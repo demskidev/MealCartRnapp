@@ -1,0 +1,143 @@
+import AuthFooter from "@/components/AuthFooter";
+import BackButton from "@/components/BackButton";
+import BaseButton from "@/components/BaseButton";
+import BaseOTPField from "@/components/BaseOTPField";
+import Header from "@/components/Header";
+import { APP_ROUTES } from "@/constants/appRoutes";
+import {
+    horizontalScale,
+    verticalScale
+} from "@/constants/constants";
+import { Strings } from "@/constants/strings";
+import { Colors } from "@/constants/theme";
+import { showErrorToast, showSuccessToast } from "@/utils/toast";
+import { OTPFormValues, OTPViewModel } from "@/viewmodels/OTPViewModel";
+import { router, useLocalSearchParams } from "expo-router";
+import { Formik } from "formik";
+import React from "react";
+import {
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    View
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const VerifyOTPScreen = () => {
+  const otpViewModel = new OTPViewModel();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const { email } = useLocalSearchParams<{ email: string }>();
+
+  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
+    router.replace(screen as any);
+  };
+
+  const handleOTPVerification = async (values: OTPFormValues) => {
+    setIsLoading(true);
+    try {
+      const result = await otpViewModel.handleOTPVerification(values);
+      if (result.success) {
+        showSuccessToast("OTP verified successfully!");
+        navigate(APP_ROUTES.NEW_PASSWORD);
+      } else {
+        showErrorToast("Verification Failed", result.message);
+      }
+    } catch (error) {
+      showErrorToast("Error", "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <BackButton onPress={() => router.back()} />
+
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.contentView}>
+            <Header
+              title={Strings.checkEmail}
+              description={`We sent a 6-digit code to ${email || "your email"}`}
+            />
+
+            <Formik
+              initialValues={{
+                otp: "",
+              }}
+              validationSchema={otpViewModel.validationSchema}
+              onSubmit={handleOTPVerification}
+              validateOnChange={true}
+              validateOnBlur={true}
+            >
+              {({ handleChange, handleBlur, values, errors, touched, validateForm, setTouched }) => (
+                <View style={styles.form}>
+                  <BaseOTPField
+                    value={values.otp}
+                    onChange={handleChange("otp")}
+                    onBlur={() => handleBlur("otp")}
+                    error={touched.otp ? errors.otp : undefined}
+                  />
+
+                  <BaseButton
+                    title={Strings.verify}
+                    gradientButton={true}
+                    textColor={Colors.white}
+                    onPress={async () => {
+                      const formErrors = await validateForm();
+                      if (Object.keys(formErrors).length > 0) {
+                        setTouched({ otp: true });
+                        // Don't show toast, only show errors under field
+                        return;
+                      }
+                      handleOTPVerification(values);
+                    }}
+                    disabled={isLoading}
+                  />
+                </View>
+              )}
+            </Formik>
+          </View>
+        </ScrollView>
+
+        <AuthFooter
+          title={Strings.rememberPassword}
+          buttonText={Strings.logIn}
+          onPressButton={() => navigate(APP_ROUTES.SIGNIN)}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    paddingHorizontal: horizontalScale(20),
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  contentView: {
+    gap: verticalScale(34),
+  },
+  form: {
+    gap: verticalScale(12),
+  },
+});
+
+export default VerifyOTPScreen;
