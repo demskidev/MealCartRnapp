@@ -7,8 +7,8 @@ import Header from "@/components/Header";
 import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
-import { pushNavigation, replaceNavigation, resetAndNavigate } from "@/utils/navigation";
-import { showErrorToast, showSuccessToast } from "@/utils/toast";
+import { pushNavigation, replaceNavigation, resetAndNavigate } from "@/utils/Navigation";
+import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import {
   KeyboardAvoidingView,
   Platform,

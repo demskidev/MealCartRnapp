@@ -1,6 +1,6 @@
-import { moderateScale, verticalScale } from "@/constants/Constants";
+import { verticalScale } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import { StyleSheet, Text, View } from "react-native";
 
 // Props for Header component

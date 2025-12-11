@@ -10,8 +10,8 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
-import { backNavigation, pushNavigation, replaceNavigation } from "@/utils/navigation";
-import { showErrorToast, showSuccessToast } from "@/utils/toast";
+import { backNavigation, pushNavigation, replaceNavigation } from "@/utils/Navigation";
+import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { OTPFormValues, OTPViewModel } from "@/viewmodels/OTPViewModel";
 import { useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";

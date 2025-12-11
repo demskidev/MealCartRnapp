@@ -1,4 +1,4 @@
-import { FontFamily } from "@/utils/fonts";
+import { FontFamily } from "@/utils/Fonts";
 
 export const Colors = {
   primary: "#08120F",

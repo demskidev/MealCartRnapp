@@ -4,7 +4,7 @@ import {
   verticalScale,
 } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";

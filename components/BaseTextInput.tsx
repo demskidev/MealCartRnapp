@@ -4,7 +4,7 @@ import {
   verticalScale,
 } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import React from "react";
 import {
   Platform,

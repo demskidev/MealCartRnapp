@@ -1,6 +1,6 @@
-import { horizontalScale, moderateScale } from "@/constants/Constants";
+import { horizontalScale } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 /**

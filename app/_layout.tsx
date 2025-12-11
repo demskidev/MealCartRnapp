@@ -1,8 +1,8 @@
 import { moderateScale } from "@/constants/Constants";
 import { AuthContextProvider } from "@/context/AuthContext";
 import { FontProvider } from "@/context/FontContext";
-import RootNavigator from "@/navigation/root_navigator";
-import { toastConfig } from "@/utils/toastConfig";
+import RootNavigator from "@/navigation/RootNavigator";
+import { toastConfig } from "@/utils/ToastConfig";
 import Toast from "react-native-toast-message";
 
 const RootLayout = () => {

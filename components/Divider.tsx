@@ -3,7 +3,7 @@ import {
   verticalScale
 } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface DividerProps {

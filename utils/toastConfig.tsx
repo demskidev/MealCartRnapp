@@ -1,6 +1,6 @@
 import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import { Text, View } from "react-native";
 
 const ToastContent = ({ props, bgColor, borderColor }: any) => (

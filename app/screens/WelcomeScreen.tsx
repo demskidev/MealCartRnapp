@@ -4,7 +4,7 @@ import { APP_ROUTES } from "@/constants/AppRoutes";
 import { moderateScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { fontSize, scaleFontSize } from "@/utils/fonts";
+import { fontSize } from "@/utils/Fonts";
 import { router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

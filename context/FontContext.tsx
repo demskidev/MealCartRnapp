@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/Theme';
-import { loadCustomFonts } from '@/utils/fonts';
+import { loadCustomFonts } from '@/utils/Fonts';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 

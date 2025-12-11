@@ -18,9 +18,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
-import { fontSize } from "@/utils/fonts";
-import { replaceNavigation, resetAndNavigate } from "@/utils/navigation";
-import { showErrorToast, showSuccessToast } from "@/utils/toast";
+import { fontSize } from "@/utils/Fonts";
+import { replaceNavigation, resetAndNavigate } from "@/utils/Navigation";
+import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import {
   SignupFormValues,
   SignupViewModel,

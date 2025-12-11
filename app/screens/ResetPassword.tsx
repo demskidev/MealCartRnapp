@@ -7,8 +7,8 @@ import { APP_ROUTES } from "@/constants/AppRoutes";
 import { horizontalScale, verticalScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
-import { backNavigation, pushNavigation } from "@/utils/navigation";
-import { showToast } from "@/utils/toast";
+import { backNavigation, pushNavigation } from "@/utils/Navigation";
+import { showToast } from "@/utils/Toast";
 import {
   ResetPasswordFormValues,
   ResetPasswordViewModel,
