@@ -1,5 +1,5 @@
-import { moderateScale } from '@/constants/constants';
-import { Colors } from '@/constants/theme';
+import { moderateScale } from '@/constants/Constants';
+import { Colors } from '@/constants/Theme';
 import { StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

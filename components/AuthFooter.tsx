@@ -1,5 +1,6 @@
-import { horizontalScale, moderateScale } from "@/constants/constants";
-import { Colors } from "@/constants/theme";
+import { horizontalScale, moderateScale } from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize } from "@/utils/fonts";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 /**
@@ -49,9 +50,9 @@ const styles = StyleSheet.create({
 
   // Base text styling used for both title and button text
   title: {
-    fontWeight: "bold",
-    color: Colors.secondaryText,
-    fontSize: moderateScale(14), // Scaled for responsiveness
+    fontFamily:FontFamilies.ROBOTO_SEMI_BOLD,
+    color: Colors.tertiary,
+    fontSize: fontSize(13), // Scaled for responsiveness
   },
 
   // Additional style for clickable text (adds underline)

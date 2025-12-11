@@ -2,8 +2,9 @@ import {
   horizontalScale,
   moderateScale,
   verticalScale,
-} from "@/constants/constants";
-import { Colors } from "@/constants/theme";
+} from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize } from "@/utils/fonts";
 import React from "react";
 import {
   Platform,
@@ -42,6 +43,7 @@ interface BaseTextInputProps {
   value: string | null;
   maxLength?: number;
   width?: number;
+  textAlign?: "auto" | "left" | "right" | "center" | "justify";
   onChangeText?: (text: string) => void;
   onKeyPress?: (e: TextInputKeyPressEvent) => void;
   onBlur?: () => void;
@@ -67,6 +69,7 @@ const BaseTextInput = React.memo(
         width,
         error,
         onBlur,
+        textAlign = "left",
       },
       ref
     ) => {
@@ -98,13 +101,12 @@ const BaseTextInput = React.memo(
               ref={ref}
               style={[
                 styles.textInput,
-                {
-                  color: isFocused.current ? Colors.text : Colors.secondaryText, // Change text color on focus
-                },
+                { textAlign },
               ]}
               value={value ?? ""}
               onChangeText={onChangeText}
               placeholder={placeholder}
+              placeholderTextColor={Colors.tertiary}
               secureTextEntry={showPassword} // Mask text if needed
               keyboardType={keyboardType}
               onFocus={() => (isFocused.current = true)} // Set focus state
@@ -146,17 +148,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 1,
     padding: Platform.select({
-      ios: verticalScale(18),
-      android: verticalScale(10),
+      ios: verticalScale(16),
+      android: verticalScale(3),
     }),
     borderColor: Colors.borderColor,
-    borderRadius: moderateScale(8),
+    borderRadius: moderateScale(5),
     gap: horizontalScale(10),
   },
 
   textInput: {
     flex: 1,
-    fontSize: moderateScale(16),
+    fontSize: fontSize(14),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
   },
 
   // Right icon container
@@ -169,7 +172,8 @@ const styles = StyleSheet.create({
 
   errorMsg: {
     color: Colors.error,
-    fontSize: moderateScale(12),
+    fontSize: fontSize(14),
+    fontFamily:FontFamilies.ROBOTO_REGULAR
   },
 });
 

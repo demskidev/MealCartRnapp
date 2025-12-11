@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 const AuthNavigator = () => {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="FirstScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="WelcomeScreen" options={{ headerShown: false }} />
       <Stack.Screen name="SignIn" options={{ headerShown: false }} />
       <Stack.Screen name="SignUp" options={{ headerShown: false }} />
       <Stack.Screen name="ResetPassword" options={{ headerShown: false }} />

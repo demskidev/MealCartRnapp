@@ -3,13 +3,13 @@ import BackButton from "@/components/BackButton";
 import BaseButton from "@/components/BaseButton";
 import BaseTextInput from "@/components/BaseTextInput";
 import Header from "@/components/Header";
-import { APP_ROUTES } from "@/constants/appRoutes";
-import { horizontalScale, verticalScale } from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import { horizontalScale, verticalScale } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors } from "@/constants/Theme";
+import { backNavigation, resetAndNavigate } from "@/utils/navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/toast";
 import { NewPasswordFormValues, NewPasswordViewModel } from "@/viewmodels/NewPasswordViewModel";
-import { router } from "expo-router";
 import { Formik } from "formik";
 import React from "react";
 import {
@@ -22,20 +22,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const NewPasswordScreen = () => {
-  // Helper to safely go back or navigate to Sign In
   const handleBack = () => {
-    if (router.canGoBack && router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace(APP_ROUTES.SIGNIN as any);
-    }
+    backNavigation(APP_ROUTES.SIGNIN);
   };
   const newPasswordViewModel = new NewPasswordViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
-    router.replace(screen as any);
-  };
 
   const handleNewPassword = async (values: NewPasswordFormValues) => {
     setIsLoading(true);
@@ -43,7 +34,7 @@ const NewPasswordScreen = () => {
       const result = await newPasswordViewModel.handleNewPassword(values);
       if (result.success) {
         showSuccessToast("Password updated successfully!");
-        navigate(APP_ROUTES.SIGNIN);
+        resetAndNavigate(APP_ROUTES.SIGNIN);
       } else {
         showErrorToast("Update Failed", result.message);
       }
@@ -140,7 +131,7 @@ const NewPasswordScreen = () => {
         <AuthFooter
           title={Strings.rememberPassword}
           buttonText={Strings.logIn}
-          onPressButton={() => navigate(APP_ROUTES.SIGNIN)}
+          onPressButton={() => resetAndNavigate(APP_ROUTES.SIGNIN)}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

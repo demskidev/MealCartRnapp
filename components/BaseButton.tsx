@@ -2,8 +2,9 @@ import {
   horizontalScale,
   moderateScale,
   verticalScale,
-} from "@/constants/constants";
-import { Colors } from "@/constants/theme";
+} from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize } from "@/utils/fonts";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -51,7 +52,10 @@ const BaseButton = React.memo(
   }: BaseButtonProps) => {
     return (
       <TouchableOpacity
-        style={[styles.container, { width: width || "100%", opacity: disabled ? 0.5 : 1 }]}
+        style={[
+          styles.container,
+          { width: width || "100%", opacity: disabled ? 0.5 : 1 },
+        ]}
         onPress={onPress}
         disabled={disabled}
       >
@@ -66,7 +70,7 @@ const BaseButton = React.memo(
             >
               <Defs>
                 <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
-                  <Stop offset="0.4" stopColor={Colors.olive} />
+                  <Stop offset="0." stopColor={Colors.olive} />
                   <Stop
                     offset="1"
                     stopColor={Colors.secondaryButtonBackground}
@@ -115,47 +119,38 @@ const BaseButton = React.memo(
 );
 
 const styles = StyleSheet.create({
-  // Wrapper to provide spacing between button and description
   container: {
     gap: verticalScale(10),
-    },
+  },
 
-  // Main button layout and styling
   button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.buttonBackground,
-    padding: verticalScale(18),
+    paddingVertical: moderateScale(12),
+    paddingHorizontal: moderateScale(24),
     borderRadius: moderateScale(8),
-
     gap: horizontalScale(10),
-
-    shadowColor: Colors.buttonShadow,
-    shadowOffset: { width: 0, height: verticalScale(3) },
-    shadowOpacity: 0.1,
-    shadowRadius: moderateScale(4), 
-    // Android shadow 
-    elevation: moderateScale(5),
   },
 
   buttonWrapper: {
     borderRadius: moderateScale(8),
     overflow: "hidden",
+    boxShadow: "0px 0px 12px rgba(0, 0, 0, 0.15)",
   },
 
-  // Optional description text below the button
   description: {
     textAlign: "center",
-    color: Colors.secondaryText,
+    color: Colors.tertiary,
     fontSize: moderateScale(12),
   },
 
-  // Default button text styling
   text: {
-    color: Colors.text,
-    fontWeight: "bold",
-    fontSize: moderateScale(16),
+    letterSpacing: fontSize(0.5),
+    color: Colors.primary,
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: fontSize(16),
   },
 });
 

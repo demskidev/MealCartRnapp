@@ -1,5 +1,6 @@
-import { moderateScale, verticalScale } from "@/constants/constants";
-import { Colors } from "@/constants/theme";
+import { moderateScale, verticalScale } from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize } from "@/utils/fonts";
 import { StyleSheet, Text, View } from "react-native";
 
 // Props for Header component
@@ -36,13 +37,14 @@ const styles = StyleSheet.create({
     gap: verticalScale(8),
   },
   title: {
-    color: Colors.text,
-    fontSize: moderateScale(20),
-    fontWeight: "bold",
+    color: Colors.primary,
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    fontSize: fontSize(21),
   },
   description: {
-    fontSize: moderateScale(14),
-    color: Colors.secondaryText,
+    fontSize: fontSize(12),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
     textAlign: "center",
   },
 });

@@ -3,34 +3,34 @@ import BaseButton from "@/components/BaseButton";
 import BaseTextInput from "@/components/BaseTextInput";
 import Divider from "@/components/Divider";
 import Header from "@/components/Header";
-import { moderateScale, verticalScale } from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
+import { moderateScale, verticalScale } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    View
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
-import { APP_ROUTES } from "@/constants/appRoutes";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import { fontSize } from "@/utils/fonts";
+import { replaceNavigation, resetAndNavigate } from "@/utils/navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/toast";
-import { SignupFormValues, SignupViewModel } from "@/viewmodels/SignupViewModel";
-import { router } from "expo-router";
+import {
+  SignupFormValues,
+  SignupViewModel,
+} from "@/viewmodels/SignupViewModel";
 import { Formik } from "formik";
 import React from "react";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  // Navigation helper function using expo-router
-  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
-    router.replace(screen as any);
-  };
 
   const handleSignup = async (values: SignupFormValues) => {
     setIsLoading(true);
@@ -39,7 +39,7 @@ const SignupScreen = () => {
       if (result.success) {
         showSuccessToast("Account created successfully!");
         // Navigate to OTP verification
-        navigate(APP_ROUTES.VERIFY_OTP);
+        resetAndNavigate(APP_ROUTES.HOME);
       } else {
         showErrorToast("Signup Failed", result.message);
       }
@@ -51,7 +51,10 @@ const SignupScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right',"bottom"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right", "bottom"]}
+    >
       {/* Adjust UI when keyboard is open */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
@@ -68,7 +71,7 @@ const SignupScreen = () => {
             {/* Header component with screen title and description */}
             <Header
               title={Strings.createYourAccount}
-              description="Start your journey to organized meals "
+              description={Strings.startJourney}
             />
 
             {/* Form with Formik */}
@@ -84,7 +87,16 @@ const SignupScreen = () => {
               validateOnChange={true}
               validateOnBlur={true}
             >
-              {({ handleChange, handleBlur, values, errors, touched, isValid, validateForm, setTouched }) => (
+              {({
+                handleChange,
+                handleBlur,
+                values,
+                errors,
+                touched,
+                isValid,
+                validateForm,
+                setTouched,
+              }) => (
                 <View style={styles.form}>
                   <BaseTextInput
                     value={values.name}
@@ -94,7 +106,9 @@ const SignupScreen = () => {
                       setTouched({ ...touched, name: true });
                     }}
                     placeholder={Strings.name}
-                    error={touched.name && errors.name ? errors.name : undefined}
+                    error={
+                      touched.name && errors.name ? errors.name : undefined
+                    }
                   />
                   <BaseTextInput
                     value={values.email}
@@ -105,7 +119,9 @@ const SignupScreen = () => {
                     }}
                     placeholder={Strings.email}
                     keyboardType="email-address"
-                    error={touched.email && errors.email ? errors.email : undefined}
+                    error={
+                      touched.email && errors.email ? errors.email : undefined
+                    }
                   />
                   <BaseTextInput
                     value={values.password}
@@ -116,7 +132,11 @@ const SignupScreen = () => {
                     }}
                     placeholder={Strings.password}
                     secureTextEntry={true}
-                    error={touched.password && errors.password ? errors.password : undefined}
+                    error={
+                      touched.password && errors.password
+                        ? errors.password
+                        : undefined
+                    }
                   />
                   <BaseTextInput
                     value={values.confirmPassword}
@@ -161,8 +181,14 @@ const SignupScreen = () => {
                     />
                   </View>
 
+                  <Text
+                    style={styles.secureMeals}
+                  >
+                    {Strings.mealsAreSecure}
+                  </Text>
+
                   {/* Divider between sign up and social login */}
-                  <Divider />
+                  <Divider style={{marginTop:verticalScale(15)}}/>
 
                   {/* Social login buttons */}
                   <View style={styles.buttonContainer}>
@@ -188,7 +214,7 @@ const SignupScreen = () => {
           <AuthFooter
             title={Strings.alreadyHaveAccount}
             buttonText={Strings.logIn}
-            onPressButton={() => navigate(APP_ROUTES.SIGNIN)}
+            onPressButton={() => replaceNavigation(APP_ROUTES.SIGNIN)}
           />
         </View>
       </KeyboardAvoidingView>
@@ -204,7 +230,7 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   scrollContent: {
     flexGrow: 1,
@@ -220,9 +246,16 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     gap: verticalScale(10),
+    marginTop:verticalScale(20)
   },
   buttonSpace: {
     marginTop: verticalScale(10),
+  },
+  secureMeals: {
+    fontSize: fontSize(10),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    textAlign: "center",
   },
   footerContainer: {
     paddingHorizontal: moderateScale(20),

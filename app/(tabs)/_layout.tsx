@@ -1,6 +1,6 @@
 import { IconCart, IconDate, IconHome, IconMeal } from '@/assets/svg';
-import { moderateScale, verticalScale } from '@/constants/constants';
-import { Colors } from '@/constants/theme';
+import { moderateScale, verticalScale } from '@/constants/Constants';
+import { Colors } from '@/constants/Theme';
 import { Tabs } from 'expo-router';
 
 // Define tab icons with SVG support

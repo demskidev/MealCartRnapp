@@ -3,16 +3,17 @@ import BackButton from "@/components/BackButton";
 import BaseButton from "@/components/BaseButton";
 import BaseOTPField from "@/components/BaseOTPField";
 import Header from "@/components/Header";
-import { APP_ROUTES } from "@/constants/appRoutes";
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
   verticalScale
-} from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors } from "@/constants/Theme";
+import { backNavigation, pushNavigation, replaceNavigation } from "@/utils/navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/toast";
 import { OTPFormValues, OTPViewModel } from "@/viewmodels/OTPViewModel";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React from "react";
 import {
@@ -25,21 +26,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const VerifyOTPScreen = () => {
-  // Helper to safely go back or navigate to Sign In
   const handleBack = () => {
-    if (router.canGoBack && router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace(APP_ROUTES.SIGNIN as any);
-    }
+    backNavigation(APP_ROUTES.SIGNIN);
   };
   const otpViewModel = new OTPViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
   const { email } = useLocalSearchParams<{ email: string }>();
-
-  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
-    router.replace(screen as any);
-  };
 
   const handleOTPVerification = async (values: OTPFormValues) => {
     setIsLoading(true);
@@ -47,7 +39,7 @@ const VerifyOTPScreen = () => {
       const result = await otpViewModel.handleOTPVerification(values);
       if (result.success) {
         showSuccessToast("OTP verified successfully!");
-        navigate(APP_ROUTES.NEW_PASSWORD);
+        pushNavigation(APP_ROUTES.NEW_PASSWORD);
       } else {
         showErrorToast("Verification Failed", result.message);
       }
@@ -120,7 +112,7 @@ const VerifyOTPScreen = () => {
         <AuthFooter
           title={Strings.rememberPassword}
           buttonText={Strings.logIn}
-          onPressButton={() => navigate(APP_ROUTES.SIGNIN)}
+          onPressButton={() => replaceNavigation(APP_ROUTES.SIGNIN)}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

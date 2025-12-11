@@ -1,10 +1,14 @@
 import {
   horizontalScale,
-  moderateScale,
-  verticalScale,
-} from "@/constants/constants";
-import { Colors } from "@/constants/theme";
-import { StyleSheet, Text, View } from "react-native";
+  verticalScale
+} from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize } from "@/utils/fonts";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
+
+interface DividerProps {
+  style?: ViewStyle;
+}
 
 /**
  * Divider Component
@@ -15,10 +19,14 @@ import { StyleSheet, Text, View } from "react-native";
  * Structure:
  *  - Two lines on either side of a centered "OR" text
  *  - Lines stretch to fill remaining horizontal space
+ *
+ * Usage:
+ *  <Divider />
+ *  <Divider style={{ gap: 20, marginVertical: 10 }} />
  */
-const Divider = () => {
+const Divider = ({ style }: DividerProps) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {/* Left horizontal line */}
       <View style={styles.line} />
 
@@ -44,8 +52,9 @@ const styles = StyleSheet.create({
     height: verticalScale(1),
   },
   text: {
-    fontSize: moderateScale(16),
-    color: Colors.secondaryText,
+    fontSize: fontSize(12),
+    fontFamily:FontFamilies.ROBOTO_REGULAR,
+    color: Colors.tertiary,
   },
 });
 

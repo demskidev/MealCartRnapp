@@ -5,9 +5,9 @@ import {
   moderateScale,
   screenWidth,
   verticalScale
-} from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors } from "@/constants/Theme";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Image, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

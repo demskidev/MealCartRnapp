@@ -1,5 +1,5 @@
-import FirstScreen from "./screens/FirstScreen";
+import WelcomeScreen from "./screens/WelcomeScreen";
 
 export default function IndexScreen() {
-  return <FirstScreen />;
+  return <WelcomeScreen />;
 }

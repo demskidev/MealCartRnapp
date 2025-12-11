@@ -1,12 +1,12 @@
-import { moderateScale, verticalScale } from '@/constants/constants';
-import { Colors } from '@/constants/theme';
+import { moderateScale, verticalScale } from '@/constants/Constants';
+import { Colors } from '@/constants/Theme';
 import React from 'react';
 import {
-    StyleSheet,
-    Text,
-    TextStyle,
-    View,
-    ViewStyle,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+  ViewStyle,
 } from 'react-native';
 import { SelectList } from 'react-native-dropdown-select-list';
 

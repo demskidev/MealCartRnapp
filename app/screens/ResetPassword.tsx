@@ -3,12 +3,16 @@ import BackButton from "@/components/BackButton";
 import BaseButton from "@/components/BaseButton";
 import BaseTextInput from "@/components/BaseTextInput";
 import Header from "@/components/Header";
-import { APP_ROUTES } from "@/constants/appRoutes";
-import { horizontalScale, verticalScale } from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
-import { ResetPasswordFormValues, ResetPasswordViewModel } from "@/viewmodels/ResetPasswordViewModel";
-import { router } from "expo-router";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import { horizontalScale, verticalScale } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors } from "@/constants/Theme";
+import { backNavigation, pushNavigation } from "@/utils/navigation";
+import { showToast } from "@/utils/toast";
+import {
+  ResetPasswordFormValues,
+  ResetPasswordViewModel,
+} from "@/viewmodels/ResetPasswordViewModel";
 import { Formik } from "formik";
 import React from "react";
 import {
@@ -25,21 +29,12 @@ interface ResetScreenProps {
   navigation?: any;
 }
 
-const ResetPasswordScreen : React.FC<ResetScreenProps> = ({navigation}) => {
+const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
   const resetPasswordViewModel = new ResetPasswordViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Helper to safely go back or navigate to Sign In
   const handleBack = () => {
-    if (router.canGoBack && router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace(APP_ROUTES.SIGNIN as any);
-    }
-  };
-
-  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
-    router.replace(screen as any);
+    backNavigation(APP_ROUTES.SIGNIN);
   };
 
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
@@ -47,8 +42,8 @@ const ResetPasswordScreen : React.FC<ResetScreenProps> = ({navigation}) => {
     try {
       const result = await resetPasswordViewModel.handleResetPassword(values);
       if (result.success) {
-        Alert.alert("Success", result.message);
-        navigate(
+        showToast("success", result.message);
+        pushNavigation(
           `${APP_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(values.email)}`
         );
       } else {
@@ -62,7 +57,10 @@ const ResetPasswordScreen : React.FC<ResetScreenProps> = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right','bottom']}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <BackButton onPress={handleBack} />
 
       <KeyboardAvoidingView
@@ -90,7 +88,15 @@ const ResetPasswordScreen : React.FC<ResetScreenProps> = ({navigation}) => {
               validateOnChange={true}
               validateOnBlur={true}
             >
-              {({ handleChange, handleBlur, values, errors, touched, validateForm, setTouched }) => (
+              {({
+                handleChange,
+                handleBlur,
+                values,
+                errors,
+                touched,
+                validateForm,
+                setTouched,
+              }) => (
                 <View style={styles.form}>
                   <BaseTextInput
                     value={values.email}
@@ -101,7 +107,9 @@ const ResetPasswordScreen : React.FC<ResetScreenProps> = ({navigation}) => {
                     }}
                     placeholder={Strings.email}
                     keyboardType="email-address"
-                    error={touched.email && errors.email ? errors.email : undefined}
+                    error={
+                      touched.email && errors.email ? errors.email : undefined
+                    }
                   />
 
                   <BaseButton
@@ -128,7 +136,7 @@ const ResetPasswordScreen : React.FC<ResetScreenProps> = ({navigation}) => {
         <AuthFooter
           title={Strings.rememberPassword}
           buttonText={Strings.logIn}
-          onPressButton={() => navigate(APP_ROUTES.SIGNIN)}
+          onPressButton={() => backNavigation(APP_ROUTES.SIGNIN)}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

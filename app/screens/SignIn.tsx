@@ -2,37 +2,35 @@ import AuthFooter from "@/components/AuthFooter";
 import BaseButton from "@/components/BaseButton";
 import BaseTextInput from "@/components/BaseTextInput";
 import Divider from "@/components/Divider";
+import GradientText from "@/components/GradientText";
 import Header from "@/components/Header";
-import { moderateScale, verticalScale } from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
+import { moderateScale, verticalScale } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors } from "@/constants/Theme";
+import { pushNavigation, replaceNavigation, resetAndNavigate } from "@/utils/navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/toast";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
-import { APP_ROUTES } from "@/constants/appRoutes";
-import { SigninFormValues, SigninViewModel } from "@/viewmodels/SigninViewModel";
-import { router } from "expo-router";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import {
+  SigninFormValues,
+  SigninViewModel,
+} from "@/viewmodels/SigninViewModel";
 import { Formik } from "formik";
 import React from "react";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  // Navigation helper function using expo-router
-  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
-    router.replace(screen as any);
-  };
 
   const handleSignin = async (values: SigninFormValues) => {
     setIsLoading(true);
@@ -41,7 +39,7 @@ const SignInScreen = () => {
       if (result.success) {
         showSuccessToast("Signed in successfully!");
         // Navigate to home screen
-        navigate(APP_ROUTES.HOME);
+        resetAndNavigate(APP_ROUTES.HOME);
       } else {
         showErrorToast("Sign In Failed", result.message);
       }
@@ -53,7 +51,10 @@ const SignInScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right", "bottom"]}
+    >
       {/* KeyboardAvoidingView adjusts UI when keyboard is visible */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
@@ -84,7 +85,15 @@ const SignInScreen = () => {
               validateOnChange={true}
               validateOnBlur={true}
             >
-              {({ handleChange, handleBlur, values, errors, touched, validateForm, setTouched }) => (
+              {({
+                handleChange,
+                handleBlur,
+                values,
+                errors,
+                touched,
+                validateForm,
+                setTouched,
+              }) => (
                 <View>
                   <View style={styles.form}>
                     <BaseTextInput
@@ -96,7 +105,9 @@ const SignInScreen = () => {
                       }}
                       placeholder={Strings.email}
                       keyboardType="email-address"
-                      error={touched.email && errors.email ? errors.email : undefined}
+                      error={
+                        touched.email && errors.email ? errors.email : undefined
+                      }
                     />
                     <BaseTextInput
                       value={values.password}
@@ -107,18 +118,27 @@ const SignInScreen = () => {
                       }}
                       placeholder={Strings.password}
                       secureTextEntry={true}
-                      error={touched.password && errors.password ? errors.password : undefined}
+                      error={
+                        touched.password && errors.password
+                          ? errors.password
+                          : undefined
+                      }
                     />
                   </View>
 
                   {/* Container for "Forgot Password" and login button */}
                   <View style={styles.middleContainer}>
                     <TouchableOpacity
-                      onPress={() => navigate(APP_ROUTES.RESET_PASSWORD)}
+                      style={styles.forgotPasswordContainer}
+                      onPress={() => pushNavigation(APP_ROUTES.RESET_PASSWORD)}
                     >
-                      <Text style={styles.forgotPassword}>
-                        {Strings.forgotPassword}
-                      </Text>
+                      <GradientText
+                        text={Strings.forgotPassword}
+                        startColor={Colors._586E3F}
+                        endColor={Colors._5F6C51}
+                        fontSize={14}
+                        angle="diagonal"
+                      />
                     </TouchableOpacity>
 
                     {/* Login button */}
@@ -143,7 +163,7 @@ const SignInScreen = () => {
                   </View>
 
                   {/* Divider between login and social login buttons */}
-                  <Divider />
+                  <Divider style={{marginVertical:verticalScale(50)}}/>
 
                   {/* Social login buttons */}
                   <View style={styles.buttonContainer}>
@@ -169,7 +189,7 @@ const SignInScreen = () => {
           <AuthFooter
             title={Strings.newUser}
             buttonText={Strings.signup}
-            onPressButton={() => navigate(APP_ROUTES.SIGNUP)}
+            onPressButton={() => replaceNavigation(APP_ROUTES.SIGNUP)}
           />
         </View>
       </KeyboardAvoidingView>
@@ -184,7 +204,7 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   scrollContent: {
     flexGrow: 1,
@@ -193,7 +213,7 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     textAlign: "right",
-    color: Colors.secondaryText,
+    color: Colors.tertiary,
     fontSize: moderateScale(14),
   },
   form: {
@@ -204,7 +224,7 @@ const styles = StyleSheet.create({
     gap: moderateScale(35),
   },
   middleContainer: {
-    gap: moderateScale(12),
+    gap: moderateScale(8),
   },
   text: {
     textAlign: "center",
@@ -216,6 +236,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(20),
     paddingBottom: verticalScale(10),
     backgroundColor: Colors.background,
+  },
+  forgotPasswordContainer: {
+    alignSelf: "flex-end",
+    marginVertical: verticalScale(8),
   },
 });
 

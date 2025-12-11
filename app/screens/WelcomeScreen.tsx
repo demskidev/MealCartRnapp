@@ -1,17 +1,18 @@
 import { CreateAccount, ForwardIcon, SplashIcon } from "@/assets/svg";
 import BaseButton from "@/components/BaseButton";
-import { APP_ROUTES } from "@/constants/appRoutes";
-import { moderateScale } from "@/constants/constants";
-import { Strings } from "@/constants/strings";
-import { Colors } from "@/constants/theme";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import { moderateScale } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize, scaleFontSize } from "@/utils/fonts";
 import { router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const FirstScreen = () => {
+const WelcomeScreen = () => {
   // Navigation helper using expo-router
   const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
-    router.replace(screen as any);
+    router.push(screen as any);
   };
 
   return (
@@ -60,12 +61,15 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontWeight: "bold", // Bold title
-    fontSize: moderateScale(35),
+    color: Colors.primary,
+    fontFamily:FontFamilies.ROBOTO_BLACK,
+    fontSize: fontSize(35),
   },
   description: {
-    color: Colors.secondaryText,
-    fontSize: moderateScale(16),
+    color: Colors.tertiary,
+    lineHeight: moderateScale(20),
+    fontFamily:FontFamilies.ROBOTO_REGULAR,
+    fontSize: fontSize(14),
   },
 
   middleContainer: {
@@ -81,4 +85,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FirstScreen;
+export default WelcomeScreen;

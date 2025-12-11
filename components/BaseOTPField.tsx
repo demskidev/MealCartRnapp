@@ -1,15 +1,16 @@
 import {
-    moderateScale,
-    verticalScale
-} from "@/constants/constants";
-import { Colors } from "@/constants/theme";
+  horizontalScale,
+  moderateScale,
+  verticalScale
+} from "@/constants/Constants";
+import { Colors } from "@/constants/Theme";
 import React from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TextInputKeyPressEvent,
-    View,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputKeyPressEvent,
+  View,
 } from "react-native";
 import BaseTextInput from "./BaseTextInput";
 
@@ -60,18 +61,20 @@ const BaseOTPField = React.memo(
       <View style={styles.mainContainer}>
         <View style={styles.container}>
           {values.map((val, index) => (
-            <BaseTextInput
-              key={index}
-              ref={(r) => {
-                inputRefs.current[index] = r;
-              }}
-              width={50}
-              value={val}
-              onChangeText={(text) => handleChange(text, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              keyboardType="numeric"
-              maxLength={1}
-            />
+            <View key={index} style={styles.inputWrapper}>
+              <BaseTextInput
+                ref={(r) => {
+                  inputRefs.current[index] = r;
+                }}
+                width={45}
+                value={val}
+                onChangeText={(text) => handleChange(text, index)}
+                onKeyPress={(e) => handleKeyPress(e, index)}
+                keyboardType="numeric"
+                maxLength={1}
+                textAlign="center"
+              />
+            </View>
           ))}
         </View>
         {error && <Text style={styles.errorMsg}>{error}</Text>}
@@ -82,13 +85,17 @@ const BaseOTPField = React.memo(
 
 const styles = StyleSheet.create({
   mainContainer: {
-    gap: verticalScale(8),
+    gap: verticalScale(10),
   },
   container: {
     flexDirection: "row",
     justifyContent: "space-around",
+    marginHorizontal: horizontalScale(20),
   },
-
+  inputWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   errorMsg: {
     color: Colors.error,
     textAlign: "center",
