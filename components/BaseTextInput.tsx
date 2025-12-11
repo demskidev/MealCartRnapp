@@ -3,7 +3,7 @@ import {
   moderateScale,
   verticalScale,
 } from "@/constants/constants";
-import { Colors, Fonts } from "@/constants/theme";
+import { Colors } from "@/constants/theme";
 import React from "react";
 import {
   Platform,
@@ -41,14 +41,15 @@ import {
 interface BaseTextInputProps {
   value: string | null;
   maxLength?: number;
-  width?: string | number;
+  width?: number;
   onChangeText?: (text: string) => void;
   onKeyPress?: (e: TextInputKeyPressEvent) => void;
+  onBlur?: () => void;
   placeholder?: string;
   secureTextEntry?: boolean;
   rightIcon?: React.ReactNode;
   keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
-  errorMsg?: string;
+  error?: string;
 }
 
 const BaseTextInput = React.memo(
@@ -64,7 +65,8 @@ const BaseTextInput = React.memo(
         onKeyPress,
         maxLength,
         width,
-        errorMsg,
+        error,
+        onBlur,
       },
       ref
     ) => {
@@ -106,7 +108,10 @@ const BaseTextInput = React.memo(
               secureTextEntry={showPassword} // Mask text if needed
               keyboardType={keyboardType}
               onFocus={() => (isFocused.current = true)} // Set focus state
-              onBlur={() => (isFocused.current = false)} // Remove focus state
+              onBlur={() => {
+                isFocused.current = false;
+                onBlur?.();
+              }} // Remove focus state
               onKeyPress={onKeyPress}
               maxLength={maxLength}
             />
@@ -123,7 +128,7 @@ const BaseTextInput = React.memo(
           </View>
 
           {/* Display error message if provided */}
-          {errorMsg && <Text style={styles.errorMsg}>{errorMsg}</Text>}
+          {error && <Text style={styles.errorMsg}>{error}</Text>}
         </View>
       );
     }

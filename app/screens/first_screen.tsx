@@ -10,12 +10,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const FirstScreen = () => {
   // Navigation helper using expo-router
-  const navigate = (screen: string) => {
-    router.replace(screen);
+  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
+    router.replace(screen as any);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Splash image/logo */}
       <SplashIcon width={moderateScale(145)} height={moderateScale(196)} />
 

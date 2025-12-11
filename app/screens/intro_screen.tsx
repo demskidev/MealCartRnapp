@@ -3,13 +3,12 @@ import Header from "@/components/Header";
 import {
   horizontalScale,
   moderateScale,
-  screenHeight,
   screenWidth,
-  verticalScale,
+  verticalScale
 } from "@/constants/constants";
 import { Strings } from "@/constants/strings";
 import { Colors } from "@/constants/theme";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, Image, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -40,7 +39,7 @@ const IntroScreen = () => {
   }, [currentPage]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Svg height="100%" width="100%" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">

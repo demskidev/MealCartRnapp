@@ -1,33 +1,26 @@
-import { signupValidationSchema } from '@/utils/validators/authValidators';
+import { newPasswordValidationSchema } from '@/utils/validators/authValidators';
 import * as yup from 'yup';
 
-export interface SignupFormValues {
-  name: string;
-  email: string;
+export interface NewPasswordFormValues {
   password: string;
   confirmPassword: string;
 }
 
-export class SignupViewModel {
-  validationSchema = signupValidationSchema;
+export class NewPasswordViewModel {
+  validationSchema = newPasswordValidationSchema;
 
   constructor() {}
 
-  async handleSignup(values: SignupFormValues): Promise<{ success: boolean; message: string }> {
+  async handleNewPassword(values: NewPasswordFormValues): Promise<{ success: boolean; message: string }> {
     try {
-      // Validate using schema
       await this.validationSchema.validate(values, { abortEarly: false });
 
-      // TODO: Call API to register user
-      console.log('Signup attempt:', {
-        name: values.name,
-        email: values.email,
-      });
+      // TODO: Call API to set new password
+      console.log('New password set attempt');
 
-      // Simulate API call
       return {
         success: true,
-        message: 'Signup successful',
+        message: 'Password changed successfully',
       };
     } catch (error) {
       if (error instanceof yup.ValidationError) {
@@ -38,12 +31,11 @@ export class SignupViewModel {
       }
       return {
         success: false,
-        message: 'Signup failed',
+        message: 'Failed to change password',
       };
     }
   }
 
-  // Field validation is handled by Formik
   async validateField(fieldName: string, value: string): Promise<string | undefined> {
     try {
       const fieldSchema = yup.reach(this.validationSchema, fieldName);

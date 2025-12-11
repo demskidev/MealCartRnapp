@@ -7,79 +7,128 @@ import { APP_ROUTES } from "@/constants/appRoutes";
 import { horizontalScale, verticalScale } from "@/constants/constants";
 import { Strings } from "@/constants/strings";
 import { Colors } from "@/constants/theme";
+import { showErrorToast, showSuccessToast } from "@/utils/toast";
+import { NewPasswordFormValues, NewPasswordViewModel } from "@/viewmodels/NewPasswordViewModel";
 import { router } from "expo-router";
+import { Formik } from "formik";
 import React from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const NewPasswordScreen = () => {
-  // Local state for new password and confirmation
-  const [password, setPassword] = React.useState<string | null>(null);
-  const [confirmPassword, setConfirmPassword] = React.useState<string | null>(
-    null
-  );
+  const newPasswordViewModel = new NewPasswordViewModel();
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  // Navigation helper using expo-router
-  const navigate = (screen: string) => {
-    router.replace(screen);
+  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
+    router.replace(screen as any);
+  };
+
+  const handleNewPassword = async (values: NewPasswordFormValues) => {
+    setIsLoading(true);
+    try {
+      const result = await newPasswordViewModel.handleNewPassword(values);
+      if (result.success) {
+        showSuccessToast("Password updated successfully!");
+        navigate(APP_ROUTES.SIGNIN);
+      } else {
+        showErrorToast("Update Failed", result.message);
+      }
+    } catch (error) {
+      showErrorToast("Error", "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back button to go to previous screen */}
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <BackButton onPress={() => router.back()} />
 
-      {/* Adjust UI when keyboard is visible */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        {/* Scrollable content for smaller screens and keyboard */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.contentView}>
-            {/* Header with screen title and description */}
             <Header
               title={Strings.setNewPassword}
               description="Your new password must be different from previous ones."
             />
 
-            {/* Form for entering new password and confirmation */}
-            <View style={styles.form}>
-              <BaseTextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder={Strings.password}
-                secureTextEntry={true} // Hide password input
-              />
-              <BaseTextInput
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder={Strings.confirmPassword}
-                secureTextEntry={true} // Hide confirm password input
-              />
+            <Formik
+              initialValues={{
+                password: "",
+                confirmPassword: "",
+              }}
+              validationSchema={newPasswordViewModel.validationSchema}
+              onSubmit={handleNewPassword}
+              validateOnChange={true}
+              validateOnBlur={true}
+            >
+              {({ handleChange, handleBlur, values, errors, touched, validateForm, setTouched }) => (
+                <View style={styles.form}>
+                  <BaseTextInput
+                    value={values.password}
+                    onChangeText={handleChange("password")}
+                    onBlur={() => {
+                      handleBlur("password");
+                      setTouched({ ...touched, password: true });
+                    }}
+                    placeholder={Strings.password}
+                    secureTextEntry={true}
+                    error={touched.password && errors.password ? errors.password : undefined}
+                  />
+                  <BaseTextInput
+                    value={values.confirmPassword}
+                    onChangeText={handleChange("confirmPassword")}
+                    onBlur={() => {
+                      handleBlur("confirmPassword");
+                      setTouched({ ...touched, confirmPassword: true });
+                    }}
+                    placeholder={Strings.confirmPassword}
+                    secureTextEntry={true}
+                    error={
+                      touched.confirmPassword && errors.confirmPassword
+                        ? errors.confirmPassword
+                        : undefined
+                    }
+                  />
 
-              {/* Button to save new password and navigate (login) */}
-              <BaseButton
-                title={Strings.saveAndLogin}
-                gradientButton={true}
-                textColor={Colors.white}
-              />
-            </View>
+                  <BaseButton
+                    title={Strings.saveAndLogin}
+                    gradientButton={true}
+                    textColor={Colors.white}
+                    onPress={async () => {
+                      const formErrors = await validateForm();
+                      if (Object.keys(formErrors).length > 0) {
+                        setTouched({
+                          password: true,
+                          confirmPassword: true,
+                        });
+                        // Don't show toast, only show errors under fields
+                        return;
+                      }
+                      handleNewPassword(values);
+                    }}
+                    disabled={isLoading}
+                  />
+                </View>
+              )}
+            </Formik>
           </View>
         </ScrollView>
 
-        {/* Footer to navigate back to login if needed */}
         <AuthFooter
           title={Strings.rememberPassword}
           buttonText={Strings.logIn}
@@ -90,7 +139,6 @@ const NewPasswordScreen = () => {
   );
 };
 
-// Styles for NewPasswordScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,

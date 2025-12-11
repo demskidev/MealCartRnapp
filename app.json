@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MEAL_CART_RN-MAIN",
-    "slug": "MEAL_CART_RN-MAIN",
+    "name": "MealCart",
+    "slug": "MealCart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

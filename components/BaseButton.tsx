@@ -27,12 +27,13 @@ interface BaseButtonProps {
   title: string;
   description?: string;
   gradientButton?: boolean;
-  width?: string | number;
+  width?: number | "100%";
   backgroundColor?: string;
   textColor?: string;
   rightChild?: React.ReactNode; // Icon or element rendered on right
   leftChild?: React.ReactNode; // Icon or element rendered on left
   onPress?: () => void;
+  disabled?: boolean;
 }
 
 const BaseButton = React.memo(
@@ -46,9 +47,14 @@ const BaseButton = React.memo(
     leftChild,
     rightChild,
     onPress,
+    disabled = false,
   }: BaseButtonProps) => {
     return (
-      <TouchableOpacity style={[styles.container, { width: width || "100%" }]} onPress={onPress}>
+      <TouchableOpacity
+        style={[styles.container, { width: width || "100%", opacity: disabled ? 0.5 : 1 }]}
+        onPress={onPress}
+        disabled={disabled}
+      >
         {/* Main Pressable Button */}
         <View style={styles.buttonWrapper}>
           {/* Render gradient if backgroundColor not provided */}

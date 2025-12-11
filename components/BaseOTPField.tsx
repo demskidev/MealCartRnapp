@@ -1,7 +1,6 @@
 import {
-    horizontalScale,
     moderateScale,
-    verticalScale,
+    verticalScale
 } from "@/constants/constants";
 import { Colors } from "@/constants/theme";
 import React from "react";
@@ -16,17 +15,20 @@ import BaseTextInput from "./BaseTextInput";
 
 interface BaseOTPFieldProps {
   length?: number;
-  errorMsg?: string;
+  error?: string;
+  value?: string;
   onChange?: (otp: string) => void;
+  onBlur?: () => void;
 }
 
 const BaseOTPField = React.memo(
-  ({ length = 6, onChange, errorMsg }: BaseOTPFieldProps) => {
+  ({ length = 6, onChange, value = "", error, onBlur }: BaseOTPFieldProps) => {
     const [values, setValues] = React.useState<string[]>(
-      Array(length).fill("")
+      value ? value.split("").slice(0, length) : Array(length).fill("")
     );
 
     const inputRefs = React.useRef<Array<TextInput | null>>([]);
+
     const handleChange = (text: string, index: number) => {
       if (text.length > 1) return; // prevent multi-character flicker
 
@@ -40,7 +42,8 @@ const BaseOTPField = React.memo(
         inputRefs.current[index + 1]?.focus();
       }
 
-      onChange && onChange(newValues.join(""));
+      const otpValue = newValues.join("");
+      onChange && onChange(otpValue);
     };
 
     const handleKeyPress = (e: TextInputKeyPressEvent, index: number) => {
@@ -62,7 +65,7 @@ const BaseOTPField = React.memo(
               ref={(r) => {
                 inputRefs.current[index] = r;
               }}
-              width={horizontalScale(50)}
+              width={50}
               value={val}
               onChangeText={(text) => handleChange(text, index)}
               onKeyPress={(e) => handleKeyPress(e, index)}
@@ -71,7 +74,7 @@ const BaseOTPField = React.memo(
             />
           ))}
         </View>
-        {errorMsg && <Text style={styles.errorMsg}>{errorMsg}</Text>}
+        {error && <Text style={styles.errorMsg}>{error}</Text>}
       </View>
     );
   }

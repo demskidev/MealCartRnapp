@@ -1,33 +1,29 @@
-import { signupValidationSchema } from '@/utils/validators/authValidators';
+import { otpValidationSchema } from '@/utils/validators/authValidators';
 import * as yup from 'yup';
 
-export interface SignupFormValues {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
+export interface OTPFormValues {
+  otp: string;
 }
 
-export class SignupViewModel {
-  validationSchema = signupValidationSchema;
+export class OTPViewModel {
+  validationSchema = otpValidationSchema;
 
   constructor() {}
 
-  async handleSignup(values: SignupFormValues): Promise<{ success: boolean; message: string }> {
+  async handleOTPVerification(values: OTPFormValues): Promise<{ success: boolean; message: string }> {
     try {
       // Validate using schema
       await this.validationSchema.validate(values, { abortEarly: false });
 
-      // TODO: Call API to register user
-      console.log('Signup attempt:', {
-        name: values.name,
-        email: values.email,
+      // TODO: Call API to verify OTP
+      console.log('OTP verification attempt:', {
+        otp: values.otp,
       });
 
       // Simulate API call
       return {
         success: true,
-        message: 'Signup successful',
+        message: 'OTP verified successfully',
       };
     } catch (error) {
       if (error instanceof yup.ValidationError) {
@@ -38,12 +34,11 @@ export class SignupViewModel {
       }
       return {
         success: false,
-        message: 'Signup failed',
+        message: 'OTP verification failed',
       };
     }
   }
 
-  // Field validation is handled by Formik
   async validateField(fieldName: string, value: string): Promise<string | undefined> {
     try {
       const fieldSchema = yup.reach(this.validationSchema, fieldName);
@@ -53,7 +48,7 @@ export class SignupViewModel {
       if (error instanceof yup.ValidationError) {
         return error.message;
       }
-      return 'Invalid input';
+      return 'Invalid OTP';
     }
   }
 }

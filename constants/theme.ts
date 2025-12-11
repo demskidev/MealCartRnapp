@@ -18,6 +18,8 @@ export const Colors = {
   olive: "#667D4C",
   buttonShadow:"#073B2A33",
   error:'#ED1717',
+  primary: "#9DAF89",
+  lightGray: "#F5F5F5",
 };
 
 export const Fonts = Platform.select({

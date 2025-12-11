@@ -1,6 +1,11 @@
-import HomeScreen from "@/app/(tabs)/home_screen";
+import { Stack } from "expo-router";
 
 const AppNavigator = () => {
-  return <HomeScreen />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
 };
+
 export default AppNavigator;
