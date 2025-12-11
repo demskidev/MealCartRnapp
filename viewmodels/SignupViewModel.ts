@@ -1,4 +1,4 @@
-import { signupValidationSchema } from '@/utils/validators/authValidators';
+import { signupValidationSchema } from '@/utils/validators/AuthValidators';
 import * as yup from 'yup';
 
 export interface SignupFormValues {

@@ -3,6 +3,8 @@ import { FontFamily } from "@/utils/Fonts";
 export const Colors = {
   primary: "#08120F",
   tertiary: "#696F77",
+  secondaryText: "#696F77",
+  text: "#08120F",
   background: "#fff",
   buttonBackground: "#F8FAFC",
   borderColor: "#DBE0D7",
@@ -23,3 +25,4 @@ export const Colors = {
  * Font family enum - use these instead of string literals
  */
 export const FontFamilies = FontFamily;
+

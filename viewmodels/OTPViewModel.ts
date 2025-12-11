@@ -1,4 +1,4 @@
-import { otpValidationSchema } from '@/utils/validators/authValidators';
+import { otpValidationSchema } from '@/utils/validators/AuthValidators';
 import * as yup from 'yup';
 
 export interface OTPFormValues {

@@ -1,4 +1,4 @@
-import { newPasswordValidationSchema } from '@/utils/validators/authValidators';
+import { newPasswordValidationSchema } from '@/utils/validators/AuthValidators';
 import * as yup from 'yup';
 
 export interface NewPasswordFormValues {

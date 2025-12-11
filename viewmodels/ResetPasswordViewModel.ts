@@ -1,4 +1,4 @@
-import { resetPasswordValidationSchema } from '@/utils/validators/authValidators';
+import { resetPasswordValidationSchema } from '@/utils/validators/AuthValidators';
 import * as yup from 'yup';
 
 export interface ResetPasswordFormValues {

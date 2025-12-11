@@ -6,7 +6,6 @@ import GradientText from "@/components/GradientText";
 import Header from "@/components/Header";
 import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
-import { Colors } from "@/constants/Theme";
 import { pushNavigation, replaceNavigation, resetAndNavigate } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import {
@@ -21,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
+import { Colors } from "@/constants/Theme";
 import {
   SigninFormValues,
   SigninViewModel,
