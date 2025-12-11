@@ -1,48 +1,58 @@
 import AuthFooter from "@/components/AuthFooter";
 import BackButton from "@/components/BackButton";
 import BaseButton from "@/components/BaseButton";
-import BaseTextInput from "@/components/BaseTextInput";
+import BaseOTPField from "@/components/BaseOTPField";
 import Header from "@/components/Header";
 import { APP_ROUTES } from "@/constants/appRoutes";
-import { horizontalScale, verticalScale } from "@/constants/constants";
+import {
+  horizontalScale,
+  verticalScale
+} from "@/constants/constants";
 import { Strings } from "@/constants/strings";
 import { Colors } from "@/constants/theme";
-import { ResetPasswordFormValues, ResetPasswordViewModel } from "@/viewmodels/ResetPasswordViewModel";
-import { router } from "expo-router";
+import { showErrorToast, showSuccessToast } from "@/utils/toast";
+import { OTPFormValues, OTPViewModel } from "@/viewmodels/OTPViewModel";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const ResetPasswordScreen = () => {
-  const resetPasswordViewModel = new ResetPasswordViewModel();
+const VerifyOTPScreen = () => {
+  // Helper to safely go back or navigate to Sign In
+  const handleBack = () => {
+    if (router.canGoBack && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace(APP_ROUTES.SIGNIN as any);
+    }
+  };
+  const otpViewModel = new OTPViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
+  const { email } = useLocalSearchParams<{ email: string }>();
 
   const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
     router.replace(screen as any);
   };
 
-  const handleResetPassword = async (values: ResetPasswordFormValues) => {
+  const handleOTPVerification = async (values: OTPFormValues) => {
     setIsLoading(true);
     try {
-      const result = await resetPasswordViewModel.handleResetPassword(values);
+      const result = await otpViewModel.handleOTPVerification(values);
       if (result.success) {
-        Alert.alert("Success", result.message);
-        navigate(
-          `${APP_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(values.email)}`
-        );
+        showSuccessToast("OTP verified successfully!");
+        navigate(APP_ROUTES.NEW_PASSWORD);
       } else {
-        Alert.alert("Error", result.message);
+        showErrorToast("Verification Failed", result.message);
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred");
+      showErrorToast("Error", "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +60,7 @@ const ResetPasswordScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <BackButton onPress={() => router.back()} />
+      <BackButton onPress={handleBack} />
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
@@ -64,45 +74,40 @@ const ResetPasswordScreen = () => {
         >
           <View style={styles.contentView}>
             <Header
-              title={Strings.resetPassword}
-              description="Enter your email and we'll send you a code to get back into your account."
+              title={Strings.checkEmail}
+              description={`We sent a 6-digit code to ${email || "your email"}`}
             />
 
             <Formik
               initialValues={{
-                email: "",
+                otp: "",
               }}
-              validationSchema={resetPasswordViewModel.validationSchema}
-              onSubmit={handleResetPassword}
+              validationSchema={otpViewModel.validationSchema}
+              onSubmit={handleOTPVerification}
               validateOnChange={true}
               validateOnBlur={true}
             >
               {({ handleChange, handleBlur, values, errors, touched, validateForm, setTouched }) => (
                 <View style={styles.form}>
-                  <BaseTextInput
-                    value={values.email}
-                    onChangeText={handleChange("email")}
-                    onBlur={() => {
-                      handleBlur("email");
-                      setTouched({ ...touched, email: true });
-                    }}
-                    placeholder={Strings.email}
-                    keyboardType="email-address"
-                    error={touched.email && errors.email ? errors.email : undefined}
+                  <BaseOTPField
+                    value={values.otp}
+                    onChange={handleChange("otp")}
+                    onBlur={() => handleBlur("otp")}
+                    error={touched.otp ? errors.otp : undefined}
                   />
 
                   <BaseButton
-                    title={Strings.sendCode}
+                    title={Strings.verify}
                     gradientButton={true}
                     textColor={Colors.white}
                     onPress={async () => {
                       const formErrors = await validateForm();
                       if (Object.keys(formErrors).length > 0) {
-                        setTouched({ email: true });
+                        setTouched({ otp: true });
                         // Don't show toast, only show errors under field
                         return;
                       }
-                      handleResetPassword(values);
+                      handleOTPVerification(values);
                     }}
                     disabled={isLoading}
                   />
@@ -143,4 +148,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ResetPasswordScreen;
+export default VerifyOTPScreen;

@@ -13,15 +13,23 @@ import { router } from "expo-router";
 import { Formik } from "formik";
 import React from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    View
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const NewPasswordScreen = () => {
+  // Helper to safely go back or navigate to Sign In
+  const handleBack = () => {
+    if (router.canGoBack && router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace(APP_ROUTES.SIGNIN as any);
+    }
+  };
   const newPasswordViewModel = new NewPasswordViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -48,7 +56,7 @@ const NewPasswordScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <BackButton onPress={() => router.back()} />
+      <BackButton onPress={handleBack} />
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
