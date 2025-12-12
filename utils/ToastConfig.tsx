@@ -7,7 +7,7 @@ const ToastContent = ({ props, bgColor, borderColor }: any) => (
   <View
     style={{
       backgroundColor: bgColor,
-      marginHorizontal: moderateScale(40),
+      marginHorizontal: moderateScale(50),
       paddingHorizontal: moderateScale(16),
       paddingVertical: verticalScale(12),
       borderRadius: moderateScale(12),

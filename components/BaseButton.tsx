@@ -5,9 +5,9 @@ import {
 } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
+import { LinearGradient } from 'expo-linear-gradient';
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 /**
  * BaseButton Component
@@ -24,18 +24,29 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
  *  - Buttons with icons
  *  - Buttons with small helper description underneath
  */
+
 interface BaseButtonProps {
   title: string;
   description?: string;
   gradientButton?: boolean;
+
+  // NEW — gradient colors
+  gradientStartColor?: string;
+  gradientEndColor?: string;
+
+  // optional gradient direction
+  gradientStart?: { x: number; y: number };
+  gradientEnd?: { x: number; y: number };
+
   width?: number | "100%";
   backgroundColor?: string;
   textColor?: string;
-  rightChild?: React.ReactNode; // Icon or element rendered on right
-  leftChild?: React.ReactNode; // Icon or element rendered on left
+  rightChild?: React.ReactNode;
+  leftChild?: React.ReactNode;
   onPress?: () => void;
   disabled?: boolean;
 }
+
 
 const BaseButton = React.memo(
   ({
@@ -43,6 +54,10 @@ const BaseButton = React.memo(
     description,
     width,
     gradientButton = false,
+    gradientStartColor,
+    gradientEndColor,
+    gradientStart,
+    gradientEnd,
     backgroundColor,
     textColor,
     leftChild,
@@ -61,54 +76,42 @@ const BaseButton = React.memo(
       >
         {/* Main Pressable Button */}
         <View style={styles.buttonWrapper}>
-          {/* Render gradient if backgroundColor not provided */}
-          {gradientButton && (
-            <Svg
-              width="100%"
-              height="100%"
-              style={StyleSheet.absoluteFill} // Fill entire button
+          {/* Render gradient if gradientButton is true */}
+          {gradientButton ? (
+            <LinearGradient
+              colors={[
+                gradientStartColor || Colors.olive,
+                gradientEndColor || Colors.secondaryButtonBackground,
+              ]}
+              start={gradientStart || { x: 0, y: 0 }}
+              end={gradientEnd || { x: 1, y: 0 }}
+              style={styles.gradientButton}
             >
-              <Defs>
-                <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
-                  <Stop offset="0." stopColor={Colors.olive} />
-                  <Stop
-                    offset="1"
-                    stopColor={Colors.secondaryButtonBackground}
-                  />
-                </LinearGradient>
-              </Defs>
-              <Rect
-                x="0"
-                y="0"
-                width="100%"
-                height="100%"
-                rx={moderateScale(8)}
-                fill="url(#grad)"
-              />
-            </Svg>
+              <TouchableOpacity
+                onPress={onPress}
+                style={[styles.button, { backgroundColor: 'transparent' }]}
+                disabled={disabled}
+              >
+                {leftChild && leftChild}
+                <Text style={[styles.text, textColor && { color: textColor }]}> {title} </Text>
+                {rightChild && rightChild}
+              </TouchableOpacity>
+            </LinearGradient>
+          ) : (
+            <TouchableOpacity
+              onPress={onPress}
+              style={[
+                styles.button,
+                backgroundColor && { backgroundColor },
+              ]}
+              disabled={disabled}
+            >
+              {leftChild && leftChild}
+              <Text style={[styles.text, textColor && { color: textColor }]}> {title} </Text>
+              {rightChild && rightChild}
+            </TouchableOpacity>
           )}
-
-          {/* Touchable content */}
-          <TouchableOpacity
-            onPress={onPress}
-            style={[
-              styles.button,
-              gradientButton
-                ? { backgroundColor: "transparent" }
-                : backgroundColor && { backgroundColor },
-            ]}
-          >
-            {/* Optional left component (usually an icon) */}
-            {leftChild && leftChild}
-
-            {/* Button title text */}
-            <Text style={[styles.text, textColor && { color: textColor }]}>
-              {title}
-            </Text>
-
-            {/* Optional right component (icon, arrow, loader, etc.) */}
-            {rightChild && rightChild}
-          </TouchableOpacity>
+          
         </View>
 
         {/* Optional description below button */}
@@ -152,6 +155,13 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     fontSize: fontSize(16),
   },
+  gradientButton: {
+
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        maxWidth: 5000,
+    },
 });
 
 export default BaseButton;

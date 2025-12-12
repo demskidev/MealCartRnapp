@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { fontSize } from "@/utils/Fonts";
-import { replaceNavigation, resetAndNavigate } from "@/utils/Navigation";
+import { pushNavigation, replaceNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import {
   SignupFormValues,
@@ -39,7 +39,9 @@ const SignupScreen = () => {
       if (result.success) {
         showSuccessToast("Account created successfully!");
         // Navigate to OTP verification
-        resetAndNavigate(APP_ROUTES.HOME);
+        // resetAndNavigate(APP_ROUTES.HOME);
+        pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
+
       } else {
         showErrorToast("Signup Failed", result.message);
       }

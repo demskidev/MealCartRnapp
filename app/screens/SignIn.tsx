@@ -39,7 +39,8 @@ const SignInScreen = () => {
       if (result.success) {
         showSuccessToast("Signed in successfully!");
         // Navigate to home screen
-        resetAndNavigate(APP_ROUTES.HOME);
+         resetAndNavigate(APP_ROUTES.HOME);
+
       } else {
         showErrorToast("Sign In Failed", result.message);
       }

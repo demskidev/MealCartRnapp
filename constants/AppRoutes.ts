@@ -7,6 +7,8 @@ export const APP_ROUTES = {
   NEW_PASSWORD: "/screens/NewPassword",
   FIRST_SCREEN: "/screens/FirstScreen",
   INTRO_SCREEN: "/screens/IntroScreen",
+  WELCOME_MEAL_CART: "/screens/WelcomeMealCart",
+
   
   // App routes
   HOME: "/(tabs)/HomeScreen",
