@@ -148,16 +148,21 @@ const SignInScreen = () => {
                       gradientButton={true}
                       textColor={Colors.white}
                       onPress={async () => {
-                        const formErrors = await validateForm();
-                        if (Object.keys(formErrors).length > 0) {
-                          setTouched({
-                            email: true,
-                            password: true,
-                          });
-                          // Don't show toast, only show errors under fields
-                          return;
-                        }
-                        handleSignin(values);
+
+ resetAndNavigate(APP_ROUTES.HOME);
+
+
+
+                        // const formErrors = await validateForm();
+                        // if (Object.keys(formErrors).length > 0) {
+                        //   setTouched({
+                        //     email: true,
+                        //     password: true,
+                        //   });
+                        //   // Don't show toast, only show errors under fields
+                        //   return;
+                        // }
+                        // handleSignin(values);
                       }}
                       disabled={isLoading}
                     />

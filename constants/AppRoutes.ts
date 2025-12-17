@@ -11,8 +11,8 @@ export const APP_ROUTES = {
 
   
   // App routes
-  HOME: "/(tabs)/HomeScreen",
-  MEALS: "/(tabs)/Meals",
-  PLANS: "/(tabs)/Plans",
-  LISTS: "/(tabs)/Lists",
+  HOME: "/(tabs)/0_HomeScreen",
+  MEALS: "/(tabs)/1_Meals",
+  PLANS: "/(tabs)/2_Plans",
+  LISTS: "/(tabs)/3_Lists",
 };

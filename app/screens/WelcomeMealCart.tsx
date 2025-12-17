@@ -124,7 +124,7 @@ const WelcomeMealCart: React.FC = () => {
                 <BaseButton
                     title={currentIndex === 2 ? "Get Started" : "Next"}
                     gradientButton={true}
-                    width={currentIndex >0 ? width * 0.7 : width * 0.9}
+                    width={currentIndex > 0 ? width * 0.7 : width * 0.9}
                     gradientStartColor="#667D4C"
                     gradientEndColor="#9DAF89"
                     gradientStart={{ x: 0, y: 0 }}

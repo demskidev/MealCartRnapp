@@ -6,7 +6,7 @@ import {
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
 import { LinearGradient } from 'expo-linear-gradient';
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 /**
@@ -30,11 +30,9 @@ interface BaseButtonProps {
   description?: string;
   gradientButton?: boolean;
 
-  // NEW — gradient colors
   gradientStartColor?: string;
   gradientEndColor?: string;
 
-  // optional gradient direction
   gradientStart?: { x: number; y: number };
   gradientEnd?: { x: number; y: number };
 
@@ -45,6 +43,9 @@ interface BaseButtonProps {
   leftChild?: React.ReactNode;
   onPress?: () => void;
   disabled?: boolean;
+  textStyle?: any;
+  showPressedShadow?: boolean
+
 }
 
 
@@ -63,20 +64,31 @@ const BaseButton = React.memo(
     leftChild,
     rightChild,
     onPress,
+    textStyle,
     disabled = false,
+    showPressedShadow
+
   }: BaseButtonProps) => {
+
+    const [pressed, setPressed] = useState(false);
     return (
       <TouchableOpacity
         style={[
           styles.container,
           { width: width || "100%", opacity: disabled ? 0.5 : 1 },
         ]}
+
         onPress={onPress}
         disabled={disabled}
       >
-        {/* Main Pressable Button */}
-        <View style={styles.buttonWrapper}>
-          {/* Render gradient if gradientButton is true */}
+
+       <View
+  style={[
+    styles.buttonWrapper,
+    showPressedShadow && pressed && styles.pressedBorder,
+  ]}
+>
+
           {gradientButton ? (
             <LinearGradient
               colors={[
@@ -87,13 +99,25 @@ const BaseButton = React.memo(
               end={gradientEnd || { x: 1, y: 0 }}
               style={styles.gradientButton}
             >
+           
               <TouchableOpacity
                 onPress={onPress}
+                onPressIn={() => setPressed(true)}
+                onPressOut={() => setPressed(false)}
                 style={[styles.button, { backgroundColor: 'transparent' }]}
                 disabled={disabled}
               >
+
                 {leftChild && leftChild}
-                <Text style={[styles.text, textColor && { color: textColor }]}> {title} </Text>
+                <Text
+                  style={[
+                    styles.text,
+                    textColor && { color: textColor },
+                    textStyle,
+                  ]}
+                >
+                  {title} </Text>
+
                 {rightChild && rightChild}
               </TouchableOpacity>
             </LinearGradient>
@@ -103,6 +127,7 @@ const BaseButton = React.memo(
               style={[
                 styles.button,
                 backgroundColor && { backgroundColor },
+                textStyle
               ]}
               disabled={disabled}
             >
@@ -111,12 +136,13 @@ const BaseButton = React.memo(
               {rightChild && rightChild}
             </TouchableOpacity>
           )}
-          
+
         </View>
 
-        {/* Optional description below button */}
+
+
         {description && <Text style={styles.description}>{description}</Text>}
-      </TouchableOpacity>
+      </TouchableOpacity >
     );
   }
 );
@@ -132,16 +158,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Colors.buttonBackground,
     paddingVertical: moderateScale(12),
-    paddingHorizontal: moderateScale(24),
+    paddingHorizontal: moderateScale(20),
     borderRadius: moderateScale(8),
     gap: horizontalScale(10),
   },
 
-  buttonWrapper: {
-    borderRadius: moderateScale(8),
-    overflow: "hidden",
-    boxShadow: "0px 0px 12px rgba(0, 0, 0, 0.15)",
-  },
+ 
 
   description: {
     textAlign: "center",
@@ -157,11 +179,34 @@ const styles = StyleSheet.create({
   },
   gradientButton: {
 
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        maxWidth: 5000,
-    },
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    maxWidth: 5000,
+  },
+
+
+
+ 
+
+  buttonWrapper: {
+  borderRadius: moderateScale(19),
+  borderWidth: moderateScale(7), 
+  borderColor: 'transparent',    
+  overflow: 'hidden',
+},
+
+pressedBorder: {
+  borderColor: '#D9D9D9',        
+},
+
+
+
+
+
+
+
+
 });
 
 export default BaseButton;

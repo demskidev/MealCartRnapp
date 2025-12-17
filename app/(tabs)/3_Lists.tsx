@@ -3,10 +3,10 @@ import { Colors } from '@/constants/Theme';
 import { StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const HomeScreen = () => {
+const ListsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <Text style={styles.text}>Home Screen</Text>
+      <Text style={styles.text}>Lists Screen</Text>
     </SafeAreaView>
   );
 };
@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
   text: {
     fontSize: moderateScale(18),
     fontWeight: 'bold',
-    color: Colors.text,
+    color: Colors.primary,
   },
 });
 
-export default HomeScreen;
+export default ListsScreen;

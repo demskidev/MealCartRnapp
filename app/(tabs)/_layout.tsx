@@ -2,15 +2,19 @@ import { IconCart, IconDate, IconHome, IconMeal } from '@/assets/svg';
 import { moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors } from '@/constants/Theme';
 import { Tabs } from 'expo-router';
-
+import { View } from 'react-native';
+import { TourGuideZone } from 'rn-tourguide'; // Add this at the top
 // Define tab icons with SVG support
 const getTabIcon = (
   focused: boolean,
-  tabName: 'home' | 'meals' | 'plans' | 'lists'
+  tabName: 'home' | 'meals' | 'plans' | 'lists',
+    color: string
 ) => {
   const iconProps = {
     width: moderateScale(24),
     height: moderateScale(24),
+    fill: color,     
+    stroke: color,  
   };
 
   switch (tabName) {
@@ -38,8 +42,8 @@ export default function TabLayout() {
           backgroundColor: Colors.white,
           borderTopColor: '#E8E8E8',
           borderTopWidth: 1,
-          height: verticalScale(70),
-          paddingBottom: verticalScale(10),
+          height: verticalScale(90),
+          paddingBottom: verticalScale(30),
           paddingTop: verticalScale(8),
           shadowColor: '#000',
           shadowOffset: {
@@ -61,31 +65,45 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="home_screen"
+        name="0_HomeScreen"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => getTabIcon(focused, 'home'),
+     
+          
+
+
+          tabBarIcon: ({ focused , color }) => getTabIcon(focused, 'home',color),
+          
         }}
+        
       />
       <Tabs.Screen
-        name="meals"
+        name="1_Meals"
         options={{
           title: 'Meals',
-          tabBarIcon: ({ focused }) => getTabIcon(focused, 'meals'),
+          
+          tabBarIcon: ({ focused , color }) => getTabIcon(focused, 'meals',color),
         }}
       />
       <Tabs.Screen
-        name="plans"
+        name="2_Plans"
         options={{
           title: 'Plans',
-          tabBarIcon: ({ focused }) => getTabIcon(focused, 'plans'),
+        
+          tabBarIcon: ({ focused, color }) => 
+             <TourGuideZone zone={3} shape="circle" borderRadius={12} maskOffset={10} >
+            <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: moderateScale(55), minWidth: moderateScale(40), }}>
+            {getTabIcon(focused, 'plans',color)}
+            </View>
+            </TourGuideZone>
         }}
       />
       <Tabs.Screen
-        name="lists"
+        name="3_Lists"
         options={{
           title: 'Lists',
-          tabBarIcon: ({ focused }) => getTabIcon(focused, 'lists'),
+         
+          tabBarIcon: ({ focused, color }) => getTabIcon(focused, 'lists',color),
         }}
       />
     </Tabs>
