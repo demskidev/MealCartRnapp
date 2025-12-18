@@ -19,6 +19,7 @@ export const Colors = {
   lightGray: "#F5F5F5",
   _586E3F: "#586E3F",
   _5F6C51: "#5F6C51",
+  greysoft:'#F4F4F4'
 };
 
 /**

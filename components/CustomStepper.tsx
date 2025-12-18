@@ -1,5 +1,7 @@
 
 import { IconDown, IconUp } from '@/assets/svg/IconUpDown';
+import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Colors, FontFamilies } from '@/constants/Theme';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -19,12 +21,12 @@ const CustomStepper: React.FC<CustomStepperProps> = ({ value, onIncrement, onDec
     <View style={{ justifyContent: 'center', alignItems: 'center' }}>
       {showUp && (
         <TouchableOpacity onPress={onIncrement} style={styles.iconBtn}>
-          <IconUp width={16} height={16} />
+          <IconUp style={styles.iconUp} />
         </TouchableOpacity>
       )}
       {showDown && (
         <TouchableOpacity onPress={onDecrement} style={styles.iconBtn}>
-          <IconDown width={16} height={16} />
+          <IconDown style={styles.iconDown} />
         </TouchableOpacity>
       )}
     </View>
@@ -37,23 +39,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F6F6F6',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 8,
-    paddingHorizontal: 8,
-    height: 48,
+    borderRadius: moderateScale(8),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    marginBottom: verticalScale(8),
+    paddingHorizontal: horizontalScale(8),
+    height: moderateScale(42),
   },
   iconBtn: {
-    padding: 2,
+    padding: moderateScale(2),
     alignItems: 'center',
     justifyContent: 'center',
   },
   value: {
-    fontSize: 16,
-    color: '#6B6B6B',
-    marginLeft: 8,
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    marginLeft: moderateScale(8),
+    fontFamily: FontFamilies.ROBOTO_REGULAR
   },
+  iconUp: {
+    width: moderateScale(20),
+    height: moderateScale(20),
+  },
+  iconDown: {
+    width: moderateScale(20),
+    height: moderateScale(20),
+  }
 });
 
 export default CustomStepper;

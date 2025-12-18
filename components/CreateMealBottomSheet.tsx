@@ -1,3 +1,4 @@
+import { IconPlus } from '@/assets/svg';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -23,7 +24,11 @@ const CreateMealBottomSheet = forwardRef<BottomSheet>((_, ref) => {
   const { height } = Dimensions.get('window');
   const { width } = Dimensions.get('window')
   const prepTimeOptions = ['5 Mins', '10 Mins', '15 Mins'];
-const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
+  const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
+  const [unitWeight, setUnitweight] = useState('100 grms');
+  const unitWeightOptions = ['100grm', '200grm', '1kg'];
+  const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
+
   const handleUpload = () => {
     // Implement upload logic here
     alert('Upload clicked!');
@@ -52,24 +57,27 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
           appearsOnIndex={0}
         />
       )}
-      containerStyle={{ flex: 1 }}
+    // containerStyle={{ flex: 1 }}
     >
-      <BottomSheetScrollView
-        contentContainerStyle={{ paddingHorizontal: moderateScale(20), flexGrow: 1, }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.emptyView}></View>
-        <View style={styles.parentCreateMealText}>
-          <Text style={styles.header}>Create Meal</Text>
+
+      <View style={styles.emptyView}></View>
+      <View style={styles.parentCreateMealText}>
+        <Text style={styles.header}>Create Meal</Text>
+        <TouchableOpacity onPress={() => ref && typeof ref !== 'function' && ref.current?.close()}>
           <Image
             source={require("@/assets/images/close-icon.png")}
             style={{ width: verticalScale(44), height: verticalScale(44) }}
             resizeMode="contain"
           />
+        </TouchableOpacity>
 
-        </View>
 
+      </View>
 
+      <BottomSheetScrollView
+        contentContainerStyle={{ paddingHorizontal: moderateScale(20) }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Basic Information</Text>
           <Text style={styles.label}>Meal Name</Text>
@@ -77,7 +85,7 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
 
           <Text style={styles.label}>Meal Description</Text>
           <CustomTextInput
-            style={{ height: 60 }}
+            style={{ height: verticalScale(60), borderRadius: moderateScale(4), backgroundColor: Colors.greysoft, paddingHorizontal: horizontalScale(10) }}
             placeholder="A short summary of the meal..."
             multiline
             value={mealDescription}
@@ -92,12 +100,10 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
             </TouchableOpacity>
           </View>
 
-          {/* Row for Prep Time, Servings */}
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Prep Time (min)</Text>
-            
-              {/* <CustomDropdown value={prepTime} options={['5 Mins', '10 Mins', '15 Mins']} onSelect={setPrepTime} /> */}
+
               <CustomStepper
                 value={prepTime}
                 onIncrement={() => {
@@ -113,7 +119,7 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
                 showUp={true}
                 showDown={true}
               />
-           
+
             </View>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Servings</Text>
@@ -121,26 +127,25 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
             </View>
           </View>
 
-          {/* Row for Difficulty, Category */}
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Difficulty</Text>
-              <CustomDropdown value={difficulty} options={['Easy', 'Medium', 'Hard']} onSelect={setDifficulty} />
+              <CustomDropdown value={difficulty} options={['Easy', 'Medium', 'Hard']} onSelect={setDifficulty} icon={require("@/assets/images/icondown.png")} />
+
             </View>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Category</Text>
-              <CustomDropdown value={category} options={['Dinner', 'Lunch', 'Breakfast']} onSelect={setCategory} />
+              <CustomDropdown value={category} options={['Dinner', 'Lunch', 'Breakfast']} onSelect={setCategory} icon={require("@/assets/images/icondown.png")} />
+
             </View>
           </View>
         </View>
 
-        {/* Ingredients Card */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Ingredients</Text>
           <Text style={styles.label}>Ingredient Name</Text>
           <CustomTextInput placeholder="e.g. Tomato" value={ingredientName} onChangeText={setIngredientName} />
 
-          {/* Row for Count, Unit, Category, and Delete */}
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Count</Text>
@@ -148,28 +153,49 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
             </View>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Unit (weight)</Text>
-              <CustomDropdown value={ingredientUnit} options={['100grm', '200grm', '1kg']} onSelect={setIngredientUnit} />
+
+              <CustomStepper
+                value={unitWeight}
+                onIncrement={() => {
+                  if (unitWeightIndex < unitWeightOptions.length - 1) {
+                    setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
+                  }
+                }}
+                onDecrement={() => {
+                  if (unitWeightIndex > 0) {
+                    setUnitweight(unitWeightOptions[unitWeightIndex - 1]);
+                  }
+                }}
+              />
             </View>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Category</Text>
-              <CustomDropdown value={ingredientCategory} options={['Fruit', 'Vegetable', 'Meat']} onSelect={setIngredientCategory} />
-            </View>
+              <CustomDropdown value={ingredientCategory} options={['Fruit', 'Vegetable',]} onSelect={setIngredientCategory} icon={require("@/assets/images/icondown.png")} />
+
+            </View >
+
             <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteIngredient}>
-              {/* <Text style={{ color: 'white', fontWeight: 'bold' }}>✕</Text>
-               */}
-               <Image
+
+              <Image
                 source={require("@/assets/images/delete.png")}
-            style={{ width: verticalScale(24), height: verticalScale(24) }}
-            resizeMode="contain"
-               
-               />
+                style={{ width: verticalScale(24), height: verticalScale(24) }}
+                resizeMode="contain"
+
+              />
             </TouchableOpacity>
 
 
           </View>
           <View style={styles.addIngredient}>
-            <Text style={styles.addIngredientText}>Add Ingredient</Text>
+            {/* <Image
+              source={require("@/assets/images/icon.png")}
+              style={{ width: verticalScale(20), height: verticalScale(20), marginRight: 8 }}
+              resizeMode="contain"
+            /> */}
+            <IconPlus width={verticalScale(21)} height={verticalScale(21)} color="black" />
+            <Text style={styles.plusicon}>+</Text>
 
+            <Text style={styles.addIngredientText}>Add Ingredient</Text>
           </View>
         </View>
 
@@ -179,7 +205,8 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
             <Text style={styles.sectionTitle}>1.</Text>
 
             <CustomTextInput
-              style={{ height: 60 }}
+              style={{ height: verticalScale(60), borderRadius: moderateScale(4), backgroundColor: Colors.greysoft, paddingHorizontal: horizontalScale(10), marginTop: moderateScale(-5), width: width * 0.8 }}
+
               placeholder="A short summary of the meal..."
               multiline
               value={mealDescription}
@@ -188,6 +215,8 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
 
           </View>
           <View style={styles.addIngredient}>
+            <Text style={styles.plusicon}>+</Text>
+
             <Text style={styles.addIngredientText}>Add Step</Text>
 
           </View>
@@ -196,11 +225,13 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
         <View style={styles.parentOfConfirmButton}>
           <BaseButton
             title="Cancel"
-            gradientButton={false}   // 👈 IMPORTANT
+            gradientButton={false}
             backgroundColor={Colors.white}
-            textStyle={styles.cancelButton}
+            width={width * 0.41}
 
-          // textColor="#333333"
+            textStyle={[styles.cancelButton]}
+
+
           // onPress={handleCancel}
           />
           <BaseButton
@@ -213,13 +244,14 @@ const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
             gradientEnd={{ x: 1, y: 0 }}
             textColor={Colors.white}
             // rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
-            textStyle={styles.confirmButton}
+            textStyle={[styles.confirmButton,]}
           // onPress={goNext}
           // showPressedShadow={true}
           />
-        </View>
 
+        </View>
       </BottomSheetScrollView>
+
     </BottomSheet>
   );
 });
@@ -234,6 +266,12 @@ const styles = StyleSheet.create({
     padding: moderateScale(10),
     marginBottom: verticalScale(10),
     elevation: 2,
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+
   },
   sectionTitle: { fontSize: moderateScale(12), fontFamily: FontFamilies.ROBOTO_SEMI_BOLD, color: Colors.primary, marginBottom: verticalScale(10) },
   label: { fontSize: moderateScale(12), marginTop: moderateScale(8), marginBottom: moderateScale(4), fontFamily: FontFamilies.ROBOTO_REGULAR, color: Colors.primary },
@@ -256,17 +294,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   uploadButtonText: { fontFamily: FontFamilies.ROBOTO_MEDIUM, color: Colors.primary, fontSize: moderateScale(14) },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  rowItem: { flex: 1, minWidth: 80 },
+  row: { flexDirection: 'row', justifyContent: 'flex-start', gap: 8, },
+  rowItem: { flex: 1, minWidth: 80, },
   deleteButton: {
-    // backgroundColor: '#FF3B30',
-    // borderRadius: 8,
-    // padding: 10,
+
     alignSelf: 'flex-end',
-    marginLeft: 8,
+    marginBottom: verticalScale(18)
   },
   parentCreateMealText: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: verticalScale(20),
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: verticalScale(20), marginHorizontal: moderateScale(20)
   },
   emptyView: {
     height: verticalScale(35)
@@ -286,7 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: verticalScale(10)
+    marginVertical: verticalScale(10),
   },
   confirmButton: {
     color: Colors.white,
@@ -297,11 +333,24 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.primary,
 
-    fontSize: moderateScale(12)
+    fontSize: moderateScale(12),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
   },
   parentOfConfirmButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    marginVertical: verticalScale(15)
+  },
+  plusicon: {
+    color: Colors.primary,
+    fontSize: moderateScale(22),
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    marginRight: moderateScale(8)
+
+  },
+  rowItemDelete: {
+
   }
 });

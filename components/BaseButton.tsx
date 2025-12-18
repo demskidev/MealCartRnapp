@@ -45,6 +45,8 @@ interface BaseButtonProps {
   disabled?: boolean;
   textStyle?: any;
   showPressedShadow?: boolean
+   textStyleText   ?: any    
+
 
 }
 
@@ -66,7 +68,8 @@ const BaseButton = React.memo(
     onPress,
     textStyle,
     disabled = false,
-    showPressedShadow
+    showPressedShadow,
+    textStyleText
 
   }: BaseButtonProps) => {
 
@@ -82,12 +85,12 @@ const BaseButton = React.memo(
         disabled={disabled}
       >
 
-       <View
-  style={[
-    styles.buttonWrapper,
-    showPressedShadow && pressed && styles.pressedBorder,
-  ]}
->
+        <View
+          style={[
+            styles.buttonWrapper,
+            showPressedShadow && pressed && styles.pressedBorder,
+          ]}
+        >
 
           {gradientButton ? (
             <LinearGradient
@@ -99,7 +102,7 @@ const BaseButton = React.memo(
               end={gradientEnd || { x: 1, y: 0 }}
               style={styles.gradientButton}
             >
-           
+
               <TouchableOpacity
                 onPress={onPress}
                 onPressIn={() => setPressed(true)}
@@ -132,7 +135,7 @@ const BaseButton = React.memo(
               disabled={disabled}
             >
               {leftChild && leftChild}
-              <Text style={[styles.text, textColor && { color: textColor }]}> {title} </Text>
+              <Text style={[styles.text, textColor && { color: textColor },textStyleText]}> {title} </Text>
               {rightChild && rightChild}
             </TouchableOpacity>
           )}
@@ -161,9 +164,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(20),
     borderRadius: moderateScale(8),
     gap: horizontalScale(10),
+    height: verticalScale(48)
   },
 
- 
+
 
   description: {
     textAlign: "center",
@@ -179,26 +183,27 @@ const styles = StyleSheet.create({
   },
   gradientButton: {
 
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
     maxWidth: 5000,
+    height: verticalScale(48)
   },
 
 
 
- 
+
 
   buttonWrapper: {
-  borderRadius: moderateScale(19),
-  borderWidth: moderateScale(7), 
-  borderColor: 'transparent',    
-  overflow: 'hidden',
-},
+    borderRadius: moderateScale(19),
+    borderWidth: moderateScale(7),
+    borderColor: 'transparent',
+    overflow: 'hidden',
+  },
 
-pressedBorder: {
-  borderColor: '#D9D9D9',        
-},
+  pressedBorder: {
+    borderColor: '#D9D9D9',
+  },
 
 
 

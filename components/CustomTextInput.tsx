@@ -1,3 +1,5 @@
+import { moderateScale, verticalScale } from '@/constants/Constants';
+import { Colors } from '@/constants/Theme';
 import React from 'react';
 import { StyleSheet, TextInput, TextInputProps } from 'react-native';
 
@@ -11,13 +13,13 @@ const CustomTextInput: React.FC<TextInputProps> = (props) => (
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: '#F6F6F6',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
+    backgroundColor:Colors.greysoft,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(10),
+    fontSize: moderateScale(12),
+    marginBottom: verticalScale(8),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
   },
 });
 
