@@ -6,10 +6,15 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mealcartrnmain",
+    "owner": "the-demski-group",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jbehl23.mealcart",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +24,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.jbehl23.mealcart"
     },
     "web": {
       "output": "static",
@@ -43,6 +49,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3c7a96f9-4a7e-48b1-9452-4e3e47c534f2"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3c7a96f9-4a7e-48b1-9452-4e3e47c534f2"
     }
   }
 }

@@ -7,8 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import { IconPlus, MealsLogo } from "@/assets/svg";
 import CreateMealBottomSheet from '@/components/CreateMealBottomSheet';
 import MealDetail from '@/components/MealDetail';
+import { useLoader } from '@/context/LoaderContext';
 import { FontFamily } from '@/utils/Fonts';
 import BottomSheet from '@gorhom/bottom-sheet';
+import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from 'expo-router';
 import React from 'react';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -22,6 +24,7 @@ const HomeScreen: React.FC = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [showIntroPopup, setShowIntroPopup] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const navigation = useNavigation();
   const mealData = [
     { id: '1', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodA.png'), time: '30 min', difficulty: 'Moderate' },
     { id: '2', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodB.png'), time: '30 min', difficulty: 'Moderate' },
@@ -33,7 +36,13 @@ const HomeScreen: React.FC = () => {
     { id: '8', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodH.png'), time: '30 min', difficulty: 'Moderate' },
     // ...add more items as needed
   ];
+
   const [selectedMeal, setSelectedMeal] = useState(null);
+  const { hideLoader } = useLoader();
+
+  useEffect(() => {
+    hideLoader(); // turn off loader when Home is ready
+  }, []);
   interface Meal {
     id: string;
     name: string;
@@ -112,7 +121,7 @@ const HomeScreen: React.FC = () => {
           textStyle={[styles.mealCardButton]}
           textStyleText={styles.mealCardButtonText}
 
-         onPress={() => setSelectedMeal(item)}
+          onPress={() => setSelectedMeal(item)}
         />
 
 
@@ -160,124 +169,128 @@ const HomeScreen: React.FC = () => {
   return (
 
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-     
-       {selectedMeal ? (
-    // 👉 WHEN state changes (View button pressed)
-    <MealDetail
-      meal={selectedMeal}
-      onBack={() => setSelectedMeal(null)}
-    />
-  ) : (
-     
-     <View>
-      <LinearGradient
-        colors={['#667D4C', '#9DAF89']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-      >
-        <View style={styles.mainMealCartContainer}>
-          <View style={styles.emptyView}></View>
 
-          <View style={styles.mealcartLogoParent}>
-            <Image
-              source={require("@/assets/images/mealcartLogo.png")}
-              style={{ width: verticalScale(21), height: verticalScale(28) }}
-              resizeMode="contain"
-            />
+      {selectedMeal ? (
+        // 👉 WHEN state changes (View button pressed)
+        <MealDetail
+          meal={selectedMeal}
+          onBack={() => {
+            setSelectedMeal(null);
 
-            <Text style={styles.text}>MealCart</Text>
-          </View>
-          <View style={styles.parentGreetingAvatar}>
-            <View>
-              <Text style={styles.greetingText}>Hello there!</Text>
-              <Text style={styles.subgreetingText}>What delicious meal are you planning today?</Text>
-            </View>
-            <TourGuideZone zone={4} shape="circle" borderRadius={30} >
-              <View style={{ minHeight: moderateScale(70), minWidth: moderateScale(70), justifyContent: 'center', alignItems: 'center' }}>
+
+          }}
+        />
+      ) : (
+
+        <View>
+          <LinearGradient
+            colors={['#667D4C', '#9DAF89']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.mainMealCartContainer}>
+              <View style={styles.emptyView}></View>
+
+              <View style={styles.mealcartLogoParent}>
                 <Image
-                  source={require('@/assets/images/userDummy.png')}
-                  style={styles.image}
+                  source={require("@/assets/images/mealcartLogo.png")}
+                  style={{ width: verticalScale(21), height: verticalScale(28) }}
                   resizeMode="contain"
                 />
+
+                <Text style={styles.text}>MealCart</Text>
               </View>
-            </TourGuideZone>
-          </View>
-          <View style={styles.upcomingSection}>
-            <View style={styles.upcomingHeader}>
-              <TourGuideZone zone={3} shape="circle" borderRadius={16}>
+              <View style={styles.parentGreetingAvatar}>
+                <View>
+                  <Text style={styles.greetingText}>Hello there!</Text>
+                  <Text style={styles.subgreetingText}>What delicious meal are you planning today?</Text>
+                </View>
+                <TourGuideZone zone={4} shape="circle" borderRadius={30} >
+                  <View style={{ minHeight: moderateScale(70), minWidth: moderateScale(70), justifyContent: 'center', alignItems: 'center' }}>
+                    <Image
+                      source={require('@/assets/images/userDummy.png')}
+                      style={styles.image}
+                      resizeMode="contain"
+                    />
+                  </View>
+                </TourGuideZone>
+              </View>
+              <View style={styles.upcomingSection}>
+                <View style={styles.upcomingHeader}>
+                  <TourGuideZone zone={3} shape="circle" borderRadius={16}>
 
-                <Text style={styles.upcomingText}>Your Next Meal</Text>
-              </TourGuideZone>
+                    <Text style={styles.upcomingText}>Your Next Meal</Text>
+                  </TourGuideZone>
 
-              <TourGuideZone zone={1} shape="circle" borderRadius={100}>
+                  <TourGuideZone zone={1} shape="circle" borderRadius={100}>
 
-                <TouchableOpacity onPress={() => console.log('View All pressed')}>
-                  <Text style={styles.viewAllText}>View All</Text>
-                </TouchableOpacity>
-              </TourGuideZone>
+                    <TouchableOpacity onPress={() => console.log('View All pressed')}>
+                      <Text style={styles.viewAllText}>View All</Text>
+                    </TouchableOpacity>
+                  </TourGuideZone>
 
+                </View>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={mealData}
+                  renderItem={renderMealItem}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={{ paddingVertical: 0, marginTop: verticalScale(9), paddingLeft: moderateScale(8), paddingRight: moderateScale(8) }}
+                />
+              </View>
             </View>
-            <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              data={mealData}
-              renderItem={renderMealItem}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingVertical: 0, marginTop: verticalScale(9), paddingLeft: moderateScale(8), paddingRight: moderateScale(8) }}
-            />
+          </LinearGradient>
+          <View style={styles.parentCreateMeal}>
+            <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
+              <BaseButton
+                title={'Add New Meal'}
+                gradientButton={true}
+                width={width * 0.41}
+                gradientStartColor="#667D4C"
+                gradientEndColor="#9DAF89"
+                gradientStart={{ x: 0, y: 0 }}
+                gradientEnd={{ x: 1, y: 0 }}
+                textColor={Colors.white}
+                rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
+                textStyle={styles.createMeal}
+                onPress={goNext}
+                showPressedShadow={true}
+              />
+            </TourGuideZone>
+            <TouchableOpacity
+              style={styles.myMeals}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.myMealText}>My Meals</Text>
+              <MealsLogo width={verticalScale(21)} height={verticalScale(21)} />
+            </TouchableOpacity>
           </View>
-        </View>
-      </LinearGradient>
-      <View style={styles.parentCreateMeal}>
-        <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
-          <BaseButton
-            title={'Add New Meal'}
-            gradientButton={true}
-            width={width * 0.41}
-            gradientStartColor="#667D4C"
-            gradientEndColor="#9DAF89"
-            gradientStart={{ x: 0, y: 0 }}
-            gradientEnd={{ x: 1, y: 0 }}
-            textColor={Colors.white}
-            rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
-            textStyle={styles.createMeal}
-            onPress={goNext}
-            showPressedShadow={true}
+
+
+          <View style={styles.parentOfRecentMeal}>
+            <Text style={styles.recentText}>Recent Meals</Text>
+            <TouchableOpacity
+              // style={styles.myMeals}
+              activeOpacity={0.7}
+              onPress={() => setShowAll(!showAll)}
+            >
+              <Text style={styles.viewText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={showAll ? mealData : mealData.slice(0, 2)}
+            renderItem={renderMealCard}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: 'space-between', marginHorizontal: 8 }}
+            contentContainerStyle={{ paddingBottom: 16 }}
+            showsVerticalScrollIndicator={false}
           />
-        </TourGuideZone>
-        <TouchableOpacity
-          style={styles.myMeals}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.myMealText}>My Meals</Text>
-          <MealsLogo width={verticalScale(21)} height={verticalScale(21)} />
-        </TouchableOpacity>
-      </View>
 
-
-      <View style={styles.parentOfRecentMeal}>
-        <Text style={styles.recentText}>Recent Meals</Text>
-        <TouchableOpacity
-          // style={styles.myMeals}
-          activeOpacity={0.7}
-          onPress={() => setShowAll(!showAll)}
-        >
-          <Text style={styles.viewText}>View All</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={showAll ? mealData : mealData.slice(0, 2)}
-        renderItem={renderMealCard}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between', marginHorizontal: 8 }}
-        contentContainerStyle={{ paddingBottom: 16 }}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <CreateMealBottomSheet ref={bottomSheetRef} />
-      </View>
+          <CreateMealBottomSheet ref={bottomSheetRef} />
+        </View>
       )}
     </SafeAreaView>
 
@@ -347,7 +360,7 @@ const styles = StyleSheet.create({
   },
   mealCardButton: {
     borderWidth: moderateScale(1),
-    borderColor:Colors.borderColor,
+    borderColor: Colors.borderColor,
     borderRadius: moderateScale(8),
     marginTop: moderateScale(16),
     paddingVertical: moderateScale(10),

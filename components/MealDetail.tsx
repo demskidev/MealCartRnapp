@@ -2,113 +2,179 @@ import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, } from '@/constants/Theme';
 import { FontFamily } from '@/utils/Fonts';
+import BottomSheet from '@gorhom/bottom-sheet';
+import { useRef, useState } from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CreateMealBottomSheet from './CreateMealBottomSheet';
+import SendToShoppingList from './SendShoppingList';
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 
-const MealDetail = ({ meal, onBack }) => (
+const MealDetail = ({ meal, onBack }) => {
+    const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
-    <View style={styles.container}>
-        <View style={styles.headerImageContainer}>
-            <Image source={meal.image} style={styles.image} resizeMode="cover" />
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-                {/* <Text style={styles.backButtonText}>{'←'}</Text> */}
-         <Image
+
+    // const bottomSheetRef = useRef<CreateMealBottomSheetRef>(null);
+    const bottomSheetRef = useRef<BottomSheet>(null);
+
+    // 👇 state to pass meal data to bottom sheet
+    const [selectedMeal, setSelectedMeal] = useState(null);
+
+    const handleEditPress = () => {
+
+        setSelectedMeal(meal);
+        bottomSheetRef.current?.expand();
+    };
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.headerImageContainer}  >
+
+                <Image source={meal.image} style={styles.image} resizeMode="cover" />
+                <View style={styles.headerOverlayContent}>
+                    <View style={styles.parentOfname} >
+                        <Text style={styles.title}>{meal.title}</Text>
+                        <Text style={styles.info}>{meal.time} • 4 Servings • Medium</Text>
+                    </View>
+                    <View style={styles.parentOfAddList}>
+                        <Image
+                            source={require('@/assets/images/addtomeallist.png')}
+                            style={styles.imageMeallist}
+                            resizeMode="contain"
+                        />
+                        <TouchableOpacity onPress={() => setShowSendShoppingList(true)}>
+                            <Image
+                                source={require('@/assets/images/addwishlisticon.png')}
+                                style={styles.imageaddToList}
+                                resizeMode="contain"
+                            />
+                        </TouchableOpacity>
+
+                    </View>
+                </View>
+                <TouchableOpacity onPress={onBack} style={styles.backButton}>
+                    {/* <Text style={styles.backButtonText}>{'←'}</Text> */}
+
+
+                    <Image
                         source={require('@/assets/images/backIcon.png')}
                         style={styles.backImage}
                         resizeMode="contain"
+
                     />
-            </TouchableOpacity>
-            {/* <View style={styles.tagContainer}>
+
+
+                </TouchableOpacity>
+                {/* <View style={styles.tagContainer}>
                 <Text style={styles.tagText}>{meal.tag}</Text>
             </View> */}
-            <View style={styles.headerOverlayContent}>
-                <View style={styles.parentOfname} >
-                <Text style={styles.title}>{meal.title}</Text>
-                <Text style={styles.info}>{meal.time} • 4 Servings • Medium</Text>
-                </View>
-                <View style={styles.parentOfAddList}>
-                    <Image
-                        source={require('@/assets/images/addtomeallist.png')}
-                        style={styles.imageMeallist}
-                        resizeMode="contain"
-                    />
-                    <Image
-                        source={require('@/assets/images/addwishlisticon.png')}
-                        style={styles.imageaddToList}
-                        resizeMode="contain"
-                    />
-                </View>
-            </View>
-        </View>
-        <ScrollView style={styles.detailContent} contentContainerStyle={{ paddingBottom: 32 }}>
-            <Text style={styles.description}>
-                A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love.
-            </Text>
-            <View style={styles.buttonRow}>
-                <BaseButton
-                    title="Edit"
-                    gradientButton={false}
-                    backgroundColor={Colors.olive}
-                    textColor="#fff"
-                    textStyle={styles.editButton}
-                    leftChild={<Text style={styles.editIcon}>✎</Text>}
-                />
-                <BaseButton
-                    title="Delete"
-                    gradientButton={false}
-                    backgroundColor={Colors.primary || '#D32F2F'}
-                    textColor="#fff"
-                    textStyle={styles.deleteButton}
-                />
-            </View>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
-            <View style={styles.divider} />
-            {/* Example ingredients, replace with meal.ingredients if available */}
-            <View style={styles.ingredientRow}>
-                <Text style={styles.ingredientName}>Spaghetti</Text>
-            <View style={styles.dividerRow} />
 
-                <Text style={styles.ingredientValue}>400 g</Text>
             </View>
-            <View style={styles.ingredientRow}>
-                <Text style={styles.ingredientName}>Ground Beef</Text>
-                
-                <Text style={styles.ingredientValue}>500 g</Text>
-            </View>
-            <View style={styles.ingredientRow}>
-                <Text style={styles.ingredientName}>Onion</Text>
-                <Text style={styles.ingredientValue}>1 large</Text>
-            </View>
-            <View style={styles.ingredientRow}>
-                <Text style={styles.ingredientName}>Garlic Cloves</Text>
-                <Text style={styles.ingredientValue}>2</Text>
-            </View>
-            <View style={styles.ingredientRow}>
-                <Text style={styles.ingredientName}>Chopped Tomatoes</Text>
-                <Text style={styles.ingredientValue}>800 g</Text>
-            </View>
-            <View style={styles.ingredientRow}>
-                <Text style={styles.ingredientName}>Tomato Paste</Text>
-                <Text style={styles.ingredientValue}>2 tbsp</Text>
-            </View>
-            <Text style={styles.sectionTitle}>Instructions</Text>
-            <View style={styles.divider} />
-            <View style={styles.instructionRow}>
-                <Text style={styles.instructionNumber}>1.</Text>
-                <Text style={styles.instructionText}>Heat olive oil in a large pan. Sauté diced onion and garlic.</Text>
-            </View>
-            <View style={styles.instructionRow}>
-                <Text style={styles.instructionNumber}>2.</Text>
-                <Text style={styles.instructionText}>Add ground beef and cook until browned.</Text>
-            </View>
-            <View style={styles.instructionRow}>
-                <Text style={styles.instructionNumber}>3.</Text>
-                <Text style={styles.instructionText}>Stir in chopped tomatoes and tomato paste. Simmer for 20 minutes.</Text>
-            </View>
-        </ScrollView>
-    </View >
-);
+            <ScrollView style={styles.detailContent} contentContainerStyle={{ paddingBottom: 32 }}>
+                <Text style={styles.description}>
+                    A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love.
+                </Text>
+                <View style={styles.buttonRow}>
+                    <BaseButton
+                        title="Edit"
+                        gradientButton={true}
+                        // backgroundColor={Colors.olive}
+                        textColor="#fff"
+                        width={width * 0.43}
+                        textStyle={styles.editButton}
+                        rightChild={
+                            <Image
+                                source={require('@/assets/images/icon_edit.png')}
+                                style={styles.editImage}
+                                resizeMode="contain"
+                            />
+                        }
+                        onPress={handleEditPress}
+                    />
+
+                    {/* <CreateMealBottomSheet ref={bottomSheetRef} /> */}
+
+                    <BaseButton
+                        title="Delete"
+                        gradientButton={true}
+                        width={width * 0.43}
+                        gradientStartColor="#A62A2A"
+                        gradientEndColor="#FD4B4B"
+                        gradientStart={{ x: 0, y: 0 }}
+                        gradientEnd={{ x: 1, y: 0 }}
+                        // backgroundColor={Colors.primary || '#D32F2F'}
+                        textColor="#fff"
+                        textStyle={styles.deleteButton}
+                    />
+                </View>
+                <Text style={styles.sectionTitle}>Ingredients</Text>
+                <View style={styles.divider} />
+                {/* Example ingredients, replace with meal.ingredients if available */}
+                <View style={styles.ingredientRow}>
+                    <Text style={styles.ingredientName}>Spaghetti</Text>
+                    <View style={styles.dividerRow} />
+
+                    <Text style={styles.ingredientValue}>400 g</Text>
+                </View>
+                <View style={styles.ingredientRow}>
+                    <Text style={styles.ingredientName}>Ground Beef</Text>
+                    <View style={styles.dividerRow} />
+
+                    <Text style={styles.ingredientValue}>500 g</Text>
+                </View>
+                <View style={styles.ingredientRow}>
+                    <Text style={styles.ingredientName}>Onion</Text>
+                    <View style={styles.dividerRow} />
+
+                    <Text style={styles.ingredientValue}>1 large</Text>
+                </View>
+                <View style={styles.ingredientRow}>
+                    <Text style={styles.ingredientName}>Garlic Cloves</Text>
+                    <View style={styles.dividerRow} />
+
+                    <Text style={styles.ingredientValue}>2</Text>
+                </View>
+                <View style={styles.ingredientRow}>
+                    <Text style={styles.ingredientName}>Chopped Tomatoes</Text>
+                    <View style={styles.dividerRow} />
+
+                    <Text style={styles.ingredientValue}>800 g</Text>
+                </View>
+                <View style={styles.ingredientRow}>
+                    <Text style={styles.ingredientName}>Tomato Paste</Text>
+                    <View style={styles.dividerRow} />
+
+                    <Text style={styles.ingredientValue}>2 tbsp</Text>
+                </View>
+                <Text style={styles.sectionTitle}>Instructions</Text>
+                <View style={styles.divider} />
+                <View style={styles.instructionRow}>
+                    <Text style={styles.instructionNumber}>1.</Text>
+                    <Text style={styles.instructionText}>Heat olive oil in a large pan. Sauté diced onion and garlic.</Text>
+                </View>
+                <View style={styles.instructionRow}>
+                    <Text style={styles.instructionNumber}>2.</Text>
+                    <Text style={styles.instructionText}>Add ground beef and cook until browned.</Text>
+                </View>
+                <View style={styles.instructionRow}>
+                    <Text style={styles.instructionNumber}>3.</Text>
+                    <Text style={styles.instructionText}>Stir in chopped tomatoes and tomato paste. Simmer for 20 minutes.</Text>
+                </View>
+            </ScrollView>
+
+            <CreateMealBottomSheet
+                ref={bottomSheetRef}
+                isEdit={true}
+                mealData={selectedMeal}
+            />
+            <SendToShoppingList
+                visible={showSendShoppingList}
+                onClose={() => setShowSendShoppingList(false)}
+            />
+
+        </View >
+    )
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -161,7 +227,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: moderateScale(21),
         fontFamily: FontFamily.ROBOTO_SEMI_BOLD,
-        color:Colors.white,
+        color: Colors.white,
     },
     info: {
         fontSize: moderateScale(12),
@@ -183,12 +249,13 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     editButton: {
-        backgroundColor: Colors.olive,
-        borderRadius: 8,
-        paddingHorizontal: 32,
-        paddingVertical: 10,
+        // backgroundColor: Colors.olive,
+        // borderRadius: 8,
+        // paddingHorizontal: 32,
+        // paddingVertical: 10,
         fontFamily: FontFamily.ROBOTO_MEDIUM,
-        fontSize: 16,
+        fontSize: moderateScale(16),
+        color: Colors.white
     },
     editIcon: {
         color: '#fff',
@@ -196,12 +263,13 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     deleteButton: {
-        backgroundColor: Colors.primary || '#D32F2F',
-        borderRadius: 8,
-        paddingHorizontal: 32,
-        paddingVertical: 10,
+        // backgroundColor: Colors.primary || '#D32F2F',
+        // borderRadius: 8,
+        // paddingHorizontal: 32,
+        // paddingVertical: 10,
         fontFamily: FontFamily.ROBOTO_MEDIUM,
-        fontSize: 16,
+        fontSize: moderateScale(16),
+        color: Colors.white
     },
     sectionTitle: {
         fontSize: moderateScale(21),
@@ -218,6 +286,11 @@ const styles = StyleSheet.create({
     dividerRow: {
         height: moderateScale(1),
         backgroundColor: Colors.divider,
+        flex: 1,
+        // width:width*0.9,
+        marginHorizontal: horizontalScale(12)
+        // marginHorizontal: 8 
+
         // marginBottom: moderateScale(8),
     },
     ingredientRow: {
@@ -231,13 +304,13 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(14),
         fontFamily: FontFamily.ROBOTO_MEDIUM,
         color: Colors.primary,
-        flex: 1,
+        // flex: 1,
     },
     ingredientValue: {
         fontSize: moderateScale(14),
         fontFamily: FontFamily.ROBOTO_REGULAR,
         color: Colors.tertiary,
-        marginLeft: horizontalScale(8),
+        // marginLeft: horizontalScale(8),
     },
     instructionRow: {
         flexDirection: 'row',
@@ -261,8 +334,8 @@ const styles = StyleSheet.create({
     parentOfAddList: {
         flexDirection: 'row',
         alignItems: 'center',
-        width:width *0.30,
-        justifyContent:'space-between'
+        width: width * 0.30,
+        justifyContent: 'space-between'
     },
     image: {
         width: '100%',
@@ -273,7 +346,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: verticalScale(300),
         backgroundColor: Colors.background,
-        marginBottom:verticalScale(20)
+        marginBottom: verticalScale(20)
     },
     headerOverlayContent: {
         position: 'absolute',
@@ -281,9 +354,9 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: verticalScale(16),
         paddingHorizontal: horizontalScale(16),
-        flexDirection:'row',
-        alignItems:'center',
-        justifyContent:'space-between'
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
     },
     imageMeallist: {
         width: moderateScale(56),
@@ -294,12 +367,16 @@ const styles = StyleSheet.create({
         width: moderateScale(56),
         height: moderateScale(42),
     },
-    backImage:{
-        width:moderateScale(20),
-        height:moderateScale(20)
+    backImage: {
+        width: moderateScale(20),
+        height: moderateScale(20)
     },
-    parentOfname:{
-        width:width *0.58,
+    parentOfname: {
+        width: width * 0.58,
+    },
+    editImage: {
+        width: moderateScale(20),
+        height: moderateScale(20)
     }
 });
 

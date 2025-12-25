@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
+import { useLoader } from "@/context/LoaderContext";
 import { fontSize } from "@/utils/Fonts";
 import { pushNavigation, replaceNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
@@ -31,9 +32,11 @@ import React from "react";
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
+  const { showLoader, hideLoader } = useLoader();
 
   const handleSignup = async (values: SignupFormValues) => {
-    setIsLoading(true);
+    // setIsLoading(true);
+     showLoader();
     try {
       const result = await signupViewModel.handleSignup(values);
       if (result.success) {
@@ -48,7 +51,8 @@ const SignupScreen = () => {
     } catch (error) {
       showErrorToast("Error", "An unexpected error occurred");
     } finally {
-      setIsLoading(false);
+       hideLoader();
+      // setIsLoading(false);
     }
   };
 
@@ -63,20 +67,17 @@ const SignupScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        {/* ScrollView ensures content is scrollable, especially with keyboard open */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
-            {/* Header component with screen title and description */}
             <Header
               title={Strings.createYourAccount}
               description={Strings.startJourney}
             />
 
-            {/* Form with Formik */}
             <Formik
               initialValues={{
                 name: "",
@@ -190,7 +191,7 @@ const SignupScreen = () => {
                   </Text>
 
                   {/* Divider between sign up and social login */}
-                  <Divider style={{marginTop:verticalScale(15)}}/>
+                  <Divider style={{ marginTop: verticalScale(15) }} />
 
                   {/* Social login buttons */}
                   <View style={styles.buttonContainer}>
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     gap: verticalScale(10),
-    marginTop:verticalScale(20)
+    marginTop: verticalScale(20)
   },
   buttonSpace: {
     marginTop: verticalScale(10),

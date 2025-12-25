@@ -1,51 +1,63 @@
 import BaseButton from "@/components/BaseButton";
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
     horizontalScale,
     moderateScale,
     verticalScale
 } from "@/constants/Constants";
 import { Colors } from "@/constants/Theme";
+import { useLoader } from "@/context/LoaderContext";
+import { pushNavigation } from "@/utils/Navigation";
 import React, { useRef, useState } from "react";
-import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Sample images for scroll view (replace with your images)
-const images = [
-    require("@/assets/images/userDummy.png"),
-    require("@/assets/images/userDummy.png"),
-    require("@/assets/images/userDummy.png"),
-];
-const { width } = Dimensions.get("window");
-
+// const images = [
+//     require("assets/images/FirstSlideshot.png"),
+//     require("assets/images/SecondSlideshot.png"),
+//     require("assets/images/ThirdSliodeshot.png"),
+// ];
+const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 const slides = [
     {
         heading: "Welcome to MealCart  ",
         subheading: "All your meal planning, simplified in one place.",
-        image: require("@/assets/images/userDummy.png"),
+        image: require("@/assets/images/FirstSlideshot.png"),
+        background: require("@/assets/images/thirdslide.png"),
     },
     {
         heading: "Build Your Perfect week",
         subheading: "Create custom meal plans from your favorite receipes with just a few taps",
-        image: require("@/assets/images/userDummy.png"),
+        image: require("@/assets/images/SecondSlideshot.png"),
+        background: require("@/assets/images/secondslide.png"),
     },
     {
         heading: "Shop Smarter,  Not Harder",
         subheading: "Automatically generate an organized shopping list from your plan. Never forget an ingredient again.",
-        image: require("@/assets/images/userDummy.png"),
+        image: require("@/assets/images/ThirdSlideshot.png"),
+        background: require("@/assets/images/firstslide.png"),
     },
 ];
 
 const WelcomeMealCart: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef<FlatList>(null);
+    const { showLoader, hideLoader } = useLoader();
 
     const goNext = () => {
         if (currentIndex < slides.length - 1) {
             const nextIndex = currentIndex + 1;
             setCurrentIndex(nextIndex);
             flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+        } else {
+            // Last slide → navigate to Home screen
+            showLoader();
+            pushNavigation(APP_ROUTES.HOME); // or replaceNavigation if you want to remove this screen from stack
         }
     };
+
 
     const goBack = () => {
         if (currentIndex > 0) {
@@ -59,48 +71,49 @@ const WelcomeMealCart: React.FC = () => {
         <View style={[styles.slide,]}>
             <Text style={styles.heading}>{item.heading}</Text>
             <Text style={styles.subheading}>{item.subheading}</Text>
-            <View style={styles.parentImage}>
+            {/* <View style={styles.parentImage}>
                 <Image source={item.image} style={styles.image} resizeMode="contain" />
-            </View>
+            </View> */}
         </View>
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <ImageBackground source={slides[currentIndex].background} style={{ flex: 1 }}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
 
-            <FlatList
-                data={slides}
-                horizontal
-                ref={flatListRef}
-                renderItem={renderItem}
-                keyExtractor={(_, index) => index.toString()}
-                scrollEnabled={false} // disable swipe
-                showsHorizontalScrollIndicator={false}
-                pagingEnabled
-            />
+                <FlatList
+                    data={slides}
+                    horizontal
+                    ref={flatListRef}
+                    renderItem={renderItem}
+                    keyExtractor={(_, index) => index.toString()}
+                    scrollEnabled={false} // disable swipe
+                    showsHorizontalScrollIndicator={false}
+                    pagingEnabled
+                />
 
-            {/* Dots */}
-            <View style={styles.dotsContainer}>
-                {slides.map((_, index) => (
-                    <View
-                        key={index}
-                        style={[
-                            styles.dot,
-                            { backgroundColor: index === currentIndex ? "#3A4D25" : "#E6F0DF" },
-                        ]}
-                    />
-                ))}
-            </View>
+                {/* Dots */}
+                <View style={styles.dotsContainer}>
+                    {slides.map((_, index) => (
+                        <View
+                            key={index}
+                            style={[
+                                styles.dot,
+                                { backgroundColor: index === currentIndex ? "#3A4D25" : "#E6F0DF" },
+                            ]}
+                        />
+                    ))}
+                </View>
 
-            {/* Buttons */}
-            <View style={styles.buttonsContainer}>
-                {currentIndex > 0 && (
-                    <TouchableOpacity onPress={goBack} style={styles.backButton}>
-                        <Text style={styles.buttonText}>Back</Text>
-                    </TouchableOpacity>
-                )}
+                {/* Buttons */}
+                <View style={styles.buttonsContainer}>
+                    {currentIndex > 0 && (
+                        <TouchableOpacity onPress={goBack} style={styles.backButton}>
+                            <Text style={styles.buttonText}>Back</Text>
+                        </TouchableOpacity>
+                    )}
 
-                {/* <TouchableOpacity
+                    {/* <TouchableOpacity
                     onPress={goNext}
                     activeOpacity={0.8}
                     style={[
@@ -121,23 +134,24 @@ const WelcomeMealCart: React.FC = () => {
                         </Text>
                     </LinearGradient>
                 </TouchableOpacity> */}
-                <BaseButton
-                    title={currentIndex === 2 ? "Get Started" : "Next"}
-                    gradientButton={true}
-                    width={currentIndex > 0 ? width * 0.7 : width * 0.9}
-                    gradientStartColor="#667D4C"
-                    gradientEndColor="#9DAF89"
-                    gradientStart={{ x: 0, y: 0 }}
-                    gradientEnd={{ x: 1, y: 0 }}
-                    textColor="#fff"
-                    onPress={goNext}
-                />
-            </View>
+                    <BaseButton
+                        title={currentIndex === 2 ? "Get Started" : "Next"}
+                        gradientButton={true}
+                        width={currentIndex > 0 ? width * 0.7 : width * 0.9}
+                        gradientStartColor="#667D4C"
+                        gradientEndColor="#9DAF89"
+                        gradientStart={{ x: 0, y: 0 }}
+                        gradientEnd={{ x: 1, y: 0 }}
+                        textColor="#fff"
+                        onPress={goNext}
+                    />
+                </View>
 
 
 
 
-        </SafeAreaView>
+            </SafeAreaView>
+        </ImageBackground>
     );
 };
 
@@ -145,7 +159,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: "center",
-        backgroundColor: Colors.background,
+        // backgroundColor: Colors.background,
         paddingBottom: verticalScale(20),
         paddingTop: verticalScale(10),
         width: '100%'
@@ -198,8 +212,9 @@ const styles = StyleSheet.create({
         height: verticalScale(500)
     },
     image: {
-        width: horizontalScale(360),
-        height: verticalScale(300),
+        width: width * 1,
+        height: height * 0.5,
+        marginTop: verticalScale(28)
     },
     dotsContainer: {
         flexDirection: "row",

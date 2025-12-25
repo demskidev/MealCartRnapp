@@ -8,7 +8,6 @@ import { horizontalScale, verticalScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
 import { backNavigation, pushNavigation } from "@/utils/Navigation";
-import { showToast } from "@/utils/Toast";
 import {
   ResetPasswordFormValues,
   ResetPasswordViewModel,
@@ -42,10 +41,23 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
     try {
       const result = await resetPasswordViewModel.handleResetPassword(values);
       if (result.success) {
-        showToast("success", result.message);
-        pushNavigation(
-          `${APP_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(values.email)}`
-        );
+        // showToast("success", result.message);
+        // pushNavigation(
+        //   `${APP_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(values.email)}`
+        // );
+
+         Alert.alert(
+        "Check Your Email",
+        "A password reset link has been sent to your email address.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              pushNavigation(APP_ROUTES.SIGNIN); 
+            },
+          },
+        ]
+      );
       } else {
         Alert.alert("Error", result.message);
       }

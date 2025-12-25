@@ -7,6 +7,8 @@ const CustomTextInput: React.FC<TextInputProps> = (props) => (
   <TextInput
     style={[styles.input, props.style]}
     placeholderTextColor="#B0B0B0"
+      multiline={props.multiline}
+      numberOfLines={props.numberOfLines}
     {...props}
   />
 );

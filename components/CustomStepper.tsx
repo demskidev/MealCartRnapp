@@ -3,7 +3,7 @@ import { IconDown, IconUp } from '@/assets/svg/IconUpDown';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 interface CustomStepperProps {
   value: string;
@@ -11,21 +11,39 @@ interface CustomStepperProps {
   onDecrement: () => void;
   showUp?: boolean;
   showDown?: boolean;
+   containerStyle?: StyleProp<ViewStyle>;
 }
 
-const CustomStepper: React.FC<CustomStepperProps> = ({ value, onIncrement, onDecrement, showUp = true, showDown = true }) => (
-  <View style={styles.container}>
+const CustomStepper: React.FC<CustomStepperProps> = ({
+  value,
+  onIncrement,
+  onDecrement,
+  showUp = true,
+  showDown = true,
+  containerStyle,
+}) => (
+  <View style={[styles.container, containerStyle]}>
     <View style={{ flex: 1 }}>
       <Text style={styles.value}>{value}</Text>
     </View>
+
     <View style={{ justifyContent: 'center', alignItems: 'center' }}>
       {showUp && (
-        <TouchableOpacity onPress={onIncrement} style={styles.iconBtn}>
+        <TouchableOpacity
+          onPress={onIncrement}
+          style={styles.iconBtn}
+         
+        >
           <IconUp style={styles.iconUp} />
         </TouchableOpacity>
       )}
+
       {showDown && (
-        <TouchableOpacity onPress={onDecrement} style={styles.iconBtn}>
+        <TouchableOpacity
+          onPress={onDecrement}
+          style={styles.iconBtn}
+         
+        >
           <IconDown style={styles.iconDown} />
         </TouchableOpacity>
       )}
