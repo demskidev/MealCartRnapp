@@ -13,11 +13,11 @@ const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
     const [selectedDifficulty, setSelectedDifficulty] = useState(null);
     const [selectedPrepTime, setSelectedPrepTime] = useState(null);
     const handleReset = () => {
-        // setSelectedCategory(null);
-        // setSelectedDifficulty(null);
-        // setSelectedPrepTime(null);
-
-        
+        setSelectedCategory(null);
+        setSelectedDifficulty(null);
+        setSelectedPrepTime(null);
+        if (onReset) onReset();
+        if (onClose) onClose();
     };
 
     return (
@@ -128,13 +128,16 @@ const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
                             width={width * 0.42}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
-                            // onPress={() =>
-                            //     onConfirm({
-                            //         category: selectedCategory,
-                            //         difficulty: selectedDifficulty,
-                            //         prepTime: selectedPrepTime,
-                            //     })
-                            // }
+                            onPress={() => {
+                                if (onConfirm) {
+                                    onConfirm({
+                                        category: selectedCategory,
+                                        difficulty: selectedDifficulty,
+                                        prepTime: selectedPrepTime,
+                                    });
+                                }
+                                if (onClose) onClose();
+                            }}
                         />
 
                     </View>

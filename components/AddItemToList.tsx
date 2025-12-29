@@ -346,10 +346,10 @@ const AddItemToList = ({ visible, onClose }) => {
                             width={width * 0.42}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
-                        // rightChild={
-                        //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                        // }
-                        // onPress={handleEditPress}
+                            // rightChild={
+                            //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
+                            // }
+                            onPress={onClose}
                         />
                         <BaseButton
                             title="Generate List"
@@ -359,10 +359,11 @@ const AddItemToList = ({ visible, onClose }) => {
                             width={width * 0.42}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
-                        // rightChild={
-                        //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                        // }
-                        // onPress={handleEditPress}
+                            // rightChild={
+                            //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
+                            // }
+                            onPress={onClose}
+
                         />
 
                     </View>

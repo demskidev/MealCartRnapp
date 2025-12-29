@@ -1,9 +1,8 @@
-import { IconCart } from '@/assets/svg';
 import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRef } from 'react';
-import { Dimensions, FlatList, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
+import { Dimensions, FlatList, Image, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
 import CreateNewListBottomSheet, { CreateNewListBottomSheetRef } from './CreateNewListBottomSheet';
 
 const shoppingLists = [
@@ -31,7 +30,7 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                 onRequestClose={onClose}
             >
                 <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.overlay}  />
+                    <View style={styles.overlay} />
                 </TouchableWithoutFeedback>
 
                 <View style={styles.container}>
@@ -58,10 +57,11 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                         // width={width * 0.43}
                         textStyle={styles.createButtonText}
                         rightChild={
-                            <IconCart width={moderateScale(20)} height={moderateScale(20)} />
+                               <Image source={require("@/assets/images/createlist.png")} resizeMode="contain" style={{ width: moderateScale(18), height: moderateScale(18),  }}/>
+                         
                         }
                         onPress={() => {
-                          
+
                             createNewListRef.current?.expand();
                         }}
                     />
@@ -114,28 +114,20 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                         <BaseButton
                             title="Cancel"
                             gradientButton={false}
-                            // backgroundColor={Colors.olive}
                             textColor="#fff"
                             width={width * 0.35}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
-                        // rightChild={
-                        //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                        // }
-                        // onPress={handleEditPress}
+                            onPress={onClose}
                         />
                         <BaseButton
                             title="Confirm"
                             gradientButton={true}
-                            // backgroundColor={Colors.olive}
                             textColor="#fff"
                             width={width * 0.35}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
-                        // rightChild={
-                        //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                        // }
-                        // onPress={handleEditPress}
+                            onPress={onClose}
                         />
 
                     </View>

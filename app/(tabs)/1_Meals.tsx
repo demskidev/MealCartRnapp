@@ -34,28 +34,28 @@ const MealsScreen: React.FC = () => {
     { id: '8', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodH.png'), time: '30 min', difficulty: 'Moderate' },
     // ...add more items as needed
   ];
-const filteredMeals = mealData.filter(item => {
-  // Category filter
-  if (filters.category && item.tag !== filters.category) {
-    return false;
-  }
+  const filteredMeals = mealData.filter(item => {
+    // Category filter
+    if (filters.category && item.tag !== filters.category) {
+      return false;
+    }
 
-  // Difficulty filter
-  if (filters.difficulty && item.difficulty !== filters.difficulty) {
-    return false;
-  }
+    // Difficulty filter
+    if (filters.difficulty && item.difficulty !== filters.difficulty) {
+      return false;
+    }
 
-  // Prep time filter
-  if (filters.prepTime) {
-    const time = parseInt(item.time) || 0; // fallback to 0 if invalid
-    if (filters.prepTime === '< 5 Mins' && time >= 5) return false;
-    if (filters.prepTime === '5 - 10 Mins' && (time < 5 || time > 10)) return false;
-    if (filters.prepTime === '10 - 15 Mins' && (time < 10 || time > 15)) return false;
-    if (filters.prepTime === '> 15 Mins' && time <= 15) return false;
-  }
+    // Prep time filter
+    if (filters.prepTime) {
+      const time = parseInt(item.time) || 0; // fallback to 0 if invalid
+      if (filters.prepTime === '< 5 Mins' && time >= 5) return false;
+      if (filters.prepTime === '5 - 10 Mins' && (time < 5 || time > 10)) return false;
+      if (filters.prepTime === '10 - 15 Mins' && (time < 10 || time > 15)) return false;
+      if (filters.prepTime === '> 15 Mins' && time <= 15) return false;
+    }
 
-  return true;
-});
+    return true;
+  });
 
 
 
@@ -121,10 +121,10 @@ const filteredMeals = mealData.filter(item => {
       </View>
 
       {isMyMeals ?
-        <View style={{ flex: 1 }}>
+        <View >
           <Text style={styles.recentText}>Recent Meals</Text>
 
-          <View style={{ height: height * 0.35 }}>
+          <View style={{ height: height * 0.35, }}>
             <FlatList
               data={mealData}
               renderItem={renderMealCard}
@@ -133,7 +133,7 @@ const filteredMeals = mealData.filter(item => {
               columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: verticalScale(8) }}
               contentContainerStyle={{ paddingBottom: 60 }}
               showsVerticalScrollIndicator={false}
-               ListEmptyComponent={<Text>No meals found</Text>} 
+              ListEmptyComponent={<Text>No meals found</Text>}
 
             />
           </View>
@@ -151,7 +151,7 @@ const filteredMeals = mealData.filter(item => {
 
               }}
               showsVerticalScrollIndicator={false}
-               ListEmptyComponent={<Text>No meals found</Text>} 
+              ListEmptyComponent={<Text>No meals found</Text>}
 
             />
           </View>
@@ -167,7 +167,7 @@ const filteredMeals = mealData.filter(item => {
             columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: verticalScale(8) }}
             contentContainerStyle={{ paddingBottom: 160 }}
             showsVerticalScrollIndicator={false}
-            
+
 
           />
 
@@ -282,3 +282,6 @@ const styles = StyleSheet.create({
 });
 
 export default MealsScreen;
+
+
+

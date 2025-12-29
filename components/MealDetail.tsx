@@ -4,13 +4,15 @@ import { Colors, } from '@/constants/Theme';
 import { FontFamily } from '@/utils/Fonts';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { useRef, useState } from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ConfirmationModal from './ConfirmationModal';
 import CreateMealBottomSheet from './CreateMealBottomSheet';
 import SendToShoppingList from './SendShoppingList';
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 
 const MealDetail = ({ meal, onBack }) => {
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
 
@@ -30,46 +32,68 @@ const MealDetail = ({ meal, onBack }) => {
         <View style={styles.container}>
             <View style={styles.headerImageContainer}  >
 
-                <Image source={meal.image} style={styles.image} resizeMode="cover" />
-                <View style={styles.headerOverlayContent}>
-                    <View style={styles.parentOfname} >
-                        <Text style={styles.title}>{meal.title}</Text>
-                        <Text style={styles.info}>{meal.time} • 4 Servings • Medium</Text>
-                    </View>
-                    <View style={styles.parentOfAddList}>
+                {/* <Image source={meal.image} style={styles.image} resizeMode="cover" /> */}
+
+                <ImageBackground
+                    source={meal.image}
+                    style={{ height: verticalScale(300), width: '100%' }}
+                >
+
+                    <TouchableOpacity onPress={onBack} style={styles.backButton} >
+
+
                         <Image
-                            source={require('@/assets/images/addtomeallist.png')}
-                            style={styles.imageMeallist}
+                            source={require('@/assets/images/backIcon.png')}
+                            style={styles.backImage}
                             resizeMode="contain"
+
                         />
-                        <TouchableOpacity onPress={() => setShowSendShoppingList(true)}>
+
+
+                    </TouchableOpacity>
+
+                    <View style={styles.headerOverlayContent1}>
+                        <View style={styles.parentOfname} >
+                            <Text style={styles.title}>{meal.title}</Text>
+                            <Text style={styles.info}>{meal.time} • 4 Servings • Medium</Text>
+                        </View>
+                        <View style={styles.parentOfAddList}>
                             <Image
-                                source={require('@/assets/images/addwishlisticon.png')}
-                                style={styles.imageaddToList}
+                                source={require('@/assets/images/addtomeallist.png')}
+                                style={styles.imageMeallist}
                                 resizeMode="contain"
                             />
-                        </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setShowSendShoppingList(true)}>
+                                <Image
+                                    source={require('@/assets/images/addwishlisticon.png')}
+                                    style={styles.imageaddToList}
+                                    resizeMode="contain"
+                                />
+                            </TouchableOpacity>
+
+                        </View>
+                        {/* <TouchableOpacity onPress={onBack} style={styles.backButton} >
+
+
+                            <Image
+                                source={require('@/assets/images/backIcon.png')}
+                                style={styles.backImage}
+                                resizeMode="contain"
+
+                            />
+
+
+                        </TouchableOpacity> */}
+                    </View>
+                    <View >
 
                     </View>
-                </View>
-                <TouchableOpacity onPress={onBack} style={styles.backButton}>
-                    {/* <Text style={styles.backButtonText}>{'←'}</Text> */}
-
-
-                    <Image
-                        source={require('@/assets/images/backIcon.png')}
-                        style={styles.backImage}
-                        resizeMode="contain"
-
-                    />
-
-
-                </TouchableOpacity>
-                {/* <View style={styles.tagContainer}>
+                    {/* <View style={styles.tagContainer}>
                 <Text style={styles.tagText}>{meal.tag}</Text>
             </View> */}
-
+                </ImageBackground>
             </View>
+
             <ScrollView style={styles.detailContent} contentContainerStyle={{ paddingBottom: 32 }}>
                 <Text style={styles.description}>
                     A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love.
@@ -102,10 +126,11 @@ const MealDetail = ({ meal, onBack }) => {
                         gradientEndColor="#FD4B4B"
                         gradientStart={{ x: 0, y: 0 }}
                         gradientEnd={{ x: 1, y: 0 }}
-                        // backgroundColor={Colors.primary || '#D32F2F'}
                         textColor="#fff"
                         textStyle={styles.deleteButton}
+                        onPress={() => setShowDeleteModal(true)}
                     />
+
                 </View>
                 <Text style={styles.sectionTitle}>Ingredients</Text>
                 <View style={styles.divider} />
@@ -161,7 +186,27 @@ const MealDetail = ({ meal, onBack }) => {
                     <Text style={styles.instructionText}>Stir in chopped tomatoes and tomato paste. Simmer for 20 minutes.</Text>
                 </View>
             </ScrollView>
+            {/* <ConfirmationModal
+                visible={showDeleteModal}
+                onCancel={() => setShowDeleteModal(false)}
+                onDelete={() => {
+                    setShowDeleteModal(false);
+                    // Add your delete logic here
+                }}
+            /> */}
 
+            <ConfirmationModal
+                visible={showDeleteModal}
+                title="Delete Meal"
+                description="This action is permanent and cannot be undone. You will lose access to this meal."
+                cancelText="Cancel"
+                confirmText="Delete"
+                onCancel={() => setShowDeleteModal(false)}
+                onConfirm={() => {
+                    setShowDeleteModal(false);
+
+                }}
+            />
             <CreateMealBottomSheet
                 ref={bottomSheetRef}
                 isEdit={true}
@@ -190,26 +235,36 @@ const styles = StyleSheet.create({
         height: moderateScale(42),
     },
     backButton: {
+        // position: 'absolute',
+        // bottom: verticalScale(2),
+        // left: horizontalScale(16),
+        // zIndex: 100,
+        // borderRadius: 20,
+        // padding: 4,
+        // backgroundColor: 'red',
+        marginTop: verticalScale(15),
+
+
+
         position: 'absolute',
         top: verticalScale(24),
-        left: horizontalScale(16),
-        zIndex: 2,
-        // backgroundColor: 'rgba(0,0,0,0.3)',
+        left: horizontalScale(10),
+        zIndex: 10,
+        padding: 8,
         borderRadius: 20,
-        padding: 4,
     },
     backButtonText: {
         fontSize: 28,
         color: '#fff',
     },
     tagContainer: {
-        position: 'absolute',
-        top: verticalScale(24),
-        right: horizontalScale(16),
-        backgroundColor: '#F5F5F5',
-        borderRadius: 16,
-        paddingHorizontal: 12,
-        paddingVertical: 4,
+        // position: 'absolute',
+        // top: verticalScale(24),
+        // right: horizontalScale(16),
+        // backgroundColor: '#F5F5F5',
+        // borderRadius: 16,
+        // paddingHorizontal: 12,
+        // paddingVertical: 4,
     },
     tagText: {
         fontSize: moderateScale(13),
@@ -342,21 +397,34 @@ const styles = StyleSheet.create({
         height: verticalScale(300)
     },
     headerImageContainer: {
-        position: 'relative',
-        width: '100%',
-        height: verticalScale(300),
-        backgroundColor: Colors.background,
-        marginBottom: verticalScale(20)
+        // position: 'relative',
+        // width: '100%',
+        // height: verticalScale(300),
+        // backgroundColor: Colors.background,
+        // marginBottom: verticalScale(20),
+        // pointerEvents: 'box-none'
     },
     headerOverlayContent: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: verticalScale(16),
-        paddingHorizontal: horizontalScale(16),
+        // position: 'absolute',
+        // left: 0,
+        // right: 0,
+        // bottom: verticalScale(16),
+        // paddingHorizontal: horizontalScale(16),
+        // flexDirection: 'row',
+        // alignItems: 'center',
+        // justifyContent: 'space-between',
+    },
+    headerOverlayContent1: {
+
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between'
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        position: 'absolute',
+        bottom: verticalScale(40),
+        left: horizontalScale(16),
+        width: width * 0.92
+
+        // marginTop: 90
     },
     imageMeallist: {
         width: moderateScale(56),
@@ -372,7 +440,7 @@ const styles = StyleSheet.create({
         height: moderateScale(20)
     },
     parentOfname: {
-        width: width * 0.58,
+        width: width * 0.5,
     },
     editImage: {
         width: moderateScale(20),

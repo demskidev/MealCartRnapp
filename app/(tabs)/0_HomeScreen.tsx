@@ -11,9 +11,10 @@ import { useLoader } from '@/context/LoaderContext';
 import { FontFamily } from '@/utils/Fonts';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React from 'react';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TourGuideZone, useTourGuideController } from 'rn-tourguide';
 
@@ -25,6 +26,8 @@ const HomeScreen: React.FC = () => {
   const [showIntroPopup, setShowIntroPopup] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const navigation = useNavigation();
+  const router = useRouter();
+
   const mealData = [
     { id: '1', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodA.png'), time: '30 min', difficulty: 'Moderate' },
     { id: '2', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodB.png'), time: '30 min', difficulty: 'Moderate' },
@@ -142,6 +145,7 @@ const HomeScreen: React.FC = () => {
     </View>
   );
   const renderMealCard = ({ item }) => (
+
     <View style={{
       backgroundColor: Colors.white,
       borderRadius: moderateScale(8),
@@ -154,16 +158,19 @@ const HomeScreen: React.FC = () => {
       shadowOffset: { width: 0, height: 2 },
       overflow: 'visible'
     }}>
-      <Image source={item.image} resizeMode="cover" style={{ width: '99%', height: verticalScale(160), backgroundColor: Colors.white, alignSelf: 'center', borderTopLeftRadius: moderateScale(8), borderTopRightRadius: moderateScale(8) }}
-      />
-      {/* <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#F5F5F5', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 4 }}>
+      <TouchableOpacity onPress={() => setSelectedMeal(item)} >
+        <Image source={item.image} resizeMode="cover" style={{ width: '99%', height: verticalScale(160), backgroundColor: Colors.white, alignSelf: 'center', borderTopLeftRadius: moderateScale(8), borderTopRightRadius: moderateScale(8) }}
+        />
+        {/* <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#F5F5F5', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 4 }}>
         <Text style={styles.mealNametext}>{item.tag}</Text>
       </View> */}
-      <View style={{ padding: moderateScale(12) }}>
-        <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
-      </View>
+        <View style={{ padding: moderateScale(12) }}>
+          <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
+        </View>
+      </TouchableOpacity>
     </View>
+
   );
 
   return (
@@ -181,116 +188,127 @@ const HomeScreen: React.FC = () => {
           }}
         />
       ) : (
-
         <View>
-          <LinearGradient
-            colors={['#667D4C', '#9DAF89']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <View style={styles.mainMealCartContainer}>
-              <View style={styles.emptyView}></View>
+          <KeyboardAwareScrollView extraScrollHeight={20} enableOnAndroid={true} keyboardShouldPersistTaps="handled">
 
-              <View style={styles.mealcartLogoParent}>
-                <Image
-                  source={require("@/assets/images/mealcartLogo.png")}
-                  style={{ width: verticalScale(21), height: verticalScale(28) }}
-                  resizeMode="contain"
-                />
 
-                <Text style={styles.text}>MealCart</Text>
-              </View>
-              <View style={styles.parentGreetingAvatar}>
-                <View>
-                  <Text style={styles.greetingText}>Hello there!</Text>
-                  <Text style={styles.subgreetingText}>What delicious meal are you planning today?</Text>
+            <LinearGradient
+              colors={['#667D4C', '#9DAF89']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View style={styles.mainMealCartContainer}>
+                <View style={styles.emptyView}></View>
+
+                <View style={styles.mealcartLogoParent}>
+                  <Image
+                    source={require("@/assets/images/mealcartLogo.png")}
+                    style={{ width: verticalScale(21), height: verticalScale(28) }}
+                    resizeMode="contain"
+                  />
+
+                  <Text style={styles.text}>MealCart</Text>
                 </View>
-                <TourGuideZone zone={4} shape="circle" borderRadius={30} >
-                  <View style={{ minHeight: moderateScale(70), minWidth: moderateScale(70), justifyContent: 'center', alignItems: 'center' }}>
-                    <Image
-                      source={require('@/assets/images/userDummy.png')}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
+                <View style={styles.parentGreetingAvatar}>
+                  <View>
+                    <Text style={styles.greetingText}>Hello there!</Text>
+                    <Text style={styles.subgreetingText}>What delicious meal are you planning today?</Text>
                   </View>
-                </TourGuideZone>
-              </View>
-              <View style={styles.upcomingSection}>
-                <View style={styles.upcomingHeader}>
-                  <TourGuideZone zone={3} shape="circle" borderRadius={16}>
-
-                    <Text style={styles.upcomingText}>Your Next Meal</Text>
+                  <TourGuideZone zone={4} shape="circle" borderRadius={30} >
+                    <View style={{ minHeight: moderateScale(70), minWidth: moderateScale(70), justifyContent: 'center', alignItems: 'center' }}>
+                      <Image
+                        source={require('@/assets/images/userDummy.png')}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                    </View>
                   </TourGuideZone>
-
-                  <TourGuideZone zone={1} shape="circle" borderRadius={100}>
-
-                    <TouchableOpacity onPress={() => console.log('View All pressed')}>
-                      <Text style={styles.viewAllText}>View All</Text>
-                    </TouchableOpacity>
-                  </TourGuideZone>
-
                 </View>
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={mealData}
-                  renderItem={renderMealItem}
-                  keyExtractor={(item) => item.id}
-                  contentContainerStyle={{ paddingVertical: 0, marginTop: verticalScale(9), paddingLeft: moderateScale(8), paddingRight: moderateScale(8) }}
-                />
+                <View style={styles.upcomingSection}>
+                  <View style={styles.upcomingHeader}>
+                    <TourGuideZone zone={3} shape="circle" borderRadius={16}>
+
+                      <Text style={styles.upcomingText}>Your Next Meal</Text>
+                    </TourGuideZone>
+
+                    <TourGuideZone zone={1} shape="circle" borderRadius={100}>
+
+                      <TouchableOpacity onPress={() => console.log('View All pressed')}>
+                        <Text style={styles.viewAllText}>View All</Text>
+                      </TouchableOpacity>
+                    </TourGuideZone>
+
+                  </View>
+                  <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={mealData}
+                    renderItem={renderMealItem}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={{ paddingVertical: 0, marginTop: verticalScale(9), paddingLeft: moderateScale(8), paddingRight: moderateScale(8) }}
+                  />
+                </View>
               </View>
+            </LinearGradient>
+
+
+            <View style={styles.parentCreateMeal}>
+              <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
+                <BaseButton
+                  title={'Create Meal'}
+                  gradientButton={true}
+                  width={width * 0.41}
+                  gradientStartColor="#667D4C"
+                  gradientEndColor="#9DAF89"
+                  gradientStart={{ x: 0, y: 0 }}
+                  gradientEnd={{ x: 1, y: 0 }}
+                  textColor={Colors.white}
+                  rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
+                  textStyle={styles.createMeal}
+                  onPress={goNext}
+                // showPressedShadow={true}
+                />
+              </TourGuideZone>
+              <TouchableOpacity
+                style={styles.myMeals}
+                activeOpacity={0.7}
+                onPress={() => router.push('/(tabs)/1_Meals')}
+              >
+                <Text style={styles.myMealText}>My Meals</Text>
+                <MealsLogo width={verticalScale(21)} height={verticalScale(21)} />
+              </TouchableOpacity>
             </View>
-          </LinearGradient>
-          <View style={styles.parentCreateMeal}>
-            <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
-              <BaseButton
-                title={'Add New Meal'}
-                gradientButton={true}
-                width={width * 0.41}
-                gradientStartColor="#667D4C"
-                gradientEndColor="#9DAF89"
-                gradientStart={{ x: 0, y: 0 }}
-                gradientEnd={{ x: 1, y: 0 }}
-                textColor={Colors.white}
-                rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
-                textStyle={styles.createMeal}
-                onPress={goNext}
-                showPressedShadow={true}
-              />
-            </TourGuideZone>
-            <TouchableOpacity
-              style={styles.myMeals}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.myMealText}>My Meals</Text>
-              <MealsLogo width={verticalScale(21)} height={verticalScale(21)} />
-            </TouchableOpacity>
-          </View>
 
 
-          <View style={styles.parentOfRecentMeal}>
-            <Text style={styles.recentText}>Recent Meals</Text>
-            <TouchableOpacity
-              // style={styles.myMeals}
-              activeOpacity={0.7}
-              onPress={() => setShowAll(!showAll)}
-            >
-              <Text style={styles.viewText}>View All</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.parentOfRecentMeal}>
+              <Text style={styles.recentText}>Recent Meals</Text>
+              <TouchableOpacity
+                // style={styles.myMeals}
+                activeOpacity={0.7}
+                onPress={() => setShowAll(!showAll)}
+              >
+                <Text style={styles.viewText}>View All</Text>
+              </TouchableOpacity>
+            </View>
 
-          <FlatList
-            data={showAll ? mealData : mealData.slice(0, 2)}
-            renderItem={renderMealCard}
-            keyExtractor={item => item.id}
-            numColumns={2}
-            columnWrapperStyle={{ justifyContent: 'space-between', marginHorizontal: 8 }}
-            contentContainerStyle={{ paddingBottom: 16 }}
-            showsVerticalScrollIndicator={false}
-          />
+            <FlatList
+              data={mealData}
+              renderItem={renderMealCard}
+              keyExtractor={item => item.id}
+              numColumns={2}
+              columnWrapperStyle={{ justifyContent: 'space-between', marginHorizontal: 8 }}
+              contentContainerStyle={{ paddingBottom: 16 }}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+            />
 
+
+
+
+          </KeyboardAwareScrollView>
           <CreateMealBottomSheet ref={bottomSheetRef} />
         </View>
+
       )}
     </SafeAreaView>
 
