@@ -1,3 +1,5 @@
+import { IconCartWhite } from '@/assets/svg';
+import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
@@ -106,7 +108,34 @@ export default function CreateMealPlan({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 /* or your scale */ }}
       />
-
+  <View style={styles.parentOfConfirmButton}>
+              <BaseButton
+                title="Discard"
+                gradientButton={false}
+                backgroundColor={Colors.white}
+                width={width * 0.28}
+                textStyle={[styles.cancelButton, { color: Colors.error }]}
+                textColor={Colors.error}
+                textStyleText={styles.discardText}
+                // onPress={() => bottomSheetRef.current?.close()}
+                 onPress={() => router.push('/(tabs)/3_Lists')}
+              />
+              <BaseButton
+                title="Save "
+                gradientButton={true}
+                width={width * 0.65}
+                gradientStartColor="#667D4C"
+                gradientEndColor="#9DAF89"
+                gradientStart={{ x: 0, y: 0 }}
+                gradientEnd={{ x: 1, y: 0 }}
+                textColor={Colors.white}
+                rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
+                textStyle={[styles.confirmButton,]}
+                textStyleText={styles.saveShopping}
+                 onPress={() => router.push('/(tabs)/3_Lists')}
+                // onPress={() => bottomSheetRef.current?.close()}
+              />
+            </View>
     </SafeAreaView>
 
   );
@@ -161,7 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.greysoft,
     borderRadius: moderateScale(4),
     paddingVertical: verticalScale(12),
-    paddingRight:horizontalScale(10),
+    paddingRight: horizontalScale(10),
     // paddingHorizontal: horizontalScale(12),
     height: verticalScale(50)
 
@@ -232,5 +261,35 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(22),
     color: Colors.tertiary,
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
+  },
+  cancelButton: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    // color: Colors.primary,
+
+    fontSize: moderateScale(12),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+  },
+  parentOfConfirmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+     marginBottom: verticalScale(55),
+    marginHorizontal: moderateScale(-5)
+  },
+    discardText: {
+    fontSize: moderateScale(14),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.error
+  },
+  saveShopping: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(16),
+    color: Colors.white
+  },
+    confirmButton: {
+    color: Colors.white,
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(13)
   },
 });

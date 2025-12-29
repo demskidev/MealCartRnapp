@@ -158,6 +158,7 @@ const CreateNewListBottomSheet = forwardRef<
                 textStyle={[styles.cancelButton, { color: Colors.error }]}
                 textColor={Colors.error}
                 textStyleText={styles.discardText}
+                onPress={() => bottomSheetRef.current?.close()}
               />
               <BaseButton
                 title="Save Shopping List"
@@ -171,6 +172,7 @@ const CreateNewListBottomSheet = forwardRef<
                 rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
                 textStyle={[styles.confirmButton,]}
                 textStyleText={styles.saveShopping}
+                onPress={() => bottomSheetRef.current?.close()}
               />
             </View>
           </BottomSheetScrollView>

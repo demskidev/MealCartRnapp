@@ -16,7 +16,6 @@ const shoppingLists = [
 const PlansScreen: React.FC = () => {
   const [pausePlan, setPausePlan] = useState(false);
   const [showResumePlan, setShowResumePlan] = useState(false);
-
   const router = useRouter();
   const renderShoppingList = ({ item }) => (
     <View style={styles.listCard}>
@@ -24,7 +23,7 @@ const PlansScreen: React.FC = () => {
 
       <View style={styles.listItem}>
         <View>
-          <Text style={styles.listDate}>{showResumePlan  ? "Started :" : "Created:"} {item.created}</Text>
+          <Text style={styles.listDate}>{showResumePlan ? "Started :" : "Created:"} {item.created}</Text>
 
         </View>
 
@@ -36,18 +35,17 @@ const PlansScreen: React.FC = () => {
       <View style={styles.dividerRow} />
       <View style={styles.parentOfMarkDone}>
         <BaseButton
-          title={showResumePlan ? "View Plan" :"Mark Done"}
+          title={ "View Plan"}
           gradientButton={false}
           // backgroundColor={Colors.olive}
           textColor="#fff"
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
-
-        // onPress={handleEditPress}
+          onPress={() => router.push('/appscreens/TestMealPlan')}
         />
         <BaseButton
-          title={showResumePlan ? " Start Plan" : "View List"}
+          title={ " Start Plan"  }
           gradientButton={false}
           // backgroundColor={Colors.olive}
           textColor="#fff"
@@ -79,7 +77,7 @@ const PlansScreen: React.FC = () => {
 
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Meal Plans</Text>
-          <TouchableOpacity >
+          <TouchableOpacity onPress={() => router.push('/appscreens/CreateMealPlan')}>
             <Image source={require("@/assets/images/gradientclose.png")} resizeMode="contain" style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-11), }} />
 
           </TouchableOpacity>
@@ -93,7 +91,7 @@ const PlansScreen: React.FC = () => {
 
 
             </View>
-            <View style={[styles.dividerRow , {marginVertical:verticalScale(20)}]} />
+            <View style={[styles.dividerRow, { marginVertical: verticalScale(20) }]} />
           </>
 
           :
@@ -139,6 +137,7 @@ const PlansScreen: React.FC = () => {
                   <Image source={require("@/assets/images/createlist.png")} resizeMode="contain" style={{ width: moderateScale(18), height: moderateScale(18), }} />
 
                 }
+                onPress={() => router.push('/(tabs)/3_Lists')}
               // onPress={() => {
 
               //     createNewListRef.current?.expand();
@@ -156,7 +155,7 @@ const PlansScreen: React.FC = () => {
 
             </View>
             {/* <Pressable> */}
-            <TouchableOpacity style={styles.pauseButton} onPress={() => setShowResumePlan(true)}>
+            <TouchableOpacity style={styles.pauseButton} onPress={() => setPausePlan(true)}>
               <Text style={styles.pauseText}>Pause Plan</Text>
             </TouchableOpacity>
             {/* </Pressable> */}
@@ -218,7 +217,8 @@ const PlansScreen: React.FC = () => {
         confirmText="Pause"
         onCancel={() => setPausePlan(false)}
         onConfirm={() => {
-          setPausePlan(false);
+          setShowResumePlan(true);
+          setPausePlan(false)
 
         }}
       />
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    paddingVertical:verticalScale(35)
+    paddingVertical: verticalScale(35)
   },
   noActiveText: {
     fontSize: moderateScale(14),
