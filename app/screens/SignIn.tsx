@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { Colors } from "@/constants/Theme";
+import { useLoader } from "@/context/LoaderContext";
 import {
   SigninFormValues,
   SigninViewModel,
@@ -30,10 +31,13 @@ import React from "react";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
-  const [isLoading, setIsLoading] = React.useState(false);
+   const [isLoading, setIsLoading] = React.useState(false);
+    const { showLoader, hideLoader } = useLoader();
+  
 
   const handleSignin = async (values: SigninFormValues) => {
     setIsLoading(true);
+      showLoader();
     try {
       const result = await signinViewModel.handleSignin(values);
       if (result.success) {
@@ -47,7 +51,10 @@ const SignInScreen = () => {
     } catch (error) {
       showErrorToast("Error", "An unexpected error occurred");
     } finally {
+       hideLoader();
+
       setIsLoading(false);
+
     }
   };
 
@@ -149,20 +156,20 @@ const SignInScreen = () => {
                       textColor={Colors.white}
                       onPress={async () => {
 
-                          resetAndNavigate(APP_ROUTES.HOME);
+                          //  resetAndNavigate(APP_ROUTES.HOME);
 
 
 
-                        // const formErrors = await validateForm();
-                        // if (Object.keys(formErrors).length > 0) {
-                        //   setTouched({
-                        //     email: true,
-                        //     password: true,
-                        //   });
-                        //   // Don't show toast, only show errors under fields
-                        //   return;
-                        // }
-                        // handleSignin(values);
+                        const formErrors = await validateForm();
+                        if (Object.keys(formErrors).length > 0) {
+                          setTouched({
+                            email: true,
+                            password: true,
+                          });
+                          // Don't show toast, only show errors under fields
+                          return;
+                        }
+                        handleSignin(values);
                       }}
                       disabled={isLoading}
                     />

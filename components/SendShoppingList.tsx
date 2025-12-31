@@ -104,12 +104,7 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                     />
 
                     <View style={styles.footer}>
-                        {/* <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.confirmButton}>
-                        <Text style={styles.confirmButtonText}>Confirm</Text>
-                    </TouchableOpacity> */}
+                   
 
                         <BaseButton
                             title="Cancel"

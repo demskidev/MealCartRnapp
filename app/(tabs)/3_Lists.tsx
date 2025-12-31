@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     // marginBottom: moderateScale(8),
   },
   listCard: {
-    backgroundColor: Colors.white,
+   backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
     marginVertical: verticalScale(6), // top + bottom spacing
     paddingHorizontal: moderateScale(9),

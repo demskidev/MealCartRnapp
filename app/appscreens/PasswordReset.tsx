@@ -1,0 +1,121 @@
+import BaseButton from '@/components/BaseButton';
+import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Colors, FontFamilies } from '@/constants/Theme';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+
+
+
+const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+
+
+export default function PasswordReset({ navigation }) {
+    const [removePlan, setRemovePlan] = useState(false);
+    const router = useRouter();
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    return (
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Image
+                        source={require("@/assets/images/iconback.png")}
+                        resizeMode="contain"
+                        style={{
+                            width: moderateScale(24),
+                            height: moderateScale(24),
+                            alignSelf: 'flex-end',
+                        }}
+                    />
+                </TouchableOpacity>
+                <Text style={styles.backText}>Password Reset</Text>
+            </View>
+
+            <Text style={styles.label}>Current Password</Text>
+            <TextInput
+                style={styles.input}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                placeholder=""
+                secureTextEntry
+            />
+            <Text style={styles.label}>New Password</Text>
+            <TextInput
+                style={styles.input}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder=""
+                secureTextEntry
+            />
+            <Text style={styles.label}>Confirm New Password</Text>
+            <TextInput
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder=""
+                secureTextEntry
+            />
+            <BaseButton
+                title="Update Password"
+                gradientButton={true}
+                textStyle={styles.savePreference}
+                width={width * 0.92}
+            />
+
+
+
+
+        </SafeAreaView>
+
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: Colors.white,
+        paddingHorizontal: horizontalScale(20),
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    backText: {
+        fontSize: moderateScale(21),
+        color: Colors.primary,
+        fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+        marginLeft: horizontalScale(30),
+    },
+    savePreference: {
+        fontFamily: FontFamilies.ROBOTO_MEDIUM,
+        fontSize: moderateScale(16),
+        color: Colors.white
+    },
+    label: {
+        fontSize: moderateScale(12),
+        color: Colors.tertiary,
+        marginBottom: verticalScale(6),
+        marginTop: verticalScale(10),
+        fontFamily: FontFamilies.ROBOTO_REGULAR
+    },
+    input: {
+        backgroundColor: Colors.greysoft,
+        borderRadius: moderateScale(4),
+        paddingHorizontal: horizontalScale(14),
+        paddingVertical: verticalScale(2),
+        fontSize: moderateScale(12),
+        color: Colors.primary,
+        marginBottom: verticalScale(10),
+        borderWidth: moderateScale(1),
+        borderColor: Colors.borderColor,
+        height:verticalScale(42)
+    },
+
+});

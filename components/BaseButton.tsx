@@ -45,7 +45,7 @@ interface BaseButtonProps {
   disabled?: boolean;
   textStyle?: any;
   showPressedShadow?: boolean
-   textStyleText   ?: any    
+  textStyleText?: any
 
 
 }
@@ -135,7 +135,7 @@ const BaseButton = React.memo(
               disabled={disabled}
             >
               {leftChild && leftChild}
-              <Text style={[styles.text, textColor && { color: textColor },textStyleText]}> {title} </Text>
+              <Text style={[styles.text, textColor && { color: textColor }, textStyleText]}> {title} </Text>
               {rightChild && rightChild}
             </TouchableOpacity>
           )}

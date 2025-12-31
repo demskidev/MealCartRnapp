@@ -8,6 +8,11 @@ const AppNavigator = () => {
       <Stack.Screen name="CreateMealPlan" options={{ headerShown: false }} />
       <Stack.Screen name="TestPlanShopping" options={{ headerShown: false }} />
       <Stack.Screen name="ProfileScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="DietaryPreferencesScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="AllergiesIntolerancesScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="PasswordReset" options={{ headerShown: false }} />
+      <Stack.Screen name="MealPlanSettings" options={{ headerShown: false }} />
+
 
     </Stack>
   );

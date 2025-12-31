@@ -19,10 +19,11 @@ export const Colors = {
   lightGray: "#F5F5F5",
   _586E3F: "#586E3F",
   _5F6C51: "#5F6C51",
-  greysoft:'#F4F4F4',
-  boxbackground:'#EBEBEB',
-  _667D4C : '#667D4C',
-  _9DAF89 :'#9DAF89'
+  greysoft: '#F4F4F4',
+  boxbackground: '#EBEBEB',
+  _667D4C: '#667D4C',
+  _9DAF89: '#9DAF89',
+  textBlack: '#0F0F0F'
 };
 
 /**

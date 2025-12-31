@@ -35,7 +35,7 @@ const PlansScreen: React.FC = () => {
       <View style={styles.dividerRow} />
       <View style={styles.parentOfMarkDone}>
         <BaseButton
-          title={ "View Plan"}
+          title={"View Plan"}
           gradientButton={false}
           // backgroundColor={Colors.olive}
           textColor="#fff"
@@ -45,7 +45,7 @@ const PlansScreen: React.FC = () => {
           onPress={() => router.push('/appscreens/TestMealPlan')}
         />
         <BaseButton
-          title={ " Start Plan"  }
+          title={" Start Plan"}
           gradientButton={false}
           // backgroundColor={Colors.olive}
           textColor="#fff"

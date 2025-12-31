@@ -1,6 +1,12 @@
+import ConfirmationModal from '@/components/ConfirmationModal';
+import DefaultServingsModal from '@/components/DefaultServingsModal';
+import UpdateProfileModal from '@/components/UpdateProfileModal';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const preferencesData = [
     {
@@ -26,46 +32,74 @@ const preferencesData = [
 ];
 
 export default function ProfileScreen() {
-    return (
-        <View style={styles.container}>
-            {/* Header */}
-           <View style={styles.parentCreateMealText}>
-                     <Text style={styles.header}> "Edit Meal" </Text>
-                     <TouchableOpacity   >
-                       <Image
-                         source={require("@/assets/images/close-icon.png")}
-                         style={{ width: verticalScale(24), height: verticalScale(24) }}
-                         resizeMode="contain"
-                       />
-                     </TouchableOpacity>
-           
-           
-                   </View>
-            <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
-                {/* Avatar */}
-                <View style={styles.avatarContainer}>
-                    {/* <Image
-                        source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }}
-                        style={styles.avatar}
-                    /> */}
-                    <Text style={styles.name}>Alex Doe</Text>
-                    <Text style={styles.email}>alex.doe@email.com</Text>
-                </View>
+    const router = useRouter();
+    const [showModal, setShowModal] = useState(false);
+    const [deleteAccount, setDeleteAccount] = useState(false);
+    const [defaultServings, setDefaultServings] = useState(false);
 
-                {/* Preferences Section */}
+
+
+    const onPressItem = (index: any) => {
+        if (index === 0) {
+            router.push('/appscreens/DietaryPreferences');
+        } else if (index === 1) {
+            router.push('/appscreens/AllergiesIntolerance');
+
+        } else if (index === 2) {
+            router.push('/appscreens/MealPlanSettings');
+
+        } else if (index === 3) {
+            setDefaultServings(true);
+            //    router.push('');
+        }
+    }
+    return (
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+            <View style={styles.parentCreateMealText}>
+                <Text style={styles.header}> Profile </Text>
+                <TouchableOpacity onPress={() => router.back()} >
+                    <Image
+                        source={require("@/assets/images/close-icon.png")}
+                        style={{ width: verticalScale(24), height: verticalScale(24) }}
+                        resizeMode="contain"
+                    />
+                </TouchableOpacity>
+
+
+            </View>
+            <View style={styles.avatarContainer}>
+                <TouchableOpacity onPress={() => setShowModal(true)} >
+                    <Image
+                        source={require("@/assets/images/Profileimage.png")}
+                        style={{ width: verticalScale(112), height: verticalScale(112) }}
+                        resizeMode="contain"
+                    />
+                </TouchableOpacity>
+                <Text style={styles.name}>Alex Doe</Text>
+                <Text style={styles.email}>alex.doe@email.com</Text>
+            </View>
+            <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+
                 <Text style={styles.sectionHeader}>MEAL & COOKING PREFERENCES</Text>
+
                 <View style={styles.card}>
                     <FlatList
                         data={preferencesData}
                         keyExtractor={item => item.id}
+                        scrollEnabled={false}
                         renderItem={({ item, index }) => (
                             <>
-                                <TouchableOpacity style={styles.row}>
+                                <TouchableOpacity style={styles.row} onPress={() => onPressItem(index)} >
                                     <View>
                                         <Text style={styles.rowTitle}>{item.title}</Text>
                                         {!!item.subtitle && <Text style={styles.rowSubtitle}>{item.subtitle}</Text>}
                                     </View>
-                                    <Text style={styles.arrow}>{'>'}</Text>
+
+                                    <Image
+                                        source={require("@/assets/images/forwardicon.png")}
+                                        style={{ width: verticalScale(8), height: verticalScale(12) }}
+                                        resizeMode="contain"
+                                    />
                                 </TouchableOpacity>
                                 {index !== preferencesData.length - 1 && <View style={styles.divider} />}
                             </>
@@ -73,34 +107,79 @@ export default function ProfileScreen() {
                     />
                 </View>
 
-                {/* Account & Security Section */}
                 <Text style={styles.sectionHeader}>ACCOUNT & SECURITY</Text>
                 <View style={styles.card}>
-                    <TouchableOpacity style={styles.row}>
+                    <TouchableOpacity
+                        style={styles.row}
+                        onPress={() => router.push('/appscreens/PasswordReset')}
+                    >
                         <Text style={styles.rowTitle}>Change Password</Text>
-                        <Text style={styles.arrow}>{'>'}</Text>
+                        <Image
+                            source={require("@/assets/images/forwardicon.png")}
+                            style={{ width: verticalScale(8), height: verticalScale(12) }}
+                            resizeMode="contain"
+                        />
                     </TouchableOpacity>
                     <View style={styles.divider} />
-                    <TouchableOpacity style={styles.row}>
+                    <TouchableOpacity style={styles.row} onPress={() => setDeleteAccount(true)}>
                         <Text style={styles.deleteText}>Delete Account</Text>
                     </TouchableOpacity>
                 </View>
+                <Text style={styles.sectionHeader}>APP SETTINGS</Text>
+                <View style={styles.card}>
+                    <TouchableOpacity style={styles.row}>
+                        <Text style={styles.rowTitle}>Help & Support</Text>
+                        <Image
+                            source={require("@/assets/images/forwardicon.png")}
+                            style={{ width: verticalScale(8), height: verticalScale(12) }}
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
+                    <View style={styles.divider} />
+                    <TouchableOpacity style={styles.row}>
+                        <Text style={styles.rowTitle}>About & Legal</Text>
+                        <Image
+                            source={require("@/assets/images/forwardicon.png")}
+                            style={{ width: verticalScale(8), height: verticalScale(12) }}
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
-            {/* Bottom Navigation Placeholder */}
             <View style={styles.bottomNav}>
-                {/* <TouchableOpacity style={styles.navItem}><Image source={require('@/assets/images/home.png')} style={styles.navIcon} /><Text style={styles.navLabel}>Home</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Image source={require('@/assets/images/meals.png')} style={styles.navIcon} /><Text style={styles.navLabel}>Meals</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Image source={require('@/assets/images/plans.png')} style={styles.navIcon} /><Text style={styles.navLabel}>Plans</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Image source={require('@/assets/images/lists.png')} style={styles.navIcon} /><Text style={[styles.navLabel, styles.selectedNav]}>Lists</Text></TouchableOpacity> */}
             </View>
-        </View>
+            <UpdateProfileModal
+                visible={showModal}
+                onClose={() => setShowModal(false)}
+            />
+            <ConfirmationModal
+                visible={deleteAccount}
+                title="Delete Account?"
+                description="This action is permanent and cannot be undone. All your meals, plans, and lists will be lost."
+                cancelText="Cancel"
+                confirmText="Delete"
+                onCancel={() => setDeleteAccount(false)}
+                onConfirm={() => {
+                    setDeleteAccount(false);
+
+                }}
+            />
+            <DefaultServingsModal
+                visible={defaultServings}
+                onClose={() => setDefaultServings(false)}
+                onSave={(selected) => {
+                    setDefaultServings(false);
+                }}
+            />
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.background,
+        backgroundColor: Colors.white,
+        paddingHorizontal: horizontalScale(20)
     },
     headerRow: {
         flexDirection: 'row',
@@ -121,46 +200,43 @@ const styles = StyleSheet.create({
     },
     avatarContainer: {
         alignItems: 'center',
-        marginTop: verticalScale(18),
+        marginTop: verticalScale(8),
         marginBottom: verticalScale(10),
     },
-    avatar: {
-        width: moderateScale(90),
-        height: moderateScale(90),
-        borderRadius: moderateScale(45),
-        backgroundColor: Colors.greysoft,
-    },
+
     name: {
-        fontSize: moderateScale(20),
+        fontSize: moderateScale(21),
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
         color: Colors.primary,
         marginTop: verticalScale(2),
     },
     email: {
-        fontSize: moderateScale(13),
+        fontSize: moderateScale(12),
         fontFamily: FontFamilies.ROBOTO_REGULAR,
         color: Colors.tertiary,
         marginTop: verticalScale(2),
     },
     sectionHeader: {
-        fontSize: moderateScale(12),
-        fontFamily: FontFamilies.ROBOTO_MEDIUM,
+        fontSize: moderateScale(14),
+        fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
         color: Colors.tertiary,
         marginTop: verticalScale(18),
         marginBottom: verticalScale(6),
-        marginLeft: horizontalScale(20),
     },
     card: {
         backgroundColor: Colors.white,
-        borderRadius: moderateScale(12),
-        marginHorizontal: horizontalScale(14),
-        marginBottom: verticalScale(14),
-        elevation: 2,
-        shadowColor: Colors.black,
+        borderRadius: moderateScale(8),
+        marginVertical: verticalScale(6),
+        paddingVertical: verticalScale(11),
+
+        // Android
+        elevation: 4,
+
+        // iOS
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        paddingVertical: verticalScale(2),
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     row: {
         flexDirection: 'row',
@@ -170,7 +246,7 @@ const styles = StyleSheet.create({
         paddingVertical: verticalScale(13),
     },
     rowTitle: {
-        fontSize: moderateScale(15),
+        fontSize: moderateScale(14),
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         color: Colors.primary,
     },
@@ -186,12 +262,11 @@ const styles = StyleSheet.create({
         marginLeft: horizontalScale(8),
     },
     divider: {
-        height: 1,
+        height: moderateScale(1),
         backgroundColor: Colors.divider,
-        marginHorizontal: horizontalScale(16),
     },
     deleteText: {
-        fontSize: moderateScale(15),
+        fontSize: moderateScale(14),
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         color: Colors.error,
     },
@@ -227,8 +302,8 @@ const styles = StyleSheet.create({
         color: Colors.olive,
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
     },
-  header: { fontSize: moderateScale(21), color: Colors.primary, fontFamily: FontFamilies.ROBOTO_SEMI_BOLD },
- parentCreateMealText: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: verticalScale(20), marginHorizontal: moderateScale(20)
-  },
+    header: { fontSize: moderateScale(21), color: Colors.primary, fontFamily: FontFamilies.ROBOTO_SEMI_BOLD },
+    parentCreateMealText: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: verticalScale(20),
+    },
 });
