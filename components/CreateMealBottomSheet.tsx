@@ -48,7 +48,6 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     const prepTimeOptions = ['5 Mins', '10 Mins', '15 Mins'];
     const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
-    const unitWeightOptions = ['100grm', '200grm', '1kg'];
 
     const [ingredients, setIngredients] = useState([
     ]);
