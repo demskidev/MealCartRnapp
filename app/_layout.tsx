@@ -12,9 +12,14 @@ import { LoaderProvider } from "@/context/LoaderContext";
 import { TourStepProvider } from '@/context/TourStepContext';
 import RootNavigator from "@/navigation/RootNavigator";
 import { toastConfig } from "@/utils/ToastConfig";
+import { useRouter, useSegments } from 'expo-router';
 import Toast from "react-native-toast-message";
 
 const RootLayout = () => {
+  const router = useRouter();
+const segments = useSegments();
+
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LoaderProvider>

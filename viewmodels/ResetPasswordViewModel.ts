@@ -1,7 +1,7 @@
 import { resetPasswordValidationSchema } from '@/utils/validators/AuthValidators';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import * as yup from 'yup';
-import { auth } from "../firebase";
+import { auth } from "../services/firebase";
 
 export interface ResetPasswordFormValues {
   email: string;

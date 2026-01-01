@@ -5,7 +5,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface CustomDropdownProps {
   value: string;
-  options: string[];
+  options: [];
   onSelect: (option: string) => void;
   icon?: any;
 }
@@ -17,7 +17,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  const handleSelect = (option: string) => {
+  const handleSelect = (option: any) => {
     onSelect(option);
     setOpen(false);
   };
@@ -31,7 +31,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         activeOpacity={0.8}
         // hitSlop={moderateScale(20)}
       >
-        <Text style={styles.text}>{value}</Text>
+        <Text style={styles.text}>{value?.title ?? value}</Text>
 
         {icon && (
           <Image
@@ -46,12 +46,12 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         <View style={styles.optionContainer}>
           {options.map((option) => (
             <TouchableOpacity
-              key={option}
+              key={option?.id ?? option}
               style={styles.option}
               onPress={() => handleSelect(option)}
               // hitSlop={moderateScale(20)}
             >
-              <Text style={styles.optionText}>{option}</Text>
+              <Text style={styles.optionText}>{option?.title ?? option}</Text>
             </TouchableOpacity>
           ))}
         </View>

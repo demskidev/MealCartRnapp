@@ -22,40 +22,44 @@ import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { Colors } from "@/constants/Theme";
 import { useLoader } from "@/context/LoaderContext";
+import { useAppSelector } from "@/reduxStore/hooks";
 import {
   SigninFormValues,
   SigninViewModel,
 } from "@/viewmodels/SigninViewModel";
 import { Formik } from "formik";
-import React from "react";
+import { useEffect } from "react";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
-   const [isLoading, setIsLoading] = React.useState(false);
-    const { showLoader, hideLoader } = useLoader();
-  
+  // const [isLoading, setIsLoading] = React.useState(false);
+  const isLoading = useAppSelector(state => state.auth.loading);
+  const { showLoader, hideLoader } = useLoader();
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoader();
+    } else {
+      hideLoader();
+    }
+  }, [isLoading]);
+
 
   const handleSignin = async (values: SigninFormValues) => {
-    setIsLoading(true);
-      showLoader();
-    try {
-      const result = await signinViewModel.handleSignin(values);
-      if (result.success) {
-        showSuccessToast("Signed in successfully!");
-        // Navigate to home screen
+
+
+    await signinViewModel.handleSignin(
+      values,
+      (payload) => {
+        showSuccessToast(Strings.signinSuccessful);
         resetAndNavigate(APP_ROUTES.HOME);
 
-      } else {
-        showErrorToast("Sign In Failed", result.message);
+      },
+      (error) => {
+        showErrorToast(error);
+
       }
-    } catch (error) {
-      showErrorToast("Error", "An unexpected error occurred");
-    } finally {
-       hideLoader();
-
-      setIsLoading(false);
-
-    }
+    );
   };
 
   return (
@@ -156,20 +160,20 @@ const SignInScreen = () => {
                       textColor={Colors.white}
                       onPress={async () => {
 
-                            resetAndNavigate(APP_ROUTES.HOME);
+                        //  resetAndNavigate(APP_ROUTES.HOME);
 
 
 
-                        // const formErrors = await validateForm();
-                        // if (Object.keys(formErrors).length > 0) {
-                        //   setTouched({
-                        //     email: true,
-                        //     password: true,
-                        //   });
-                        //   // Don't show toast, only show errors under fields
-                        //   return;
-                        // }
-                        // handleSignin(values);
+                        const formErrors = await validateForm();
+                        if (Object.keys(formErrors).length > 0) {
+                          setTouched({
+                            email: true,
+                            password: true,
+                          });
+                          // Don't show toast, only show errors under fields
+                          return;
+                        }
+                        handleSignin(values);
                       }}
                       disabled={isLoading}
                     />

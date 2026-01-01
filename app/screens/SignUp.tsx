@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { useLoader } from "@/context/LoaderContext";
+import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
 import { pushNavigation, replaceNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
@@ -27,33 +28,35 @@ import {
   SignupViewModel,
 } from "@/viewmodels/SignupViewModel";
 import { Formik } from "formik";
-import React from "react";
+import { useEffect } from "react";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const { showLoader, hideLoader } = useLoader();
+  const isLoading = useAppSelector(state => state.auth.loading);
+    const { showLoader, hideLoader } = useLoader();
+  
+    useEffect(() => {
+      if (isLoading) {
+        showLoader();
+      } else {
+        hideLoader();
+      }
+    }, [isLoading]);
 
   const handleSignup = async (values: SignupFormValues) => {
-    // setIsLoading(true);
-     showLoader();
-    try {
-      const result = await signupViewModel.handleSignup(values);
-      if (result.success) {
-        showSuccessToast("Account created successfully!");
-        // Navigate to OTP verification
-        // resetAndNavigate(APP_ROUTES.HOME);
-        pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
+  
 
-      } else {
-        showErrorToast("Signup Failed", result.message);
-      }
-    } catch (error) {
-      showErrorToast("Error", "An unexpected error occurred");
-    } finally {
-       hideLoader();
-      // setIsLoading(false);
-    }
+    await signupViewModel.handleSignup(
+          values,
+          (payload) => {
+            showSuccessToast(Strings.signupSuccessfully);
+            pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
+    
+          },
+          (error) => {
+            showErrorToast(error);
+    
+          });
   };
 
   return (

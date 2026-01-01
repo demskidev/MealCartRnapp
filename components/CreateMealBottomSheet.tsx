@@ -1,13 +1,18 @@
 import { IconMeal, IconPlus } from '@/assets/svg';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useAppSelector } from '@/reduxStore/hooks';
+import { useCreateMealViewModel } from '@/viewmodels/CreateMealViewModel';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { serverTimestamp } from "firebase/firestore";
 import { forwardRef, useMemo, useState } from 'react';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import BaseButton from './BaseButton';
 import CustomDropdown from './CustomDropdown';
 import CustomStepper from './CustomStepper';
 import CustomTextInput from './CustomTextInput';
+import ImagePickerModal from './ImagePickerModal';
 
 
 export interface CreateMealBottomSheetRef {
@@ -22,6 +27,11 @@ interface CreateMealBottomSheetProps {
 }
 const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps>(
   ({ isEdit = false, mealData }, ref) => {
+
+    const user = useAppSelector(state => state.auth.user);
+
+    const { ingredientCategories, ingredientLoading, ingredientError, addMeal } = useCreateMealViewModel();
+
     const snapPoints = useMemo(() => ['100%'], []);
     const [mealName, setMealName] = useState('');
     const [mealDescription, setMealDescription] = useState('');
@@ -30,9 +40,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
     const [servings, setServings] = useState('1');
     const [difficulty, setDifficulty] = useState('Easy');
     const [category, setCategory] = useState('Dinner');
-    const [ingredientName, setIngredientName] = useState('');
     const [ingredientCount, setIngredientCount] = useState('1');
-    const [ingredientUnit, setIngredientUnit] = useState('100grm');
     const [ingredientCategory, setIngredientCategory] = useState('Fruit');
     const { height } = Dimensions.get('window');
     const { width } = Dimensions.get('window')
@@ -40,32 +48,73 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
     const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
     const [unitWeight, setUnitweight] = useState('100 grms');
     const unitWeightOptions = ['100grm', '200grm', '1kg'];
-    const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
+
     const [ingredients, setIngredients] = useState([
-      { name: '', count: '1', unit: '100grm', category: 'Fruit' }
     ]);
+
+
     const [steps, setSteps] = useState(
       isEdit
         ? Array(6).fill({ text: '' }) // when editing → 6 blank instructions
         : [{ text: '' }]              // when creating → 1 blank instruction
     );
 
+    // Modal for image picker
+    const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+
+
+    const updateIngredientsCategprory = (category, index) => {
+      const updated = ingredients.map((ing, i) => {
+        if (i === index) {
+          return { ...ing, category };
+        }
+        return ing;
+      });
+      setIngredients(updated);
+
+    }
+
+    const updateUnit = (unit, index) => {
+      const updated = ingredients.map((ing, i) => {
+        if (i === index) {
+          return { ...ing, unit };
+        }
+        return ing;
+      });
+      setIngredients(updated);
+
+    }
+
+    const updateCount = (count, index) => {
+      const updated = ingredients.map((ing, i) => {
+        if (i === index) {
+          return { ...ing, count };
+        }
+        return ing;
+      });
+      setIngredients(updated);
+
+    }
+
+    const updateName = (name, index) => {
+      const updated = ingredients.map((ing, i) => {
+        if (i === index) {
+          return { ...ing, name };
+        }
+        return ing;
+      });
+      setIngredients(updated);
+
+    }
+
     const handleAddIngredient = () => {
       setIngredients((prev) => [
         ...prev,
-        { name: '', count: '1', unit: '100grm', category: 'Fruit' }
+        { name: '', count: '1', unit: '100grm', category: ingredientCategories.length > 0 ? ingredientCategories[0] : '' },
       ]);
     };
 
-    const handleUpdateIngredient = (index, key, value) => {
-      // const updated = [...ingredients];
-      // updated[index][key] = value;
-      // setIngredients(updated);
-    };
 
-    // const handleDeleteIngredient = (index) => {
-    //   setIngredients((prev) => prev.filter((_, i) => i !== index));
-    // };
 
     // Ingredient item renderer
     const renderIngredientItem = ({ item, index }) => (
@@ -76,7 +125,8 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
         <CustomTextInput
           placeholder="e.g. Tomato"
           value={item.name}
-          onChangeText={(text) => handleUpdateIngredient(index, 'name', text)}
+          onChangeText={(text) =>
+            updateName(text, index)}
         />
 
         {isEdit ? <View>
@@ -136,7 +186,15 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <Text style={styles.label}>Count</Text>
-              <CustomStepper value={ingredientCount} onIncrement={() => setIngredientCount(c => String(Number(c) + 1))} onDecrement={() => setIngredientCount(c => String(Math.max(1, Number(c) - 1)))} />
+              <CustomStepper value={item?.count} onIncrement={() => {
+                // setIngredientCount(c => String(Number(c) + 1))
+                updateCount(String(Number(item?.count) + 1), index);
+              }
+              } onDecrement={() => {
+                //  setIngredientCount(c => String(Math.max(1, Number(c) - 1)))
+                updateCount(String(Math.max(1, Number(item?.count) - 1)), index);
+              }
+              } />
 
 
             </View>
@@ -145,15 +203,22 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
               <Text style={styles.label}>Unit (weight)</Text>
 
               <CustomStepper
-                value={unitWeight}
+                value={item?.unit}
                 onIncrement={() => {
+                  const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
                   if (unitWeightIndex < unitWeightOptions.length - 1) {
-                    setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
+                    //setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
+                    updateUnit(unitWeightOptions[unitWeightIndex + 1], index);
                   }
                 }}
                 onDecrement={() => {
+
+                  const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
+
                   if (unitWeightIndex > 0) {
-                    setUnitweight(unitWeightOptions[unitWeightIndex - 1]);
+                    //setUnitweight(unitWeightOptions[unitWeightIndex - 1]);
+                    updateUnit(unitWeightOptions[unitWeightIndex - 1], index);
+
                   }
                 }}
               />
@@ -164,18 +229,13 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
             <View style={styles.rowItem}>
               <Text style={styles.label}>Category</Text>
 
-              <CustomDropdown value={ingredientCategory} options={['Fruit', 'Vegetable',]} onSelect={setIngredientCategory} icon={require("@/assets/images/icondown.png")} />
-
-
-
-
-
+              <CustomDropdown value={item?.category} options={ingredientCategories} onSelect={(category) => updateIngredientsCategprory(category, index)} icon={require("@/assets/images/icondown.png")} />
 
             </View>
 
             <TouchableOpacity
               style={styles.deleteButton}
-            // onPress={() => handleDeleteIngredient(index)}
+           onPress={() => handleDeleteIngredient(index)}
             >
               <Image
                 source={require("@/assets/images/delete.png")}
@@ -190,14 +250,11 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
 
     const handleUpload = () => {
-      // Implement upload logic here
-      alert('Upload clicked!');
+      setShowImagePickerModal(true);
     };
-    const handleDeleteIngredient = () => {
-      setIngredientName('');
-      setIngredientCount('1');
-      setIngredientUnit('100grm');
-      setIngredientCategory('Fruit');
+    const handleDeleteIngredient = (index) => {
+      const updated = ingredients.filter((_, i) => i !== index);
+      setIngredients(updated);
     };
 
     // const renderInstructionItem = ({ item, index }) => (
@@ -227,6 +284,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
             borderRadius: moderateScale(4),
             backgroundColor: Colors.greysoft,
             paddingHorizontal: horizontalScale(10),
+            paddingTop: moderateScale(15),
             marginTop: moderateScale(-5),
             width: isEdit ? width * 0.7 : width * 0.8,
             marginBottom: verticalScale(15)
@@ -239,8 +297,18 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
           multiline
           // value={item.text}
           // onChangeText={(text) => handleUpdateStep(index, text)}
-          value={mealDescription}
-          onChangeText={setMealDescription}
+          value={item?.text}
+          onChangeText={(text)=>
+          {
+            const updated = steps.map((step, i) => {
+              if (i === index) {
+                return { ...step, text };
+              }
+              return step;
+            });
+            setSteps(updated);
+          }
+          }
         />
 
         {isEdit ? <TouchableOpacity onPress={() => ref && typeof ref !== 'function' && ref.current?.close()}>
@@ -253,7 +321,49 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
       </View>
     );
 
+    const handleCreateMeal = async () => {
+      try {
+        // Map ingredients to only include category id
+        const mappedIngredients = ingredients.map(ing => ({
+          ...ing,
+          category: typeof ing.category === 'object' && ing.category.id ? ing.category.id : ing.category
+        }));
+        // Map steps to string array
+        const mappedSteps = steps.map(step => step.text);
+        const mealData = {
+          name: mealName,
+          description: mealDescription,
+          imageUrl,
+          prepTime,
+          servings,
+          difficulty,
+          category,
+          ingredients: mappedIngredients,
+          steps: mappedSteps,
+          createdAt: serverTimestamp(),
+          uid : user?.id
+        };
+
+       await addMeal(mealData);
+       alert(Strings.mealAdded);
+        if (ref && typeof ref !== 'function' && ref.current?.close) {
+          ref.current.close();
+        }
+      } catch (error) {
+        alert("Error creating meal: " + error.message);
+      }
+    };
+
     return (
+      <>
+
+      {/* Image Picker Modal (Reusable) */}
+      <ImagePickerModal
+        visible={showImagePickerModal}
+        onClose={() => setShowImagePickerModal(false)}
+        onImagePicked={setImageUrl}
+      />
+
       <BottomSheet
         ref={ref}
         index={-1}
@@ -288,7 +398,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
         </View>
 
         <BottomSheetScrollView
-          contentContainerStyle={{ paddingHorizontal: moderateScale(20), paddingBottom : verticalScale(30) }}
+          contentContainerStyle={{ paddingHorizontal: moderateScale(20), paddingBottom: verticalScale(30) }}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
@@ -407,13 +517,11 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
               renderItem={renderIngredientItem}
             />
 
-            <View style={styles.addIngredient}>
-
+            <TouchableOpacity style={styles.addIngredient} onPress={handleAddIngredient}>
               <IconPlus width={verticalScale(21)} height={verticalScale(21)} color="black" />
               <Text style={styles.plusicon}>+</Text>
-
               <Text style={styles.addIngredientText}>Add Ingredient</Text>
-            </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.card}>
@@ -439,12 +547,14 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
               scrollEnabled={false}
               renderItem={renderInstructionItem}
             />
-            <View style={styles.addIngredient}>
+
+            <TouchableOpacity
+              style={styles.addIngredient}
+              onPress={() => setSteps(prev => [...prev, { text: '' }])}
+            >
               <Text style={styles.plusicon}>+</Text>
-
               <Text style={styles.addIngredientText}>Add Step</Text>
-
-            </View>
+            </TouchableOpacity>
 
           </View>
           <View style={styles.parentOfConfirmButton}>
@@ -470,8 +580,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
               textColor={Colors.white}
               rightChild={isEdit ? <IconMeal width={verticalScale(21)} height={verticalScale(21)} /> : null}
               textStyle={[styles.confirmButton,]}
-            // onPress={goNext}
-            // showPressedShadow={true}
+              onPress={handleCreateMeal}
             />
 
           </View>
@@ -479,6 +588,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
         </BottomSheetScrollView>
 
       </BottomSheet>
+      </>
     );
   });
 
@@ -576,8 +686,8 @@ const styles = StyleSheet.create({
     marginRight: moderateScale(8)
 
   },
-  emptybottom:{
-height:verticalScale(140)
+  emptybottom: {
+    height: verticalScale(140)
   },
- 
+
 });
