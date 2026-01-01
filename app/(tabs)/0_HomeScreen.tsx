@@ -62,9 +62,11 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       if (canStart) {
-        // start()
+        //  start()
       }
     }, [canStart])
+
+
   )
 
   React.useEffect(() => {
@@ -216,15 +218,15 @@ const HomeScreen: React.FC = () => {
                   </View>
                   <TourGuideZone zone={4} shape="circle" borderRadius={30} >
                     <View style={{ minHeight: moderateScale(70), minWidth: moderateScale(70), justifyContent: 'center', alignItems: 'center' }}>
-                      
-                      <TouchableOpacity   onPress={() => router.push('/appscreens/ProfileScreen')}>
-                      <Image
-                        source={require('@/assets/images/userDummy.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                   
-                   </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => router.push('/appscreens/ProfileScreen')}>
+                        <Image
+                          source={require('@/assets/images/userDummy.png')}
+                          style={styles.image}
+                          resizeMode="contain"
+                        />
+
+                      </TouchableOpacity>
                     </View>
                   </TourGuideZone>
                 </View>

@@ -2,10 +2,12 @@ import BaseButton from '@/components/BaseButton';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useTourStep } from '@/context/TourStepContext';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TourGuideZone, useTourGuideController } from 'rn-tourguide';
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window')
 
@@ -16,7 +18,86 @@ const shoppingLists = [
 const PlansScreen: React.FC = () => {
   const [pausePlan, setPausePlan] = useState(false);
   const [showResumePlan, setShowResumePlan] = useState(false);
+  const [layoutReady, setLayoutReady] = useState(false);
   const router = useRouter();
+  const zoneReadyRef = React.useRef(false);
+  const { start, stop } = useTourGuideController();
+  const didStartRef = React.useRef(false);
+  const { setCurrentStepIndex } = useTourStep();
+  const [zoneReady, setZoneReady] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!zoneReady) return;
+
+      setCurrentStepIndex(4);
+
+      const timeout = setTimeout(() => {
+        start(5);
+      }, 300); // Android needs delay
+
+      return () => clearTimeout(timeout);
+    }, [zoneReady])
+  );
+
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     if (didStartRef.current) return;
+
+  //     didStartRef.current = true;
+
+  //     requestAnimationFrame(() => {
+  //       start(5); // 🔥 resume tour at zone 5
+  //     });
+
+  //     return () => { };
+  //   }, [])
+  // );
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     // when Plans screen is focused
+  //     setCurrentStepIndex(4);   // 🔥 move to step 4
+  //     requestAnimationFrame(() => {
+  //       start(5);               // zone 5
+  //     });
+  //   }, [])
+  // );
+
+
+
+
+
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     stop(); // reset the tour
+
+  //     let isActive = true;
+
+  //     const timeout = setTimeout(() => {
+  //       if (isActive) {
+  //         start(); // start the tour
+  //       }
+  //     }, 200); // small delay to let the layout finish
+
+  //     return () => {
+  //       isActive = false;
+  //       clearTimeout(timeout); // cleanup
+  //     };
+  //   }, [])
+  // );
+
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     return () => stop();
+  //   }, [])
+  // );
+
+
+
+
+
+
+
   const renderShoppingList = ({ item }) => (
     <View style={styles.listCard}>
       <Text style={styles.listTitle}>{item.name}</Text>
@@ -64,10 +145,17 @@ const PlansScreen: React.FC = () => {
   )
 
 
+
+
+
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
 
-
+      <View
+        style={styles.headerRow}
+        onLayout={() => setLayoutReady(true)} // triggers after layout
+      ></View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
 
@@ -77,12 +165,31 @@ const PlansScreen: React.FC = () => {
 
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Meal Plans</Text>
-          <TouchableOpacity onPress={() => router.push('/appscreens/CreateMealPlan')}>
-            <Image source={require("@/assets/images/gradientclose.png")} resizeMode="contain" style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-11), }} />
 
-          </TouchableOpacity>
+          {/* Use a unique zone number for the add plan button, e.g., 2 */}
+
+          <TourGuideZone zone={5} shape="circle" maskOffset={10}>
+            <View
+              collapsable={false}   // 🔥 THIS IS THE KEY
+              style={styles.tourTarget}
+              onLayout={() => setZoneReady(true)}
+            >
+              <TouchableOpacity onPress={() => router.push('/appscreens/CreateMealPlan')}
+              // onLayout={() => {
+              //   if (!zoneReadyRef.current) {
+              //     zoneReadyRef.current = true;
+              //     stop();
+              //     requestAnimationFrame(() => {
+              //       start();
+              //     });
+              //   }
+              // }}
+              >
+                <Image source={require("@/assets/images/gradientclose.png")} style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-11), }} />
+              </TouchableOpacity>
+            </View>
+          </TourGuideZone>
         </View>
-
         {showResumePlan ?
           <>
             <View style={styles.noActivePlan}>
@@ -587,7 +694,31 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.tertiary
 
-  }
+  },
+  addButtonWrapper: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+  },
+  tourTarget: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  touchable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  image: {
+    width: 56,
+    height: 56,
+  },
+
+
 });
 
 export default PlansScreen;
