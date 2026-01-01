@@ -7,3 +7,9 @@ export const MEALS_COLLECTION = 'meals';
 export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';
 // Add more collection keys as needed
+
+
+export const MEAL_IMAGE_FOLDER = 'mealImages/';
+
+
+export const HTTPPREFIX = 'http://';

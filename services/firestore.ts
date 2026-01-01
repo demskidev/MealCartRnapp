@@ -4,8 +4,8 @@ import { setDoc } from 'firebase/firestore';
 // Firestore service for common queries
 
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
-import { db } from './firebase';
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from './firebase';
 
 
 // Get all documents from a collection
@@ -71,7 +71,7 @@ export const queryDocuments = async (collectionName: string, field: string, op: 
 // Upload an image to Firebase Storage and return the download URL
 export const uploadImageToFirebase = async (uri: string, path: string) => {
   try {
-    const storage = getStorage();
+  
     // Convert local URI to blob
     let blob;
   

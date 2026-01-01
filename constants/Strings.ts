@@ -36,4 +36,5 @@ mealsAreSecure:"Your meal plans and recipes will be securely synced to your acco
 	registrationFailed: "Registration failed",
 	loginFailed: "Login failed",
 	mealAdded: "Meal added successfully",
+	error_creating_meal: "Error creating meal",
 };
