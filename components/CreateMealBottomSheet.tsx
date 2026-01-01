@@ -2,11 +2,12 @@ import { IconMeal, IconPlus } from '@/assets/svg';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useLoader } from '@/context/LoaderContext';
 import { useAppSelector } from '@/reduxStore/hooks';
 import { useCreateMealViewModel } from '@/viewmodels/CreateMealViewModel';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { serverTimestamp } from "firebase/firestore";
-import { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import BaseButton from './BaseButton';
 import CustomDropdown from './CustomDropdown';
@@ -30,7 +31,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     const user = useAppSelector(state => state.auth.user);
 
-    const { ingredientCategories, ingredientLoading, ingredientError, addMeal } = useCreateMealViewModel();
+    const { ingredientCategories, loading, error, addMealData } = useCreateMealViewModel();
 
     const snapPoints = useMemo(() => ['100%'], []);
     const [mealName, setMealName] = useState('');
@@ -44,13 +45,15 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
     const [ingredientCategory, setIngredientCategory] = useState('Fruit');
     const { height } = Dimensions.get('window');
     const { width } = Dimensions.get('window')
+
     const prepTimeOptions = ['5 Mins', '10 Mins', '15 Mins'];
     const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
-    const [unitWeight, setUnitweight] = useState('100 grms');
     const unitWeightOptions = ['100grm', '200grm', '1kg'];
 
     const [ingredients, setIngredients] = useState([
     ]);
+
+     const { showLoader, hideLoader } = useLoader();
 
 
     const [steps, setSteps] = useState(
@@ -63,10 +66,19 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
     const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
 
-    const updateIngredientsCategprory = (category, index) => {
+    useEffect(() => { 
+      if(loading)
+        showLoader();
+      else
+        hideLoader();
+    }, [loading]);
+
+
+    const updateIngredientsCategprory = (category : any, index : number) => {
+
       const updated = ingredients.map((ing, i) => {
         if (i === index) {
-          return { ...ing, category };
+          return { ...ing, unit : category?.unit?.[0] ?? '', category };
         }
         return ing;
       });
@@ -74,7 +86,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     }
 
-    const updateUnit = (unit, index) => {
+    const updateUnit = (unit: any, index: number) => {
       const updated = ingredients.map((ing, i) => {
         if (i === index) {
           return { ...ing, unit };
@@ -85,7 +97,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     }
 
-    const updateCount = (count, index) => {
+    const updateCount = (count: any, index: number) => {
       const updated = ingredients.map((ing, i) => {
         if (i === index) {
           return { ...ing, count };
@@ -96,7 +108,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     }
 
-    const updateName = (name, index) => {
+    const updateName = (name: any, index: number) => {
       const updated = ingredients.map((ing, i) => {
         if (i === index) {
           return { ...ing, name };
@@ -108,9 +120,10 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
     }
 
     const handleAddIngredient = () => {
+
       setIngredients((prev) => [
         ...prev,
-        { name: '', count: '1', unit: '100grm', category: ingredientCategories.length > 0 ? ingredientCategories[0] : '' },
+        { name: '', count: '1', unit: ingredientCategories.length > 0 ? ingredientCategories[0]?.unit?.[0] ?? '' : '', category: ingredientCategories.length > 0 ? ingredientCategories[0] : '' },
       ]);
     };
 
@@ -205,6 +218,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
               <CustomStepper
                 value={item?.unit}
                 onIncrement={() => {
+                  const unitWeightOptions = item?.category?.unit;
                   const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
                   if (unitWeightIndex < unitWeightOptions.length - 1) {
                     //setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
@@ -212,7 +226,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
                   }
                 }}
                 onDecrement={() => {
-
+                 const unitWeightOptions = item?.category?.unit;
                   const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
 
                   if (unitWeightIndex > 0) {
@@ -341,16 +355,22 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
           ingredients: mappedIngredients,
           steps: mappedSteps,
           createdAt: serverTimestamp(),
-          uid : user?.id
+          uid: user?.id
         };
-
-       await addMeal(mealData);
-       alert(Strings.mealAdded);
-        if (ref && typeof ref !== 'function' && ref.current?.close) {
-          ref.current.close();
-        }
+        addMealData(
+          mealData,
+          () => {
+            alert(Strings.mealAdded);
+            if (ref && typeof ref !== 'function' && ref.current?.close) {
+              ref.current.close();
+            }
+          },
+          (error) => {
+            alert(Strings.error_creating_meal + error);
+          }
+        );
       } catch (error) {
-        alert("Error creating meal: " + error.message);
+        alert(Strings.error_creating_meal + error);
       }
     };
 

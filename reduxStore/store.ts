@@ -7,6 +7,7 @@ import { persistReducer, persistStore } from "redux-persist";
 import { AUTH_SLICE, LOGOUT, ROOT } from "./actionTypes";
 import authReducer from "./slices/authSlice";
 import ingredientCategoryReducer from "./slices/ingredientCategorySlice";
+import MealReducer from "./slices/mealsSlice";
 
 
 const persistConfig = {
@@ -18,6 +19,7 @@ const persistConfig = {
 const appReducer = combineReducers({
  auth : authReducer,
  ingredientCategory: ingredientCategoryReducer,
+ meal : MealReducer,
  // home: homeReducer,
 });
 
