@@ -259,7 +259,7 @@ const HomeScreen: React.FC = () => {
             <View style={styles.parentCreateMeal}>
               <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
                 <BaseButton
-                  title={'Create Meal'}
+                  title={'Add New Meal'}
                   gradientButton={true}
                   width={width * 0.41}
                   gradientStartColor="#667D4C"

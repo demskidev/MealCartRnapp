@@ -1,3 +1,4 @@
+
 export const APP_ROUTES = {
   // Auth routes
   SIGNUP: "/screens/SignUp",
@@ -8,6 +9,7 @@ export const APP_ROUTES = {
   FIRST_SCREEN: "/screens/FirstScreen",
   INTRO_SCREEN: "/screens/IntroScreen",
   WELCOME_MEAL_CART: "/screens/WelcomeMealCart",
+  WelcomeScreen: "/screens/WelcomeScreen",
 
   
   // App routes

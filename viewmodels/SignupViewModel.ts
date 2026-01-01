@@ -1,7 +1,6 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { useAppDispatch } from '@/reduxStore/hooks';
+import { registerAsync } from '@/reduxStore/slices/authSlice';
 import * as yup from 'yup';
-import { auth, db } from "../firebase";
 
 export interface SignupFormValues {
   name: string;
@@ -21,7 +20,7 @@ export class SignupViewModel {
       .required("Confirm password is required"),
   });
 
-  constructor() { }
+  dispatch = useAppDispatch();
 
   // async handleSignup(values: SignupFormValues): Promise<{ success: boolean; message: string }> {
   //   try {
@@ -56,28 +55,26 @@ export class SignupViewModel {
   // Field validation is handled by Formik
 
 
-  async handleSignup(values: SignupFormValues): Promise<{ success: boolean; message: string }> {
+  async handleSignup(
+    values: SignupFormValues,
+    onSuccess?: (payload: any) => void,
+    onError?: (error: string) => void
+  ): Promise<void> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
-
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const uid = userCredential.user.uid;
-
-      await setDoc(doc(db, "users", uid), {
-        email: values.email,
+      const resultAction = await this.dispatch(registerAsync({
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
         name: values.name,
-        createdAt: new Date(),
-      });
-
-      return { success: true, message: "Signup successful" };
+      }));
+      if (registerAsync.fulfilled.match(resultAction)) {
+        onSuccess?.(resultAction.payload);
+      } else {
+        onError?.(resultAction.payload as string);
+      }
     } catch (error: any) {
-      let errorMessage = "Signup failed";
-      if (error.code === "auth/email-already-in-use") errorMessage = "Email already in use";
-      if (error.code === "auth/invalid-email") errorMessage = "Invalid email address";
-      if (error.code === "auth/weak-password") errorMessage = "Password should be at least 6 characters";
-      if (error instanceof yup.ValidationError) errorMessage = error.errors[0] || "Validation failed";
-
-      return { success: false, message: errorMessage };
+      onError?.(error.message || 'Validation error');
+      console.log('Validation error:', error);
     }
   }
 

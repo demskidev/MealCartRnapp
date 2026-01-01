@@ -3,6 +3,8 @@ import DefaultServingsModal from '@/components/DefaultServingsModal';
 import UpdateProfileModal from '@/components/UpdateProfileModal';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useAppDispatch } from '@/reduxStore/hooks';
+import { performLogout } from '@/utils/auth';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -36,6 +38,7 @@ export default function ProfileScreen() {
     const [showModal, setShowModal] = useState(false);
     const [deleteAccount, setDeleteAccount] = useState(false);
     const [defaultServings, setDefaultServings] = useState(false);
+    const dispatch = useAppDispatch();
 
 
 
@@ -124,7 +127,15 @@ export default function ProfileScreen() {
                     <TouchableOpacity style={styles.row} onPress={() => setDeleteAccount(true)}>
                         <Text style={styles.deleteText}>Delete Account</Text>
                     </TouchableOpacity>
+
+                     <TouchableOpacity style={styles.row} onPress={async() => {
+                      
+                       await performLogout();
+                     }}>
+                        <Text style={styles.deleteText}>Logout</Text>
+                    </TouchableOpacity>
                 </View>
+                
                 <Text style={styles.sectionHeader}>APP SETTINGS</Text>
                 <View style={styles.card}>
                     <TouchableOpacity style={styles.row}>

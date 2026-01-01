@@ -2,6 +2,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDLGQsd7Kr3nA1DwOkzZZI941azqXp7OLg",
   authDomain: "mealcart-5d62b.firebaseapp.com",
@@ -15,8 +18,13 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication
+// Initialize Firebase Authentication with AsyncStorage persistence (React Native)
+// const auth = initializeAuth(app, {
+//   persistence: getReactNativePersistence(AsyncStorage)
+// });
+
 const auth = getAuth(app);
+
+
 export const db = getFirestore(app);
-// Export auth to use in signup/login screens
 export { auth };

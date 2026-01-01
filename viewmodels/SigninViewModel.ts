@@ -1,8 +1,7 @@
+import { useAppDispatch } from '@/reduxStore/hooks';
+import { loginAsync } from '@/reduxStore/slices/authSlice';
 import { signinValidationSchema } from '@/utils/validators/AuthValidators';
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import * as yup from 'yup';
-import { auth, db } from "../firebase";
 export interface SigninFormValues {
   email: string;
   password: string;
@@ -10,8 +9,7 @@ export interface SigninFormValues {
 
 export class SigninViewModel {
   validationSchema = signinValidationSchema;
-
-  constructor() { }
+  dispatch = useAppDispatch();
 
   // async handleSignin(values: SigninFormValues): Promise<{ success: boolean; message: string }> {
   //   try {
@@ -56,49 +54,21 @@ export class SigninViewModel {
   }
 
 
-  async handleSignin(values: SigninFormValues): Promise<{ success: boolean; message: string }> {
-    console.log('handleSignin called with values:', values);
-
+  async handleSignin(
+    values: SigninFormValues,
+    onSuccess?: (payload: any) => void,
+    onError?: (error: string) => void
+  ): Promise<void> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
-
-      const email = values.email.trim().toLowerCase();
-
-      const userCredential = await signInWithEmailAndPassword(auth, email, values.password);
-      console.log("Firebase signed-in user:", userCredential.user);
-
-      if (userCredential.user) {
-        const userUid = userCredential.user.uid;
-        console.log("Authenticated user UID:", userUid);
-
-        const userDocRef = doc(db, "users", userUid);
-        const userDocSnapshot = await getDoc(userDocRef);
-
-        if (!userDocSnapshot.exists()) {
-          console.log("No user found in Firestore with UID:", userUid);
-          return { success: false, message: "User is not registered in the database" }; // User not found in Firestore
-        }
-
-        console.log("User data found in Firestore:", userDocSnapshot.data());
-
-        return { success: true, message: "Signin successful" };
+      const resultAction = await this.dispatch(loginAsync({ email: values.email.trim().toLowerCase(), password: values.password }));
+      if (loginAsync.fulfilled.match(resultAction)) {
+        onSuccess?.(resultAction.payload);
       } else {
-        console.log("User sign-in failed (userCredential.user is null)");
-        return { success: false, message: "Signin failed" };
+        onError?.(resultAction.payload as string);
       }
-
     } catch (error: any) {
-      let errorMessage = "Signin failed";
-
-      if (error.code === "auth/user-not-found") errorMessage = "User not found";
-      else if (error.code === "auth/wrong-password") errorMessage = "Incorrect password";
-      else if (error.code === "auth/invalid-email") errorMessage = "Invalid email address";
-
-      if (error instanceof yup.ValidationError) errorMessage = error.errors[0] || "Validation failed";
-
-      console.log("Error during signin:", error);
-
-      return { success: false, message: errorMessage };
+      onError?.(error.message || 'Validation error');
     }
   }
 
