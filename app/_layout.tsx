@@ -14,6 +14,8 @@ import RootNavigator from "@/navigation/RootNavigator";
 import { toastConfig } from "@/utils/ToastConfig";
 import { useRouter, useSegments } from 'expo-router';
 import Toast from "react-native-toast-message";
+import { Provider } from 'react-redux';
+import { store } from '../reduxStore/store';
 
 const RootLayout = () => {
   const router = useRouter();
@@ -32,7 +34,9 @@ const segments = useSegments();
           >
             <FontProvider>
               <AuthContextProvider>
+                <Provider store={store}>
                 <RootNavigator />
+                </Provider>
                 <Toast
                   config={toastConfig}
                   topOffset={moderateScale(200)}
