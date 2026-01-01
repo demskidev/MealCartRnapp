@@ -12,12 +12,7 @@ import React, { useRef, useState } from "react";
 import { Dimensions, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Sample images for scroll view (replace with your images)
-// const images = [
-//     require("assets/images/FirstSlideshot.png"),
-//     require("assets/images/SecondSlideshot.png"),
-//     require("assets/images/ThirdSliodeshot.png"),
-// ];
+
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 const slides = [
@@ -52,9 +47,8 @@ const WelcomeMealCart: React.FC = () => {
             setCurrentIndex(nextIndex);
             flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
         } else {
-            // Last slide → navigate to Home screen
             showLoader();
-            pushNavigation(APP_ROUTES.HOME); // or replaceNavigation if you want to remove this screen from stack
+            pushNavigation(APP_ROUTES.HOME);
         }
     };
 
@@ -71,9 +65,7 @@ const WelcomeMealCart: React.FC = () => {
         <View style={[styles.slide,]}>
             <Text style={styles.heading}>{item.heading}</Text>
             <Text style={styles.subheading}>{item.subheading}</Text>
-            {/* <View style={styles.parentImage}>
-                <Image source={item.image} style={styles.image} resizeMode="contain" />
-            </View> */}
+
         </View>
     );
 
@@ -87,12 +79,11 @@ const WelcomeMealCart: React.FC = () => {
                     ref={flatListRef}
                     renderItem={renderItem}
                     keyExtractor={(_, index) => index.toString()}
-                    scrollEnabled={false} // disable swipe
+                    scrollEnabled={false}
                     showsHorizontalScrollIndicator={false}
                     pagingEnabled
                 />
 
-                {/* Dots */}
                 <View style={styles.dotsContainer}>
                     {slides.map((_, index) => (
                         <View
@@ -105,7 +96,6 @@ const WelcomeMealCart: React.FC = () => {
                     ))}
                 </View>
 
-                {/* Buttons */}
                 <View style={styles.buttonsContainer}>
                     {currentIndex > 0 && (
                         <TouchableOpacity onPress={goBack} style={styles.backButton}>
@@ -113,27 +103,7 @@ const WelcomeMealCart: React.FC = () => {
                         </TouchableOpacity>
                     )}
 
-                    {/* <TouchableOpacity
-                    onPress={goNext}
-                    activeOpacity={0.8}
-                    style={[
-                        styles.nextButtonWrapper,
-                        currentIndex === 1
-                            ? { width: width * 0.7 } // No back button → 70%
-                            : { width: width * 0.9 } // Back button visible → 90%
-                    ]}
-                >
-                    <LinearGradient
-                        colors={['#667D4C', '#9DAF89']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.gradientButton}
-                    >
-                        <Text style={styles.buttonTextGradient}>
-                            {currentIndex === 2 ? 'Get Started' : 'Next'}
-                        </Text>
-                    </LinearGradient>
-                </TouchableOpacity> */}
+
                     <BaseButton
                         title={currentIndex === 2 ? "Get Started" : "Next"}
                         gradientButton={true}
@@ -159,7 +129,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: "center",
-        // backgroundColor: Colors.background,
         paddingBottom: verticalScale(20),
         paddingTop: verticalScale(10),
         width: '100%'

@@ -3,7 +3,7 @@ import { moderateScale, verticalScale } from '@/constants/Constants';
 import { Colors } from '@/constants/Theme';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import { TourGuideZone } from 'rn-tourguide'; // Add this at the top
+import { TourGuideZone } from 'rn-tourguide';
 // Define tab icons with SVG support
 const getTabIcon = (
   focused: boolean,

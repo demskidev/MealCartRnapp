@@ -10,17 +10,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const WelcomeScreen = () => {
-  // Navigation helper using expo-router
   const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
     router.push(screen as any);
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* Splash image/logo */}
       <SplashIcon width={moderateScale(145)} height={moderateScale(196)} />
 
-      {/* Middle section with title and description */}
       <View style={styles.middleContainer}>
         <Text style={[styles.title, styles.text]}>{Strings.mealCart}</Text>
         <Text style={[styles.description, styles.text]}>
@@ -28,23 +25,20 @@ const WelcomeScreen = () => {
         </Text>
       </View>
 
-      {/* Bottom section with action buttons */}
       <View style={styles.bottomContainer}>
-        {/* Button to create a new account */}
         <BaseButton
           title={Strings.createAccount}
           gradientButton={true}
-          rightChild={<CreateAccount />} // Icon on the right
+          rightChild={<CreateAccount />}
           textColor={Colors.white}
-          onPress={() => navigate(APP_ROUTES.SIGNUP)} // Navigate to signup screen
+          onPress={() => navigate(APP_ROUTES.SIGNUP)}
         />
 
-        {/* Button to log in */}
         <BaseButton
           title={Strings.logIn}
-          rightChild={<ForwardIcon />} // Icon on the right
+          rightChild={<ForwardIcon />}
           backgroundColor={Colors.buttonBackground}
-          onPress={() => navigate(APP_ROUTES.SIGNIN)} // Navigate to signin screen
+          onPress={() => navigate(APP_ROUTES.SIGNIN)}
         />
       </View>
     </SafeAreaView>
@@ -62,13 +56,13 @@ const styles = StyleSheet.create({
 
   title: {
     color: Colors.primary,
-    fontFamily:FontFamilies.ROBOTO_BLACK,
+    fontFamily: FontFamilies.ROBOTO_BLACK,
     fontSize: fontSize(35),
   },
   description: {
     color: Colors.tertiary,
     lineHeight: moderateScale(20),
-    fontFamily:FontFamilies.ROBOTO_REGULAR,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
     fontSize: fontSize(14),
   },
 

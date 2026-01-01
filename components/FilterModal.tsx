@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
         fontSize: moderateScale(21),
         color: Colors.primary,
-        // marginBottom: verticalScale(10),
     },
     label: {
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
@@ -186,8 +185,7 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(12),
         marginBottom: verticalScale(13)
 
-        // marginTop: verticalScale(10),
-        // marginBottom: verticalScale(6),
+
     },
     chipRow: {
         flexDirection: 'row',
@@ -258,7 +256,6 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(18),
     },
     cancelButton: {
-        // flex: 1,
         backgroundColor: Colors.white,
         borderColor: Colors.borderColor,
         borderWidth: moderateScale(1),
@@ -273,12 +270,8 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(14),
     },
     confirmButton: {
-        //  flex: 1,
-        // backgroundColor: '#9DAF89',
         borderRadius: moderateScale(8),
-        // paddingVertical: verticalScale(12),
         alignItems: 'center',
-        // marginLeft: horizontalScale(8),
     },
     confirmButtonText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,

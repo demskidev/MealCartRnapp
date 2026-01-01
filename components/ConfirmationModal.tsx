@@ -124,21 +124,14 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(16),
     },
     editButton: {
-        // backgroundColor: Colors.olive,
-        // borderRadius: 8,
-        // paddingHorizontal: 32,
-        // paddingVertical: 10,
+
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
-        // color: Colors.primary,
         borderWidth: moderateScale(1),
         borderColor: Colors.borderColor
     },
     deleteButton: {
-        // backgroundColor: Colors.primary || '#D32F2F',
-        // borderRadius: 8,
-        // paddingHorizontal: 32,
-        // paddingVertical: 10,
+
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
         color: Colors.white

@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function ProgressBar({
-    progress = 0, // 0 to 1
+    progress = 0,
     height = 12,
     backgroundColor = Colors.borderColor,
     fillColors = [Colors._586E3F, Colors._5F6C51],
@@ -60,13 +60,13 @@ const styles = StyleSheet.create({
     label: {
         fontSize: moderateScale(10),
         color: Colors.tertiary,
-        fontFamily:FontFamilies.ROBOTO_MEDIUM
+        fontFamily: FontFamilies.ROBOTO_MEDIUM
     },
     progressText: {
         fontSize: moderateScale(10),
         color: Colors.tertiary,
-        fontFamily:FontFamilies.ROBOTO_MEDIUM
-        
+        fontFamily: FontFamilies.ROBOTO_MEDIUM
+
     },
     container: {
         width: "100%",

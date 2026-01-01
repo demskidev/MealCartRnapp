@@ -44,7 +44,7 @@ const HomeScreen: React.FC = () => {
   const { hideLoader } = useLoader();
 
   useEffect(() => {
-    hideLoader(); // turn off loader when Home is ready
+    hideLoader();
   }, []);
   interface Meal {
     id: string;
@@ -58,7 +58,7 @@ const HomeScreen: React.FC = () => {
     eventEmitter,
   } = useTourGuideController()
 
-  // 🔹 Always start when Home screen is focused
+
   useFocusEffect(
     React.useCallback(() => {
       if (canStart) {
@@ -104,24 +104,19 @@ const HomeScreen: React.FC = () => {
         resizeMode="cover"
         style={styles.mealCardImage}
       />
-      {/* <View style={styles.mealCardTagContainer}>
-        <Text style={styles.mealCardTag}>{item.tag}</Text>
-      </View> */}
+
       <View style={styles.mealCardContent}>
         <View style={styles.mealCardTitleRow}>
           <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
         </View>
         <Text style={styles.mealCardDescription}>Some sort of description etc. Big Card if we want more information here</Text>
-        {/* <TouchableOpacity style={styles.mealCardButton}>
-          <Text style={styles.mealCardButtonText}>View</Text>
-        </TouchableOpacity> */}
+
 
         <BaseButton
           title="View"
           gradientButton={false}
           backgroundColor={Colors.white}
-          // width={width * 0.41}
 
           textStyle={[styles.mealCardButton]}
           textStyleText={styles.mealCardButtonText}
@@ -163,9 +158,7 @@ const HomeScreen: React.FC = () => {
       <TouchableOpacity onPress={() => setSelectedMeal(item)} >
         <Image source={item.image} resizeMode="cover" style={{ width: '99%', height: verticalScale(160), backgroundColor: Colors.white, alignSelf: 'center', borderTopLeftRadius: moderateScale(8), borderTopRightRadius: moderateScale(8) }}
         />
-        {/* <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#F5F5F5', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 4 }}>
-        <Text style={styles.mealNametext}>{item.tag}</Text>
-      </View> */}
+
         <View style={{ padding: moderateScale(12) }}>
           <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
@@ -180,7 +173,6 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
 
       {selectedMeal ? (
-        // 👉 WHEN state changes (View button pressed)
         <MealDetail
           meal={selectedMeal}
           onBack={() => {
@@ -272,7 +264,6 @@ const HomeScreen: React.FC = () => {
                   rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
                   textStyle={styles.createMeal}
                   onPress={goNext}
-                // showPressedShadow={true}
                 />
               </TourGuideZone>
               <TouchableOpacity
@@ -289,7 +280,6 @@ const HomeScreen: React.FC = () => {
             <View style={styles.parentOfRecentMeal}>
               <Text style={styles.recentText}>Recent Meals</Text>
               <TouchableOpacity
-                // style={styles.myMeals}
                 activeOpacity={0.7}
                 onPress={() => setShowAll(!showAll)}
               >

@@ -33,30 +33,30 @@ import { useEffect } from "react";
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
   const isLoading = useAppSelector(state => state.auth.loading);
-    const { showLoader, hideLoader } = useLoader();
-  
-    useEffect(() => {
-      if (isLoading) {
-        showLoader();
-      } else {
-        hideLoader();
-      }
-    }, [isLoading]);
+  const { showLoader, hideLoader } = useLoader();
+
+  useEffect(() => {
+    if (isLoading) {
+      showLoader();
+    } else {
+      hideLoader();
+    }
+  }, [isLoading]);
 
   const handleSignup = async (values: SignupFormValues) => {
-  
+
 
     await signupViewModel.handleSignup(
-          values,
-          (payload) => {
-            showSuccessToast(Strings.signupSuccessfully);
-            pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
-    
-          },
-          (error) => {
-            showErrorToast(error);
-    
-          });
+      values,
+      (payload) => {
+        showSuccessToast(Strings.signupSuccessfully);
+        pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
+
+      },
+      (error) => {
+        showErrorToast(error);
+
+      });
   };
 
   return (
@@ -64,7 +64,6 @@ const SignupScreen = () => {
       style={styles.safeArea}
       edges={["top", "left", "right", "bottom"]}
     >
-      {/* Adjust UI when keyboard is open */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -160,27 +159,22 @@ const SignupScreen = () => {
                     }
                   />
 
-                  {/* Sign Up button */}
                   <View style={styles.buttonSpace}>
                     <BaseButton
                       title={Strings.signUp}
                       gradientButton={true}
                       textColor={Colors.white}
                       onPress={async () => {
-                        // Validate all fields first
                         const formErrors = await validateForm();
                         if (Object.keys(formErrors).length > 0) {
-                          // Mark all fields as touched to show errors under fields
                           setTouched({
                             name: true,
                             email: true,
                             password: true,
                             confirmPassword: true,
                           });
-                          // Don't show toast, only show errors under fields
                           return;
                         }
-                        // If valid, submit
                         handleSignup(values);
                       }}
                       disabled={isLoading}
@@ -193,10 +187,8 @@ const SignupScreen = () => {
                     {Strings.mealsAreSecure}
                   </Text>
 
-                  {/* Divider between sign up and social login */}
                   <Divider style={{ marginTop: verticalScale(15) }} />
 
-                  {/* Social login buttons */}
                   <View style={styles.buttonContainer}>
                     <BaseButton
                       title={Strings.continueWithGoogle}
@@ -215,7 +207,6 @@ const SignupScreen = () => {
           </View>
         </ScrollView>
 
-        {/* Footer with navigation to Sign In screen - positioned above bottom nav */}
         <View style={styles.footerContainer}>
           <AuthFooter
             title={Strings.alreadyHaveAccount}
@@ -228,7 +219,6 @@ const SignupScreen = () => {
   );
 };
 
-// Styles for the screen
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

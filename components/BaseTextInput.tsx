@@ -73,10 +73,8 @@ const BaseTextInput = React.memo(
       },
       ref
     ) => {
-      // Local state to toggle password visibility if secureTextEntry is true
       const [showPassword, setShowPassword] = React.useState(secureTextEntry);
 
-      // Track focus state for border/text color change
       const isFocused = React.useRef(false);
 
       const toggleShowPassword = () => {
@@ -85,14 +83,13 @@ const BaseTextInput = React.memo(
 
       return (
         <View style={styles.mainContainer}>
-          {/* Input container with dynamic border color and width */}
           <View
             style={[
               styles.container,
               {
                 borderColor: isFocused.current
-                  ? Colors.secondaryButtonBackground // Highlight border when focused
-                  : Colors.borderColor, // Default border color
+                  ? Colors.secondaryButtonBackground
+                  : Colors.borderColor,
                 width: width || "100%",
               },
             ]}
@@ -107,29 +104,27 @@ const BaseTextInput = React.memo(
               onChangeText={onChangeText}
               placeholder={placeholder}
               placeholderTextColor={Colors.tertiary}
-              secureTextEntry={showPassword} // Mask text if needed
+              secureTextEntry={showPassword}
               keyboardType={keyboardType}
-              onFocus={() => (isFocused.current = true)} // Set focus state
+              onFocus={() => (isFocused.current = true)}
               onBlur={() => {
                 isFocused.current = false;
                 onBlur?.();
-              }} // Remove focus state
+              }}
               onKeyPress={onKeyPress}
               maxLength={maxLength}
             />
 
-            {/* Optional right-side icon (e.g., eye icon) */}
             {rightIcon && (
               <TouchableOpacity
                 style={styles.rightIcon}
-                onPress={toggleShowPassword} // Toggle password visibility
+                onPress={toggleShowPassword}
               >
                 {rightIcon}
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Display error message if provided */}
           {error && <Text style={styles.errorMsg}>{error}</Text>}
         </View>
       );
@@ -139,10 +134,9 @@ const BaseTextInput = React.memo(
 
 const styles = StyleSheet.create({
   mainContainer: {
-    gap: verticalScale(6), // Space between input and error text
+    gap: verticalScale(6),
   },
 
-  // Wrapper for TextInput and optional right icon
   container: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -162,7 +156,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
   },
 
-  // Right icon container
   rightIcon: {
     width: horizontalScale(24),
     height: verticalScale(24),
@@ -173,7 +166,7 @@ const styles = StyleSheet.create({
   errorMsg: {
     color: Colors.error,
     fontSize: fontSize(14),
-    fontFamily:FontFamilies.ROBOTO_REGULAR
+    fontFamily: FontFamilies.ROBOTO_REGULAR
   },
 });
 

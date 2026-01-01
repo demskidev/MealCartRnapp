@@ -13,7 +13,6 @@ import { Animated, Image, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
-// Sample images for scroll view (replace with your images)
 const images = [
   require("@/assets/images/userDummy.png"),
   require("@/assets/images/userDummy.png"),
@@ -29,7 +28,6 @@ const IntroScreen = () => {
     setCurrentPage(page);
   };
 
-  // Animate Back button visibility
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: currentPage > 0 ? 1 : 0,
@@ -55,13 +53,12 @@ const IntroScreen = () => {
         description="All your meal planning, simplified in one place."
       />
 
-      {/* Horizontal ScrollView with paging */}
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
-        scrollEventThrottle={16} // ensures smooth updates
+        scrollEventThrottle={16}
         ref={scrollRef}
         style={styles.scrollView}
       >
@@ -75,7 +72,6 @@ const IntroScreen = () => {
         ))}
       </ScrollView>
 
-      {/* Page control dots */}
       <View style={styles.pageControl}>
         {images.map((_, index) => (
           <View
@@ -88,7 +84,6 @@ const IntroScreen = () => {
         ))}
       </View>
 
-      {/* Bottom buttons */}
       <View style={styles.bottomContainer}>
         {currentPage > 0 && currentPage < images.length - 1 && (
           <Animated.View style={{ opacity: fadeAnim }}>
@@ -130,12 +125,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(20),
   },
 
-  scrollView: {
-    // marginVertical: 20,
-  },
+
 
   image: {
-    width: screenWidth, // account for SafeArea padding
+    width: screenWidth,
     marginHorizontal: 10,
     borderRadius: 12,
   },

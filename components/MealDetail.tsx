@@ -16,10 +16,8 @@ const MealDetail = ({ meal, onBack }) => {
     const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
 
-    // const bottomSheetRef = useRef<CreateMealBottomSheetRef>(null);
     const bottomSheetRef = useRef<BottomSheet>(null);
 
-    // 👇 state to pass meal data to bottom sheet
     const [selectedMeal, setSelectedMeal] = useState(null);
 
     const handleEditPress = () => {
@@ -32,7 +30,6 @@ const MealDetail = ({ meal, onBack }) => {
         <View style={styles.container}>
             <View style={styles.headerImageContainer}  >
 
-                {/* <Image source={meal.image} style={styles.image} resizeMode="cover" /> */}
 
                 <ImageBackground
                     source={meal.image}
@@ -72,25 +69,12 @@ const MealDetail = ({ meal, onBack }) => {
                             </TouchableOpacity>
 
                         </View>
-                        {/* <TouchableOpacity onPress={onBack} style={styles.backButton} >
 
-
-                            <Image
-                                source={require('@/assets/images/backIcon.png')}
-                                style={styles.backImage}
-                                resizeMode="contain"
-
-                            />
-
-
-                        </TouchableOpacity> */}
                     </View>
                     <View >
 
                     </View>
-                    {/* <View style={styles.tagContainer}>
-                <Text style={styles.tagText}>{meal.tag}</Text>
-            </View> */}
+
                 </ImageBackground>
             </View>
 
@@ -102,7 +86,6 @@ const MealDetail = ({ meal, onBack }) => {
                     <BaseButton
                         title="Edit"
                         gradientButton={true}
-                        // backgroundColor={Colors.olive}
                         textColor="#fff"
                         width={width * 0.43}
                         textStyle={styles.editButton}
@@ -116,7 +99,6 @@ const MealDetail = ({ meal, onBack }) => {
                         onPress={handleEditPress}
                     />
 
-                    {/* <CreateMealBottomSheet ref={bottomSheetRef} /> */}
 
                     <BaseButton
                         title="Delete"
@@ -134,7 +116,6 @@ const MealDetail = ({ meal, onBack }) => {
                 </View>
                 <Text style={styles.sectionTitle}>Ingredients</Text>
                 <View style={styles.divider} />
-                {/* Example ingredients, replace with meal.ingredients if available */}
                 <View style={styles.ingredientRow}>
                     <Text style={styles.ingredientName}>Spaghetti</Text>
                     <View style={styles.dividerRow} />
@@ -186,14 +167,7 @@ const MealDetail = ({ meal, onBack }) => {
                     <Text style={styles.instructionText}>Stir in chopped tomatoes and tomato paste. Simmer for 20 minutes.</Text>
                 </View>
             </ScrollView>
-            {/* <ConfirmationModal
-                visible={showDeleteModal}
-                onCancel={() => setShowDeleteModal(false)}
-                onDelete={() => {
-                    setShowDeleteModal(false);
-                    // Add your delete logic here
-                }}
-            /> */}
+
 
             <ConfirmationModal
                 visible={showDeleteModal}
@@ -235,13 +209,7 @@ const styles = StyleSheet.create({
         height: moderateScale(42),
     },
     backButton: {
-        // position: 'absolute',
-        // bottom: verticalScale(2),
-        // left: horizontalScale(16),
-        // zIndex: 100,
-        // borderRadius: 20,
-        // padding: 4,
-        // backgroundColor: 'red',
+
         marginTop: verticalScale(15),
 
 
@@ -258,13 +226,7 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
     tagContainer: {
-        // position: 'absolute',
-        // top: verticalScale(24),
-        // right: horizontalScale(16),
-        // backgroundColor: '#F5F5F5',
-        // borderRadius: 16,
-        // paddingHorizontal: 12,
-        // paddingVertical: 4,
+
     },
     tagText: {
         fontSize: moderateScale(13),
@@ -304,10 +266,7 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     editButton: {
-        // backgroundColor: Colors.olive,
-        // borderRadius: 8,
-        // paddingHorizontal: 32,
-        // paddingVertical: 10,
+
         fontFamily: FontFamily.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
         color: Colors.white
@@ -318,10 +277,7 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     deleteButton: {
-        // backgroundColor: Colors.primary || '#D32F2F',
-        // borderRadius: 8,
-        // paddingHorizontal: 32,
-        // paddingVertical: 10,
+
         fontFamily: FontFamily.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
         color: Colors.white
@@ -342,11 +298,8 @@ const styles = StyleSheet.create({
         height: moderateScale(1),
         backgroundColor: Colors.divider,
         flex: 1,
-        // width:width*0.9,
         marginHorizontal: horizontalScale(12)
-        // marginHorizontal: 8 
 
-        // marginBottom: moderateScale(8),
     },
     ingredientRow: {
         flexDirection: 'row',
@@ -359,13 +312,11 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(14),
         fontFamily: FontFamily.ROBOTO_MEDIUM,
         color: Colors.primary,
-        // flex: 1,
     },
     ingredientValue: {
         fontSize: moderateScale(14),
         fontFamily: FontFamily.ROBOTO_REGULAR,
         color: Colors.tertiary,
-        // marginLeft: horizontalScale(8),
     },
     instructionRow: {
         flexDirection: 'row',
@@ -397,22 +348,10 @@ const styles = StyleSheet.create({
         height: verticalScale(300)
     },
     headerImageContainer: {
-        // position: 'relative',
-        // width: '100%',
-        // height: verticalScale(300),
-        // backgroundColor: Colors.background,
-        // marginBottom: verticalScale(20),
-        // pointerEvents: 'box-none'
+
     },
     headerOverlayContent: {
-        // position: 'absolute',
-        // left: 0,
-        // right: 0,
-        // bottom: verticalScale(16),
-        // paddingHorizontal: horizontalScale(16),
-        // flexDirection: 'row',
-        // alignItems: 'center',
-        // justifyContent: 'space-between',
+
     },
     headerOverlayContent1: {
 
@@ -424,17 +363,8 @@ const styles = StyleSheet.create({
         left: horizontalScale(16),
         width: width * 0.92
 
-        // marginTop: 90
     },
-    imageMeallist: {
-        width: moderateScale(56),
-        height: moderateScale(42),
-        marginRight: moderateScale(8),
-    },
-    imageaddToList: {
-        width: moderateScale(56),
-        height: moderateScale(42),
-    },
+
     backImage: {
         width: moderateScale(20),
         height: moderateScale(20)

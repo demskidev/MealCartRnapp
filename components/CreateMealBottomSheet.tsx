@@ -55,11 +55,10 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     const [steps, setSteps] = useState(
       isEdit
-        ? Array(6).fill({ text: '' }) // when editing → 6 blank instructions
-        : [{ text: '' }]              // when creating → 1 blank instruction
+        ? Array(6).fill({ text: '' })
+        : [{ text: '' }]
     );
 
-    // Modal for image picker
     const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
 
@@ -116,9 +115,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
 
 
-    // Ingredient item renderer
     const renderIngredientItem = ({ item, index }) => (
-      // <View style={styles.ingredientItem}>
       <View >
 
         <Text style={styles.label}>Ingredient Name</Text>
@@ -138,25 +135,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
             </View>
 
-            {/* <View style={styles.rowItem}>
-              <Text style={styles.label}>Unit (weight)</Text>
 
-              <CustomStepper
-                value={unitWeight}
-                onIncrement={() => {
-                  if (unitWeightIndex < unitWeightOptions.length - 1) {
-                    setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
-                  }
-                }}
-                onDecrement={() => {
-                  if (unitWeightIndex > 0) {
-                    setUnitweight(unitWeightOptions[unitWeightIndex - 1]);
-                  }
-                }}
-              />
-
-
-            </View> */}
 
             <View style={styles.rowItem}>
               <Text style={styles.label}>Category</Text>
@@ -172,7 +151,6 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
             <TouchableOpacity
               style={styles.deleteButton}
-            // onPress={() => handleDeleteIngredient(index)}
             >
               <Image
                 source={require("@/assets/images/delete.png")}
@@ -187,11 +165,9 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
             <View style={styles.rowItem}>
               <Text style={styles.label}>Count</Text>
               <CustomStepper value={item?.count} onIncrement={() => {
-                // setIngredientCount(c => String(Number(c) + 1))
                 updateCount(String(Number(item?.count) + 1), index);
               }
               } onDecrement={() => {
-                //  setIngredientCount(c => String(Math.max(1, Number(c) - 1)))
                 updateCount(String(Math.max(1, Number(item?.count) - 1)), index);
               }
               } />
@@ -207,7 +183,6 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
                 onIncrement={() => {
                   const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
                   if (unitWeightIndex < unitWeightOptions.length - 1) {
-                    //setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
                     updateUnit(unitWeightOptions[unitWeightIndex + 1], index);
                   }
                 }}
@@ -216,7 +191,6 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
                   const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
 
                   if (unitWeightIndex > 0) {
-                    //setUnitweight(unitWeightOptions[unitWeightIndex - 1]);
                     updateUnit(unitWeightOptions[unitWeightIndex - 1], index);
 
                   }
@@ -235,7 +209,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
             <TouchableOpacity
               style={styles.deleteButton}
-           onPress={() => handleDeleteIngredient(index)}
+              onPress={() => handleDeleteIngredient(index)}
             >
               <Image
                 source={require("@/assets/images/delete.png")}
@@ -257,22 +231,7 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
       setIngredients(updated);
     };
 
-    // const renderInstructionItem = ({ item, index }) => (
 
-    //   <View style={styles.row}>
-    //     <Text style={styles.sectionTitle}>1.</Text>
-
-    //     <CustomTextInput
-    //       style={{ height: verticalScale(60), borderRadius: moderateScale(4), backgroundColor: Colors.greysoft, paddingHorizontal: horizontalScale(10), marginTop: moderateScale(-5), width: width * 0.8, }}
-
-    //       placeholder="A short summary of the meal..."
-    //       multiline
-    //       value={mealDescription}
-    //       onChangeText={setMealDescription}
-    //     />
-
-    //   </View>
-    // )
 
     const renderInstructionItem = ({ item, index }) => (
       <View style={styles.row}>
@@ -295,11 +254,9 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
               : 'A short summary of the meal...'
           }
           multiline
-          // value={item.text}
-          // onChangeText={(text) => handleUpdateStep(index, text)}
+
           value={item?.text}
-          onChangeText={(text)=>
-          {
+          onChangeText={(text) => {
             const updated = steps.map((step, i) => {
               if (i === index) {
                 return { ...step, text };
@@ -323,12 +280,10 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
 
     const handleCreateMeal = async () => {
       try {
-        // Map ingredients to only include category id
         const mappedIngredients = ingredients.map(ing => ({
           ...ing,
           category: typeof ing.category === 'object' && ing.category.id ? ing.category.id : ing.category
         }));
-        // Map steps to string array
         const mappedSteps = steps.map(step => step.text);
         const mealData = {
           name: mealName,
@@ -341,11 +296,11 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
           ingredients: mappedIngredients,
           steps: mappedSteps,
           createdAt: serverTimestamp(),
-          uid : user?.id
+          uid: user?.id
         };
 
-       await addMeal(mealData);
-       alert(Strings.mealAdded);
+        await addMeal(mealData);
+        alert(Strings.mealAdded);
         if (ref && typeof ref !== 'function' && ref.current?.close) {
           ref.current.close();
         }
@@ -357,237 +312,180 @@ const CreateMealBottomSheet = forwardRef<BottomSheet, CreateMealBottomSheetProps
     return (
       <>
 
-      {/* Image Picker Modal (Reusable) */}
-      <ImagePickerModal
-        visible={showImagePickerModal}
-        onClose={() => setShowImagePickerModal(false)}
-        onImagePicked={setImageUrl}
-      />
+        <ImagePickerModal
+          visible={showImagePickerModal}
+          onClose={() => setShowImagePickerModal(false)}
+          onImagePicked={setImageUrl}
+        />
 
-      <BottomSheet
-        ref={ref}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        keyboardBehavior="extend"
-        keyboardBlurBehavior="restore"
-        topInset={0}
-        handleComponent={() => null}
-        backdropComponent={(props) => (
-          <BottomSheetBackdrop
-            {...props}
-            disappearsOnIndex={-1}
-            appearsOnIndex={0}
-          />
-        )}
-      // containerStyle={{ flex: 1 }}
-      >
-
-        <View style={styles.emptyView}></View>
-        <View style={styles.parentCreateMealText}>
-          <Text style={styles.header}>{isEdit ? "Edit Meal" : "Create Meal"}</Text>
-          <TouchableOpacity onPress={() => ref && typeof ref !== 'function' && ref.current?.close()}  >
-            <Image
-              source={require("@/assets/images/close-icon.png")}
-              style={{ width: verticalScale(24), height: verticalScale(24) }}
-              resizeMode="contain"
+        <BottomSheet
+          ref={ref}
+          index={-1}
+          snapPoints={snapPoints}
+          enablePanDownToClose
+          keyboardBehavior="extend"
+          keyboardBlurBehavior="restore"
+          topInset={0}
+          handleComponent={() => null}
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop
+              {...props}
+              disappearsOnIndex={-1}
+              appearsOnIndex={0}
             />
-          </TouchableOpacity>
-
-
-        </View>
-
-        <BottomSheetScrollView
-          contentContainerStyle={{ paddingHorizontal: moderateScale(20), paddingBottom: verticalScale(30) }}
-          keyboardShouldPersistTaps="handled"
+          )}
         >
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Basic Information</Text>
-            <Text style={styles.label}>Meal Name</Text>
-            <CustomTextInput placeholder="e.g. Classic Spaghetti" value={mealName} onChangeText={setMealName} />
 
-            <Text style={styles.label}>Meal Description</Text>
-            <CustomTextInput
-              style={{ height: verticalScale(80), borderRadius: moderateScale(4), backgroundColor: Colors.greysoft, paddingHorizontal: horizontalScale(10) }}
-              placeholder={isEdit ? "A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love." : "A short summary of the meal..."}
-              multiline={true}
-              value={mealDescription}
-              numberOfLines={4}
-              onChangeText={setMealDescription}
-            />
+          <View style={styles.emptyView}></View>
+          <View style={styles.parentCreateMealText}>
+            <Text style={styles.header}>{isEdit ? "Edit Meal" : "Create Meal"}</Text>
+            <TouchableOpacity onPress={() => ref && typeof ref !== 'function' && ref.current?.close()}  >
+              <Image
+                source={require("@/assets/images/close-icon.png")}
+                style={{ width: verticalScale(24), height: verticalScale(24) }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
 
-            <Text style={styles.label}>Image URL</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <CustomTextInput style={{ flex: 1 }} placeholder={isEdit ? "https://myfood.com/image/Classic Spaghetti Bolognese" : "https://..."} value={imageUrl} onChangeText={setImageUrl} />
-              <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-                <Text style={styles.uploadButtonText}>{isEdit ? "Remove" : "Upload"}</Text>
+
+          </View>
+
+          <BottomSheetScrollView
+            contentContainerStyle={{ paddingHorizontal: moderateScale(20), paddingBottom: verticalScale(30) }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Basic Information</Text>
+              <Text style={styles.label}>Meal Name</Text>
+              <CustomTextInput placeholder="e.g. Classic Spaghetti" value={mealName} onChangeText={setMealName} />
+
+              <Text style={styles.label}>Meal Description</Text>
+              <CustomTextInput
+                style={{ height: verticalScale(80), borderRadius: moderateScale(4), backgroundColor: Colors.greysoft, paddingHorizontal: horizontalScale(10) }}
+                placeholder={isEdit ? "A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love." : "A short summary of the meal..."}
+                multiline={true}
+                value={mealDescription}
+                numberOfLines={4}
+                onChangeText={setMealDescription}
+              />
+
+              <Text style={styles.label}>Image URL</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <CustomTextInput style={{ flex: 1 }} placeholder={isEdit ? "https://myfood.com/image/Classic Spaghetti Bolognese" : "https://..."} value={imageUrl} onChangeText={setImageUrl} />
+                <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
+                  <Text style={styles.uploadButtonText}>{isEdit ? "Remove" : "Upload"}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.rowItem}>
+                  <Text style={styles.label}>Prep Time (min)</Text>
+
+                  <CustomStepper
+                    value={prepTime}
+                    onIncrement={() => {
+                      if (prepTimeIndex < prepTimeOptions.length - 1) {
+                        setPrepTime(prepTimeOptions[prepTimeIndex + 1]);
+                      }
+                    }}
+                    onDecrement={() => {
+                      if (prepTimeIndex > 0) {
+                        setPrepTime(prepTimeOptions[prepTimeIndex - 1]);
+                      }
+                    }}
+                    showUp={true}
+                    showDown={true}
+                  />
+
+                </View>
+                <View style={styles.rowItem}>
+                  <Text style={styles.label}>Servings</Text>
+                  <CustomStepper value={servings} onIncrement={() => setServings(s => String(Number(s) + 1))} onDecrement={() => setServings(s => String(Math.max(1, Number(s) - 1)))} />
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.rowItem}>
+                  <Text style={styles.label}>Difficulty</Text>
+                  <CustomDropdown value={difficulty} options={['Easy', 'Medium', 'Hard']} onSelect={setDifficulty} icon={require("@/assets/images/icondown.png")} />
+
+                </View>
+                <View style={styles.rowItem}>
+                  <Text style={styles.label}>Category</Text>
+                  <CustomDropdown value={category} options={['Dinner', 'Lunch', 'Breakfast']} onSelect={setCategory} icon={require("@/assets/images/icondown.png")} />
+
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Ingredients</Text>
+
+              <FlatList
+                data={ingredients}
+                keyExtractor={(_, index) => index.toString()}
+                scrollEnabled={false}
+                renderItem={renderIngredientItem}
+              />
+
+              <TouchableOpacity style={styles.addIngredient} onPress={handleAddIngredient}>
+                <IconPlus width={verticalScale(21)} height={verticalScale(21)} color="black" />
+                <Text style={styles.plusicon}>+</Text>
+                <Text style={styles.addIngredientText}>Add Ingredient</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.row}>
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>Prep Time (min)</Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Instruction</Text>
 
-                <CustomStepper
-                  value={prepTime}
-                  onIncrement={() => {
-                    if (prepTimeIndex < prepTimeOptions.length - 1) {
-                      setPrepTime(prepTimeOptions[prepTimeIndex + 1]);
-                    }
-                  }}
-                  onDecrement={() => {
-                    if (prepTimeIndex > 0) {
-                      setPrepTime(prepTimeOptions[prepTimeIndex - 1]);
-                    }
-                  }}
-                  showUp={true}
-                  showDown={true}
-                />
 
-              </View>
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>Servings</Text>
-                <CustomStepper value={servings} onIncrement={() => setServings(s => String(Number(s) + 1))} onDecrement={() => setServings(s => String(Math.max(1, Number(s) - 1)))} />
-              </View>
-            </View>
 
-            <View style={styles.row}>
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>Difficulty</Text>
-                <CustomDropdown value={difficulty} options={['Easy', 'Medium', 'Hard']} onSelect={setDifficulty} icon={require("@/assets/images/icondown.png")} />
-
-              </View>
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>Category</Text>
-                <CustomDropdown value={category} options={['Dinner', 'Lunch', 'Breakfast']} onSelect={setCategory} icon={require("@/assets/images/icondown.png")} />
-
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
-            {/* <Text style={styles.label}>Ingredient Name</Text>
-          <CustomTextInput placeholder="e.g. Tomato" value={ingredientName} onChangeText={setIngredientName} />
-
-          <View style={styles.row}>
-            <View style={styles.rowItem}>
-              <Text style={styles.label}>Count</Text>
-              <CustomStepper value={ingredientCount} onIncrement={() => setIngredientCount(c => String(Number(c) + 1))} onDecrement={() => setIngredientCount(c => String(Math.max(1, Number(c) - 1)))} />
-            </View>
-            <View style={styles.rowItem}>
-              <Text style={styles.label}>Unit (weight)</Text>
-
-              <CustomStepper
-                value={unitWeight}
-                onIncrement={() => {
-                  if (unitWeightIndex < unitWeightOptions.length - 1) {
-                    setUnitweight(unitWeightOptions[unitWeightIndex + 1]);
-                  }
-                }}
-                onDecrement={() => {
-                  if (unitWeightIndex > 0) {
-                    setUnitweight(unitWeightOptions[unitWeightIndex - 1]);
-                  }
-                }}
+              <FlatList
+                data={steps}
+                keyExtractor={(_, index) => index.toString()}
+                scrollEnabled={false}
+                renderItem={renderInstructionItem}
               />
+
+              <TouchableOpacity
+                style={styles.addIngredient}
+                onPress={() => setSteps(prev => [...prev, { text: '' }])}
+              >
+                <Text style={styles.plusicon}>+</Text>
+                <Text style={styles.addIngredientText}>Add Step</Text>
+              </TouchableOpacity>
+
             </View>
-            <View style={styles.rowItem}>
-              <Text style={styles.label}>Category</Text>
-              <CustomDropdown value={ingredientCategory} options={['Fruit', 'Vegetable',]} onSelect={setIngredientCategory} icon={require("@/assets/images/icondown.png")} />
+            <View style={styles.parentOfConfirmButton}>
+              <BaseButton
+                title={isEdit ? "Discard" : "Cancel"}
+                gradientButton={false}
+                backgroundColor={Colors.white}
+                width={isEdit ? width * 0.28 : width * 0.41}
 
-            </View >
-
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteIngredient}>
-
-              <Image
-                source={require("@/assets/images/delete.png")}
-                style={{ width: verticalScale(24), height: verticalScale(24) }}
-                resizeMode="contain"
+                textStyle={[styles.cancelButton, { color: isEdit ? Colors.error : Colors.primary }]}
+                textColor={isEdit ? Colors.error : Colors.primary}
 
               />
-            </TouchableOpacity>
+              <BaseButton
+                title={isEdit ? "Update Meal" : "Confirm"}
+                gradientButton={true}
+                width={isEdit ? width * 0.65 : width * 0.41}
+                gradientStartColor="#667D4C"
+                gradientEndColor="#9DAF89"
+                gradientStart={{ x: 0, y: 0 }}
+                gradientEnd={{ x: 1, y: 0 }}
+                textColor={Colors.white}
+                rightChild={isEdit ? <IconMeal width={verticalScale(21)} height={verticalScale(21)} /> : null}
+                textStyle={[styles.confirmButton,]}
+                onPress={handleCreateMeal}
+              />
 
+            </View>
+            <View style={styles.emptybottom}></View>
+          </BottomSheetScrollView>
 
-          </View> */}
-            <FlatList
-              data={ingredients}
-              keyExtractor={(_, index) => index.toString()}
-              scrollEnabled={false}
-              renderItem={renderIngredientItem}
-            />
-
-            <TouchableOpacity style={styles.addIngredient} onPress={handleAddIngredient}>
-              <IconPlus width={verticalScale(21)} height={verticalScale(21)} color="black" />
-              <Text style={styles.plusicon}>+</Text>
-              <Text style={styles.addIngredientText}>Add Ingredient</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Instruction</Text>
-            {/* <View style={styles.row}>
-            <Text style={styles.sectionTitle}>1.</Text>
-
-            <CustomTextInput
-              style={{ height: verticalScale(60), borderRadius: moderateScale(4), backgroundColor: Colors.greysoft, paddingHorizontal: horizontalScale(10), marginTop: moderateScale(-5), width: width * 0.8 }}
-
-              placeholder="A short summary of the meal..."
-              multiline
-              value={mealDescription}
-              onChangeText={setMealDescription}
-            />
-
-          </View> */}
-
-
-            <FlatList
-              data={steps}
-              keyExtractor={(_, index) => index.toString()}
-              scrollEnabled={false}
-              renderItem={renderInstructionItem}
-            />
-
-            <TouchableOpacity
-              style={styles.addIngredient}
-              onPress={() => setSteps(prev => [...prev, { text: '' }])}
-            >
-              <Text style={styles.plusicon}>+</Text>
-              <Text style={styles.addIngredientText}>Add Step</Text>
-            </TouchableOpacity>
-
-          </View>
-          <View style={styles.parentOfConfirmButton}>
-            <BaseButton
-              title={isEdit ? "Discard" : "Cancel"}
-              gradientButton={false}
-              backgroundColor={Colors.white}
-              width={isEdit ? width * 0.28 : width * 0.41}
-
-              textStyle={[styles.cancelButton, { color: isEdit ? Colors.error : Colors.primary }]}
-              textColor={isEdit ? Colors.error : Colors.primary}
-
-            // onPress={handleCancel}
-            />
-            <BaseButton
-              title={isEdit ? "Update Meal" : "Confirm"}
-              gradientButton={true}
-              width={isEdit ? width * 0.65 : width * 0.41}
-              gradientStartColor="#667D4C"
-              gradientEndColor="#9DAF89"
-              gradientStart={{ x: 0, y: 0 }}
-              gradientEnd={{ x: 1, y: 0 }}
-              textColor={Colors.white}
-              rightChild={isEdit ? <IconMeal width={verticalScale(21)} height={verticalScale(21)} /> : null}
-              textStyle={[styles.confirmButton,]}
-              onPress={handleCreateMeal}
-            />
-
-          </View>
-          <View style={styles.emptybottom}></View>
-        </BottomSheetScrollView>
-
-      </BottomSheet>
+        </BottomSheet>
       </>
     );
   });
@@ -602,7 +500,6 @@ const styles = StyleSheet.create({
     padding: moderateScale(10),
     marginBottom: verticalScale(10),
     elevation: 2,
-    // iOS shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -667,7 +564,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    // color: Colors.primary,
 
     fontSize: moderateScale(12),
     borderWidth: moderateScale(1),

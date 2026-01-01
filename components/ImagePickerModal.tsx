@@ -11,7 +11,6 @@ interface ImagePickerModalProps {
 
 const ImagePickerModal: React.FC<ImagePickerModalProps> = ({ visible, onClose, onImagePicked }) => {
   const pickImage = async (type: 'camera' | 'gallery') => {
- ///  onClose();
     let result;
     if (type === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();

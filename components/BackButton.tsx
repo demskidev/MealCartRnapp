@@ -1,34 +1,28 @@
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { BackIcon } from "@/assets/svg";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
-// Props for BackButton
 interface BackButtonProps {
-  title?: string; // Optional text to display next to the icon
-  icon?: React.ReactNode; // Optional custom icon component
-  onPress?: () => void; // Function to call when button is pressed
+  title?: string;
+  icon?: React.ReactNode;
+  onPress?: () => void;
 }
 
 const BackButton = ({ title, icon, onPress }: BackButtonProps) => {
   return (
-    // TouchableOpacity provides press feedback and handles taps
     <TouchableOpacity onPress={onPress} style={styles.container}>
-      {/* Render custom icon if provided, otherwise default BackIcon */}
       {icon ?? <BackIcon />}
 
-      {/* Render title text if provided */}
       {title && <Text style={styles.title}>{title}</Text>}
     </TouchableOpacity>
   );
 };
 
-// Styles for BackButton
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row", // Layout children horizontally
-    alignItems: "center", // Vertically align icon and text
+    flexDirection: "row",
+    alignItems: "center",
   },
   title: {
-    // Add spacing or styling for text if needed
   },
 });
 

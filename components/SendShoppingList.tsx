@@ -36,29 +36,22 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                 <View style={styles.container}>
                     <View style={styles.header}>
                         <Text style={styles.title}>Send To Shopping List</Text>
-                        {/* <TouchableOpacity onPress={onClose}>
-                        <Ionicons name="close" size={moderateScale(20)} color={Colors.primary} />
-                    </TouchableOpacity> */}
+
                     </View>
 
                     <Text style={styles.subtitle}>
                         You can choose from existing list to add this item’s shopping requirements.
                     </Text>
 
-                    {/* <TouchableOpacity style={styles.createButton}>
-                    <Text style={styles.createButtonText}>Create New List</Text>
-                    <Ionicons name="cart-outline" size={verticalScale(18)} color={Colors.white} style={{ marginLeft: horizontalScale(8) }} />
-                </TouchableOpacity> */}
+
                     <BaseButton
                         title="Create New List"
                         gradientButton={true}
-                        // backgroundColor={Colors.olive}
                         textColor="#fff"
-                        // width={width * 0.43}
                         textStyle={styles.createButtonText}
                         rightChild={
-                               <Image source={require("@/assets/images/createlist.png")} resizeMode="contain" style={{ width: moderateScale(18), height: moderateScale(18),  }}/>
-                         
+                            <Image source={require("@/assets/images/createlist.png")} resizeMode="contain" style={{ width: moderateScale(18), height: moderateScale(18), }} />
+
                         }
                         onPress={() => {
 
@@ -78,33 +71,25 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                                     <Text style={styles.listTitle}>{item.name}</Text>
                                     <Text style={styles.listDate}>Created: {item.created}</Text>
                                 </View>
-                                {/* <TouchableOpacity style={styles.addButton}>
-                                <Text style={styles.addButtonText}>Add</Text>
-                            </TouchableOpacity> */}
+
 
                                 <BaseButton
                                     title="Add"
                                     gradientButton={false}
-                                    // backgroundColor={Colors.olive}
                                     textColor="#fff"
                                     width={width * 0.35}
                                     textStyle={styles.addButton}
                                     textStyleText={styles.addButtonText}
-                                // rightChild={
-                                //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                                // }
-                                // onPress={handleEditPress}
+
                                 />
 
                             </View>
                         )}
-                    //     ItemSeparatorComponent={() => <View style={styles.separator} />
 
-                    // }
                     />
 
                     <View style={styles.footer}>
-                   
+
 
                         <BaseButton
                             title="Cancel"
@@ -129,7 +114,6 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                 </View>
                 <CreateNewListBottomSheet ref={createNewListRef} />
 
-                {/* Move bottom sheet inside Modal so it appears above overlay */}
             </Modal>
 
         </View>
@@ -199,14 +183,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.white,
         borderRadius: moderateScale(8),
-        marginVertical: verticalScale(6), // top + bottom spacing
+        marginVertical: verticalScale(6),
         paddingHorizontal: moderateScale(9),
         marginHorizontal: horizontalScale(2),
 
-        // Android
         elevation: 4,
 
-        // iOS
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
@@ -264,12 +246,9 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(14),
     },
     confirmButton: {
-        //  flex: 1,
-        // backgroundColor: '#9DAF89',
+
         borderRadius: moderateScale(8),
-        // paddingVertical: verticalScale(12),
         alignItems: 'center',
-        // marginLeft: horizontalScale(8),
     },
     confirmButtonText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -280,12 +259,9 @@ const styles = StyleSheet.create({
         height: moderateScale(1),
         backgroundColor: Colors.divider,
         flex: 1,
-        // width:width*0.9,
-        // marginHorizontal: horizontalScale(12),
-        marginVertical: verticalScale(18)
-        // marginHorizontal: 8 
 
-        // marginBottom: moderateScale(8),
+        marginVertical: verticalScale(18)
+
     },
 
 });

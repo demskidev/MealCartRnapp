@@ -51,25 +51,20 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
                 title="Update"
                 gradientButton={false}
                 backgroundColor={Colors.white}
-                //  width={width * 0.51}
 
                 textStyle={[styles.updateBtn]}
                 textStyleText={styles.updateBtnText}
 
-              // onPress={() => setSelectedMeal(item)}
               />
 
               <BaseButton
                 title="Remove"
                 gradientButton={true}
                 backgroundColor={Colors.white}
-                //  width={width * 0.51}
                 gradientStartColor="#A62A2A"
                 gradientEndColor="#FD4B4B"
-                // textStyle={[styles.updateBtn]}
                 textStyle={styles.gradientbtnText}
 
-              // onPress={() => setSelectedMeal(item)}
               />
 
 
@@ -180,11 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderColor: Colors.borderColor,
     borderWidth: moderateScale(1)
-    // elevation: 2,
-    // shadowColor: Colors.black,
-    // shadowOffset: { width: 0, height: 1 },
-    // shadowOpacity: 0.06,
-    // shadowRadius: 2,
+
   },
   updateBtnText: {
     fontSize: moderateScale(14),
@@ -197,12 +188,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16)
   },
   removeBtn: {
-    backgroundColor: 'linear-gradient(90deg, #D9534F 0%, #C0392B 100%)', // fallback for gradient
+    backgroundColor: 'linear-gradient(90deg, #D9534F 0%, #C0392B 100%)', 
     borderRadius: moderateScale(10),
     paddingVertical: verticalScale(12),
     alignItems: 'center',
     justifyContent: 'center',
-    // backgroundColor: '#D9534F',
   },
   removeBtnText: {
     fontSize: moderateScale(18),
@@ -240,8 +230,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.buttonBackground,
     borderRadius: moderateScale(8),
-    // borderWidth: 1,
-    // borderColor: Colors.divider,
     paddingVertical: verticalScale(14),
     paddingHorizontal: horizontalScale(12),
     marginBottom: verticalScale(18),
@@ -259,7 +247,6 @@ const styles = StyleSheet.create({
     marginRight: horizontalScale(8),
   },
   socialText: {
-    // flex: 1,
     fontSize: moderateScale(16),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.textBlack,
@@ -338,10 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(18),
     paddingTop: verticalScale(24),
     paddingBottom: verticalScale(24),
-    // Remove flex: 1
-    // Add minHeight or maxHeight if needed:
-    // minHeight: 400,
-    // maxHeight: '90%',
+
     elevation: 8,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
@@ -354,7 +338,6 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(18),
   },
   cancelButton: {
-    // flex: 1,
     backgroundColor: Colors.white,
     borderColor: Colors.borderColor,
     borderWidth: moderateScale(1),
@@ -369,12 +352,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
   },
   confirmButton: {
-    //  flex: 1,
-    // backgroundColor: '#9DAF89',
+
     borderRadius: moderateScale(8),
-    // paddingVertical: verticalScale(12),
     alignItems: 'center',
-    // marginLeft: horizontalScale(8),
   },
   confirmButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,

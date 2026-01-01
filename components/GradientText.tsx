@@ -23,7 +23,6 @@ const GradientText = React.memo(
     angle = "diagonal",
     style,
   }: GradientTextProps) => {
-    // Define gradient direction based on angle
     const getGradientCoords = () => {
       switch (angle) {
         case "horizontal":

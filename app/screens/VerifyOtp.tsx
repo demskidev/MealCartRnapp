@@ -96,7 +96,6 @@ const VerifyOTPScreen = () => {
                       const formErrors = await validateForm();
                       if (Object.keys(formErrors).length > 0) {
                         setTouched({ otp: true });
-                        // Don't show toast, only show errors under field
                         return;
                       }
                       handleOTPVerification(values);

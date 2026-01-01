@@ -13,9 +13,9 @@ const shoppingLists = [
 ];
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window')
-const router = useRouter();
 
 const ListsScreen: React.FC = () => {
+const router = useRouter();
 
 
   const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
@@ -41,18 +41,15 @@ const ListsScreen: React.FC = () => {
         <BaseButton
           title="Mark Done"
           gradientButton={false}
-          // backgroundColor={Colors.olive}
           textColor="#fff"
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
 
-        // onPress={handleEditPress}
         />
         <BaseButton
           title="View List"
           gradientButton={false}
-          // backgroundColor={Colors.olive}
           textColor="#fff"
           width={width * 0.43}
           textStyle={styles.addButton}
@@ -87,9 +84,7 @@ const ListsScreen: React.FC = () => {
         renderItem={renderShoppingList}
 
 
-      //     ItemSeparatorComponent={() => <View style={styles.separator} />
 
-      // }
       />
       <CreateNewListBottomSheet ref={createNewListRef} />
 
@@ -101,8 +96,6 @@ const ListsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // justifyContent: 'center',
-    // alignItems: 'center',
     backgroundColor: Colors.background,
     paddingHorizontal: horizontalScale(20)
   },
@@ -159,25 +152,19 @@ const styles = StyleSheet.create({
     height: moderateScale(1),
     backgroundColor: Colors.divider,
     flex: 1,
-    // width:width*0.9,
-    // marginHorizontal: horizontalScale(12),
     marginVertical: verticalScale(18)
-    // marginHorizontal: 8 
 
-    // marginBottom: moderateScale(8),
   },
   listCard: {
-   backgroundColor: Colors.white,
+    backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
-    marginVertical: verticalScale(6), // top + bottom spacing
+    marginVertical: verticalScale(6),
     paddingHorizontal: moderateScale(9),
     marginHorizontal: horizontalScale(2),
     paddingVertical: verticalScale(11),
 
-    // Android
     elevation: 4,
 
-    // iOS
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

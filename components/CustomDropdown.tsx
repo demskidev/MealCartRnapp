@@ -24,12 +24,10 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   return (
     <View>
-      {/* 👇 ADD onPress HERE */}
       <TouchableOpacity
         style={styles.dropdown}
         onPress={() => setOpen(!open)}
         activeOpacity={0.8}
-        // hitSlop={moderateScale(20)}
       >
         <Text style={styles.text}>{value?.title ?? value}</Text>
 
@@ -49,7 +47,6 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
               key={option?.id ?? option}
               style={styles.option}
               onPress={() => handleSelect(option)}
-              // hitSlop={moderateScale(20)}
             >
               <Text style={styles.optionText}>{option?.title ?? option}</Text>
             </TouchableOpacity>

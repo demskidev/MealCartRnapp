@@ -15,8 +15,7 @@ export interface CreateNewListBottomSheetRef {
 }
 interface CreateNewListBottomSheetProps {
 }
-// const CreateNewListBottomSheet = forwardRef<BottomSheet, CreateNewListBottomSheetProps>(
-//   ({ isEdit = false, mealData }, ref) => {
+
 const CreateNewListBottomSheet = forwardRef<
   CreateNewListBottomSheetRef,
   {}
@@ -46,7 +45,6 @@ const CreateNewListBottomSheet = forwardRef<
     ]);
     const [isAddItemVisible, setIsAddItemVisible] = useState(false);
 
-    // Imperative handle for parent ref
     const bottomSheetRef = useRef<BottomSheet>(null);
     useImperativeHandle(ref, () => ({
       expand: () => {
@@ -81,109 +79,108 @@ const CreateNewListBottomSheet = forwardRef<
 
     return (
 
-      
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={snapPoints}
-          enablePanDownToClose
-          keyboardBehavior="extend"
-          keyboardBlurBehavior="restore"
-          topInset={0}
-          handleComponent={() => null}
-          backdropComponent={(props) => (
-            <BottomSheetBackdrop
-              {...props}
-              disappearsOnIndex={-1}
-              appearsOnIndex={0}
-            />
-          )}
-        // containerStyle={{ flex: 1 }}
-        >
 
-          <View style={styles.emptyView}></View>
-          <View style={styles.parentCreateMealText}>
-            <Text style={styles.header}>Create New List</Text>
-            <TouchableOpacity onPress={() => bottomSheetRef.current?.close()}>
-              <Image
-                source={require("@/assets/images/close-icon.png")}
-                style={{ width: verticalScale(25), height: verticalScale(25) }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        keyboardBehavior="extend"
+        keyboardBlurBehavior="restore"
+        topInset={0}
+        handleComponent={() => null}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+          />
+        )}
+      >
+
+        <View style={styles.emptyView}></View>
+        <View style={styles.parentCreateMealText}>
+          <Text style={styles.header}>Create New List</Text>
+          <TouchableOpacity onPress={() => bottomSheetRef.current?.close()}>
+            <Image
+              source={require("@/assets/images/close-icon.png")}
+              style={{ width: verticalScale(25), height: verticalScale(25) }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <BottomSheetScrollView
+          contentContainerStyle={{ paddingHorizontal: moderateScale(20) }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>List Details</Text>
+            <Text style={styles.label}>List Name</Text>
+            <CustomTextInput placeholder="Classic Spaghetti" value={mealName} onChangeText={setMealName} />
+
+            <Text style={styles.label}>Shopping Day</Text>
+            <CustomTextInput placeholder="date" value={mealName} onChangeText={setMealName} />
+
           </View>
 
-          <BottomSheetScrollView
-            contentContainerStyle={{ paddingHorizontal: moderateScale(20) }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>List Details</Text>
-              <Text style={styles.label}>List Name</Text>
-              <CustomTextInput placeholder="Classic Spaghetti" value={mealName} onChangeText={setMealName} />
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Items</Text>
+            <View style={styles.dividerRow} />
 
-              <Text style={styles.label}>Shopping Day</Text>
-              <CustomTextInput placeholder="date" value={mealName} onChangeText={setMealName} />
+            <Text style={styles.label}>imported from [Meal Name]</Text>
+            <BaseButton
+              title="Add extra items"
+              gradientButton={false}
+              backgroundColor={Colors.white}
+              textStyle={[styles.addExtraButton]}
+              textStyleText={styles.addExtra}
+              onPress={() => setIsAddItemVisible(true)}
+            />
 
-            </View>
+            <FlatList
+              data={data}
+              keyExtractor={item => item.id}
+              renderItem={renderIngredientItem}
+              scrollEnabled={false}
+            />
+          </View>
 
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Items</Text>
-              <View style={styles.dividerRow} />
-
-              <Text style={styles.label}>imported from [Meal Name]</Text>
-              <BaseButton
-                title="Add extra items"
-                gradientButton={false}
-                backgroundColor={Colors.white}
-                textStyle={[styles.addExtraButton]}
-                textStyleText={styles.addExtra}
-                onPress={() => setIsAddItemVisible(true)}
-              />
-
-              <FlatList
-                data={data}
-                keyExtractor={item => item.id}
-                renderItem={renderIngredientItem}
-                scrollEnabled={false}
-              />
-            </View>
-
-            <View style={styles.parentOfConfirmButton}>
-              <BaseButton
-                title="Discard"
-                gradientButton={false}
-                backgroundColor={Colors.white}
-                width={width * 0.28}
-                textStyle={[styles.cancelButton, { color: Colors.error }]}
-                textColor={Colors.error}
-                textStyleText={styles.discardText}
-                onPress={() => bottomSheetRef.current?.close()}
-              />
-              <BaseButton
-                title="Save Shopping List"
-                gradientButton={true}
-                width={width * 0.65}
-                gradientStartColor="#667D4C"
-                gradientEndColor="#9DAF89"
-                gradientStart={{ x: 0, y: 0 }}
-                gradientEnd={{ x: 1, y: 0 }}
-                textColor={Colors.white}
-                rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
-                textStyle={[styles.confirmButton,]}
-                textStyleText={styles.saveShopping}
-                onPress={() => bottomSheetRef.current?.close()}
-              />
-            </View>
-          </BottomSheetScrollView>
-           <AddItemToList
+          <View style={styles.parentOfConfirmButton}>
+            <BaseButton
+              title="Discard"
+              gradientButton={false}
+              backgroundColor={Colors.white}
+              width={width * 0.28}
+              textStyle={[styles.cancelButton, { color: Colors.error }]}
+              textColor={Colors.error}
+              textStyleText={styles.discardText}
+              onPress={() => bottomSheetRef.current?.close()}
+            />
+            <BaseButton
+              title="Save Shopping List"
+              gradientButton={true}
+              width={width * 0.65}
+              gradientStartColor="#667D4C"
+              gradientEndColor="#9DAF89"
+              gradientStart={{ x: 0, y: 0 }}
+              gradientEnd={{ x: 1, y: 0 }}
+              textColor={Colors.white}
+              rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
+              textStyle={[styles.confirmButton,]}
+              textStyleText={styles.saveShopping}
+              onPress={() => bottomSheetRef.current?.close()}
+            />
+          </View>
+        </BottomSheetScrollView>
+        <AddItemToList
           visible={isAddItemVisible}
           onClose={() => setIsAddItemVisible(false)}
         />
-        </BottomSheet>
+      </BottomSheet>
 
-       
-     
+
+
     );
 
 
@@ -264,7 +261,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    // color: Colors.primary,
 
     fontSize: moderateScale(12),
     borderWidth: moderateScale(1),
@@ -350,7 +346,6 @@ const styles = StyleSheet.create({
     padding: moderateScale(10),
     marginBottom: verticalScale(10),
     elevation: 2,
-    // iOS shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,

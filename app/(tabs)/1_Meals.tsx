@@ -12,7 +12,6 @@ const MealsScreen: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
-  // width minus container padding minus space between items
 
   const [isMyMeals, setIsMyMeals] = useState(true);
 
@@ -32,22 +31,18 @@ const MealsScreen: React.FC = () => {
     { id: '6', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodF.png'), time: '30 min', difficulty: 'Moderate' },
     { id: '7', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodG.png'), time: '30 min', difficulty: 'Moderate' },
     { id: '8', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodH.png'), time: '30 min', difficulty: 'Moderate' },
-    // ...add more items as needed
   ];
   const filteredMeals = mealData.filter(item => {
-    // Category filter
     if (filters.category && item.tag !== filters.category) {
       return false;
     }
 
-    // Difficulty filter
     if (filters.difficulty && item.difficulty !== filters.difficulty) {
       return false;
     }
 
-    // Prep time filter
     if (filters.prepTime) {
-      const time = parseInt(item.time) || 0; // fallback to 0 if invalid
+      const time = parseInt(item.time) || 0;
       if (filters.prepTime === '< 5 Mins' && time >= 5) return false;
       if (filters.prepTime === '5 - 10 Mins' && (time < 5 || time > 10)) return false;
       if (filters.prepTime === '10 - 15 Mins' && (time < 10 || time > 15)) return false;
@@ -197,12 +192,9 @@ const MealsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // justifyContent: 'center',
-    // alignItems: 'center',
+
     backgroundColor: Colors.background,
     paddingHorizontal: horizontalScale(20),
-    // paddingTop: verticalScale(20),
     paddingBottom: verticalScale(15)
 
   },
@@ -236,7 +228,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderColor,
     paddingHorizontal: horizontalScale(12),
     height: verticalScale(44),
-    // marginBottom: verticalScale(8),
     width: width * 0.6
 
   },
@@ -258,7 +249,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // paddingHorizontal: horizontalScale(22)
 
   },
   recentText: {

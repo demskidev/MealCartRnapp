@@ -19,7 +19,6 @@ const renderMealItem = ({ item }) => (
     <View style={styles.mealCard}>
         <Image source={item.image} style={styles.mealImage} resizeMode='cover' />
         <Text style={styles.mealName}>{item.name}</Text>
-        {/* <View style={styles.checkbox} /> */}
         <CheckBox width={verticalScale(22)} height={verticalScale(22)} color={Colors.tertiary} style={styles.checkboxIcon} />
 
     </View>
@@ -49,7 +48,6 @@ const AddItemToList = ({ visible, onClose }) => {
         setItemWeights(initialWeights);
     }, [suggestions]);
 
-    // Selected from suggestions but NOT added yet
     const handleSearch = (text: string) => {
         setSearchText(text);
 
@@ -65,7 +63,6 @@ const AddItemToList = ({ visible, onClose }) => {
         setSuggestions(filtered);
     };
     const handleSelectSuggestion = (value: string) => {
-        // prevent duplicates
         if (
             pendingItems.some(i => i.value === value) ||
             manualList.some(i => i.value === value)
@@ -174,19 +171,7 @@ const AddItemToList = ({ visible, onClose }) => {
                         value={searchText}
                     />
 
-                    {/* {suggestions.length > 0 && (
-                        <View style={styles.suggestionContainer}>
-                            {suggestions.map(item => (
-                                <TouchableOpacity
-                                    key={item}
-                                    onPress={() => handleSelectSuggestion(item)}
-                                    style={styles.suggestionItem}
-                                >
-                                    <Text style={styles.suggestionText}>{item}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )} */}
+
 
                     {suggestions.length > 0 && (
                         <FlatList
@@ -201,12 +186,8 @@ const AddItemToList = ({ visible, onClose }) => {
                                             flexDirection: 'row',
                                             alignItems: 'center',
                                             backgroundColor: Colors.white,
-                                            // borderRadius: moderateScale(8),
-                                            //  borderWidth: 1,
-                                            // borderColor: Colors.borderColor,
-                                            // marginBottom: verticalScale(8),
+
                                             paddingHorizontal: horizontalScale(12),
-                                            // height: verticalScale(48),
                                             justifyContent: 'space-between',
                                         }}
                                     >
@@ -341,27 +322,21 @@ const AddItemToList = ({ visible, onClose }) => {
                         <BaseButton
                             title="Cancel"
                             gradientButton={false}
-                            // backgroundColor={Colors.olive}
                             textColor="#fff"
                             width={width * 0.42}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
-                            // rightChild={
-                            //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                            // }
+
                             onPress={onClose}
                         />
                         <BaseButton
                             title="Generate List"
                             gradientButton={true}
-                            // backgroundColor={Colors.olive}
                             textColor="#fff"
                             width={width * 0.42}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
-                            // rightChild={
-                            //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-                            // }
+
                             onPress={onClose}
 
                         />
@@ -430,10 +405,8 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(12),
         marginRight: horizontalScale(2),
         marginLeft: horizontalScale(1),
-        // paddingHorizontal: horizontalScale(10),
         elevation: 4,
 
-        // iOS
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
@@ -441,8 +414,7 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(3)
     },
     mealImage: {
-        // width: verticalScale(48),
-        // height: verticalScale(48),
+
         borderRadius: moderateScale(8),
         marginRight: horizontalScale(12),
     },
@@ -465,7 +437,6 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(18),
         height: moderateScale(1),
         backgroundColor: Colors.divider,
-        // flex: 1,
 
     },
     addManualLabel: {
@@ -512,8 +483,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.white,
         borderRadius: moderateScale(8),
-        // borderWidth: moderateScale(1),
-        // borderColor: Colors.borderColor,
+
         fontFamily: FontFamilies.ROBOTO_REGULAR,
         fontSize: moderateScale(12),
         color: Colors.tertiary,
@@ -529,8 +499,7 @@ const styles = StyleSheet.create({
     addButton: {
         backgroundColor: Colors.white,
         borderRadius: moderateScale(8),
-        // borderWidth: moderateScale(1),
-        // borderColor: Colors.primary,
+
         paddingHorizontal: horizontalScale(18),
         height: verticalScale(40),
         justifyContent: 'center',
@@ -556,9 +525,7 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(8),
         borderWidth: moderateScale(1),
         borderColor: Colors.borderColor,
-        // flex: 1,
         marginRight: horizontalScale(8),
-        // height: verticalScale(44),
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -587,21 +554,17 @@ const styles = StyleSheet.create({
     dividerRow: {
         height: moderateScale(1),
         backgroundColor: Colors.divider,
-        // flex: 1,
 
         marginVertical: verticalScale(15)
 
     },
     confirmButton: {
-        //  flex: 1,
-        // backgroundColor: '#9DAF89',
+
         borderRadius: moderateScale(8),
-        // paddingVertical: verticalScale(12),
         alignItems: 'center',
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         color: Colors.white,
         fontSize: moderateScale(14),
-        // marginLeft: horizontalScale(8),
     },
     confirmButtonText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,

@@ -3,10 +3,9 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
 import { StyleSheet, Text, View } from "react-native";
 
-// Props for Header component
 interface HeaderProps {
-  title: string; // Main heading text (required)
-  description?: string; // Optional description/subtitle text
+  title: string;
+  description?: string;
 }
 
 /**
@@ -22,10 +21,8 @@ interface HeaderProps {
 const Header = ({ title, description }: HeaderProps) => {
   return (
     <View style={styles.container}>
-      {/* Main title */}
       <Text style={styles.title}>{title}</Text>
 
-      {/* Optional description */}
       <Text style={styles.description}>{description}</Text>
     </View>
   );

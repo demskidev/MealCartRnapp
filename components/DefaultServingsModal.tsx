@@ -28,18 +28,7 @@ export default function DefaultServingsModal({ visible, onClose, onSave }) {
                     <Text style={styles.subtitle}>
                         You can set your meals servings for all your new meals.
                     </Text>
-                    {/* <Text style={styles.label}>Servings</Text> */}
-                    {/* <View style={styles.dropdownBox}>
-                        <TouchableOpacity
-                            style={styles.dropdown}
-                            activeOpacity={0.7}
-                        // You can replace this with a real dropdown if you have one
-                        >
-                            <Text style={styles.dropdownText}>{selected}</Text>
-                            <Text style={styles.dropdownArrow}>▼</Text>
-                        </TouchableOpacity>
-                   
-                    </View> */}
+
                     <View >
                         <Text style={styles.label}>Servings</Text>
                         <CustomStepper value={servings} onIncrement={() => setServings(s => String(Number(s) + 1))} onDecrement={() => setServings(s => String(Math.max(1, Number(s) - 1)))} />
@@ -187,18 +176,13 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(14),
     },
     confirmButton: {
-        //  flex: 1,
-        // backgroundColor: '#9DAF89',
         borderRadius: moderateScale(8),
-        // paddingVertical: verticalScale(12),
         alignItems: 'center',
-        // marginLeft: horizontalScale(8),
     },
     confirmButtonText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         color: Colors.white,
         fontSize: moderateScale(14),
     },
-    // rowItem: { flex: 1, minWidth: 80, },
 
 });

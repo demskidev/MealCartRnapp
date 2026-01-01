@@ -115,7 +115,6 @@ const NewPasswordScreen = () => {
                           password: true,
                           confirmPassword: true,
                         });
-                        // Don't show toast, only show errors under fields
                         return;
                       }
                       handleNewPassword(values);

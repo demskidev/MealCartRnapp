@@ -67,26 +67,22 @@ const SignInScreen = () => {
       style={styles.safeArea}
       edges={["top", "left", "right", "bottom"]}
     >
-      {/* KeyboardAvoidingView adjusts UI when keyboard is visible */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        {/* ScrollView allows content to scroll when keyboard is open or screen is small */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
-            {/* Header component with screen title and description */}
             <Header
               title={Strings.welcomeBack}
               description="Log in to continue your meal planning."
             />
 
-            {/* Form with Formik */}
             <Formik
               initialValues={{
                 email: "",
@@ -138,7 +134,6 @@ const SignInScreen = () => {
                     />
                   </View>
 
-                  {/* Container for "Forgot Password" and login button */}
                   <View style={styles.middleContainer}>
                     <TouchableOpacity
                       style={styles.forgotPasswordContainer}
@@ -153,7 +148,6 @@ const SignInScreen = () => {
                       />
                     </TouchableOpacity>
 
-                    {/* Login button */}
                     <BaseButton
                       title={Strings.logIn}
                       gradientButton={true}
@@ -179,10 +173,8 @@ const SignInScreen = () => {
                     />
                   </View>
 
-                  {/* Divider between login and social login buttons */}
                   <Divider style={{ marginVertical: verticalScale(50) }} />
 
-                  {/* Social login buttons */}
                   <View style={styles.buttonContainer}>
                     <BaseButton
                       title={Strings.continueWithGoogle}
@@ -201,7 +193,6 @@ const SignInScreen = () => {
           </View>
         </ScrollView>
 
-        {/* Footer with navigation to Sign Up screen - positioned above bottom nav */}
         <View style={styles.footerContainer}>
           <AuthFooter
             title={Strings.newUser}

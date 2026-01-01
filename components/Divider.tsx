@@ -27,13 +27,10 @@ interface DividerProps {
 const Divider = ({ style }: DividerProps) => {
   return (
     <View style={[styles.container, style]}>
-      {/* Left horizontal line */}
       <View style={styles.line} />
 
-      {/* Center text */}
       <Text style={styles.text}>OR</Text>
 
-      {/* Right horizontal line */}
       <View style={styles.line} />
     </View>
   );
@@ -53,7 +50,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: fontSize(12),
-    fontFamily:FontFamilies.ROBOTO_REGULAR,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.tertiary,
   },
 });

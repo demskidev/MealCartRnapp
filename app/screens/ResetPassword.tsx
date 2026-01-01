@@ -46,18 +46,18 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
         //   `${APP_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(values.email)}`
         // );
 
-         Alert.alert(
-        "Check Your Email",
-        "A password reset link has been sent to your email address.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              pushNavigation(APP_ROUTES.SIGNIN); 
+        Alert.alert(
+          "Check Your Email",
+          "A password reset link has been sent to your email address.",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                pushNavigation(APP_ROUTES.SIGNIN);
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
       } else {
         Alert.alert("Error", result.message);
       }
@@ -132,7 +132,6 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
                       const formErrors = await validateForm();
                       if (Object.keys(formErrors).length > 0) {
                         setTouched({ email: true });
-                        // Don't show toast, only show errors under field
                         return;
                       }
                       handleResetPassword(values);
