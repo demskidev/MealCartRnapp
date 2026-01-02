@@ -157,7 +157,6 @@
 import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { type IStep } from 'rn-tourguide';
-import MealCartPopUp from "./MealcartPopUp";
 
 
 // TooltipProps from rn-tourguide
@@ -284,21 +283,21 @@ const TourTooltip: React.FC<TooltipProps> = ({ currentStep, handleNext, handlePr
         handleNext?.();
     };
 
-    if (!step) return null;
-    return (
-        <MealCartPopUp
-            visible={true}
-            title={step.title}
-            subTitle={step.subTitle}
-            primaryText={step.primaryText}
-            onPrimaryPress={handleStop}
-            secondaryText={step.secondaryText}
-            onSecondaryPress={handlePrev}
-            tertiaryText={step.tertiaryText}
-            onTertiaryPress={onNext}
-            style={positionStyle}
-        />
-    );
+    // if (!step) return null;
+    // return (
+    //     <MealCartPopUp
+    //         visible={true}
+    //         title={step.title}
+    //         subTitle={step.subTitle}
+    //         primaryText={step.primaryText}
+    //         onPrimaryPress={handleStop}
+    //         secondaryText={step.secondaryText}
+    //         onSecondaryPress={handlePrev}
+    //         tertiaryText={step.tertiaryText}
+    //         onTertiaryPress={onNext}
+    //         style={positionStyle}
+    //     />
+    // );
 };
 
 export default TourTooltip;

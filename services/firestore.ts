@@ -11,14 +11,11 @@ import { db, storage } from './firebase';
 // Get all documents from a collection
 export const getAllDocuments = async (collectionName: string) => {
   try {
-    console.log("getAllDocuments called with:", collectionName);
+   
     const colRef = collection(db, collectionName);
-    console.log("colRef:", colRef);
     const snapshot = await getDocs(colRef);
-    console.log("Firestore getAllDocuments snapshot:", snapshot);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error("Error in getAllDocuments:", err);
     throw err;
   }
 };

@@ -33,7 +33,6 @@ export const loginAsync = createAsyncThunk(
     try {
 
      const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-console.log("auth user signin", userCredential);
       if (userCredential?.user) {
         const userUid = userCredential.user.uid;
 
