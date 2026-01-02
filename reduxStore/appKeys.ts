@@ -18,5 +18,19 @@ export const HTTPPREFIX = 'http://';
 // Field keys for forms
 export const EMAIL_KEY = 'email';
 export const NAME_KEY = 'name';
+export const DESCRIPTION_KEY = 'description';
 export const PASSWORD_KEY = 'password';
 export const CONFIRM_PASSWORD_KEY = 'confirmPassword';
+export const INGREDIENTS_KEY = 'ingredients';
+export const STEPS_KEY = 'steps';
+export const IMAGEURL_KEY = 'imageUrl';
+export const CATEGORY_KEY = 'category';
+export const PREPTIME_KEY = 'prepTime';
+export const SERVINGS_KEY = 'servings';
+export const DIFFICULTY_KEY = 'difficulty';
+export const DIETARY_PREFERENCES_KEY = 'dietaryPreferences';
+
+
+
+
+
