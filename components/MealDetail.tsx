@@ -11,7 +11,7 @@ import { FontFamily } from "@/utils/Fonts";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -28,15 +28,19 @@ import SendToShoppingList from "./SendShoppingList";
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
-const MealDetail = ({ meal, onBack }) => {
+const MealDetail = ({ meal: initialMeal, onBack }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
-  // const bottomSheetRef = useRef<CreateMealBottomSheetRef>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const { deleteTheMeal } = useMealsViewModel();
-  // 👇 state to pass meal data to bottom sheet
+  const { meals, deleteTheMeal } = useMealsViewModel();
   const [selectedMeal, setSelectedMeal] = useState(null);
+
+  // Get the updated meal from Redux state, fallback to initial meal
+  const meal = useMemo(() => {
+    const updatedMeal = meals.find((m) => m.id === initialMeal.id);
+    return updatedMeal || initialMeal;
+  }, [meals, initialMeal.id]);
 
   const handleEditPress = () => {
     bottomSheetRef.current?.expand();
@@ -74,8 +78,6 @@ const MealDetail = ({ meal, onBack }) => {
   return (
     <View style={styles.container}>
       <View style={styles.headerImageContainer}>
-        {/* <Image source={meal.image} style={styles.image} resizeMode="cover" /> */}
-
         <ImageBackground
           source={
             meal.image
@@ -120,23 +122,7 @@ const MealDetail = ({ meal, onBack }) => {
                 />
               </TouchableOpacity>
             </View>
-            {/* <TouchableOpacity onPress={onBack} style={styles.backButton} >
-
-
-                            <Image
-                                source={require('@/assets/images/backIcon.png')}
-                                style={styles.backImage}
-                                resizeMode="contain"
-
-                            />
-
-
-                        </TouchableOpacity> */}
           </View>
-          <View></View>
-          {/* <View style={styles.tagContainer}>
-                <Text style={styles.tagText}>{meal.tag}</Text>
-            </View> */}
         </ImageBackground>
       </View>
 
@@ -165,8 +151,6 @@ const MealDetail = ({ meal, onBack }) => {
             onPress={handleEditPress}
           />
 
-          {/* <CreateMealBottomSheet ref={bottomSheetRef} /> */}
-
           <BaseButton
             title="Delete"
             gradientButton={true}
@@ -189,7 +173,8 @@ const MealDetail = ({ meal, onBack }) => {
                 <Text style={styles.ingredientName}>{ingredient.name}</Text>
                 <View style={styles.dividerRow} />
                 <Text style={styles.ingredientValue}>
-                  {ingredient.count} {ingredient.unit}
+                  {ingredient.count && `${ingredient.count} `}
+                  {ingredient.unit}
                 </Text>
               </View>
             ))}
@@ -209,14 +194,6 @@ const MealDetail = ({ meal, onBack }) => {
           </View>
         )}
       </ScrollView>
-      {/* <ConfirmationModal
-                visible={showDeleteModal}
-                onCancel={() => setShowDeleteModal(false)}
-                onDelete={() => {
-                    setShowDeleteModal(false);
-                    // Add your delete logic here
-                }}
-            /> */}
 
       <ConfirmationModal
         visible={showDeleteModal}
@@ -308,16 +285,10 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: "row",
     alignItems: "center",
-    // justifyContent: "space-between",
-    // marginHorizontal: horizontalScale(10),
     marginStart: horizontalScale(-8),
     marginVertical: verticalScale(25),
   },
   editButton: {
-    // backgroundColor: Colors.olive,
-    // borderRadius: 8,
-    // paddingHorizontal: 32,
-    // paddingVertical: 10,
     fontFamily: FontFamily.ROBOTO_MEDIUM,
     fontSize: moderateScale(16),
     color: Colors.white,
@@ -328,10 +299,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   deleteButton: {
-    // backgroundColor: Colors.primary || '#D32F2F',
-    // borderRadius: 8,
-    // paddingHorizontal: 32,
-    // paddingVertical: 10,
     fontFamily: FontFamily.ROBOTO_MEDIUM,
     fontSize: moderateScale(16),
     color: Colors.white,
@@ -352,11 +319,7 @@ const styles = StyleSheet.create({
     height: moderateScale(1),
     backgroundColor: Colors.divider,
     flex: 1,
-    // width:width*0.9,
     marginHorizontal: horizontalScale(12),
-    // marginHorizontal: 8
-
-    // marginBottom: moderateScale(8),
   },
   ingredientRow: {
     flexDirection: "row",
@@ -369,13 +332,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: FontFamily.ROBOTO_MEDIUM,
     color: Colors.primary,
-    // flex: 1,
   },
   ingredientValue: {
     fontSize: moderateScale(14),
     fontFamily: FontFamily.ROBOTO_REGULAR,
     color: Colors.tertiary,
-    // marginLeft: horizontalScale(8),
   },
   instructionRow: {
     flexDirection: "row",
@@ -406,24 +367,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: verticalScale(300),
   },
-  headerImageContainer: {
-    // position: 'relative',
-    // width: '100%',
-    // height: verticalScale(300),
-    // backgroundColor: Colors.background,
-    // marginBottom: verticalScale(20),
-    // pointerEvents: 'box-none'
-  },
-  headerOverlayContent: {
-    // position: 'absolute',
-    // left: 0,
-    // right: 0,
-    // bottom: verticalScale(16),
-    // paddingHorizontal: horizontalScale(16),
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // justifyContent: 'space-between',
-  },
+  headerImageContainer: {},
+  headerOverlayContent: {},
   headerOverlayContent1: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -432,17 +377,6 @@ const styles = StyleSheet.create({
     bottom: verticalScale(40),
     left: horizontalScale(16),
     width: width * 0.92,
-
-    // marginTop: 90
-  },
-  imageMeallist: {
-    width: moderateScale(56),
-    height: moderateScale(42),
-    marginRight: moderateScale(8),
-  },
-  imageaddToList: {
-    width: moderateScale(56),
-    height: moderateScale(42),
   },
   backImage: {
     width: moderateScale(30),
