@@ -10,6 +10,7 @@ export const Colors = {
   borderColor: "#DBE0D7",
   secondaryButtonBackground: "#9DAF89",
   white: "#FFFFFF",
+  _FFFFFF97: "#FFFFFF97",
   black: "#000000",
   divider: "#E6F0DF",
   olive: "#667D4C",

@@ -1,64 +1,59 @@
 import { iconback } from '@/assets/images';
 import { CheckBox, FilledCheckBox } from '@/assets/svg';
 import BaseButton from '@/components/BaseButton';
+import Loader from '@/components/Loader';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { showToast } from '@/utils/Toast';
+import { useProfileViewModel } from '@/viewmodels/ProfileViewModel';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
-
-const dietaryData = [
-    {
-        id: '1',
-
-        title: 'Vegetarian',
-    },
-    {
-        id: '2',
-        title: 'Vegan',
-    },
-    {
-        id: '3',
-        title: 'Glutan-Free',
-    },
-    {
-        id: '4',
-        title: 'Keto',
-
-    },
-    {
-        id: '5',
-        title: 'Paleo',
-
-    },
-    {
-        id: '6',
-        title: 'Pescatarian',
-
-    },
-    {
-        id: '7',
-        title: 'Dairy-Free',
-
-    },
-];
 
 export default function DietaryPreferences({ navigation }) {
     const [removePlan, setRemovePlan] = useState(false);
     const router = useRouter();
-    const [selectedId, setSelectedId] = useState(null);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const { user, loading, dietaryPreferences, updateUserData } = useProfileViewModel();
+
+    useEffect(() => {
+        // Load user's existing dietary preferences
+        if (user?.dietaryPreferences) {
+            setSelectedIds(user.dietaryPreferences);
+        }
+    }, [user]);
+
+    const toggleSelection = (id: string) => {
+        setSelectedIds((prev) =>
+            prev.includes(id)
+                ? prev.filter((selectedId) => selectedId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleSavePreferences = () => {
+        updateUserData(
+            { dietaryPreferences: selectedIds },
+            (payload) => {
+                showToast('success', 'Preferences saved successfully!');
+                router.back();
+            },
+            (error) => {
+                showToast('error', error || 'Failed to save preferences');
+            }
+        );
+    };
+
     const renderDietaryItem = ({ item, index }) => (
         <>
-            <TouchableOpacity style={styles.row} onPress={() => setSelectedId(item.id)}>
+            <TouchableOpacity style={styles.row} onPress={() => toggleSelection(item.id)}>
                 <View>
-                    <Text style={styles.rowTitle}>{item.title}</Text>
+                    <Text style={styles.rowTitle}>{item.name}</Text>
                 </View>
 
-                {selectedId === item.id ? (
+                {selectedIds.includes(item.id) ? (
                     <FilledCheckBox
                         width={verticalScale(22)}
                         height={verticalScale(22)}
@@ -73,7 +68,7 @@ export default function DietaryPreferences({ navigation }) {
                 )}
 
             </TouchableOpacity>
-            {index !== dietaryData.length - 1 && <View style={styles.divider} />}
+            {index !== (dietaryPreferences?.length || 0) - 1 && <View style={styles.divider} />}
         </>
     );
 
@@ -94,7 +89,7 @@ export default function DietaryPreferences({ navigation }) {
             <View style={styles.card}>
 
                 <FlatList
-                    data={dietaryData}
+                    data={dietaryPreferences || []}
                     keyExtractor={item => item.id}
                     scrollEnabled={false}
                     renderItem={renderDietaryItem}
@@ -109,10 +104,10 @@ export default function DietaryPreferences({ navigation }) {
                 title={Strings.dietaryPreferences_save}
                 gradientButton={true}
                 textStyle={styles.savePreference}
-
+                onPress={handleSavePreferences}
             />
 
-
+            {loading && <Loader />}
         </SafeAreaView>
 
     );

@@ -168,6 +168,10 @@ export const Strings = {
   imagePickerModal_cancel: "Cancel",
   imagePickerModal_cameraPermission: "Camera permission is required!",
   imagePickerModal_mediaLibraryPermission: "Media library permission is required!",
+  mealCart: "Meal Cart",
+  description:
+    "Your smart meal planning assistant. Save recipes, plan weeks, and shop instantly.",
+  createAccount: "Create Account",
   logIn: "Log In",
   continueWithGoogle: "Continue with Google",
   continueWithApple: "Continue with Apple",
@@ -194,7 +198,8 @@ export const Strings = {
   password: "Password",
   confirmPassword: "Confirm Password",
   name: "Name",
-  mealsAreSecure: "Your meal plans and recipes will be securely synced to your account.",
+  mealsAreSecure:
+    "Your meal plans and recipes will be securely synced to your account.",
   userNotRegistered: "User is not registered in the database",
   signinSuccessful: "Signin successful",
   signupSuccessfully: "Account created successfully!",
@@ -202,7 +207,6 @@ export const Strings = {
   registrationFailed: "Registration failed",
   loginFailed: "Login failed",
   mealAdded: "Meal added successfully",
-  error_creating_meal: "Error creating meal",
   signinDescription: "Log in to continue your meal planning.",
   home_mealCart: "MealCart",
   home_greeting: "Hello there!",
@@ -326,4 +330,11 @@ export const Strings = {
   createList_discard: "Discard",
   createList_saveShoppingList: "Save Shopping List",
   createList_category: "Category",
+  mealUpdated: "Meal updated successfully",
+
+  error_creating_meal: "Error creating meal",
+  error_updating_meal: "Error updating meal",
+  meal_deleted: "Meal deleted successfully",
+  error_deleting_meal: "Error deleting meal",
+  error_occurred_deleting_meal: "An error occurred while deleting the meal"
 };

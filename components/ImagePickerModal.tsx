@@ -49,7 +49,7 @@ const ImagePickerModal: React.FC<ImagePickerModalProps> = ({ visible, onClose, o
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose} />

@@ -6,6 +6,7 @@ export const INGREDIENTS_CATEGORY_COLLECTION = 'ingredientCategory';
 export const MEALS_COLLECTION = 'meals';
 export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';
+export const DIETARY_PREFERENCES_COLLECTION = 'dietryPreferences';
 // Add more collection keys as needed
 
 
