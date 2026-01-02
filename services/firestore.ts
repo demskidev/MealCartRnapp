@@ -1,12 +1,21 @@
-import { setDoc } from 'firebase/firestore';
+import { setDoc } from "firebase/firestore";
 
 // services/firestore.ts
 // Firestore service for common queries
 
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from './firebase';
-
+import { db, storage } from "./firebase";
 
 // Get all documents from a collection
 export const getAllDocuments = async (collectionName: string) => {
@@ -16,7 +25,7 @@ export const getAllDocuments = async (collectionName: string) => {
     console.log("colRef:", colRef);
     const snapshot = await getDocs(colRef);
     console.log("Firestore getAllDocuments snapshot:", snapshot);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
     console.error("Error in getAllDocuments:", err);
     throw err;
@@ -38,20 +47,33 @@ export const getDocumentById = async (collectionName: string, id: string) => {
 export const addDocument = async (collectionName: string, data: any) => {
   const colRef = collection(db, collectionName);
   const docRef = await addDoc(colRef, data);
-  return docRef.id;
+  return { id: docRef.id, ...data };
 };
 
-
 // Set a document by ID (create or overwrite)
-export const setDocumentById = async (collectionName: string, id: string, data: any) => {
+export const setDocumentById = async (
+  collectionName: string,
+  id: string,
+  data: any
+) => {
   const docRef = doc(db, collectionName, id);
   await setDoc(docRef, data);
 };
 
 // Update a document
-export const updateDocument = async (collectionName: string, id: string, data: any) => {
+export const updateDocument = async (
+  collectionName: string,
+  id: string,
+  data: any
+) => {
   const docRef = doc(db, collectionName, id);
   await updateDoc(docRef, data);
+  // Fetch and return the actual document from Firestore
+  const updatedDoc = await getDoc(docRef);
+  if (updatedDoc.exists()) {
+    return { id: updatedDoc.id, ...updatedDoc.data() };
+  }
+  return { id, ...data };
 };
 
 // Delete a document
@@ -61,23 +83,29 @@ export const deleteDocument = async (collectionName: string, id: string) => {
 };
 
 // Query documents with a condition
-export const queryDocuments = async (collectionName: string, field: string, op: any, value: any) => {
+export const queryDocuments = async (
+  collectionName: string,
+  field: string,
+  op: any,
+  value: any
+) => {
   const colRef = collection(db, collectionName);
   const q = query(colRef, where(field, op, value));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
+
+// Get all dietary preferences
 
 // Upload an image to Firebase Storage and return the download URL
 export const uploadImageToFirebase = async (uri: string, path: string) => {
   try {
-  
     // Convert local URI to blob
     let blob;
-  
-      const response = await fetch(uri);
-      blob = await response.blob();
-    
+
+    const response = await fetch(uri);
+    blob = await response.blob();
+
     // Create a storage reference
     const storageRef = ref(storage, path);
     // Upload the blob
@@ -85,7 +113,7 @@ export const uploadImageToFirebase = async (uri: string, path: string) => {
     // Get the download URL
     const downloadURL = await getDownloadURL(storageRef);
     return downloadURL;
-  } catch (error) {
-    throw new Error("Image upload failed: " + error.message);
+  } catch (error: any) {
+    throw new Error("Image upload failed: " + error?.message);
   }
 };

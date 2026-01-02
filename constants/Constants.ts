@@ -50,3 +50,7 @@ export function moderateScale(size: number, factor: number = 0.5): number {
 // Reel Heights based on platform
 export const iosReelHeight: number = screenFullHeight - getHeight(100);
 export const androidReelHeight: number = screenFullHeight - getHeight(70);
+
+export const addDotAtEnd = (data: string): string => {
+  return data.trim().endsWith(".") ? data : `${data}.`;
+};

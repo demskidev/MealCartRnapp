@@ -5,7 +5,7 @@ import {
 } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -44,12 +44,9 @@ interface BaseButtonProps {
   onPress?: () => void;
   disabled?: boolean;
   textStyle?: any;
-  showPressedShadow?: boolean
-  textStyleText?: any
-
-
+  showPressedShadow?: boolean;
+  textStyleText?: any;
 }
-
 
 const BaseButton = React.memo(
   ({
@@ -69,10 +66,8 @@ const BaseButton = React.memo(
     textStyle,
     disabled = false,
     showPressedShadow,
-    textStyleText
-
+    textStyleText,
   }: BaseButtonProps) => {
-
     const [pressed, setPressed] = useState(false);
     return (
       <TouchableOpacity
@@ -80,18 +75,15 @@ const BaseButton = React.memo(
           styles.container,
           { width: width || "100%", opacity: disabled ? 0.5 : 1 },
         ]}
-
         onPress={onPress}
         disabled={disabled}
       >
-
         <View
           style={[
             styles.buttonWrapper,
             showPressedShadow && pressed && styles.pressedBorder,
           ]}
         >
-
           {gradientButton ? (
             <LinearGradient
               colors={[
@@ -102,15 +94,13 @@ const BaseButton = React.memo(
               end={gradientEnd || { x: 1, y: 0 }}
               style={styles.gradientButton}
             >
-
               <TouchableOpacity
                 onPress={onPress}
                 onPressIn={() => setPressed(true)}
                 onPressOut={() => setPressed(false)}
-                style={[styles.button, { backgroundColor: 'transparent' }]}
+                style={[styles.button, { backgroundColor: "transparent" }]}
                 disabled={disabled}
               >
-
                 {leftChild && leftChild}
                 <Text
                   style={[
@@ -119,7 +109,8 @@ const BaseButton = React.memo(
                     textStyle,
                   ]}
                 >
-                  {title} </Text>
+                  {title}{" "}
+                </Text>
 
                 {rightChild && rightChild}
               </TouchableOpacity>
@@ -130,22 +121,28 @@ const BaseButton = React.memo(
               style={[
                 styles.button,
                 backgroundColor && { backgroundColor },
-                textStyle
+                textStyle,
               ]}
               disabled={disabled}
             >
               {leftChild && leftChild}
-              <Text style={[styles.text, textColor && { color: textColor }, textStyleText]}> {title} </Text>
+              <Text
+                style={[
+                  styles.text,
+                  textColor && { color: textColor },
+                  textStyleText,
+                ]}
+              >
+                {" "}
+                {title}{" "}
+              </Text>
               {rightChild && rightChild}
             </TouchableOpacity>
           )}
-
         </View>
 
-
-
         {description && <Text style={styles.description}>{description}</Text>}
-      </TouchableOpacity >
+      </TouchableOpacity>
     );
   }
 );
@@ -153,6 +150,11 @@ const BaseButton = React.memo(
 const styles = StyleSheet.create({
   container: {
     gap: verticalScale(10),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   button: {
@@ -164,10 +166,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(20),
     borderRadius: moderateScale(8),
     gap: horizontalScale(10),
-    height: verticalScale(48)
+    height: verticalScale(48),
   },
-
-
 
   description: {
     textAlign: "center",
@@ -182,36 +182,23 @@ const styles = StyleSheet.create({
     fontSize: fontSize(16),
   },
   gradientButton: {
-
-    borderRadius: moderateScale(12),
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: moderateScale(8),
+    justifyContent: "center",
+    alignItems: "center",
     maxWidth: 5000,
-    height: verticalScale(48)
+    height: verticalScale(48),
   },
-
-
-
-
 
   buttonWrapper: {
     borderRadius: moderateScale(19),
     borderWidth: moderateScale(7),
-    borderColor: 'transparent',
-    overflow: 'hidden',
+    borderColor: "transparent",
+    overflow: "hidden",
   },
 
   pressedBorder: {
-    borderColor: '#D9D9D9',
+    borderColor: "#D9D9D9",
   },
-
-
-
-
-
-
-
-
 });
 
 export default BaseButton;

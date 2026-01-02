@@ -48,7 +48,7 @@ const ImagePickerModal: React.FC<ImagePickerModalProps> = ({ visible, onClose, o
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="slide"
       onRequestClose={onClose}
     >
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }} onPress={onClose} />

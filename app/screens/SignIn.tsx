@@ -53,7 +53,6 @@ const SignInScreen = () => {
       (payload) => {
         showSuccessToast(Strings.signinSuccessful);
         resetAndNavigate(APP_ROUTES.HOME);
-
       },
       (error) => {
         showErrorToast(error);
