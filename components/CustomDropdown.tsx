@@ -1,7 +1,7 @@
-import { moderateScale, verticalScale } from '@/constants/Constants';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { moderateScale, verticalScale } from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface CustomDropdownProps {
   value: string;
@@ -31,13 +31,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
       >
         <Text style={styles.text}>{value?.title ?? value}</Text>
 
-        {icon && (
-          <Image
-            source={icon}
-            style={styles.icon}
-            resizeMode="contain"
-          />
-        )}
+        {icon &&
+          React.createElement(icon, {
+            width: moderateScale(20),
+            height: moderateScale(20),
+            style: styles.icon,})}
       </TouchableOpacity>
 
       {open && (
@@ -57,20 +55,23 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   );
 };
 
-
 const styles = StyleSheet.create({
   dropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors._F6F6F6,
     borderRadius: moderateScale(8),
     padding: moderateScale(10),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
     marginBottom: verticalScale(8),
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
-  text: { fontSize: moderateScale(12), color: Colors.tertiary, fontFamily: FontFamilies.ROBOTO_REGULAR },
+  text: {
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+  },
   icon: {
     width: moderateScale(20),
     height: moderateScale(20),

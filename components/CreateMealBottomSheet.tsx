@@ -1,4 +1,6 @@
+import { closeIcon, deleteicon } from "@/assets/images";
 import { IconMeal, IconPlus } from "@/assets/svg";
+import { IconDown } from "@/assets/svg/IconUpDown";
 import {
   horizontalScale,
   moderateScale,
@@ -33,8 +35,6 @@ import CustomDropdown from "./CustomDropdown";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
 import ImagePickerModal from "./ImagePickerModal";
-import { IconDown } from "@/assets/svg/IconUpDown";
-import { closeIcon } from "@/assets/images";
 
 export interface CreateMealBottomSheetRef {
   expand: () => void;
@@ -111,7 +111,6 @@ const CreateMealBottomSheet = forwardRef<
     else hideLoader();
   }, [loading]);
 
- 
   const renderIngredientItem =
     (ingredients, setFieldValue, errors, touched, setTouched) =>
     ({ item, index }) => {
@@ -262,7 +261,7 @@ const CreateMealBottomSheet = forwardRef<
               }}
             >
               <Image
-                source={delete}
+                source={deleteicon}
                 style={{
                   width: verticalScale(24),
                   height: verticalScale(24),
@@ -282,52 +281,69 @@ const CreateMealBottomSheet = forwardRef<
     (steps, setFieldValue) =>
     ({ item, index }) =>
       (
-        <View style={styles.row}>
-          <Text style={styles.sectionTitle}>{index + 1}.</Text>
-
-          <CustomTextInput
-            style={{
-              height: verticalScale(60),
-              borderRadius: moderateScale(4),
-              backgroundColor: Colors.greysoft,
-              paddingHorizontal: horizontalScale(10),
-              paddingTop: moderateScale(15),
-              marginTop: moderateScale(-5),
-              width: isEdit ? width * 0.7 : width * 0.8,
-              marginBottom: verticalScale(15),
-            }}
-            placeholder={
-              isEdit
-                ? "Heat olive oil in large pan. saute diced onion and garlic"
-                : "A short summary of the meal..."
-            }
-            multiline
-            value={item?.text}
-            onChangeText={(text) => {
-              const updated = [...steps];
-              updated[index] = { ...updated[index], text };
-              setFieldValue("steps", updated);
-            }}
-          />
-
-          {isEdit ? (
-            <TouchableOpacity
-              onPress={() =>
-                ref && typeof ref !== "function" && ref.current?.close()
-              }
+        <View style={{ marginBottom: verticalScale(15) }}>
+          <View style={[styles.row, { alignItems: "flex-start" }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                {
+                  marginTop: verticalScale(5),
+                  marginRight: horizontalScale(8),
+                },
+              ]}
             >
-              <Image
-                source={require("@/assets/images/close-icon.png")}
-                style={{ width: verticalScale(22), height: verticalScale(22) }}
-                resizeMode="contain"
+              {index + 1}.
+            </Text>
+
+            <View style={{ flex: 1 }}>
+              <CustomTextInput
+                style={{
+                  height: verticalScale(60),
+                  borderRadius: moderateScale(4),
+                  backgroundColor: Colors.greysoft,
+                  paddingHorizontal: horizontalScale(10),
+                  paddingTop: moderateScale(10),
+                  textAlignVertical: "top",
+                }}
+                placeholder={
+                  isEdit
+                    ? "Heat olive oil in large pan. saute diced onion and garlic"
+                    : "A short summary of the meal..."
+                }
+                multiline
+                value={item?.text}
+                onChangeText={(text) => {
+                  const updated = [...steps];
+                  updated[index] = { ...updated[index], text };
+                  setFieldValue("steps", updated);
+                }}
               />
-            </TouchableOpacity>
-          ) : (
-            <></>
-          )}
+            </View>
+
+            {isEdit ? (
+              <TouchableOpacity
+                onPress={() => {
+                  const updated = steps.filter((_, i) => i !== index);
+                  setFieldValue("steps", updated);
+                }}
+                style={{
+                  marginTop: verticalScale(5),
+                  marginLeft: horizontalScale(8),
+                }}
+              >
+                <Image
+                  source={closeIcon}
+                  style={{
+                    width: verticalScale(22),
+                    height: verticalScale(22),
+                  }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
       );
-
   const handleCreateMeal = async (values) => {
     try {
       const mappedIngredients = values.ingredients.map((ing) => {
@@ -475,7 +491,7 @@ const CreateMealBottomSheet = forwardRef<
       initialValues={initialValues}
       validationSchema={createMealValidationSchema}
       onSubmit={isEdit ? handleEditMeal : handleCreateMeal}
-      validateOnChange={false}
+      validateOnChange={true}
       validateOnBlur={true}
     >
       {({
@@ -774,7 +790,7 @@ const CreateMealBottomSheet = forwardRef<
                   ]}
                   textColor={isEdit ? Colors.error : Colors.primary}
 
-                  // onPress={handleCancel}
+                  onPress={()=> ref?.current?.close()}
                 />
                 <BaseButton
                   title={isEdit ? "Update Meal" : "Confirm"}
@@ -796,15 +812,34 @@ const CreateMealBottomSheet = forwardRef<
                   textStyle={[styles.confirmButton]}
                   onPress={async () => {
                     const formErrors = await validateForm();
+                    console.log("Validation errors:", formErrors);
+
                     if (Object.keys(formErrors).length > 0) {
+                      // Mark all fields as touched to show validation errors
                       const ingredientsTouched = values.ingredients.map(() => ({
                         name: true,
+                        count: true,
+                        unit: true,
+                        category: true,
                       }));
-                      setTouched({
-                        name: true,
-                        description: true,
-                        ingredients: ingredientsTouched,
-                      });
+
+                      const stepsTouched = values.steps.map(() => true);
+
+                      setTouched(
+                        {
+                          name: true,
+                          description: true,
+                          imageUrl: true,
+                          prepTime: true,
+                          servings: true,
+                          difficulty: true,
+                          category: true,
+                          ingredients: ingredientsTouched,
+                          steps: stepsTouched,
+                        },
+                        false
+                      ); // false means don't validate, just set touched
+
                       return;
                     }
                     handleSubmit();
