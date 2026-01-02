@@ -33,16 +33,15 @@ export default function ProgressBar({
                     },
                 ]}
             >
-                <View style={{ width: `${clampedProgress * 100}%`, height: "100%" }}>
+                <View style={[styles.fillContainer, { width: `${clampedProgress * 100}%` }]}>
                     <LinearGradient
                         colors={fillColors}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: radius,
-                        }}
+                        style={[
+                            styles.gradient,
+                            { borderRadius: radius },
+                        ]}
                     />
                 </View>
             </View>
@@ -71,5 +70,12 @@ const styles = StyleSheet.create({
     container: {
         width: "100%",
         overflow: "hidden",
+    },
+    fillContainer: {
+        height: "100%",
+    },
+    gradient: {
+        width: "100%",
+        height: "100%",
     },
 });

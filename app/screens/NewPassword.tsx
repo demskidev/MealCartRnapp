@@ -33,13 +33,13 @@ const NewPasswordScreen = () => {
     try {
       const result = await newPasswordViewModel.handleNewPassword(values);
       if (result.success) {
-        showSuccessToast("Password updated successfully!");
+        showSuccessToast(Strings.newPassword_success);
         resetAndNavigate(APP_ROUTES.SIGNIN);
       } else {
-        showErrorToast("Update Failed", result.message);
+        showErrorToast(Strings.newPassword_updateFailed, result.message);
       }
     } catch (error) {
-      showErrorToast("Error", "An unexpected error occurred");
+      showErrorToast(Strings.newPassword_error, Strings.newPassword_unexpectedError);
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +62,7 @@ const NewPasswordScreen = () => {
           <View style={styles.contentView}>
             <Header
               title={Strings.setNewPassword}
-              description="Your new password must be different from previous ones."
+              description={Strings.newPassword_description}
             />
 
             <Formik

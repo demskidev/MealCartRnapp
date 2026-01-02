@@ -1,6 +1,9 @@
+import { gradientclose } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import CreateNewListBottomSheet, { CreateNewListBottomSheetRef } from '@/components/CreateNewListBottomSheet';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import React, { useRef } from 'react';
@@ -15,7 +18,7 @@ const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window')
 
 const ListsScreen: React.FC = () => {
-const router = useRouter();
+  const router = useRouter();
 
 
   const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
@@ -27,7 +30,7 @@ const router = useRouter();
 
       <View style={styles.listItem}>
         <View>
-          <Text style={styles.listDate}>Created: {item.created}</Text>
+          <Text style={styles.listDate}>{Strings.lists_created} {item.created}</Text>
 
         </View>
 
@@ -39,22 +42,22 @@ const router = useRouter();
       <View style={styles.dividerRow} />
       <View style={styles.parentOfMarkDone}>
         <BaseButton
-          title="Mark Done"
+          title={Strings.lists_markDone}
           gradientButton={false}
-          textColor="#fff"
+          textColor={Colors.background}
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
 
         />
         <BaseButton
-          title="View List"
+          title={Strings.lists_viewList}
           gradientButton={false}
           textColor="#fff"
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
-          onPress={() => router.push('/appscreens/TestPlanShopping')}
+          onPress={() => router.push(APP_ROUTES.TestPlanShopping)}
 
         />
 
@@ -70,9 +73,9 @@ const router = useRouter();
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.parentMymeal}>
-        <Text style={styles.title}>Shopping Lists</Text>
-        <TouchableOpacity style={{ marginLeft: horizontalScale(6), }} onPress={() => createNewListRef.current?.expand()}  >
-          <Image source={require("@/assets/images/gradientclose.png")} resizeMode="contain" style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-17), }} />
+        <Text style={styles.title}>{Strings.lists_shoppingLists}</Text>
+        <TouchableOpacity style={styles.addNewListButton} onPress={() => createNewListRef.current?.expand()}  >
+          <Image source={gradientclose} resizeMode="contain" style={styles.gradientCloseImage} />
 
         </TouchableOpacity>
 
@@ -165,7 +168,7 @@ const styles = StyleSheet.create({
 
     elevation: 4,
 
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -174,7 +177,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
-  }
+  },
+  addNewListButton: {
+    marginLeft: horizontalScale(6),
+  },
+  gradientCloseImage: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    alignSelf: 'flex-end',
+    marginRight: horizontalScale(-17),
+  },
 });
 
 export default ListsScreen;

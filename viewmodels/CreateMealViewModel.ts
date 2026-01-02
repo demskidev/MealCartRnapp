@@ -46,8 +46,8 @@ export const useCreateMealViewModel = () => {
 
     fetchCategories,
     ingredientCategories,
-    loading : ingredientLoading || loadingMeal,
-    error : ingredientError || errorMeal,
+    loading: ingredientLoading || loadingMeal,
+    error: ingredientError || errorMeal,
     addMealData,
   };
 };

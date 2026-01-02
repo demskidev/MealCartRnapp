@@ -1,3 +1,4 @@
+import { userDummy } from '@/assets/images';
 import BaseButton from "@/components/BaseButton";
 import Header from "@/components/Header";
 import {
@@ -14,9 +15,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 const images = [
-  require("@/assets/images/userDummy.png"),
-  require("@/assets/images/userDummy.png"),
-  require("@/assets/images/userDummy.png"),
+  userDummy,
+  userDummy,
+  userDummy,
 ];
 
 const IntroScreen = () => {
@@ -49,8 +50,8 @@ const IntroScreen = () => {
       </Svg>
 
       <Header
-        title="Welcome to MealCart"
-        description="All your meal planning, simplified in one place."
+        title={Strings.introScreen_title}
+        description={Strings.introScreen_description}
       />
 
       <ScrollView

@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import * as appKeys from "@/reduxStore/appKeys";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -105,9 +106,9 @@ const SignupScreen = () => {
                 <View style={styles.form}>
                   <BaseTextInput
                     value={values.name}
-                    onChangeText={handleChange("name")}
+                    onChangeText={handleChange(appKeys.NAME_KEY)}
                     onBlur={() => {
-                      handleBlur("name");
+                      handleBlur(appKeys.NAME_KEY);
                       setTouched({ ...touched, name: true });
                     }}
                     placeholder={Strings.name}
@@ -117,9 +118,9 @@ const SignupScreen = () => {
                   />
                   <BaseTextInput
                     value={values.email}
-                    onChangeText={handleChange("email")}
+                    onChangeText={handleChange(appKeys.EMAIL_KEY)}
                     onBlur={() => {
-                      handleBlur("email");
+                      handleBlur(appKeys.EMAIL_KEY);
                       setTouched({ ...touched, email: true });
                     }}
                     placeholder={Strings.email}
@@ -130,9 +131,9 @@ const SignupScreen = () => {
                   />
                   <BaseTextInput
                     value={values.password}
-                    onChangeText={handleChange("password")}
+                    onChangeText={handleChange(appKeys.PASSWORD_KEY)}
                     onBlur={() => {
-                      handleBlur("password");
+                      handleBlur(appKeys.PASSWORD_KEY);
                       setTouched({ ...touched, password: true });
                     }}
                     placeholder={Strings.password}
@@ -145,9 +146,9 @@ const SignupScreen = () => {
                   />
                   <BaseTextInput
                     value={values.confirmPassword}
-                    onChangeText={handleChange("confirmPassword")}
+                    onChangeText={handleChange(appKeys.CONFIRM_PASSWORD_KEY)}
                     onBlur={() => {
-                      handleBlur("confirmPassword");
+                      handleBlur(appKeys.CONFIRM_PASSWORD_KEY);
                       setTouched({ ...touched, confirmPassword: true });
                     }}
                     placeholder={Strings.confirmPassword}
@@ -187,7 +188,7 @@ const SignupScreen = () => {
                     {Strings.mealsAreSecure}
                   </Text>
 
-                  <Divider style={{ marginTop: verticalScale(15) }} />
+                  <Divider style={styles.dividerStyle} />
 
                   <View style={styles.buttonContainer}>
                     <BaseButton
@@ -257,6 +258,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(20),
     paddingBottom: verticalScale(10),
     backgroundColor: Colors.background,
+  },
+  dividerStyle: {
+    marginTop: verticalScale(15),
   },
 });
 

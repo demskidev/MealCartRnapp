@@ -2,6 +2,7 @@ import {
   horizontalScale,
   verticalScale
 } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
@@ -29,7 +30,7 @@ const Divider = ({ style }: DividerProps) => {
     <View style={[styles.container, style]}>
       <View style={styles.line} />
 
-      <Text style={styles.text}>OR</Text>
+      <Text style={styles.text}>{Strings.divider_or}</Text>
 
       <View style={styles.line} />
     </View>

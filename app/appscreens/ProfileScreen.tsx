@@ -1,7 +1,10 @@
+import { closeIcon, forwardicon, Profileimage } from '@/assets/images';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import DefaultServingsModal from '@/components/DefaultServingsModal';
 import UpdateProfileModal from '@/components/UpdateProfileModal';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useAppDispatch } from '@/reduxStore/hooks';
 import { performLogout } from '@/utils/auth';
@@ -18,18 +21,18 @@ const preferencesData = [
     },
     {
         id: '2',
-        title: 'Allergies & Intolerances',
-        subtitle: 'Peanuts',
+        title: Strings.profile_allergies,
+        subtitle: Strings.profile_peanuts,
     },
     {
         id: '3',
-        title: 'Meal Plan Settings',
+        title: Strings.profile_mealPlanSettings,
         subtitle: '',
     },
     {
         id: '4',
-        title: 'Default Servings',
-        subtitle: '2 People',
+        title: Strings.profile_defaultServings,
+        subtitle: Strings.profile_defaultServingsSubtitle,
     },
 ];
 
@@ -44,12 +47,12 @@ export default function ProfileScreen() {
 
     const onPressItem = (index: any) => {
         if (index === 0) {
-            router.push('/appscreens/DietaryPreferences');
+            router.push(APP_ROUTES.DietaryPreferences);
         } else if (index === 1) {
-            router.push('/appscreens/AllergiesIntolerance');
+            router.push(APP_ROUTES.AllergiesIntolerance);
 
         } else if (index === 2) {
-            router.push('/appscreens/MealPlanSettings');
+            router.push(APP_ROUTES.MealPlanSettings);
 
         } else if (index === 3) {
             setDefaultServings(true);
@@ -59,11 +62,11 @@ export default function ProfileScreen() {
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <View style={styles.parentCreateMealText}>
-                <Text style={styles.header}> Profile </Text>
+                <Text style={styles.header}>{Strings.profile_title}</Text>
                 <TouchableOpacity onPress={() => router.back()} >
                     <Image
-                        source={require("@/assets/images/close-icon.png")}
-                        style={{ width: verticalScale(24), height: verticalScale(24) }}
+                        source={closeIcon}
+                        style={styles.closeIconImage}
                         resizeMode="contain"
                     />
                 </TouchableOpacity>
@@ -73,17 +76,17 @@ export default function ProfileScreen() {
             <View style={styles.avatarContainer}>
                 <TouchableOpacity onPress={() => setShowModal(true)} >
                     <Image
-                        source={require("@/assets/images/Profileimage.png")}
-                        style={{ width: verticalScale(112), height: verticalScale(112) }}
+                        source={Profileimage}
+                        style={styles.profileImage}
                         resizeMode="contain"
                     />
                 </TouchableOpacity>
-                <Text style={styles.name}>Alex Doe</Text>
-                <Text style={styles.email}>alex.doe@email.com</Text>
+                <Text style={styles.name}>{Strings.profile_name}</Text>
+                <Text style={styles.email}>{Strings.profile_email}</Text>
             </View>
-            <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
 
-                <Text style={styles.sectionHeader}>MEAL & COOKING PREFERENCES</Text>
+                <Text style={styles.sectionHeader}>{Strings.profile_mealCookingPreferences}</Text>
 
                 <View style={styles.card}>
                     <FlatList
@@ -99,8 +102,8 @@ export default function ProfileScreen() {
                                     </View>
 
                                     <Image
-                                        source={require("@/assets/images/forwardicon.png")}
-                                        style={{ width: verticalScale(8), height: verticalScale(12) }}
+                                        source={forwardicon}
+                                        style={styles.forwardIcon}
                                         resizeMode="contain"
                                     />
                                 </TouchableOpacity>
@@ -110,48 +113,48 @@ export default function ProfileScreen() {
                     />
                 </View>
 
-                <Text style={styles.sectionHeader}>ACCOUNT & SECURITY</Text>
+                <Text style={styles.sectionHeader}>{Strings.profile_accountSecurity}</Text>
                 <View style={styles.card}>
                     <TouchableOpacity
                         style={styles.row}
-                        onPress={() => router.push('/appscreens/PasswordReset')}
+                        onPress={() => router.push(APP_ROUTES.PasswordReset)}
                     >
-                        <Text style={styles.rowTitle}>Change Password</Text>
+                        <Text style={styles.rowTitle}>{Strings.profile_changePassword}</Text>
                         <Image
-                            source={require("@/assets/images/forwardicon.png")}
-                            style={{ width: verticalScale(8), height: verticalScale(12) }}
+                            source={forwardicon}
+                            style={styles.forwardIcon}
                             resizeMode="contain"
                         />
                     </TouchableOpacity>
                     <View style={styles.divider} />
                     <TouchableOpacity style={styles.row} onPress={() => setDeleteAccount(true)}>
-                        <Text style={styles.deleteText}>Delete Account</Text>
+                        <Text style={styles.deleteText}>{Strings.profile_deleteAccount}</Text>
                     </TouchableOpacity>
 
-                     <TouchableOpacity style={styles.row} onPress={async() => {
-                      
-                       await performLogout();
-                     }}>
-                        <Text style={styles.deleteText}>Logout</Text>
+                    <TouchableOpacity style={styles.row} onPress={async () => {
+
+                        await performLogout();
+                    }}>
+                        <Text style={styles.deleteText}>{Strings.profile_logout}</Text>
                     </TouchableOpacity>
                 </View>
-                
-                <Text style={styles.sectionHeader}>APP SETTINGS</Text>
+
+                <Text style={styles.sectionHeader}>{Strings.profile_appSettings}</Text>
                 <View style={styles.card}>
                     <TouchableOpacity style={styles.row}>
-                        <Text style={styles.rowTitle}>Help & Support</Text>
+                        <Text style={styles.rowTitle}>{Strings.profile_helpSupport}</Text>
                         <Image
-                            source={require("@/assets/images/forwardicon.png")}
-                            style={{ width: verticalScale(8), height: verticalScale(12) }}
+                            source={forwardicon}
+                            style={styles.forwardIcon}
                             resizeMode="contain"
                         />
                     </TouchableOpacity>
                     <View style={styles.divider} />
                     <TouchableOpacity style={styles.row}>
-                        <Text style={styles.rowTitle}>About & Legal</Text>
+                        <Text style={styles.rowTitle}>{Strings.profile_aboutLegal}</Text>
                         <Image
-                            source={require("@/assets/images/forwardicon.png")}
-                            style={{ width: verticalScale(8), height: verticalScale(12) }}
+                            source={forwardicon}
+                            style={styles.forwardIcon}
                             resizeMode="contain"
                         />
                     </TouchableOpacity>
@@ -165,10 +168,10 @@ export default function ProfileScreen() {
             />
             <ConfirmationModal
                 visible={deleteAccount}
-                title="Delete Account?"
-                description="This action is permanent and cannot be undone. All your meals, plans, and lists will be lost."
-                cancelText="Cancel"
-                confirmText="Delete"
+                title={Strings.profile_deleteAccountTitle}
+                description={Strings.profile_deleteAccountDescription}
+                cancelText={Strings.profile_cancel}
+                confirmText={Strings.profile_confirmDelete}
                 onCancel={() => setDeleteAccount(false)}
                 onConfirm={() => {
                     setDeleteAccount(false);
@@ -240,11 +243,9 @@ const styles = StyleSheet.create({
         marginVertical: verticalScale(6),
         paddingVertical: verticalScale(11),
 
-        // Android
         elevation: 4,
 
-        // iOS
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -316,5 +317,20 @@ const styles = StyleSheet.create({
     header: { fontSize: moderateScale(21), color: Colors.primary, fontFamily: FontFamilies.ROBOTO_SEMI_BOLD },
     parentCreateMealText: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: verticalScale(20),
+    },
+    closeIconImage: {
+        width: verticalScale(24),
+        height: verticalScale(24),
+    },
+    profileImage: {
+        width: verticalScale(112),
+        height: verticalScale(112),
+    },
+    scrollViewContent: {
+        paddingBottom: 32,
+    },
+    forwardIcon: {
+        width: verticalScale(8),
+        height: verticalScale(12),
     },
 });

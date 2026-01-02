@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
 
   pressedBorder: {
-    borderColor: '#D9D9D9',
+    borderColor: Colors.borderColor,
   },
 
 

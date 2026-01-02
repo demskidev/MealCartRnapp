@@ -1,6 +1,8 @@
+import { iconback, profileiconclose } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import GradientText from '@/components/GradientText';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -34,16 +36,12 @@ export default function AllergiesIntolerance({ navigation }) {
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Image
-                        source={require("@/assets/images/iconback.png")}
+                        source={iconback}
                         resizeMode="contain"
-                        style={{
-                            width: moderateScale(24),
-                            height: moderateScale(24),
-                            alignSelf: 'flex-end',
-                        }}
+                        style={styles.backIcon}
                     />
                 </TouchableOpacity>
-                <Text style={styles.backText}>Allergies & Intolerances</Text>
+                <Text style={styles.backText}>{Strings.allergies_title}</Text>
             </View>
             <View style={styles.card}>
                 <View style={styles.tagInputContainer}>
@@ -57,43 +55,34 @@ export default function AllergiesIntolerance({ navigation }) {
                             />
                             <TouchableOpacity >
                                 <Image
-                                    source={require("@/assets/images/profileiconclose.png")}
-                                    style={{ width: verticalScale(14), height: verticalScale(14), marginLeft: 6 }}
+                                    source={profileiconclose}
+                                    style={styles.closeIcon}
                                     resizeMode="contain"
                                 />
                             </TouchableOpacity>
                         </View>
                     ))}
 
-                    {/* TextInput for new entries */}
                     <TextInput
                         style={styles.input}
                         value={input}
-                        placeholder={tags.length === 0 ? 'Press Enter to add a tag' : ''}
+                        placeholder={tags.length === 0 ? Strings.allergies_placeholder : ''}
                         onChangeText={setInput}
                         onSubmitEditing={handleAddTag}
                         returnKeyType="done"
                     />
                 </View>
 
-                <Text style={styles.inputHint}>Press Enter to add a tag</Text>
+                <Text style={styles.inputHint}>{Strings.allergies_placeholder}</Text>
             </View>
 
 
 
 
             <BaseButton
-                title="Save Allergies"
+                title={Strings.allergies_save}
                 gradientButton={true}
-                // backgroundColor={Colors.olive}
-                // textColor="#fff"
-                // width={width * 0.42}
                 textStyle={styles.savePreference}
-            // textStyleText={styles.cancelButtonText}
-            // rightChild={
-            //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-            // }
-            // onPress={onClose}
             />
 
 
@@ -132,7 +121,7 @@ const styles = StyleSheet.create({
         elevation: 4,
 
         // iOS
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -155,26 +144,16 @@ const styles = StyleSheet.create({
     tag: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#e6f7d9',
+        backgroundColor: Colors._e6f7d9,
         borderRadius: 6,
         paddingHorizontal: 10,
         paddingVertical: 4,
         marginRight: 6,
         marginVertical: 6,
     },
-    tagText: { color: '#4b6b2c', fontFamily: FontFamilies.ROBOTO_MEDIUM, fontSize: moderateScale(14) },
-    tagRemove: { color: '#4b6b2c', fontWeight: 'bold', fontSize: 16 },
     input: { minWidth: 100, padding: 0, margin: 0, fontSize: 16, backgroundColor: 'transparent' },
     inputHint: { color: Colors.tertiary, fontSize: moderateScale(12), marginTop: 4, fontFamily: FontFamilies.ROBOTO_REGULAR },
-    saveButton: {
-        backgroundColor: '#7a9256',
-        borderRadius: 8,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginTop: 16,
-        marginBottom: 32,
-        elevation: 2,
-    },
+
     inputWrapper: {
         position: 'relative',
         height: verticalScale(40),
@@ -190,7 +169,17 @@ const styles = StyleSheet.create({
 
     gradientOverlay: {
         position: 'absolute',
-    }
+    },
+    backIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
+    closeIcon: {
+        width: verticalScale(14),
+        height: verticalScale(14),
+        marginLeft: 6,
+    },
 
 
 });

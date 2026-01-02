@@ -1,5 +1,7 @@
+import { createlist } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRef } from 'react';
 import { Dimensions, FlatList, Image, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
@@ -35,32 +37,30 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
 
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <Text style={styles.title}>Send To Shopping List</Text>
+                        <Text style={styles.title}>{Strings.sendShoppingList_title}</Text>
 
                     </View>
 
                     <Text style={styles.subtitle}>
-                        You can choose from existing list to add this item’s shopping requirements.
+                        {Strings.sendShoppingList_subtitle}
                     </Text>
 
 
                     <BaseButton
-                        title="Create New List"
+                        title={Strings.sendShoppingList_createNewList}
                         gradientButton={true}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         textStyle={styles.createButtonText}
                         rightChild={
-                            <Image source={require("@/assets/images/createlist.png")} resizeMode="contain" style={{ width: moderateScale(18), height: moderateScale(18), }} />
-
+                            <Image source={createlist} resizeMode="contain" style={styles.createListIcon} />
                         }
                         onPress={() => {
-
                             createNewListRef.current?.expand();
                         }}
                     />
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.availableLists}>Available Lists</Text>
+                    <Text style={styles.availableLists}>{Strings.sendShoppingList_availableLists}</Text>
 
                     <FlatList
                         data={shoppingLists}
@@ -69,18 +69,17 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
                             <View style={styles.listItem}>
                                 <View>
                                     <Text style={styles.listTitle}>{item.name}</Text>
-                                    <Text style={styles.listDate}>Created: {item.created}</Text>
+                                    <Text style={styles.listDate}>{Strings.sendShoppingList_created} {item.created}</Text>
                                 </View>
 
 
                                 <BaseButton
-                                    title="Add"
+                                    title={Strings.sendShoppingList_add}
                                     gradientButton={false}
-                                    textColor="#fff"
+                                    textColor={Colors.background}
                                     width={width * 0.35}
                                     textStyle={styles.addButton}
                                     textStyleText={styles.addButtonText}
-
                                 />
 
                             </View>
@@ -92,18 +91,18 @@ const SendToShoppingList = ({ visible, onClose }: SendToShoppingListProps) => {
 
 
                         <BaseButton
-                            title="Cancel"
+                            title={Strings.sendShoppingList_cancel}
                             gradientButton={false}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.35}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
                             onPress={onClose}
                         />
                         <BaseButton
-                            title="Confirm"
+                            title={Strings.sendShoppingList_confirm}
                             gradientButton={true}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.35}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
@@ -157,19 +156,15 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(14),
         marginVertical: verticalScale(9)
     },
-    createButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#9DAF89',
-        borderRadius: moderateScale(8),
-        paddingVertical: verticalScale(10),
-        justifyContent: 'center',
-        marginBottom: verticalScale(18),
-    },
+
     createButtonText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         color: Colors.white,
         fontSize: moderateScale(16),
+    },
+    createListIcon: {
+        width: moderateScale(18),
+        height: moderateScale(18),
     },
     availableLists: {
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
@@ -189,7 +184,7 @@ const styles = StyleSheet.create({
 
         elevation: 4,
 
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,

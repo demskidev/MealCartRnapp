@@ -8,7 +8,7 @@ export interface OTPFormValues {
 export class OTPViewModel {
   validationSchema = otpValidationSchema;
 
-  constructor() {}
+  constructor() { }
 
   async handleOTPVerification(values: OTPFormValues): Promise<{ success: boolean; message: string }> {
     try {

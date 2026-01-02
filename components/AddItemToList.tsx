@@ -1,6 +1,7 @@
-
+import { burger, closeIcon } from '@/assets/images';
 import { CheckBox, SearchIcon } from '@/assets/svg';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useEffect, useState } from 'react';
 import { Dimensions, FlatList, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View, } from 'react-native';
@@ -9,9 +10,9 @@ import CustomStepper from './CustomStepper';
 import CustomTextInput from './CustomTextInput';
 
 const mealsData = [
-    { id: '1', name: 'Classic Spaghetti Bolognese', image: require('@/assets/images/burger.png') },
-    { id: '2', name: 'Classic Spaghetti Bolognese', image: require('@/assets/images/burger.png') },
-    { id: '3', name: 'Classic Spaghetti Bolognese', image: require('@/assets/images/burger.png') },
+    { id: '1', name: 'Classic Spaghetti Bolognese', image: burger },
+    { id: '2', name: 'Classic Spaghetti Bolognese', image: burger },
+    { id: '3', name: 'Classic Spaghetti Bolognese', image: burger },
 ];
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window')
@@ -132,16 +133,16 @@ const AddItemToList = ({ visible, onClose }) => {
                 </TouchableWithoutFeedback>
 
                 <View style={styles.container}>
-                    <Text style={styles.title}>Select Meals to Shop For</Text>
+                    <Text style={styles.title}>{Strings.addItemToList_title}</Text>
                     <Text style={styles.subtitle}>
-                        Choose one or more meals to generate a combined list.
+                        {Strings.addItemToList_subtitle}
                     </Text>
 
                     <View style={styles.searchBox}>
                         <SearchIcon width={verticalScale(22)} height={verticalScale(22)} color={Colors.tertiary} />
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search your meals..."
+                            placeholder={Strings.addItemToList_searchPlaceholder}
                             placeholderTextColor={Colors.tertiary}
                             value={search}
                             onChangeText={setSearch}
@@ -154,17 +155,17 @@ const AddItemToList = ({ visible, onClose }) => {
                         data={mealsData}
                         keyExtractor={item => item.id}
                         renderItem={renderMealItem}
-                        contentContainerStyle={{ paddingBottom: verticalScale(12) }}
-                        ItemSeparatorComponent={() => <View style={{ height: verticalScale(10) }} />}
-                        style={{ marginTop: verticalScale(10) }}
+                        contentContainerStyle={styles.mealsListContent}
+                        ItemSeparatorComponent={() => <View style={styles.mealSeparator} />}
+                        style={styles.mealsListStyle}
                     />
 
                     <View style={styles.divider} />
 
-                    <Text style={styles.addManualLabel}>Add item Manually</Text>
+                    <Text style={styles.addManualLabel}>{Strings.addItemToList_addManualLabel}</Text>
 
                     <CustomTextInput
-                        placeholder="Search Ingredient"
+                        placeholder={Strings.addItemToList_searchIngredient}
                         style={styles.manualInput}
                         placeholderTextColor={Colors.tertiary}
                         onChangeText={handleSearch}
@@ -177,32 +178,19 @@ const AddItemToList = ({ visible, onClose }) => {
                         <FlatList
                             data={suggestions}
                             keyExtractor={item => item}
-                            style={{ maxHeight: 200 }}
+                            style={styles.suggestionsListStyle}
                             renderItem={({ item }) => (
                                 <View>
 
-                                    <View
-                                        style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            backgroundColor: Colors.white,
-
-                                            paddingHorizontal: horizontalScale(12),
-                                            justifyContent: 'space-between',
-                                        }}
+                                    <View style={styles.suggestionItemContainer}
                                     >
 
                                         <TouchableOpacity
                                             activeOpacity={0.7}
                                             onPress={() => handleSelectSuggestion(item)}
-                                            style={{ width: width * 0.5, height: verticalScale(40), justifyContent: 'center', }}
+                                            style={styles.suggestionTouchable}
                                         >
-                                            <Text
-                                                style={{
-                                                    fontFamily: FontFamilies.ROBOTO_REGULAR,
-                                                    fontSize: moderateScale(12),
-                                                    color: Colors.tertiary,
-                                                }}
+                                            <Text style={styles.suggestionText}
                                             >
                                                 {item}
                                             </Text>
@@ -227,18 +215,9 @@ const AddItemToList = ({ visible, onClose }) => {
                                                         return {
                                                             ...prev,
                                                             [item]: Math.max(current - 1, 0),
-                                                        };
-                                                    });
+                                                        };                                                    })
                                                 }}
-                                                containerStyle={{
-                                                    backgroundColor: Colors.white,
-                                                    borderRadius: moderateScale(8),
-                                                    elevation: 4,
-                                                    shadowColor: '#000',
-                                                    shadowOffset: { width: 0, height: 2 },
-                                                    shadowOpacity: 0.25,
-                                                    shadowRadius: 3.84,
-                                                }}
+                                                containerStyle={styles.stepperContainer}
                                             />
 
 
@@ -261,7 +240,7 @@ const AddItemToList = ({ visible, onClose }) => {
                     <FlatList
                         data={[...pendingItems, ...manualList]}
                         keyExtractor={item => item.id}
-                        style={{ maxHeight: verticalScale(250) }}
+                        style={styles.manualListStyle}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item }) => {
                             const isPending = pendingItems.some(i => i.id === item.id);
@@ -279,13 +258,13 @@ const AddItemToList = ({ visible, onClose }) => {
                                                 style={styles.addButton}
                                                 onPress={() => handleAddPendingItem(item)}
                                             >
-                                                <Text style={styles.addButtonText}>Add</Text>
+                                                <Text style={styles.addButtonText}>{Strings.addItemToList_add}</Text>
                                             </TouchableOpacity>
                                         </>
                                     ) : (
-                                        <View style={{ flex: 1, position: 'relative', justifyContent: 'center' }}>
+                                        <View style={styles.manualItemContainer}>
                                             <TextInput
-                                                style={[styles.manualAddInput, { marginRight: 0, paddingRight: 36 }]}
+                                                style={styles.manualItemInput}
                                                 value={item.value}
                                                 editable={false}
                                             />
@@ -293,18 +272,11 @@ const AddItemToList = ({ visible, onClose }) => {
                                                 onPress={() =>
                                                     setManualList(prev => prev.filter(i => i.id !== item.id))
                                                 }
-                                                style={{
-                                                    position: 'absolute',
-                                                    right: 10,
-                                                    top: 0,
-                                                    height: '100%',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                }}
+                                                style={styles.closeIconButton}
                                             >
                                                 <Image
-                                                    source={require("@/assets/images/close-icon.png")}
-                                                    style={{ width: 22, height: 22 }}
+                                                    source={closeIcon}
+                                                    style={styles.closeIconImage}
                                                 />
                                             </TouchableOpacity>
                                         </View>
@@ -320,9 +292,9 @@ const AddItemToList = ({ visible, onClose }) => {
 
 
                         <BaseButton
-                            title="Cancel"
+                            title={Strings.addItemToList_cancel}
                             gradientButton={false}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.42}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
@@ -330,9 +302,9 @@ const AddItemToList = ({ visible, onClose }) => {
                             onPress={onClose}
                         />
                         <BaseButton
-                            title="Generate List"
+                            title={Strings.addItemToList_generateList}
                             gradientButton={true}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.42}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
@@ -407,7 +379,7 @@ const styles = StyleSheet.create({
         marginLeft: horizontalScale(1),
         elevation: 4,
 
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -491,7 +463,7 @@ const styles = StyleSheet.create({
         height: verticalScale(40),
         marginRight: horizontalScale(8),
         elevation: 4,
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -505,7 +477,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -535,7 +507,7 @@ const styles = StyleSheet.create({
         color: Colors.primary,
     },
     generateButton: {
-        backgroundColor: '#7B8756',
+        backgroundColor: Colors._7B8756,
         borderRadius: moderateScale(8),
         flex: 1,
         marginLeft: horizontalScale(8),
@@ -591,7 +563,82 @@ const styles = StyleSheet.create({
         flex: 1,
 
         marginVertical: verticalScale(8)
-    }
+    },
+    mealsListContent: {
+        paddingBottom: verticalScale(12),
+    },
+    mealSeparator: {
+        height: verticalScale(10),
+    },
+    mealsListStyle: {
+        marginTop: verticalScale(10),
+    },
+    suggestionsListStyle: {
+        maxHeight: 200,
+    },
+    suggestionItemContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.white,
+        paddingHorizontal: horizontalScale(12),
+        justifyContent: 'space-between',
+    },
+    suggestionTouchable: {
+        width: width * 0.5,
+        height: verticalScale(40),
+        justifyContent: 'center',
+    },
+    suggestionText: {
+        fontFamily: FontFamilies.ROBOTO_REGULAR,
+        fontSize: moderateScale(12),
+        color: Colors.tertiary,
+    },
+    stepperContainer: {
+        backgroundColor: Colors.white,
+        borderRadius: moderateScale(8),
+        elevation: 4,
+        shadowColor: Colors.black,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    manualListStyle: {
+        maxHeight: verticalScale(250),
+    },
+    manualItemContainer: {
+        flex: 1,
+        position: 'relative',
+        justifyContent: 'center',
+    },
+    manualItemInput: {
+        flex: 1,
+        backgroundColor: Colors.white,
+        borderRadius: moderateScale(8),
+        fontFamily: FontFamilies.ROBOTO_REGULAR,
+        fontSize: moderateScale(12),
+        color: Colors.tertiary,
+        paddingHorizontal: horizontalScale(10),
+        height: verticalScale(40),
+        marginRight: 0,
+        paddingRight: 36,
+        elevation: 4,
+        shadowColor: Colors.black,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    closeIconButton: {
+        position: 'absolute',
+        right: 10,
+        top: 0,
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    closeIconImage: {
+        width: 22,
+        height: 22,
+    },
 
 
 });

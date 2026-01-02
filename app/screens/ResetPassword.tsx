@@ -47,11 +47,11 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
         // );
 
         Alert.alert(
-          "Check Your Email",
-          "A password reset link has been sent to your email address.",
+          Strings.resetPassword_checkEmailTitle,
+          Strings.resetPassword_checkEmailMessage,
           [
             {
-              text: "OK",
+              text: Strings.resetPassword_ok,
               onPress: () => {
                 pushNavigation(APP_ROUTES.SIGNIN);
               },
@@ -59,10 +59,13 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
           ]
         );
       } else {
-        Alert.alert("Error", result.message);
+        Alert.alert(Strings.resetPassword_error, result.message);
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred");
+      Alert.alert(
+        Strings.resetPassword_error,
+        Strings.resetPassword_unexpectedError
+      );
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +91,7 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
           <View style={styles.contentView}>
             <Header
               title={Strings.resetPassword}
-              description="Enter your email and we'll send you a code to get back into your account."
+              description={Strings.resetPassword_description}
             />
 
             <Formik

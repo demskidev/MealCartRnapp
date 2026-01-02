@@ -31,14 +31,12 @@ const BaseOTPField = React.memo(
     const inputRefs = React.useRef<Array<TextInput | null>>([]);
 
     const handleChange = (text: string, index: number) => {
-      if (text.length > 1) return; // prevent multi-character flicker
+      if (text.length > 1) return; 
 
-      // Only update if new char typed
       const newValues = [...values];
       newValues[index] = text;
       setValues(newValues);
 
-      // Move to next input
       if (text && inputRefs.current[index + 1]) {
         inputRefs.current[index + 1]?.focus();
       }

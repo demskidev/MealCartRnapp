@@ -1,4 +1,6 @@
+import { closeIcon, googleicon, updateprofile } from '@/assets/images';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import {
   Dimensions,
@@ -34,73 +36,69 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
         </TouchableWithoutFeedback>
         <View style={styles.container}>
 
-          <Text style={styles.headerTitle}>Update Profile</Text>
+          <Text style={styles.headerTitle}>{Strings.updateProfileModal_title}</Text>
           <Text style={styles.headerSubtitle}>
-            You can set your meals servings for all your new meals.
+            {Strings.updateProfileModal_subtitle}
           </Text>
 
           <View style={styles.avatarRow}>
             <Image
-              source={require("@/assets/images/updateprofile.png")}
-              style={{ width: verticalScale(112), height: verticalScale(112) }}
+              source={updateprofile}
+              style={styles.updateProfileImage}
               resizeMode="contain"
             />
             <View style={styles.avatarBtnCol}>
 
               <BaseButton
-                title="Update"
+                title={Strings.updateProfileModal_update}
                 gradientButton={false}
                 backgroundColor={Colors.white}
-
                 textStyle={[styles.updateBtn]}
                 textStyleText={styles.updateBtnText}
-
               />
-
               <BaseButton
-                title="Remove"
+                title={Strings.updateProfileModal_remove}
                 gradientButton={true}
                 backgroundColor={Colors.white}
-                gradientStartColor="#A62A2A"
-                gradientEndColor="#FD4B4B"
+                gradientStartColor={Colors._A62A2A}
+                gradientEndColor={Colors._FD4B4B}
                 textStyle={styles.gradientbtnText}
-
               />
 
 
             </View>
           </View>
 
-          <Text style={styles.label}>Update Name</Text>
+          <Text style={styles.label}>{Strings.updateProfileModal_updateName}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Your Name"
+            placeholder={Strings.updateProfileModal_namePlaceholder}
             placeholderTextColor={Colors.tertiary}
           />
 
-          <Text style={styles.label}>Update Email</Text>
+          <Text style={styles.label}>{Strings.updateProfileModal_updateEmail}</Text>
           <TextInput
             style={styles.input}
-            placeholder="youemail@example.com"
+            placeholder={Strings.updateProfileModal_emailPlaceholder}
             placeholderTextColor={Colors.tertiary}
             keyboardType="email-address"
           />
 
-          <Text style={styles.socialLabel}>Social</Text>
+          <Text style={styles.socialLabel}>{Strings.updateProfileModal_social}</Text>
           <View style={styles.socialBox}>
             <View>
               <Image
-                source={require("@/assets/images/googleicon.png")}
-                style={{ width: verticalScale(16), height: verticalScale(16) }}
+                source={googleicon}
+                style={styles.googleIconImage}
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.socialText}>Connected with Google</Text>
+            <Text style={styles.socialText}>{Strings.updateProfileModal_connectedWithGoogle}</Text>
             <TouchableOpacity>
               <TouchableOpacity  >
                 <Image
-                  source={require("@/assets/images/close-icon.png")}
-                  style={{ width: verticalScale(24), height: verticalScale(24) }}
+                  source={closeIcon}
+                  style={styles.closeIconImage}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -111,18 +109,18 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
 
 
             <BaseButton
-              title="Cancel"
+              title={Strings.updateProfileModal_cancel}
               gradientButton={false}
-              textColor="#fff"
+              textColor={Colors.background}
               width={width * 0.4}
               textStyle={styles.cancelButton}
               textStyleText={styles.cancelButtonText}
               onPress={onClose}
             />
             <BaseButton
-              title="Update"
+              title={Strings.updateProfileModal_update}
               gradientButton={true}
-              textColor="#fff"
+              textColor={Colors.background}
               width={width * 0.4}
               textStyle={styles.confirmButton}
               textStyleText={styles.confirmButtonText}
@@ -144,6 +142,18 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
     color: Colors.primary,
     marginBottom: verticalScale(4),
+  },
+  updateProfileImage: {
+    width: verticalScale(112),
+    height: verticalScale(112),
+  },
+  googleIconImage: {
+    width: verticalScale(16),
+    height: verticalScale(16),
+  },
+  closeIconImage: {
+    width: verticalScale(24),
+    height: verticalScale(24),
   },
   headerSubtitle: {
     fontSize: moderateScale(12),
@@ -187,13 +197,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: moderateScale(16)
   },
-  removeBtn: {
-    backgroundColor: 'linear-gradient(90deg, #D9534F 0%, #C0392B 100%)', 
-    borderRadius: moderateScale(10),
-    paddingVertical: verticalScale(12),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   removeBtnText: {
     fontSize: moderateScale(18),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,

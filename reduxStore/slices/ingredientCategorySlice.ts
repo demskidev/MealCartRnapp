@@ -25,7 +25,7 @@ export const fetchIngredientCategories = createAsyncThunk(
   ING_CAT,
   async (_, { rejectWithValue }) => {
     try {
-         console.log("Fetching ingredient dd categories...");
+      console.log("Fetching ingredient dd categories...");
       const data = await getAllDocuments(INGREDIENTS_CATEGORY_COLLECTION);
       return data;
     } catch (error: any) {

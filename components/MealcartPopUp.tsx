@@ -104,8 +104,8 @@ const MealCartPopUp: React.FC<MealCartPopUpProps> = ({
                     >
                       <LinearGradient
                         colors={[
-                          tertiaryGradientColors?.[0] || "#667D4C",
-                          tertiaryGradientColors?.[1] || "#9DAF89"
+                          tertiaryGradientColors?.[0] || Colors._667D4C,
+                          tertiaryGradientColors?.[1] || Colors._9DAF89
                         ]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}

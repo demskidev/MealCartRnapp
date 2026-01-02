@@ -11,10 +11,24 @@ export const APP_ROUTES = {
   WELCOME_MEAL_CART: "/screens/WelcomeMealCart",
   WelcomeScreen: "/screens/WelcomeScreen",
 
-  
+
   // App routes
   HOME: "/(tabs)/0_HomeScreen",
   MEALS: "/(tabs)/1_Meals",
   PLANS: "/(tabs)/2_Plans",
   LISTS: "/(tabs)/3_Lists",
+  AllergiesIntolerance: "/appscreens/AllergiesIntolerance",
+  ProfileScreen: '/appscreens/ProfileScreen',
+  CreateMealPlan: '/appscreens/CreateMealPlan',
+  DietaryPreferences: '/appscreens/DietaryPreferences',
+  MealPlanSettings: '/appscreens/MealPlanSettings',
+  PasswordReset: '/appscreens/PasswordReset',
+  TestMealPlan: '/appscreens/TestMealPlan',
+  TestPlanShopping: '/appscreens/TestPlanShopping'
+
+
+
+
+
+
 };

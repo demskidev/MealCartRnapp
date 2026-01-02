@@ -1,6 +1,9 @@
+import { calendaricon, iconback, plusmeal } from '@/assets/images';
 import { IconCartWhite } from '@/assets/svg';
 import BaseButton from '@/components/BaseButton';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -43,14 +46,9 @@ export default function CreateMealPlan({ navigation }) {
               <Text style={styles.mealLabel}>{meal}</Text>
               <TouchableOpacity style={styles.mealBox}>
                 <Image
-                  source={require("@/assets/images/plusmeal.png")}
+                  source={plusmeal}
                   resizeMode="contain"
-                  style={{
-                    width: moderateScale(24),
-                    height: moderateScale(24),
-                    alignSelf: 'center',
-                    // marginRight: horizontalScale(-11),
-                  }}
+                  style={styles.plusMealIcon}
                 />
 
               </TouchableOpacity>
@@ -66,76 +64,67 @@ export default function CreateMealPlan({ navigation }) {
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
           <Image
-            source={require("@/assets/images/iconback.png")}
+            source={iconback}
             resizeMode="contain"
-            style={{
-              width: moderateScale(24),
-              height: moderateScale(24),
-              alignSelf: 'flex-end',
-              marginRight: horizontalScale(-11),
-            }}
+            style={styles.backIconImage}
           />
         </TouchableOpacity>
-        <Text style={styles.backText}>Back to Plans</Text>
+        <Text style={styles.backText}>{Strings.createMealPlan_backToPlans}</Text>
       </View>
-      <Text style={styles.label}>Your Meal Plan</Text>
+      <Text style={styles.label}>{Strings.createMealPlan_yourMealPlan}</Text>
       <TextInput
         style={styles.input}
-        value="My special Meal Plan"
+        value={Strings.createMealPlan_mySpecialMealPlan}
         editable={false}
       />
 
-      {/* Starting Date */}
-      <Text style={styles.label}>Starting Date</Text>
+      <Text style={styles.label}>{Strings.createMealPlan_startingDate}</Text>
       <View style={styles.inputRow}>
         <TextInput
-          style={[styles.input, { flex: 1, paddingVertical: 0 }]}
+          style={styles.dateInput}
           value="4/10/2025"
           editable={false}
         />
         <Image
-          source={require('@/assets/images/calendaricon.png')}
+          source={calendaricon}
           style={styles.calendarIcon}
           resizeMode="contain"
         />
       </View>
 
-      {/* Days and Meals - FlatList */}
       <FlatList
         data={days}
         keyExtractor={item => item.title}
         renderItem={renderDayCard}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 /* or your scale */ }}
+        contentContainerStyle={styles.flatListContent}
       />
-  <View style={styles.parentOfConfirmButton}>
-              <BaseButton
-                title="Discard"
-                gradientButton={false}
-                backgroundColor={Colors.white}
-                width={width * 0.28}
-                textStyle={[styles.cancelButton, { color: Colors.error }]}
-                textColor={Colors.error}
-                textStyleText={styles.discardText}
-                // onPress={() => bottomSheetRef.current?.close()}
-                 onPress={() => router.push('/(tabs)/3_Lists')}
-              />
-              <BaseButton
-                title="Save "
-                gradientButton={true}
-                width={width * 0.65}
-                gradientStartColor="#667D4C"
-                gradientEndColor="#9DAF89"
-                gradientStart={{ x: 0, y: 0 }}
-                gradientEnd={{ x: 1, y: 0 }}
-                textColor={Colors.white}
-                rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
-                textStyle={[styles.confirmButton,]}
-                textStyleText={styles.saveShopping}
-                 onPress={() => router.push('/(tabs)/3_Lists')}
-                // onPress={() => bottomSheetRef.current?.close()}
-              />
-            </View>
+      <View style={styles.parentOfConfirmButton}>
+        <BaseButton
+          title={Strings.createMealPlan_discard}
+          gradientButton={false}
+          backgroundColor={Colors.white}
+          width={width * 0.28}
+          textStyle={styles.discardButton}
+          textColor={Colors.error}
+          textStyleText={styles.discardText}
+          onPress={() => router.push(APP_ROUTES.LISTS)}
+        />
+        <BaseButton
+          title={Strings.createMealPlan_save}
+          gradientButton={true}
+          width={width * 0.65}
+          gradientStartColor={Colors._667D4C}
+          gradientEndColor={Colors._9DAF89}
+          gradientStart={{ x: 0, y: 0 }}
+          gradientEnd={{ x: 1, y: 0 }}
+          textColor={Colors.white}
+          rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
+          textStyle={[styles.confirmButton,]}
+          textStyleText={styles.saveShopping}
+          onPress={() => router.push(APP_ROUTES.LISTS)}
+        />
+      </View>
     </SafeAreaView>
 
   );
@@ -146,7 +135,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     paddingHorizontal: horizontalScale(20),
-    // paddingTop: verticalScale(16),
   },
 
   backIcon: {
@@ -181,7 +169,6 @@ const styles = StyleSheet.create({
     color: Colors.tertiary,
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     height: verticalScale(50)
-    // marginBottom: verticalScale(10),
   },
   inputRow: {
     flexDirection: 'row',
@@ -191,7 +178,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(4),
     paddingVertical: verticalScale(12),
     paddingRight: horizontalScale(10),
-    // paddingHorizontal: horizontalScale(12),
     height: verticalScale(50)
 
 
@@ -208,8 +194,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(12),
     elevation: 4,
 
-    // iOS
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -235,10 +220,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mealCol: {
-    // flex: 1,
-    // alignItems: 'center',
-    //  backgroundColor:'red',
-    //  width: width * 0.3
+
   },
   mealLabel: {
     fontSize: moderateScale(12),
@@ -264,7 +246,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    // color: Colors.primary,
 
     fontSize: moderateScale(12),
     borderWidth: moderateScale(1),
@@ -274,10 +255,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-     marginBottom: verticalScale(55),
+    marginBottom: verticalScale(55),
     marginHorizontal: moderateScale(-5)
   },
-    discardText: {
+  discardText: {
     fontSize: moderateScale(14),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.error
@@ -287,9 +268,41 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     color: Colors.white
   },
-    confirmButton: {
+  confirmButton: {
     color: Colors.white,
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     fontSize: moderateScale(13)
+  },
+  plusMealIcon: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+    alignSelf: 'center',
+  },
+  backIconImage: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+    alignSelf: 'flex-end',
+    marginRight: horizontalScale(-11),
+  },
+  dateInput: {
+    backgroundColor: Colors.greysoft,
+    borderRadius: moderateScale(4),
+    paddingHorizontal: horizontalScale(12),
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    height: verticalScale(50),
+    flex: 1,
+    paddingVertical: 0,
+  },
+  flatListContent: {
+    paddingBottom: 32,
+  },
+  discardButton: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(12),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    color: Colors.error,
   },
 });

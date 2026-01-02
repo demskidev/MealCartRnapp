@@ -1,6 +1,9 @@
+import { activeImage, createlist, gradientclose } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useTourStep } from '@/context/TourStepContext';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -104,7 +107,7 @@ const PlansScreen: React.FC = () => {
 
       <View style={styles.listItem}>
         <View>
-          <Text style={styles.listDate}>{showResumePlan ? "Started :" : "Created:"} {item.created}</Text>
+          <Text style={styles.listDate}>{showResumePlan ? Strings.plans_started : Strings.plans_created} {item.created}</Text>
 
         </View>
 
@@ -116,20 +119,20 @@ const PlansScreen: React.FC = () => {
       <View style={styles.dividerRow} />
       <View style={styles.parentOfMarkDone}>
         <BaseButton
-          title={"View Plan"}
+          title={Strings.plans_viewPlan}
           gradientButton={false}
           // backgroundColor={Colors.olive}
-          textColor="#fff"
+          textColor={Colors.background}
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
-          onPress={() => router.push('/appscreens/TestMealPlan')}
+          onPress={() => router.push(APP_ROUTES.TestMealPlan)}
         />
         <BaseButton
-          title={" Start Plan"}
+          title={Strings.plans_startPlan}
           gradientButton={false}
           // backgroundColor={Colors.olive}
-          textColor="#fff"
+          textColor={Colors.background}
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
@@ -157,14 +160,14 @@ const PlansScreen: React.FC = () => {
         onLayout={() => setLayoutReady(true)}
       ></View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
 
 
 
 
 
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Meal Plans</Text>
+          <Text style={styles.headerTitle}>{Strings.plans_mealPlans}</Text>
 
 
           <TourGuideZone zone={5} shape="circle" maskOffset={10}>
@@ -173,10 +176,10 @@ const PlansScreen: React.FC = () => {
               style={styles.tourTarget}
               onLayout={() => setZoneReady(true)}
             >
-              <TouchableOpacity onPress={() => router.push('/appscreens/CreateMealPlan')}
+              <TouchableOpacity onPress={() => router.push(APP_ROUTES.CreateMealPlan)}
 
               >
-                <Image source={require("@/assets/images/gradientclose.png")} style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-11), }} />
+                <Image source={gradientclose} style={styles.gradientCloseImage} />
               </TouchableOpacity>
             </View>
           </TourGuideZone>
@@ -185,38 +188,38 @@ const PlansScreen: React.FC = () => {
           <>
             <View style={styles.noActivePlan}>
 
-              <Text style={styles.noActiveText}>No Active Plan</Text>
+              <Text style={styles.noActiveText}>{Strings.plans_noActivePlan}</Text>
 
 
             </View>
-            <View style={[styles.dividerRow, { marginVertical: verticalScale(20) }]} />
+            <View style={styles.dividerRowSpaced} />
           </>
 
           :
           <View style={styles.activeCard}>
             <View style={styles.activeBadge}>
-              <Image source={require("@/assets/images/activeImage.png")} resizeMode="contain" style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-11), }} />
+              <Image source={activeImage} resizeMode="contain" style={styles.activeImage} />
 
             </View>
-            <Text style={styles.planTitle}>Test Plan</Text>
-            <Text style={styles.planSubTitle}>Day 3 of 7</Text>
+            <Text style={styles.planTitle}>{Strings.plans_testPlan}</Text>
+            <Text style={styles.planSubTitle}>{Strings.plans_dayOf}</Text>
             <View style={styles.mealBox}>
-              <Text style={styles.mealBoxTitle}>Todaxy's Meal:</Text>
+              <Text style={styles.mealBoxTitle}>{Strings.plans_todaysMeal}</Text>
               <View style={styles.mealRow}>
 
 
 
-                <View style={{ flex: 1, }}>
-                  <Text style={styles.mealLabelTop}>Breakfast</Text>
-                  <Text style={styles.mealValue}>Avocado Toast with...</Text>
+                <View style={styles.mealColumn}>
+                  <Text style={styles.mealLabelTop}>{Strings.plans_breakfast}</Text>
+                  <Text style={styles.mealValue}>{Strings.plans_avocadoToast}</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.mealLabelTop}>Launch</Text>
-                  <Text style={styles.mealLabel}>Not planned</Text>
+                <View style={styles.mealColumn}>
+                  <Text style={styles.mealLabelTop}>{Strings.plans_lunch}</Text>
+                  <Text style={styles.mealLabel}>{Strings.plans_notPlanned}</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.mealLabelTop}>Dinner</Text>
-                  <Text style={styles.mealLabel}>Not planned</Text>
+                <View style={styles.mealColumn}>
+                  <Text style={styles.mealLabelTop}>{Strings.plans_dinner}</Text>
+                  <Text style={styles.mealLabel}>{Strings.plans_notPlanned}</Text>
                 </View>
               </View>
             </View>
@@ -224,35 +227,35 @@ const PlansScreen: React.FC = () => {
 
 
               <BaseButton
-                title="Get Shopping List"
+                title={Strings.plans_getShoppingList}
                 gradientButton={true}
-                textColor="#fff"
+                textColor={Colors.background}
                 width={width * 0.53}
                 textStyle={styles.createButtonText}
                 rightChild={
-                  <Image source={require("@/assets/images/createlist.png")} resizeMode="contain" style={{ width: moderateScale(18), height: moderateScale(18), }} />
+                  <Image source={createlist} resizeMode="contain" style={styles.createListIcon} />
 
                 }
-                onPress={() => router.push('/(tabs)/3_Lists')}
+                onPress={() => router.push(APP_ROUTES.LISTS)}
 
               />
               <BaseButton
-                title="View Plan"
+                title={Strings.plans_viewPlan}
                 gradientButton={false}
-                textColor="#fff"
+                textColor={Colors.background}
                 width={width * 0.3}
                 textStyle={styles.confirmButton}
                 textStyleText={styles.confirmButtonText}
-                onPress={() => router.push('/appscreens/TestMealPlan')}
+                onPress={() => router.push(APP_ROUTES.TestMealPlan)}
               />
 
             </View>
             <TouchableOpacity style={styles.pauseButton} onPress={() => setPausePlan(true)}>
-              <Text style={styles.pauseText}>Pause Plan</Text>
+              <Text style={styles.pauseText}>{Strings.plans_pausePlan}</Text>
             </TouchableOpacity>
           </View>
         }
-        <Text style={styles.sectionTitle}>Your Other Plans</Text>
+        <Text style={styles.sectionTitle}>{Strings.plans_yourOtherPlans}</Text>
 
         <FlatList
           data={shoppingLists}
@@ -270,15 +273,14 @@ const PlansScreen: React.FC = () => {
 
       <ConfirmationModal
         visible={pausePlan}
-        title="Pause Meal Plan?"
-        description="You can always resume the meal plan whenever you like to."
-        cancelText="Cancel"
-        confirmText="Pause"
+        title={Strings.plans_pauseMealPlan}
+        description={Strings.plans_pauseDescription}
+        cancelText={Strings.plans_cancel}
+        confirmText={Strings.plans_pause}
         onCancel={() => setPausePlan(false)}
         onConfirm={() => {
           setShowResumePlan(true);
           setPausePlan(false)
-
         }}
       />
     </SafeAreaView>
@@ -309,20 +311,11 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD
 
   },
-  addBtn: {
-    backgroundColor: '#E6EEDB',
-    borderRadius: 50,
-    padding: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
+
   activeCard: {
     borderRadius: moderateScale(16),
     borderWidth: moderateScale(1),
-    borderColor: '#667D4C',
+    borderColor: Colors._667D4C,
     padding: horizontalScale(18),
     marginBottom: verticalScale(20),
 
@@ -337,11 +330,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     zIndex: 2,
   },
-  activeBadgeText: {
-    color: '#fff',
-    fontSize: 14,
-    letterSpacing: 1,
-  },
+
   planTitle: {
     fontSize: moderateScale(21),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -407,15 +396,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: 16,
   },
-  secondaryBtn: {
-    flex: 1,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E6E6E6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
+
   secondaryBtnText: {
     fontSize: 16,
   },
@@ -432,16 +413,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     marginBottom: moderateScale(10),
   },
-  otherCard: {
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 18,
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    borderWidth: 1,
-    borderColor: '#F2F3F4',
-  },
+
   otherCardRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -463,15 +435,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  primaryBtnOutline: {
-    flex: 1,
-    backgroundColor: '#E6EEDB',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    marginLeft: 8,
-  },
+
   primaryBtnOutlineText: {
     fontSize: 16,
   },
@@ -566,7 +530,7 @@ const styles = StyleSheet.create({
 
     elevation: 4,
 
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -614,6 +578,34 @@ const styles = StyleSheet.create({
   image: {
     width: 56,
     height: 56,
+  },
+  scrollViewContent: {
+    paddingBottom: 32,
+  },
+  gradientCloseImage: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    alignSelf: 'flex-end',
+    marginRight: horizontalScale(-11),
+  },
+  dividerRowSpaced: {
+    height: moderateScale(1),
+    backgroundColor: Colors.divider,
+    flex: 1,
+    marginVertical: verticalScale(20),
+  },
+  activeImage: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    alignSelf: 'flex-end',
+    marginRight: horizontalScale(-11),
+  },
+  mealColumn: {
+    flex: 1,
+  },
+  createListIcon: {
+    width: moderateScale(18),
+    height: moderateScale(18),
   },
 
 

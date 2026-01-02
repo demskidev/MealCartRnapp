@@ -32,7 +32,6 @@ import { useEffect } from "react";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
-  // const [isLoading, setIsLoading] = React.useState(false);
   const isLoading = useAppSelector(state => state.auth.loading);
   const { showLoader, hideLoader } = useLoader();
 
@@ -80,7 +79,7 @@ const SignInScreen = () => {
           <View style={styles.container}>
             <Header
               title={Strings.welcomeBack}
-              description="Log in to continue your meal planning."
+              description={Strings.signinDescription}
             />
 
             <Formik
@@ -153,18 +152,12 @@ const SignInScreen = () => {
                       gradientButton={true}
                       textColor={Colors.white}
                       onPress={async () => {
-
-                        //  resetAndNavigate(APP_ROUTES.HOME);
-
-
-
                         const formErrors = await validateForm();
                         if (Object.keys(formErrors).length > 0) {
                           setTouched({
                             email: true,
                             password: true,
                           });
-                          // Don't show toast, only show errors under fields
                           return;
                         }
                         handleSignin(values);
@@ -173,7 +166,7 @@ const SignInScreen = () => {
                     />
                   </View>
 
-                  <Divider style={{ marginVertical: verticalScale(50) }} />
+                  <Divider style={styles.dividerStyle} />
 
                   <View style={styles.buttonContainer}>
                     <BaseButton
@@ -248,6 +241,9 @@ const styles = StyleSheet.create({
   forgotPasswordContainer: {
     alignSelf: "flex-end",
     marginVertical: verticalScale(8),
+  },
+  dividerStyle: {
+    marginVertical: verticalScale(50),
   },
 });
 

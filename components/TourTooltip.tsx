@@ -154,6 +154,7 @@
 
 
 
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { type IStep } from 'rn-tourguide';
@@ -278,7 +279,7 @@ const TourTooltip: React.FC<TooltipProps> = ({ currentStep, handleNext, handlePr
 
     const onNext = () => {
         if (currentStepIndex === 3) {
-            router.push("/2_Plans");
+            router.push(APP_ROUTES.PLANS);
         }
         setCurrentStepIndex(currentStepIndex + 1);
         handleNext?.();

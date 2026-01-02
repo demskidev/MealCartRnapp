@@ -1,4 +1,5 @@
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useState } from 'react';
 import { Dimensions, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native';
@@ -24,13 +25,13 @@ export default function DefaultServingsModal({ visible, onClose, onSave }) {
                     <View style={StyleSheet.absoluteFillObject} />
                 </TouchableWithoutFeedback>
                 <View style={styles.modalContainer}>
-                    <Text style={styles.title}>Default Servings</Text>
+                    <Text style={styles.title}>{Strings.defaultServings_title}</Text>
                     <Text style={styles.subtitle}>
-                        You can set your meals servings for all your new meals.
+                        {Strings.defaultServings_subtitle}
                     </Text>
 
                     <View >
-                        <Text style={styles.label}>Servings</Text>
+                        <Text style={styles.label}>{Strings.defaultServings_label}</Text>
                         <CustomStepper value={servings} onIncrement={() => setServings(s => String(Number(s) + 1))} onDecrement={() => setServings(s => String(Math.max(1, Number(s) - 1)))} />
                     </View>
 
@@ -38,18 +39,18 @@ export default function DefaultServingsModal({ visible, onClose, onSave }) {
 
 
                         <BaseButton
-                            title="Cancel"
+                            title={Strings.defaultServings_cancel}
                             gradientButton={false}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.35}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
                             onPress={onClose}
                         />
                         <BaseButton
-                            title="Save"
+                            title={Strings.defaultServings_save}
                             gradientButton={true}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.35}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
@@ -103,59 +104,17 @@ const styles = StyleSheet.create({
     dropdownBox: {
         marginBottom: 24,
     },
-    dropdown: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F7FAF7',
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        justifyContent: 'space-between',
-    },
-    dropdownText: {
-        fontSize: 15,
-        color: '#222',
-    },
-    dropdownArrow: {
-        fontSize: 16,
-        color: '#586E3F',
-        marginLeft: 8,
-    },
+
+
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 8,
     },
-    cancelBtn: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginRight: 8,
-    },
-    cancelText: {
-        color: '#222',
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    saveBtn: {
-        flex: 1,
-        backgroundColor: '#7a9256',
-        borderRadius: 8,
-        paddingVertical: 14,
-        alignItems: 'center',
-        marginLeft: 8,
-    },
-    saveText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '500',
-    },
+
+
+
+
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',

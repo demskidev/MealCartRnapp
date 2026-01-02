@@ -1,3 +1,4 @@
+import { FirstSlideshot, SecondSlideshot, ThirdSlideshot, firstslide, secondslide, thirdslide } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
@@ -5,6 +6,7 @@ import {
     moderateScale,
     verticalScale
 } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
 import { useLoader } from "@/context/LoaderContext";
 import { pushNavigation } from "@/utils/Navigation";
@@ -19,20 +21,20 @@ const slides = [
     {
         heading: "Welcome to MealCart  ",
         subheading: "All your meal planning, simplified in one place.",
-        image: require("@/assets/images/FirstSlideshot.png"),
-        background: require("@/assets/images/thirdslide.png"),
+        image: FirstSlideshot,
+        background: thirdslide,
     },
     {
         heading: "Build Your Perfect week",
         subheading: "Create custom meal plans from your favorite receipes with just a few taps",
-        image: require("@/assets/images/SecondSlideshot.png"),
-        background: require("@/assets/images/secondslide.png"),
+        image: SecondSlideshot,
+        background: secondslide,
     },
     {
         heading: "Shop Smarter,  Not Harder",
         subheading: "Automatically generate an organized shopping list from your plan. Never forget an ingredient again.",
-        image: require("@/assets/images/ThirdSlideshot.png"),
-        background: require("@/assets/images/firstslide.png"),
+        image: ThirdSlideshot,
+        background: firstslide,
     },
 ];
 
@@ -90,7 +92,7 @@ const WelcomeMealCart: React.FC = () => {
                             key={index}
                             style={[
                                 styles.dot,
-                                { backgroundColor: index === currentIndex ? "#3A4D25" : "#E6F0DF" },
+                                { backgroundColor: index === currentIndex ? Colors._3A4D25 : Colors.divider },
                             ]}
                         />
                     ))}
@@ -99,20 +101,20 @@ const WelcomeMealCart: React.FC = () => {
                 <View style={styles.buttonsContainer}>
                     {currentIndex > 0 && (
                         <TouchableOpacity onPress={goBack} style={styles.backButton}>
-                            <Text style={styles.buttonText}>Back</Text>
+                            <Text style={styles.buttonText}>{Strings.welcomeMealCart_back}</Text>
                         </TouchableOpacity>
                     )}
 
 
                     <BaseButton
-                        title={currentIndex === 2 ? "Get Started" : "Next"}
+                        title={currentIndex === 2 ? Strings.welcomeMealCart_getStarted : Strings.welcomeMealCart_next}
                         gradientButton={true}
                         width={currentIndex > 0 ? width * 0.7 : width * 0.9}
-                        gradientStartColor="#667D4C"
-                        gradientEndColor="#9DAF89"
+                        gradientStartColor={Colors._667D4C}
+                        gradientEndColor={Colors._9DAF89}
                         gradientStart={{ x: 0, y: 0 }}
                         gradientEnd={{ x: 1, y: 0 }}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         onPress={goNext}
                     />
                 </View>
@@ -198,11 +200,7 @@ const styles = StyleSheet.create({
         marginHorizontal: horizontalScale(5)
     },
 
-    nextButton: {
-        backgroundColor: "#000",
-        padding: 15,
-        borderRadius: 10
-    },
+
     backButton: {
         backgroundColor: Colors.buttonBackground,
         padding: verticalScale(15),

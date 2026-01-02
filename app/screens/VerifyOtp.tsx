@@ -38,13 +38,13 @@ const VerifyOTPScreen = () => {
     try {
       const result = await otpViewModel.handleOTPVerification(values);
       if (result.success) {
-        showSuccessToast("OTP verified successfully!");
+        showSuccessToast(Strings.verifyOtp_success);
         pushNavigation(APP_ROUTES.NEW_PASSWORD);
       } else {
-        showErrorToast("Verification Failed", result.message);
+        showErrorToast(Strings.verifyOtp_verificationFailed, result.message);
       }
     } catch (error) {
-      showErrorToast("Error", "An unexpected error occurred");
+      showErrorToast(Strings.verifyOtp_error, Strings.verifyOtp_unexpectedError);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +67,7 @@ const VerifyOTPScreen = () => {
           <View style={styles.contentView}>
             <Header
               title={Strings.checkEmail}
-              description={`We sent a 6-digit code to ${email || "your email"}`}
+              description={Strings.verifyOtp_description.replace('{email}', email || 'your email')}
             />
 
             <Formik

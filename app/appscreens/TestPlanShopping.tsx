@@ -1,11 +1,12 @@
-
+import { deleteicon, iconback, iconedit } from '@/assets/images';
+import ProgressBar from '@/components/ProgressBar';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// import { Checkbox, IconButton, ProgressBar } from 'react-native-paper';
-import ProgressBar from '@/components/ProgressBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 const data = [
     { id: '1', category: 'Bakery', name: 'Whole-grain bread', amount: '1 slice (Avocado Toast with Egg)' },
@@ -45,43 +46,38 @@ export default function TestPlanShopping() {
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Image
-                        source={require("@/assets/images/iconback.png")}
+                        source={iconback}
                         resizeMode="contain"
-                        style={{
-                            width: moderateScale(24),
-                            height: moderateScale(24),
-                            alignSelf: 'flex-end',
-                            marginRight: horizontalScale(-11),
-                        }}
+                        style={styles.backIcon}
                     />
                 </TouchableOpacity>
-                <Text style={styles.backText}>Back to Lists</Text>
+                <Text style={styles.backText}>{Strings.testPlanShopping_backToLists}</Text>
             </View>
 
             <View style={styles.titleRow}>
 
-                <Text style={styles.planTitle}>Test Plan ShoppingList</Text>
+                <Text style={styles.planTitle}>{Strings.testPlanShopping_title}</Text>
 
                 <View style={styles.editdelete}>
-                    <TouchableOpacity style={{ marginRight: horizontalScale(20) }} onPress={() => router.push('./CreateMealPlan')}   >
-                        <Image source={require("@/assets/images/iconedit.png")} resizeMode="contain" style={{ width: moderateScale(24), height: moderateScale(24), alignSelf: 'flex-end', }} />
+                    <TouchableOpacity style={styles.editButton} onPress={() => router.push(APP_ROUTES.CreateMealPlan)}   >
+                        <Image source={iconedit} resizeMode="contain" style={styles.editIcon} />
 
                     </TouchableOpacity>
                     <TouchableOpacity >
-                        <Image source={require("@/assets/images/delete.png")} resizeMode="contain" style={{ width: moderateScale(24), height: moderateScale(24), alignSelf: 'flex-end', }} />
+                        <Image source={deleteicon} resizeMode="contain" style={styles.deleteIcon} />
 
 
                     </TouchableOpacity>
                 </View>
             </View>
-            <Text style={styles.planSubTitle}>1 meal</Text>
+            <Text style={styles.planSubTitle}>{Strings.testPlanShopping_1meal}</Text>
 
 
 
             <ProgressBar
                 progress={0.6}
-                label="Progress"
-                progressText="2/4"
+                label={Strings.testPlanShopping_progress}
+                progressText={Strings.testPlanShopping_progressText}
                 containerStyle={styles.progressbar}
 
 
@@ -104,16 +100,8 @@ const styles = StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginLeft: 8 },
     actions: { flexDirection: 'row' },
     progressRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 10 },
-    progressLabel: { color: '#888', fontWeight: '600', fontSize: 14 },
-    progressCount: { marginLeft: 'auto', color: '#888', fontWeight: '600', fontSize: 14 },
-    progressBar: { height: 7, borderRadius: 5, marginHorizontal: 16, marginTop: 2, backgroundColor: '#E6EDE1' },
     listContainer: { flex: 1, marginTop: 10 },
-    itemBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FBF6', marginHorizontal: 12, marginVertical: 4, borderRadius: 12, padding: 12, elevation: 1 },
-    itemName: { fontWeight: 'bold', fontSize: 16, color: '#222' },
-    itemDetail: { color: '#888', fontSize: 13 },
-    bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', height: 70, backgroundColor: '#F8FBF6', borderTopLeftRadius: 24, borderTopRightRadius: 24 },
     selectedTab: { alignItems: 'center', justifyContent: 'center' },
-    selectedTabText: { color: '#3B5D3A', fontSize: 13, fontWeight: '600', marginTop: -6 },
 
     headerRow: {
         flexDirection: 'row',
@@ -130,14 +118,12 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(21),
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
         color: Colors.primary,
-        // flex: 1,
     },
     planSubTitle: {
         fontSize: moderateScale(12),
         color: Colors.tertiary,
         fontFamily: FontFamilies.ROBOTO_REGULAR,
         marginTop: verticalScale(10)
-        // marginBottom: 16,
     },
     editdelete: {
         flexDirection: 'row',
@@ -148,9 +134,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginTop: verticalScale(10)
-        // backgroundColor:'red'
-        // marginBottom: 2,
-        // marginTop: 8,
+
     },
     sectionTitle: { fontSize: moderateScale(12), fontFamily: FontFamilies.ROBOTO_SEMI_BOLD, color: Colors.primary, marginBottom: verticalScale(10) },
     dividerRow: {
@@ -175,8 +159,7 @@ const styles = StyleSheet.create({
         padding: moderateScale(10),
         marginBottom: verticalScale(10),
         elevation: 2,
-        // iOS shadow
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.15,
         shadowRadius: 4,
@@ -207,5 +190,24 @@ const styles = StyleSheet.create({
     },
     progressbar: {
         marginVertical: verticalScale(20)
-    }
+    },
+    backIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+        marginRight: horizontalScale(-11),
+    },
+    editButton: {
+        marginRight: horizontalScale(20),
+    },
+    editIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
+    deleteIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
 });

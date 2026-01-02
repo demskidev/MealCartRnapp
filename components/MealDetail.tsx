@@ -1,5 +1,7 @@
+import { addtomeallist, addwishlisticon, backIcon, icon_edit } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, } from '@/constants/Theme';
 import { FontFamily } from '@/utils/Fonts';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -33,14 +35,14 @@ const MealDetail = ({ meal, onBack }) => {
 
                 <ImageBackground
                     source={meal.image}
-                    style={{ height: verticalScale(300), width: '100%' }}
+                    style={styles.imageBackground}
                 >
 
                     <TouchableOpacity onPress={onBack} style={styles.backButton} >
 
 
                         <Image
-                            source={require('@/assets/images/backIcon.png')}
+                            source={backIcon}
                             style={styles.backImage}
                             resizeMode="contain"
 
@@ -52,17 +54,17 @@ const MealDetail = ({ meal, onBack }) => {
                     <View style={styles.headerOverlayContent1}>
                         <View style={styles.parentOfname} >
                             <Text style={styles.title}>{meal.title}</Text>
-                            <Text style={styles.info}>{meal.time} • 4 Servings • Medium</Text>
+                            <Text style={styles.info}>{meal.time} {Strings.mealDetail_info}</Text>
                         </View>
                         <View style={styles.parentOfAddList}>
                             <Image
-                                source={require('@/assets/images/addtomeallist.png')}
+                                source={addtomeallist}
                                 style={styles.imageMeallist}
                                 resizeMode="contain"
                             />
                             <TouchableOpacity onPress={() => setShowSendShoppingList(true)}>
                                 <Image
-                                    source={require('@/assets/images/addwishlisticon.png')}
+                                    source={addwishlisticon}
                                     style={styles.imageaddToList}
                                     resizeMode="contain"
                                 />
@@ -78,20 +80,20 @@ const MealDetail = ({ meal, onBack }) => {
                 </ImageBackground>
             </View>
 
-            <ScrollView style={styles.detailContent} contentContainerStyle={{ paddingBottom: 32 }}>
+            <ScrollView style={styles.detailContent} contentContainerStyle={styles.scrollViewContent}>
                 <Text style={styles.description}>
-                    A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love.
+                    {Strings.mealDetail_description}
                 </Text>
                 <View style={styles.buttonRow}>
                     <BaseButton
-                        title="Edit"
+                        title={Strings.mealDetail_edit}
                         gradientButton={true}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         width={width * 0.43}
                         textStyle={styles.editButton}
                         rightChild={
                             <Image
-                                source={require('@/assets/images/icon_edit.png')}
+                                source={icon_edit}
                                 style={styles.editImage}
                                 resizeMode="contain"
                             />
@@ -101,80 +103,80 @@ const MealDetail = ({ meal, onBack }) => {
 
 
                     <BaseButton
-                        title="Delete"
+                        title={Strings.mealDetail_delete}
                         gradientButton={true}
                         width={width * 0.43}
-                        gradientStartColor="#A62A2A"
-                        gradientEndColor="#FD4B4B"
+                        gradientStartColor={Colors._A62A2A}
+                        gradientEndColor={Colors._FD4B4B}
                         gradientStart={{ x: 0, y: 0 }}
                         gradientEnd={{ x: 1, y: 0 }}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         textStyle={styles.deleteButton}
                         onPress={() => setShowDeleteModal(true)}
                     />
 
                 </View>
-                <Text style={styles.sectionTitle}>Ingredients</Text>
+                <Text style={styles.sectionTitle}>{Strings.mealDetail_ingredients}</Text>
                 <View style={styles.divider} />
                 <View style={styles.ingredientRow}>
-                    <Text style={styles.ingredientName}>Spaghetti</Text>
+                    <Text style={styles.ingredientName}>{Strings.mealDetail_ingredient_spaghetti}</Text>
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.ingredientValue}>400 g</Text>
+                    <Text style={styles.ingredientValue}>{Strings.mealDetail_ingredient_spaghetti_qty}</Text>
                 </View>
                 <View style={styles.ingredientRow}>
-                    <Text style={styles.ingredientName}>Ground Beef</Text>
+                    <Text style={styles.ingredientName}>{Strings.mealDetail_ingredient_beef}</Text>
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.ingredientValue}>500 g</Text>
+                    <Text style={styles.ingredientValue}>{Strings.mealDetail_ingredient_beef_qty}</Text>
                 </View>
                 <View style={styles.ingredientRow}>
-                    <Text style={styles.ingredientName}>Onion</Text>
+                    <Text style={styles.ingredientName}>{Strings.mealDetail_ingredient_onion}</Text>
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.ingredientValue}>1 large</Text>
+                    <Text style={styles.ingredientValue}>{Strings.mealDetail_ingredient_onion_qty}</Text>
                 </View>
                 <View style={styles.ingredientRow}>
-                    <Text style={styles.ingredientName}>Garlic Cloves</Text>
+                    <Text style={styles.ingredientName}>{Strings.mealDetail_ingredient_garlic}</Text>
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.ingredientValue}>2</Text>
+                    <Text style={styles.ingredientValue}>{Strings.mealDetail_ingredient_garlic_qty}</Text>
                 </View>
                 <View style={styles.ingredientRow}>
-                    <Text style={styles.ingredientName}>Chopped Tomatoes</Text>
+                    <Text style={styles.ingredientName}>{Strings.mealDetail_ingredient_tomatoes}</Text>
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.ingredientValue}>800 g</Text>
+                    <Text style={styles.ingredientValue}>{Strings.mealDetail_ingredient_tomatoes_qty}</Text>
                 </View>
                 <View style={styles.ingredientRow}>
-                    <Text style={styles.ingredientName}>Tomato Paste</Text>
+                    <Text style={styles.ingredientName}>{Strings.mealDetail_ingredient_paste}</Text>
                     <View style={styles.dividerRow} />
 
-                    <Text style={styles.ingredientValue}>2 tbsp</Text>
+                    <Text style={styles.ingredientValue}>{Strings.mealDetail_ingredient_paste_qty}</Text>
                 </View>
-                <Text style={styles.sectionTitle}>Instructions</Text>
+                <Text style={styles.sectionTitle}>{Strings.mealDetail_instructions}</Text>
                 <View style={styles.divider} />
                 <View style={styles.instructionRow}>
                     <Text style={styles.instructionNumber}>1.</Text>
-                    <Text style={styles.instructionText}>Heat olive oil in a large pan. Sauté diced onion and garlic.</Text>
+                    <Text style={styles.instructionText}>{Strings.mealDetail_instruction_1}</Text>
                 </View>
                 <View style={styles.instructionRow}>
                     <Text style={styles.instructionNumber}>2.</Text>
-                    <Text style={styles.instructionText}>Add ground beef and cook until browned.</Text>
+                    <Text style={styles.instructionText}>{Strings.mealDetail_instruction_2}</Text>
                 </View>
                 <View style={styles.instructionRow}>
                     <Text style={styles.instructionNumber}>3.</Text>
-                    <Text style={styles.instructionText}>Stir in chopped tomatoes and tomato paste. Simmer for 20 minutes.</Text>
+                    <Text style={styles.instructionText}>{Strings.mealDetail_instruction_3}</Text>
                 </View>
             </ScrollView>
 
 
             <ConfirmationModal
                 visible={showDeleteModal}
-                title="Delete Meal"
-                description="This action is permanent and cannot be undone. You will lose access to this meal."
-                cancelText="Cancel"
-                confirmText="Delete"
+                title={Strings.mealDetail_deleteMeal}
+                description={Strings.mealDetail_deleteDesc}
+                cancelText={Strings.mealDetail_cancel}
+                confirmText={Strings.mealDetail_confirmDelete}
                 onCancel={() => setShowDeleteModal(false)}
                 onConfirm={() => {
                     setShowDeleteModal(false);
@@ -200,6 +202,13 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    imageBackground: {
+        height: verticalScale(300),
+        width: '100%',
+    },
+    scrollViewContent: {
+        paddingBottom: 32,
+    },
     imageMeallist: {
         width: moderateScale(56),
         height: moderateScale(42),
@@ -221,10 +230,7 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 20,
     },
-    backButtonText: {
-        fontSize: 28,
-        color: '#fff',
-    },
+
     tagContainer: {
 
     },
@@ -234,7 +240,7 @@ const styles = StyleSheet.create({
         color: Colors.primary,
     },
     detailContent: {
-        backgroundColor: '#fff',
+        backgroundColor: Colors.background,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         marginTop: -24,
@@ -271,11 +277,7 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(16),
         color: Colors.white
     },
-    editIcon: {
-        color: '#fff',
-        fontSize: 16,
-        marginLeft: 8,
-    },
+
     deleteButton: {
 
         fontFamily: FontFamily.ROBOTO_MEDIUM,
