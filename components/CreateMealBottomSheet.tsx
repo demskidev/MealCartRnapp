@@ -33,6 +33,8 @@ import CustomDropdown from "./CustomDropdown";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
 import ImagePickerModal from "./ImagePickerModal";
+import { IconDown } from "@/assets/svg/IconUpDown";
+import { closeIcon } from "@/assets/images";
 
 export interface CreateMealBottomSheetRef {
   expand: () => void;
@@ -109,134 +111,7 @@ const CreateMealBottomSheet = forwardRef<
     else hideLoader();
   }, [loading]);
 
-  // const renderIngredientItem =
-  //   (ingredients, setFieldValue, errors, touched, setTouched) =>
-  //   ({ item, index }) =>
-  //     (
-  //       // <View style={styles.ingredientItem}>
-  //       <View>
-  //         <Text style={styles.label}>Ingredient Name</Text>
-  //         <CustomTextInput
-  //           placeholder="e.g. Tomato"
-  //           value={item.name}
-  //           onChangeText={(text) => {
-  //             const updated = [...ingredients];
-  //             updated[index] = { ...updated[index], name: text };
-  //             setFieldValue("ingredients", updated);
-  //             if (
-  //               touched.ingredients?.[index]?.name &&
-  //               errors.ingredients?.[index]?.name
-  //             ) {
-  //               const updatedTouched = { ...touched };
-  //               if (Array.isArray(updatedTouched.ingredients)) {
-  //                 updatedTouched.ingredients[index] = {
-  //                   ...updatedTouched.ingredients[index],
-  //                   name: false,
-  //                 };
-  //                 setTouched(updatedTouched);
-  //               }
-  //             }
-  //           }}
-  //           error={
-  //             touched.ingredients?.[index]?.name &&
-  //             errors.ingredients?.[index]?.name
-  //           }
-  //         />
-  //         <View style={styles.row}>
-  //           <View style={styles.rowItem}>
-  //             <Text style={styles.label}>Count</Text>
-  //             <CustomStepper
-  //               value={item?.count} // Changed from item?.unit
-  //               onIncrement={() => {
-  //                 const updated = [...ingredients];
-  //                 updated[index] = {
-  //                   ...updated[index],
-  //                   count: String(Number(item?.count || 0) + 1), // Changed to count
-  //                 };
-  //                 setFieldValue("ingredients", updated);
-  //               }}
-  //               onDecrement={() => {
-  //                 const updated = [...ingredients];
-  //                 updated[index] = {
-  //                   ...updated[index],
-  //                   count: String(Math.max(1, Number(item?.count || 1) - 1)), // Changed to count
-  //                 };
-  //                 setFieldValue("ingredients", updated);
-  //               }}
-  //             />
-  //           </View>
-
-  //           <View style={styles.rowItem}>
-  //             <Text style={styles.label}>Unit (weight)</Text>
-
-  //             <CustomStepper
-  //               value={item?.unit}
-  //               onIncrement={() => {
-  //                 const unitWeightOptions = item?.category?.unit;
-  //                 const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
-  //                 if (unitWeightIndex < unitWeightOptions.length - 1) {
-  //                   const updated = [...ingredients];
-  //                   updated[index] = {
-  //                     ...updated[index],
-  //                     unit: unitWeightOptions[unitWeightIndex + 1],
-  //                   };
-  //                   setFieldValue("ingredients", updated);
-  //                 }
-  //               }}
-  //               onDecrement={() => {
-  //                 const unitWeightOptions = item?.category?.unit;
-  //                 const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
-  //                 if (unitWeightIndex > 0) {
-  //                   const updated = [...ingredients];
-  //                   updated[index] = {
-  //                     ...updated[index],
-  //                     unit: unitWeightOptions[unitWeightIndex - 1],
-  //                   };
-  //                   setFieldValue("ingredients", updated);
-  //                 }
-  //               }}
-  //             />
-  //           </View>
-
-  //           <View style={styles.rowItem}>
-  //             <Text style={styles.label}>Category</Text>
-
-  //             <CustomDropdown
-  //               value={item?.category}
-  //               options={ingredientCategories}
-  //               onSelect={(category) => {
-  //                 const updated = [...ingredients];
-  //                 updated[index] = {
-  //                   ...updated[index],
-  //                   unit: category?.unit?.[0] ?? "",
-  //                   category,
-  //                 };
-  //                 setFieldValue("ingredients", updated);
-  //               }}
-  //               icon={require("@/assets/images/icondown.png")}
-  //             />
-  //           </View>
-
-  //           <TouchableOpacity
-  //             style={styles.deleteButton}
-  //             onPress={() => {
-  //               const updated = ingredients.filter((_, i) => i !== index);
-  //               setFieldValue("ingredients", updated);
-  //             }}
-  //           >
-  //             <Image
-  //               source={require("@/assets/images/delete.png")}
-  //               style={{
-  //                 width: verticalScale(24),
-  //                 height: verticalScale(24),
-  //               }}
-  //               resizeMode="contain"
-  //             />
-  //           </TouchableOpacity>
-  //         </View>
-  //       </View>
-  //     );
-
+ 
   const renderIngredientItem =
     (ingredients, setFieldValue, errors, touched, setTouched) =>
     ({ item, index }) => {
@@ -375,7 +250,7 @@ const CreateMealBottomSheet = forwardRef<
                   };
                   setFieldValue("ingredients", updated);
                 }}
-                icon={require("@/assets/images/icondown.png")}
+                icon={IconDown}
               />
             </View>
 
@@ -387,7 +262,7 @@ const CreateMealBottomSheet = forwardRef<
               }}
             >
               <Image
-                source={require("@/assets/images/delete.png")}
+                source={delete}
                 style={{
                   width: verticalScale(24),
                   height: verticalScale(24),
@@ -651,7 +526,7 @@ const CreateMealBottomSheet = forwardRef<
                 }
               >
                 <Image
-                  source={require("@/assets/images/close-icon.png")}
+                  source={closeIcon}
                   style={{
                     width: verticalScale(24),
                     height: verticalScale(24),
@@ -796,7 +671,7 @@ const CreateMealBottomSheet = forwardRef<
                       value={values.difficulty}
                       options={["Easy", "Medium", "Hard"]}
                       onSelect={(val) => setFieldValue("difficulty", val)}
-                      icon={require("@/assets/images/icondown.png")}
+                      icon={IconDown}
                     />
                   </View>
                   <View style={styles.rowItem}>
@@ -805,7 +680,7 @@ const CreateMealBottomSheet = forwardRef<
                       value={values.category}
                       options={["Breakfast", "Lunch", "Dinner"]}
                       onSelect={(val) => setFieldValue("category", val)}
-                      icon={require("@/assets/images/icondown.png")}
+                      icon={IconDown}
                     />
                   </View>
                 </View>
@@ -905,8 +780,8 @@ const CreateMealBottomSheet = forwardRef<
                   title={isEdit ? "Update Meal" : "Confirm"}
                   gradientButton={true}
                   width={isEdit ? width * 0.65 : width * 0.41}
-                  gradientStartColor="#667D4C"
-                  gradientEndColor="#9DAF89"
+                  gradientStartColor={Colors._667D4C}
+                  gradientEndColor={Colors._9DAF89}
                   gradientStart={{ x: 0, y: 0 }}
                   gradientEnd={{ x: 1, y: 0 }}
                   textColor={Colors.white}
@@ -960,7 +835,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(10),
     elevation: 2,
     // iOS shadow
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -979,13 +854,13 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   input: {
-    backgroundColor: "#F6F6F6",
+    backgroundColor: Colors._F6F6F6,
     borderRadius: 8,
     padding: 10,
     fontSize: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: Colors.borderColor,
   },
   uploadButton: {
     marginLeft: 8,

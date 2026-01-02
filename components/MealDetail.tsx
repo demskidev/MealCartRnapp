@@ -1,3 +1,4 @@
+import { addtomeallist, addwishlisticon, backIcon, icon_edit, mealfoodH } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import {
   addDotAtEnd,
@@ -82,14 +83,14 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
           source={
             meal.image
               ? { uri: meal.image }
-              : require("@/assets/images/mealfoodH.png")
+              : mealfoodH
           }
           style={{ height: verticalScale(300), width: "100%" }}
         >
           <View style={styles.topRow}>
             <TouchableOpacity onPress={onBack} style={styles.backButton}>
               <Image
-                source={require("@/assets/images/backIcon.png")}
+                source={backIcon}
                 style={styles.backImage}
                 resizeMode="contain"
               />
@@ -110,13 +111,13 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
             </View>
             <View style={styles.parentOfAddList}>
               <Image
-                source={require("@/assets/images/addtomeallist.png")}
+                source={addtomeallist}
                 style={styles.imageMeallist}
                 resizeMode="contain"
               />
               <TouchableOpacity onPress={() => setShowSendShoppingList(true)}>
                 <Image
-                  source={require("@/assets/images/addwishlisticon.png")}
+                  source={addwishlisticon}
                   style={styles.imageaddToList}
                   resizeMode="contain"
                 />
@@ -138,12 +139,12 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
           <BaseButton
             title="Edit"
             gradientButton={true}
-            textColor="#fff"
+            textColor={Colors.white}
             width={width * 0.47}
             textStyle={styles.editButton}
             rightChild={
               <Image
-                source={require("@/assets/images/icon_edit.png")}
+                source={icon_edit}
                 style={styles.editImage}
                 resizeMode="contain"
               />
@@ -155,18 +156,18 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
             title="Delete"
             gradientButton={true}
             width={width * 0.47}
-            gradientStartColor="#A62A2A"
-            gradientEndColor="#FD4B4B"
+            gradientStartColor={Colors._A62A2A}
+            gradientEndColor={Colors._FD4B4B}
             gradientStart={{ x: 0, y: 0 }}
             gradientEnd={{ x: 1, y: 0 }}
-            textColor="#fff"
+            textColor={Colors.white}
             textStyle={styles.deleteButton}
             onPress={() => setShowDeleteModal(true)}
           />
         </View>
         {meal.ingredients && meal.ingredients.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
+            <Text style={styles.sectionTitle}>{Strings.createMeal_ingredients}</Text>
             <View style={styles.divider} />
             {meal.ingredients.map((ingredient: any, index: number) => (
               <View style={styles.ingredientRow} key={index}>
@@ -183,7 +184,7 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
 
         {meal.steps && meal.steps.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Instructions</Text>
+            <Text style={styles.sectionTitle}>{Strings.mealDetail_instructions}</Text>
             <View style={styles.divider} />
             {meal.steps.map((step: string, index: number) => (
               <View style={styles.instructionRow} key={index}>
@@ -197,10 +198,10 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
 
       <ConfirmationModal
         visible={showDeleteModal}
-        title="Delete Meal"
-        description="This action is permanent and cannot be undone. You will lose access to this meal."
-        cancelText="Cancel"
-        confirmText="Delete"
+        title={Strings.mealDetail_deleteMeal}
+        description={Strings.mealDetail_deleteDesc}
+        cancelText={Strings.mealDetail_cancel}
+        confirmText={Strings.mealDetail_delete}
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteMeal}
       />
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 28,
-    color: "#fff",
+    color: Colors.white,
   },
   tagContainer: {
     backgroundColor: Colors._FFFFFF97,
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   detailContent: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     marginTop: -24,
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   editIcon: {
-    color: "#fff",
+    color: Colors.white,
     fontSize: 16,
     marginLeft: 8,
   },
