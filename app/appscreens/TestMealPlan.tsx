@@ -1,20 +1,15 @@
+import { burger, deleteicon, foodimage, iconback, iconedit } from '@/assets/images';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import GradientText from '@/components/GradientText';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const FONT_FAMILY = 'Poppins-SemiBold';
-const FONT_FAMILY_REGULAR = 'Poppins-Regular';
-const TITLE_COLOR = '#222';
-const SUBTITLE_COLOR = '#888';
-const HIGHLIGHT_COLOR = '#7A9256';
-const CARD_BG = '#F2F3F4';
-const CARD_SHADOW = '#E6E6E6';
-const BG_COLOR = '#fff';
 
 const sections = [
     {
@@ -25,14 +20,14 @@ const sections = [
                 title: 'My special Morning Toast',
                 time: '10 min',
                 difficulty: 'Easy',
-                image: require('@/assets/images/burger.png'), // Replace with your image path
+                image: burger,
             },
             {
                 type: 'Launch',
                 title: 'My Special Burger',
                 time: '15 min',
                 difficulty: 'Medium',
-                image: require('@/assets/images/foodimage.png'), // Replace with your image path
+                image: foodimage,
             },
         ],
     },
@@ -44,14 +39,14 @@ const sections = [
                 title: 'My special Morning Toast',
                 time: '10 min',
                 difficulty: 'Easy',
-                image: require('@/assets/images/foodimage.png'),
+                image: foodimage,
             },
             {
                 type: 'Launch',
                 title: 'My Special Burger',
                 time: '15 min',
                 difficulty: 'Medium',
-                image: require('@/assets/images/burger.png'),
+                image: burger,
             },
         ],
     },
@@ -63,14 +58,14 @@ const sections = [
                 title: 'My special Morning Toast',
                 time: '10 min',
                 difficulty: 'Easy',
-                image: require('@/assets/images/foodimage.png'),
+                image: foodimage,
             },
             {
                 type: 'Launch',
                 title: 'My Special Burger',
                 time: '15 min',
                 difficulty: 'Medium',
-                image: require('@/assets/images/burger.png'),
+                image: burger,
             },
         ],
     },
@@ -87,31 +82,26 @@ export default function TestMealPlan({ navigation }) {
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Image
-                        source={require("@/assets/images/iconback.png")}
+                        source={iconback}
                         resizeMode="contain"
-                        style={{
-                            width: moderateScale(24),
-                            height: moderateScale(24),
-                            alignSelf: 'flex-end',
-                            marginRight: horizontalScale(-11),
-                        }}
+                        style={styles.backIcon}
                     />
                 </TouchableOpacity>
-                <Text style={styles.backText}>Back to Plans</Text>
+                <Text style={styles.backText}>{Strings.testMealPlan_backToPlans}</Text>
             </View>
 
             <View style={styles.titleRow}>
                 <View>
-                    <Text style={styles.planTitle}>Test Plan</Text>
-                    <Text style={styles.planSubTitle}>Started on 27/09/2025</Text>
+                    <Text style={styles.planTitle}>{Strings.testMealPlan_title}</Text>
+                    <Text style={styles.planSubTitle}>{Strings.testMealPlan_startedOn}</Text>
                 </View>
                 <View style={styles.editdelete}>
-                    <TouchableOpacity style={{ marginRight: horizontalScale(20) }} onPress={() => router.push('./CreateMealPlan')}   >
-                        <Image source={require("@/assets/images/iconedit.png")} resizeMode="contain" style={{ width: moderateScale(24), height: moderateScale(24), alignSelf: 'flex-end', }} />
+                    <TouchableOpacity style={styles.editButton} onPress={() => router.push(APP_ROUTES.CreateMealPlan)}   >
+                        <Image source={iconedit} resizeMode="contain" style={styles.editIcon} />
 
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => setRemovePlan(true)}>
-                        <Image source={require("@/assets/images/delete.png")} resizeMode="contain" style={{ width: moderateScale(24), height: moderateScale(24), alignSelf: 'flex-end', }} />
+                        <Image source={deleteicon} resizeMode="contain" style={styles.deleteIcon} />
 
 
                     </TouchableOpacity>
@@ -137,9 +127,7 @@ export default function TestMealPlan({ navigation }) {
                                 startColor={Colors._667D4C}
                                 endColor={Colors._9DAF89}
                                 fontSize={moderateScale(12)}
-                            // angle="vertical"
                             />
-                            {/* <Text style={styles.mealType}>{item.type}</Text> */}
                             <Text style={styles.mealName}>{item.title}</Text>
                             <Text style={styles.mealMeta}>
                                 {item.time} · {item.difficulty}
@@ -147,16 +135,16 @@ export default function TestMealPlan({ navigation }) {
                         </View>
                     </View>
                 )}
-                contentContainerStyle={{ paddingBottom: verticalScale(32) }}
+                contentContainerStyle={styles.sectionListContent}
                 showsVerticalScrollIndicator={false}
-                style={{ marginTop: verticalScale(8) }}
+                style={styles.sectionListStyle}
             />
             <ConfirmationModal
                 visible={removePlan}
-                title="Remove Meal Plan?"
-                description="Meal Plan will be removed and can no longer be accessible."
-                cancelText="Cancel"
-                confirmText="Remove"
+                title={Strings.testMealPlan_removeTitle}
+                description={Strings.testMealPlan_removeDescription}
+                cancelText={Strings.testMealPlan_cancel}
+                confirmText={Strings.testMealPlan_remove}
                 onCancel={() => setRemovePlan(false)}
                 onConfirm={() => {
                     setRemovePlan(false);
@@ -191,22 +179,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginTop: verticalScale(10)
-        // backgroundColor:'red'
-        // marginBottom: 2,
-        // marginTop: 8,
+
     },
     planTitle: {
         fontSize: moderateScale(21),
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
         color: Colors.primary,
-        // flex: 1,
     },
     planSubTitle: {
         fontSize: moderateScale(12),
         color: Colors.tertiary,
         fontFamily: FontFamilies.ROBOTO_REGULAR,
         marginTop: verticalScale(10)
-        // marginBottom: 16,
     },
     dayTitle: {
         fontSize: moderateScale(14),
@@ -223,18 +207,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         elevation: 4,
 
-        // iOS
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
     },
     mealImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 10,
-        marginRight: 12,
-        backgroundColor: '#ccc',
+        width: moderateScale(60),
+        height: moderateScale(60),
+        borderRadius: moderateScale(10),
+        marginRight: horizontalScale(12),
+        backgroundColor: Colors._ccc,
     },
     mealInfo: {
         flex: 1,
@@ -242,10 +225,9 @@ const styles = StyleSheet.create({
     },
     mealType: {
         fontSize: moderateScale(12),
-        color: '#667D4C',
+        color: Colors._667D4C,
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
-        // marginBottom: 2,
-        // marginTop: 6
+
     },
     mealName: {
         fontSize: moderateScale(14),
@@ -269,5 +251,30 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(2),
         marginBottom: verticalScale(15)
 
+    },
+    backIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+        marginRight: horizontalScale(-11),
+    },
+    editButton: {
+        marginRight: horizontalScale(20),
+    },
+    editIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
+    deleteIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
+    sectionListContent: {
+        paddingBottom: verticalScale(32),
+    },
+    sectionListStyle: {
+        marginTop: verticalScale(8),
     },
 });

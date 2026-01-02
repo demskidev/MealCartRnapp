@@ -1,4 +1,6 @@
+import { closeIcon } from '@/assets/images';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useState } from 'react';
 import { Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
@@ -8,10 +10,10 @@ const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
 const difficulties = ['Easy', 'Moderate', 'Challenging', 'Expert'];
 const prepTimes = ['< 5 Mins', '5 - 10 Mins', '10 - 15 Mins', '> 15 Mins'];
 
-const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedDifficulty, setSelectedDifficulty] = useState(null);
-    const [selectedPrepTime, setSelectedPrepTime] = useState(null);
+const FilterModal = ({ visible, onClose, onConfirm, onReset }: FilterModalProps) => {
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+    const [selectedPrepTime, setSelectedPrepTime] = useState<string | null>(null);
     const handleReset = () => {
         setSelectedCategory(null);
         setSelectedDifficulty(null);
@@ -29,16 +31,16 @@ const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
                 <View style={styles.modalContainer}>
                     <View style={styles.filterWithClose}>
 
-                        <Text style={styles.title}>Filters</Text>
+                        <Text style={styles.title}>{Strings.filterModal_filters}</Text>
                         <TouchableOpacity onPress={onClose} >
                             <Image
-                                source={require("@/assets/images/close-icon.png")}
-                                style={{ width: verticalScale(24), height: verticalScale(24) }}
+                                source={closeIcon}
+                                style={styles.closeIcon}
                                 resizeMode="contain"
                             />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.label}>Category</Text>
+                    <Text style={styles.label}>{Strings.filterModal_category}</Text>
                     <View style={styles.chipRow}>
                         {categories.map(cat => (
                             <TouchableOpacity
@@ -61,7 +63,7 @@ const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
                         ))}
                     </View>
 
-                    <Text style={styles.label}>Difficulty</Text>
+                    <Text style={styles.label}>{Strings.filterModal_difficulty}</Text>
                     <View style={styles.chipRow}>
                         {difficulties.map(diff => (
                             <TouchableOpacity
@@ -84,7 +86,7 @@ const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
                         ))}
                     </View>
 
-                    <Text style={styles.label}>Prep Time</Text>
+                    <Text style={styles.label}>{Strings.filterModal_prepTime}</Text>
                     <View style={styles.chipRow}>
                         {prepTimes.map(time => (
                             <TouchableOpacity
@@ -113,18 +115,18 @@ const FilterModal = ({ visible, onClose, onConfirm, onReset }) => {
 
 
                         <BaseButton
-                            title="Reset"
+                            title={Strings.filterModal_reset}
                             gradientButton={false}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.42}
                             textStyle={styles.cancelButton}
                             textStyleText={styles.cancelButtonText}
                             onPress={handleReset}
                         />
                         <BaseButton
-                            title="Confirm"
+                            title={Strings.filterModal_confirm}
                             gradientButton={true}
-                            textColor="#fff"
+                            textColor={Colors.background}
                             width={width * 0.42}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
@@ -177,7 +179,6 @@ const styles = StyleSheet.create({
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
         fontSize: moderateScale(21),
         color: Colors.primary,
-        // marginBottom: verticalScale(10),
     },
     label: {
         fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
@@ -186,8 +187,7 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(12),
         marginBottom: verticalScale(13)
 
-        // marginTop: verticalScale(10),
-        // marginBottom: verticalScale(6),
+
     },
     chipRow: {
         flexDirection: 'row',
@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.white,
     },
     chipSelected: {
-        backgroundColor: '#EAF1E2',
-        borderColor: '#7B8756',
+        backgroundColor: Colors._EAF1E2,
+        borderColor: Colors._7B8756,
     },
     chipText: {
         fontFamily: FontFamilies.ROBOTO_REGULAR,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
         color: Colors.primary,
     },
     chipTextSelected: {
-        color: '#7B8756',
+        color: Colors._7B8756,
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
     },
     divider: {
@@ -227,26 +227,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginTop: verticalScale(8),
     },
-    resetBtn: {
-        flex: 1,
-        backgroundColor: '#F7F7F7',
-        borderRadius: moderateScale(10),
-        paddingVertical: verticalScale(12),
-        marginRight: horizontalScale(10),
-        alignItems: 'center',
-    },
+
     resetText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(17),
         color: Colors.tertiary,
     },
-    confirmBtn: {
-        flex: 1,
-        backgroundColor: '#7B8756',
-        borderRadius: moderateScale(10),
-        paddingVertical: verticalScale(12),
-        alignItems: 'center',
-    },
+
     confirmText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(17),
@@ -258,7 +245,6 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(18),
     },
     cancelButton: {
-        // flex: 1,
         backgroundColor: Colors.white,
         borderColor: Colors.borderColor,
         borderWidth: moderateScale(1),
@@ -273,12 +259,8 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(14),
     },
     confirmButton: {
-        //  flex: 1,
-        // backgroundColor: '#9DAF89',
         borderRadius: moderateScale(8),
-        // paddingVertical: verticalScale(12),
         alignItems: 'center',
-        // marginLeft: horizontalScale(8),
     },
     confirmButtonText: {
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -289,7 +271,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between'
-    }
+    },
+    closeIcon: {
+        width: verticalScale(24),
+        height: verticalScale(24),
+    },
 });
 
 export default FilterModal;

@@ -11,7 +11,7 @@ interface CustomStepperProps {
   onDecrement: () => void;
   showUp?: boolean;
   showDown?: boolean;
-   containerStyle?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 const CustomStepper: React.FC<CustomStepperProps> = ({
@@ -23,16 +23,16 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
   containerStyle,
 }) => (
   <View style={[styles.container, containerStyle]}>
-    <View style={{ flex: 1 }}>
+    <View style={styles.valueContainer}>
       <Text style={styles.value}>{value}</Text>
     </View>
 
-    <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+    <View style={styles.buttonsContainer}>
       {showUp && (
         <TouchableOpacity
           onPress={onIncrement}
           style={styles.iconBtn}
-         
+
         >
           <IconUp style={styles.iconUp} />
         </TouchableOpacity>
@@ -42,7 +42,7 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
         <TouchableOpacity
           onPress={onDecrement}
           style={styles.iconBtn}
-         
+
         >
           <IconDown style={styles.iconDown} />
         </TouchableOpacity>
@@ -56,13 +56,20 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F6F6F6',
+    backgroundColor: Colors._F6F6F6,
     borderRadius: moderateScale(8),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
     marginBottom: verticalScale(8),
     paddingHorizontal: horizontalScale(8),
     height: moderateScale(42),
+  },
+  valueContainer: {
+    flex: 1,
+  },
+  buttonsContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   iconBtn: {
     padding: moderateScale(2),

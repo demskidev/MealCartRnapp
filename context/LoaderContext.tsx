@@ -7,8 +7,8 @@ type LoaderContextType = {
 };
 
 const LoaderContext = createContext<LoaderContextType>({
-  showLoader: () => {},
-  hideLoader: () => {},
+  showLoader: () => { },
+  hideLoader: () => { },
 });
 
 export const LoaderProvider = ({ children }: { children: ReactNode }) => {

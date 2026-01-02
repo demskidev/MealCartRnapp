@@ -1,3 +1,4 @@
+import { FirstSlideshot, SecondSlideshot, ThirdSlideshot, firstslide, secondslide, thirdslide } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
@@ -5,6 +6,7 @@ import {
     moderateScale,
     verticalScale
 } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
 import { useLoader } from "@/context/LoaderContext";
 import { pushNavigation } from "@/utils/Navigation";
@@ -12,32 +14,27 @@ import React, { useRef, useState } from "react";
 import { Dimensions, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Sample images for scroll view (replace with your images)
-// const images = [
-//     require("assets/images/FirstSlideshot.png"),
-//     require("assets/images/SecondSlideshot.png"),
-//     require("assets/images/ThirdSliodeshot.png"),
-// ];
+
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 const slides = [
     {
         heading: "Welcome to MealCart  ",
         subheading: "All your meal planning, simplified in one place.",
-        image: require("@/assets/images/FirstSlideshot.png"),
-        background: require("@/assets/images/thirdslide.png"),
+        image: FirstSlideshot,
+        background: thirdslide,
     },
     {
         heading: "Build Your Perfect week",
         subheading: "Create custom meal plans from your favorite receipes with just a few taps",
-        image: require("@/assets/images/SecondSlideshot.png"),
-        background: require("@/assets/images/secondslide.png"),
+        image: SecondSlideshot,
+        background: secondslide,
     },
     {
         heading: "Shop Smarter,  Not Harder",
         subheading: "Automatically generate an organized shopping list from your plan. Never forget an ingredient again.",
-        image: require("@/assets/images/ThirdSlideshot.png"),
-        background: require("@/assets/images/firstslide.png"),
+        image: ThirdSlideshot,
+        background: firstslide,
     },
 ];
 
@@ -52,9 +49,8 @@ const WelcomeMealCart: React.FC = () => {
             setCurrentIndex(nextIndex);
             flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
         } else {
-            // Last slide → navigate to Home screen
             showLoader();
-            pushNavigation(APP_ROUTES.HOME); // or replaceNavigation if you want to remove this screen from stack
+            pushNavigation(APP_ROUTES.HOME);
         }
     };
 
@@ -71,9 +67,7 @@ const WelcomeMealCart: React.FC = () => {
         <View style={[styles.slide,]}>
             <Text style={styles.heading}>{item.heading}</Text>
             <Text style={styles.subheading}>{item.subheading}</Text>
-            {/* <View style={styles.parentImage}>
-                <Image source={item.image} style={styles.image} resizeMode="contain" />
-            </View> */}
+
         </View>
     );
 
@@ -87,62 +81,40 @@ const WelcomeMealCart: React.FC = () => {
                     ref={flatListRef}
                     renderItem={renderItem}
                     keyExtractor={(_, index) => index.toString()}
-                    scrollEnabled={false} // disable swipe
+                    scrollEnabled={false}
                     showsHorizontalScrollIndicator={false}
                     pagingEnabled
                 />
 
-                {/* Dots */}
                 <View style={styles.dotsContainer}>
                     {slides.map((_, index) => (
                         <View
                             key={index}
                             style={[
                                 styles.dot,
-                                { backgroundColor: index === currentIndex ? "#3A4D25" : "#E6F0DF" },
+                                { backgroundColor: index === currentIndex ? Colors._3A4D25 : Colors.divider },
                             ]}
                         />
                     ))}
                 </View>
 
-                {/* Buttons */}
                 <View style={styles.buttonsContainer}>
                     {currentIndex > 0 && (
                         <TouchableOpacity onPress={goBack} style={styles.backButton}>
-                            <Text style={styles.buttonText}>Back</Text>
+                            <Text style={styles.buttonText}>{Strings.welcomeMealCart_back}</Text>
                         </TouchableOpacity>
                     )}
 
-                    {/* <TouchableOpacity
-                    onPress={goNext}
-                    activeOpacity={0.8}
-                    style={[
-                        styles.nextButtonWrapper,
-                        currentIndex === 1
-                            ? { width: width * 0.7 } // No back button → 70%
-                            : { width: width * 0.9 } // Back button visible → 90%
-                    ]}
-                >
-                    <LinearGradient
-                        colors={['#667D4C', '#9DAF89']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.gradientButton}
-                    >
-                        <Text style={styles.buttonTextGradient}>
-                            {currentIndex === 2 ? 'Get Started' : 'Next'}
-                        </Text>
-                    </LinearGradient>
-                </TouchableOpacity> */}
+
                     <BaseButton
-                        title={currentIndex === 2 ? "Get Started" : "Next"}
+                        title={currentIndex === 2 ? Strings.welcomeMealCart_getStarted : Strings.welcomeMealCart_next}
                         gradientButton={true}
                         width={currentIndex > 0 ? width * 0.7 : width * 0.9}
-                        gradientStartColor="#667D4C"
-                        gradientEndColor="#9DAF89"
+                        gradientStartColor={Colors._667D4C}
+                        gradientEndColor={Colors._9DAF89}
                         gradientStart={{ x: 0, y: 0 }}
                         gradientEnd={{ x: 1, y: 0 }}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         onPress={goNext}
                     />
                 </View>
@@ -159,7 +131,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: "center",
-        // backgroundColor: Colors.background,
         paddingBottom: verticalScale(20),
         paddingTop: verticalScale(10),
         width: '100%'
@@ -229,11 +200,7 @@ const styles = StyleSheet.create({
         marginHorizontal: horizontalScale(5)
     },
 
-    nextButton: {
-        backgroundColor: "#000",
-        padding: 15,
-        borderRadius: 10
-    },
+
     backButton: {
         backgroundColor: Colors.buttonBackground,
         padding: verticalScale(15),

@@ -1,5 +1,7 @@
+import { closeIcon } from '@/assets/images';
 import { IconCartWhite } from '@/assets/svg';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
@@ -46,7 +48,6 @@ const CreateNewListBottomSheet = forwardRef<
     ]);
     const [isAddItemVisible, setIsAddItemVisible] = useState(false);
 
-    // Imperative handle for parent ref
     const bottomSheetRef = useRef<BottomSheet>(null);
     useImperativeHandle(ref, () => ({
       expand: () => {
@@ -65,7 +66,7 @@ const CreateNewListBottomSheet = forwardRef<
 
     const renderIngredientItem = ({ item }: { item: { id: string; category: string; name: string; amount: string } }) => (
       <View>
-        <Text style={styles.sectionTitle}>Category</Text>
+        <Text style={styles.sectionTitle}>{Strings.createList_category}</Text>
         <View style={styles.dividerRow} />
         <View style={styles.cardCategory}>
           <View style={styles.checkboxRow}>
@@ -81,109 +82,108 @@ const CreateNewListBottomSheet = forwardRef<
 
     return (
 
-      
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={snapPoints}
-          enablePanDownToClose
-          keyboardBehavior="extend"
-          keyboardBlurBehavior="restore"
-          topInset={0}
-          handleComponent={() => null}
-          backdropComponent={(props) => (
-            <BottomSheetBackdrop
-              {...props}
-              disappearsOnIndex={-1}
-              appearsOnIndex={0}
-            />
-          )}
-        // containerStyle={{ flex: 1 }}
-        >
 
-          <View style={styles.emptyView}></View>
-          <View style={styles.parentCreateMealText}>
-            <Text style={styles.header}>Create New List</Text>
-            <TouchableOpacity onPress={() => bottomSheetRef.current?.close()}>
-              <Image
-                source={require("@/assets/images/close-icon.png")}
-                style={{ width: verticalScale(25), height: verticalScale(25) }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        keyboardBehavior="extend"
+        keyboardBlurBehavior="restore"
+        topInset={0}
+        handleComponent={() => null}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+          />
+        )}
+      >
+
+        <View style={styles.emptyView}></View>
+        <View style={styles.parentCreateMealText}>
+          <Text style={styles.header}>{Strings.createList_createNewList}</Text>
+          <TouchableOpacity onPress={() => bottomSheetRef.current?.close()}>
+            <Image
+              source={closeIcon}
+              style={styles.closeIcon}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <BottomSheetScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>{Strings.createList_listDetails}</Text>
+            <Text style={styles.label}>{Strings.createList_listName}</Text>
+            <CustomTextInput placeholder={Strings.createList_listName_placeholder} value={mealName} onChangeText={setMealName} />
+
+            <Text style={styles.label}>{Strings.createList_shoppingDay}</Text>
+            <CustomTextInput placeholder={Strings.createList_shoppingDay_placeholder} value={mealName} onChangeText={setMealName} />
+
           </View>
 
-          <BottomSheetScrollView
-            contentContainerStyle={{ paddingHorizontal: moderateScale(20) }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>List Details</Text>
-              <Text style={styles.label}>List Name</Text>
-              <CustomTextInput placeholder="Classic Spaghetti" value={mealName} onChangeText={setMealName} />
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>{Strings.createList_items}</Text>
+            <View style={styles.dividerRow} />
 
-              <Text style={styles.label}>Shopping Day</Text>
-              <CustomTextInput placeholder="date" value={mealName} onChangeText={setMealName} />
+            <Text style={styles.label}>{Strings.createList_importedFrom}</Text>
+            <BaseButton
+              title={Strings.createList_addExtraItems}
+              gradientButton={false}
+              backgroundColor={Colors.white}
+              textStyle={[styles.addExtraButton]}
+              textStyleText={styles.addExtra}
+              onPress={() => setIsAddItemVisible(true)}
+            />
 
-            </View>
+            <FlatList
+              data={data}
+              keyExtractor={item => item.id}
+              renderItem={renderIngredientItem}
+              scrollEnabled={false}
+            />
+          </View>
 
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Items</Text>
-              <View style={styles.dividerRow} />
-
-              <Text style={styles.label}>imported from [Meal Name]</Text>
-              <BaseButton
-                title="Add extra items"
-                gradientButton={false}
-                backgroundColor={Colors.white}
-                textStyle={[styles.addExtraButton]}
-                textStyleText={styles.addExtra}
-                onPress={() => setIsAddItemVisible(true)}
-              />
-
-              <FlatList
-                data={data}
-                keyExtractor={item => item.id}
-                renderItem={renderIngredientItem}
-                scrollEnabled={false}
-              />
-            </View>
-
-            <View style={styles.parentOfConfirmButton}>
-              <BaseButton
-                title="Discard"
-                gradientButton={false}
-                backgroundColor={Colors.white}
-                width={width * 0.28}
-                textStyle={[styles.cancelButton, { color: Colors.error }]}
-                textColor={Colors.error}
-                textStyleText={styles.discardText}
-                onPress={() => bottomSheetRef.current?.close()}
-              />
-              <BaseButton
-                title="Save Shopping List"
-                gradientButton={true}
-                width={width * 0.65}
-                gradientStartColor="#667D4C"
-                gradientEndColor="#9DAF89"
-                gradientStart={{ x: 0, y: 0 }}
-                gradientEnd={{ x: 1, y: 0 }}
-                textColor={Colors.white}
-                rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
-                textStyle={[styles.confirmButton,]}
-                textStyleText={styles.saveShopping}
-                onPress={() => bottomSheetRef.current?.close()}
-              />
-            </View>
-          </BottomSheetScrollView>
-           <AddItemToList
+          <View style={styles.parentOfConfirmButton}>
+            <BaseButton
+              title={Strings.createList_discard}
+              gradientButton={false}
+              backgroundColor={Colors.white}
+              width={width * 0.28}
+              textStyle={styles.cancelButtonError}
+              textColor={Colors.error}
+              textStyleText={styles.discardText}
+              onPress={() => bottomSheetRef.current?.close()}
+            />
+            <BaseButton
+              title={Strings.createList_saveShoppingList}
+              gradientButton={true}
+              width={width * 0.65}
+              gradientStartColor={Colors._667D4C}
+              gradientEndColor={Colors._9DAF89}
+              gradientStart={{ x: 0, y: 0 }}
+              gradientEnd={{ x: 1, y: 0 }}
+              textColor={Colors.white}
+              rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
+              textStyle={[styles.confirmButton,]}
+              textStyleText={styles.saveShopping}
+              onPress={() => bottomSheetRef.current?.close()}
+            />
+          </View>
+        </BottomSheetScrollView>
+        <AddItemToList
           visible={isAddItemVisible}
           onClose={() => setIsAddItemVisible(false)}
         />
-        </BottomSheet>
+      </BottomSheet>
 
-       
-     
+
+
     );
 
 
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(10),
     elevation: 2,
 
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -208,15 +208,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: moderateScale(12), fontFamily: FontFamilies.ROBOTO_SEMI_BOLD, color: Colors.primary, marginBottom: verticalScale(10) },
   label: { fontSize: moderateScale(12), marginTop: moderateScale(8), marginBottom: moderateScale(4), fontFamily: FontFamilies.ROBOTO_REGULAR, color: Colors.primary },
-  input: {
-    backgroundColor: '#F6F6F6',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
+
   uploadButton: {
     marginLeft: 8,
     paddingHorizontal: horizontalScale(16),
@@ -264,7 +256,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    // color: Colors.primary,
 
     fontSize: moderateScale(12),
     borderWidth: moderateScale(1),
@@ -304,14 +295,7 @@ const styles = StyleSheet.create({
 
   },
 
-  category: {
-    fontFamily: 'Roboto-Bold',
-    fontSize: 16,
-    color: '#222',
-    marginLeft: 8,
-    marginTop: 8,
-    marginBottom: 4,
-  },
+
 
   checkboxRow: {
     flexDirection: 'row',
@@ -350,8 +334,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(10),
     marginBottom: verticalScale(10),
     elevation: 2,
-    // iOS shadow
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -366,6 +349,20 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     fontSize: moderateScale(16),
     color: Colors.white
-  }
+  },
+  closeIcon: {
+    width: verticalScale(25),
+    height: verticalScale(25),
+  },
+  scrollViewContent: {
+    paddingHorizontal: moderateScale(20),
+  },
+  cancelButtonError: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.error,
+    fontSize: moderateScale(12),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+  },
 
 });

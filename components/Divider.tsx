@@ -2,6 +2,7 @@ import {
   horizontalScale,
   verticalScale
 } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
@@ -27,13 +28,10 @@ interface DividerProps {
 const Divider = ({ style }: DividerProps) => {
   return (
     <View style={[styles.container, style]}>
-      {/* Left horizontal line */}
       <View style={styles.line} />
 
-      {/* Center text */}
-      <Text style={styles.text}>OR</Text>
+      <Text style={styles.text}>{Strings.divider_or}</Text>
 
-      {/* Right horizontal line */}
       <View style={styles.line} />
     </View>
   );
@@ -53,7 +51,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: fontSize(12),
-    fontFamily:FontFamilies.ROBOTO_REGULAR,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.tertiary,
   },
 });

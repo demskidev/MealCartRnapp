@@ -1,6 +1,9 @@
+import { gradientclose } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import CreateNewListBottomSheet, { CreateNewListBottomSheetRef } from '@/components/CreateNewListBottomSheet';
+import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import React, { useRef } from 'react';
@@ -13,9 +16,9 @@ const shoppingLists = [
 ];
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window')
-const router = useRouter();
 
 const ListsScreen: React.FC = () => {
+  const router = useRouter();
 
 
   const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
@@ -27,7 +30,7 @@ const ListsScreen: React.FC = () => {
 
       <View style={styles.listItem}>
         <View>
-          <Text style={styles.listDate}>Created: {item.created}</Text>
+          <Text style={styles.listDate}>{Strings.lists_created} {item.created}</Text>
 
         </View>
 
@@ -39,25 +42,22 @@ const ListsScreen: React.FC = () => {
       <View style={styles.dividerRow} />
       <View style={styles.parentOfMarkDone}>
         <BaseButton
-          title="Mark Done"
+          title={Strings.lists_markDone}
           gradientButton={false}
-          // backgroundColor={Colors.olive}
-          textColor="#fff"
+          textColor={Colors.background}
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
 
-        // onPress={handleEditPress}
         />
         <BaseButton
-          title="View List"
+          title={Strings.lists_viewList}
           gradientButton={false}
-          // backgroundColor={Colors.olive}
           textColor="#fff"
           width={width * 0.43}
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
-          onPress={() => router.push('/appscreens/TestPlanShopping')}
+          onPress={() => router.push(APP_ROUTES.TestPlanShopping)}
 
         />
 
@@ -73,9 +73,9 @@ const ListsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.parentMymeal}>
-        <Text style={styles.title}>Shopping Lists</Text>
-        <TouchableOpacity style={{ marginLeft: horizontalScale(6), }} onPress={() => createNewListRef.current?.expand()}  >
-          <Image source={require("@/assets/images/gradientclose.png")} resizeMode="contain" style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-17), }} />
+        <Text style={styles.title}>{Strings.lists_shoppingLists}</Text>
+        <TouchableOpacity style={styles.addNewListButton} onPress={() => createNewListRef.current?.expand()}  >
+          <Image source={gradientclose} resizeMode="contain" style={styles.gradientCloseImage} />
 
         </TouchableOpacity>
 
@@ -87,9 +87,7 @@ const ListsScreen: React.FC = () => {
         renderItem={renderShoppingList}
 
 
-      //     ItemSeparatorComponent={() => <View style={styles.separator} />
 
-      // }
       />
       <CreateNewListBottomSheet ref={createNewListRef} />
 
@@ -101,8 +99,6 @@ const ListsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // justifyContent: 'center',
-    // alignItems: 'center',
     backgroundColor: Colors.background,
     paddingHorizontal: horizontalScale(20)
   },
@@ -159,26 +155,20 @@ const styles = StyleSheet.create({
     height: moderateScale(1),
     backgroundColor: Colors.divider,
     flex: 1,
-    // width:width*0.9,
-    // marginHorizontal: horizontalScale(12),
     marginVertical: verticalScale(18)
-    // marginHorizontal: 8 
 
-    // marginBottom: moderateScale(8),
   },
   listCard: {
-   backgroundColor: Colors.white,
+    backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
-    marginVertical: verticalScale(6), // top + bottom spacing
+    marginVertical: verticalScale(6),
     paddingHorizontal: moderateScale(9),
     marginHorizontal: horizontalScale(2),
     paddingVertical: verticalScale(11),
 
-    // Android
     elevation: 4,
 
-    // iOS
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -187,7 +177,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
-  }
+  },
+  addNewListButton: {
+    marginLeft: horizontalScale(6),
+  },
+  gradientCloseImage: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    alignSelf: 'flex-end',
+    marginRight: horizontalScale(-17),
+  },
 });
 
 export default ListsScreen;

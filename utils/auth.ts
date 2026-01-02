@@ -35,8 +35,8 @@ export const performLogout = async () => {
     router.dismissAll();
     router.replace(APP_ROUTES.SIGNIN as any);
 
-  
-  //  }
+
+    //  }
   } catch (error) {
     console.error("Logout error:", error);
     // Still try to navigate to signin even if purge fails

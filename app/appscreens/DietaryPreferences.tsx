@@ -1,6 +1,8 @@
+import { iconback } from '@/assets/images';
 import { CheckBox, FilledCheckBox } from '@/assets/svg';
 import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -61,14 +63,12 @@ export default function DietaryPreferences({ navigation }) {
                         width={verticalScale(22)}
                         height={verticalScale(22)}
                         color={Colors.tertiary}
-                    //   style={styles.checkboxIcon}
                     />
                 ) : (
                     <CheckBox
                         width={verticalScale(22)}
                         height={verticalScale(22)}
                         color={Colors.tertiary}
-                    //   style={styles.checkboxIcon}
                     />
                 )}
 
@@ -84,16 +84,12 @@ export default function DietaryPreferences({ navigation }) {
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Image
-                        source={require("@/assets/images/iconback.png")}
+                        source={iconback}
                         resizeMode="contain"
-                        style={{
-                            width: moderateScale(24),
-                            height: moderateScale(24),
-                            alignSelf: 'flex-end',
-                        }}
+                        style={styles.backIcon}
                     />
                 </TouchableOpacity>
-                <Text style={styles.backText}>Dietary Preferences</Text>
+                <Text style={styles.backText}>{Strings.dietaryPreferences_title}</Text>
             </View>
             <View style={styles.card}>
 
@@ -110,17 +106,10 @@ export default function DietaryPreferences({ navigation }) {
 
 
             <BaseButton
-                title="Save Preferences"
+                title={Strings.dietaryPreferences_save}
                 gradientButton={true}
-                // backgroundColor={Colors.olive}
-                // textColor="#fff"
-                // width={width * 0.42}
                 textStyle={styles.savePreference}
-            // textStyleText={styles.cancelButtonText}
-            // rightChild={
-            //     <IconCart width={moderateScale(20)} height={moderateScale(20)} />
-            // }
-            // onPress={onClose}
+
             />
 
 
@@ -149,16 +138,12 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: Colors.white,
         borderRadius: moderateScale(8),
-        // marginVertical: verticalScale(6),
-        // paddingVertical: verticalScale(17),
         marginTop: verticalScale(23),
         marginBottom: verticalScale(18),
 
-        // Android
         elevation: 4,
 
-        // iOS
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
@@ -189,6 +174,11 @@ const styles = StyleSheet.create({
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
         color: Colors.white
-    }
+    },
+    backIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
 
 });

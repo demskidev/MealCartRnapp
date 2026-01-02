@@ -31,7 +31,7 @@ export interface MealCartPopUpProps {
 
   tertiaryGradientColors?: string[];
 
-  style?: object; // Added for modal positioning
+  style?: object;
 }
 
 const { width } = Dimensions.get("window");
@@ -104,8 +104,8 @@ const MealCartPopUp: React.FC<MealCartPopUpProps> = ({
                     >
                       <LinearGradient
                         colors={[
-                          tertiaryGradientColors?.[0] || "#667D4C",
-                          tertiaryGradientColors?.[1] || "#9DAF89"
+                          tertiaryGradientColors?.[0] || Colors._667D4C,
+                          tertiaryGradientColors?.[1] || Colors._9DAF89
                         ]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
@@ -125,7 +125,7 @@ const MealCartPopUp: React.FC<MealCartPopUpProps> = ({
       </View>
     </Modal>
   );
-  
+
 };
 
 export default MealCartPopUp;
@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
-    // marginTop: verticalScale(40),
 
   },
   container: {

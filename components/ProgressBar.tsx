@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function ProgressBar({
-    progress = 0, // 0 to 1
+    progress = 0,
     height = 12,
     backgroundColor = Colors.borderColor,
     fillColors = [Colors._586E3F, Colors._5F6C51],
@@ -33,16 +33,15 @@ export default function ProgressBar({
                     },
                 ]}
             >
-                <View style={{ width: `${clampedProgress * 100}%`, height: "100%" }}>
+                <View style={[styles.fillContainer, { width: `${clampedProgress * 100}%` }]}>
                     <LinearGradient
                         colors={fillColors}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={{
-                            width: "100%",
-                            height: "100%",
-                            borderRadius: radius,
-                        }}
+                        style={[
+                            styles.gradient,
+                            { borderRadius: radius },
+                        ]}
                     />
                 </View>
             </View>
@@ -60,16 +59,23 @@ const styles = StyleSheet.create({
     label: {
         fontSize: moderateScale(10),
         color: Colors.tertiary,
-        fontFamily:FontFamilies.ROBOTO_MEDIUM
+        fontFamily: FontFamilies.ROBOTO_MEDIUM
     },
     progressText: {
         fontSize: moderateScale(10),
         color: Colors.tertiary,
-        fontFamily:FontFamilies.ROBOTO_MEDIUM
-        
+        fontFamily: FontFamilies.ROBOTO_MEDIUM
+
     },
     container: {
         width: "100%",
         overflow: "hidden",
+    },
+    fillContainer: {
+        height: "100%",
+    },
+    gradient: {
+        width: "100%",
+        height: "100%",
     },
 });

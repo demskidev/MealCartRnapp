@@ -13,3 +13,9 @@ export const MEAL_IMAGE_FOLDER = 'mealImages/';
 
 
 export const HTTPPREFIX = 'http://';
+
+// Field keys for forms
+export const EMAIL_KEY = 'email';
+export const NAME_KEY = 'name';
+export const PASSWORD_KEY = 'password';
+export const CONFIRM_PASSWORD_KEY = 'confirmPassword';

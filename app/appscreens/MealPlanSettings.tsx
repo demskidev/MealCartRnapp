@@ -1,5 +1,7 @@
+import { deleteicon, icon_edit, iconback, plusblackicon, tikicon } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -75,20 +77,15 @@ export default function MealPlanSettings({ navigation }) {
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Image
-                        source={require("@/assets/images/iconback.png")}
+                        source={iconback}
                         resizeMode="contain"
-                        style={{
-                            width: moderateScale(24),
-                            height: moderateScale(24),
-                            alignSelf: 'flex-end',
-                        }}
+                        style={styles.backIcon}
                     />
                 </TouchableOpacity>
-                <Text style={styles.backText}>Meal Plan Settings</Text>
+                <Text style={styles.backText}>{Strings.mealPlanSettings_title}</Text>
             </View>
 
-            <Text style={styles.customizeText}>Customize the number and names of meals for your daily plans.
-            </Text>
+            <Text style={styles.customizeText}>{Strings.mealPlanSettings_customize}</Text>
 
 
             <FlatList
@@ -110,7 +107,7 @@ export default function MealPlanSettings({ navigation }) {
                                     selectTextOnFocus={item.isEditing}
                                     placeholder={
                                         item.editable
-                                            ? 'Add Evening Snacks'
+                                            ? Strings.mealPlanSettings_addEveningSnacks
                                             : ''
                                     }
                                     placeholderTextColor={Colors.tertiary}
@@ -122,29 +119,27 @@ export default function MealPlanSettings({ navigation }) {
                                 />
 
 
-                                {/* ✏️ EDIT ICON INSIDE INPUT */}
                                 {item.editable && !item.isEditing && (
                                     <TouchableOpacity
                                         onPress={() => handleEditType(userIndex)}
                                         style={styles.editIcon}
                                     >
                                         <Image
-                                            source={require('@/assets/images/icon_edit.png')}
+                                            source={icon_edit}
                                             style={styles.editImage}
                                         />
                                     </TouchableOpacity>
                                 )}
                             </View>
 
-                            {/* RIGHT-SIDE ICONS */}
                             {item.editable && item.isEditing && (
                                 <TouchableOpacity
                                     onPress={() => handleSaveType(userIndex)}
                                     style={styles.deleteBtn}
                                 >
                                     <Image
-                                        source={require('@/assets/images/tikicon.png')}
-                                        style={{ width: verticalScale(24), height: verticalScale(24) }}
+                                        source={tikicon}
+                                        style={styles.tikIcon}
                                     />
                                 </TouchableOpacity>
                             )}
@@ -155,8 +150,8 @@ export default function MealPlanSettings({ navigation }) {
                                     style={styles.deleteBtn}
                                 >
                                     <Image
-                                        source={require('@/assets/images/delete.png')}
-                                        style={{ width: verticalScale(22), height: verticalScale(22) }}
+                                        source={deleteicon}
+                                        style={styles.deleteIcon}
                                     />
                                 </TouchableOpacity>
                             )}
@@ -174,26 +169,26 @@ export default function MealPlanSettings({ navigation }) {
                         >
                             <Text style={styles.addMoreText}>
                                 {isLimitReached
-                                    ? 'Limit Reached (Max 9 Slots)'
-                                    : 'Add More Type'}
+                                    ? Strings.mealPlanSettings_limitReached
+                                    : Strings.mealPlanSettings_addMoreType}
                             </Text>
                             {isLimitReached ? null : <Image
-                                source={require('@/assets/images/plusblackicon.png')}
-                                style={{ width: verticalScale(12), height: verticalScale(12) }}
+                                source={plusblackicon}
+                                style={styles.plusBlackIcon}
                                 resizeMode="contain"
                             />}
 
                         </TouchableOpacity>
 
                         <BaseButton
-                            title="Save Settings"
+                            title={Strings.mealPlanSettings_save}
                             gradientButton={true}
                             textStyle={styles.savePreference}
                             width={width * 0.92}
                         />
                     </>
                 }
-                contentContainerStyle={{ paddingBottom: 32 }}
+                contentContainerStyle={styles.flatListContent}
             />
 
 
@@ -256,11 +251,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    deleteText: {
-        color: '#586E3F',
-        fontSize: 22,
-        fontWeight: 'bold',
-    },
+
 
     addMeal: {
         flexDirection: 'row',
@@ -268,7 +259,6 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.buttonBackground,
         borderRadius: moderateScale(8),
 
-        // paddingVertical: verticalScale(14),
         paddingHorizontal: horizontalScale(12),
         marginBottom: verticalScale(18),
         justifyContent: 'center',
@@ -293,7 +283,7 @@ const styles = StyleSheet.create({
     },
 
     inputWithIcon: {
-        paddingRight: horizontalScale(40), // space for edit icon
+        paddingRight: horizontalScale(40),
     },
 
     editIcon: {
@@ -307,6 +297,26 @@ const styles = StyleSheet.create({
         width: verticalScale(22),
         height: verticalScale(22),
         tintColor: Colors.primary,
+    },
+    backIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
+    },
+    tikIcon: {
+        width: verticalScale(24),
+        height: verticalScale(24),
+    },
+    deleteIcon: {
+        width: verticalScale(22),
+        height: verticalScale(22),
+    },
+    plusBlackIcon: {
+        width: verticalScale(12),
+        height: verticalScale(12),
+    },
+    flatListContent: {
+        paddingBottom: 32,
     },
 
 

@@ -82,13 +82,8 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(12),
     backgroundColor: Colors.white,
   } as any,
-  selectBoxError: {
-    borderColor: '#E53935',
-  },
-  selectBoxDisabled: {
-    opacity: 0.5,
-    backgroundColor: '#F5F5F5',
-  },
+  
+  
   selectInput: {
     fontSize: moderateScale(14),
     color: Colors.black,
@@ -103,7 +98,7 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(10),
     paddingHorizontal: moderateScale(12),
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: Colors._F0F0F0,
   },
   dropdownText: {
     fontSize: moderateScale(14),
@@ -112,7 +107,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     marginTop: verticalScale(6),
     fontSize: moderateScale(12),
-    color: '#E53935',
+    color: Colors._E53935,
   },
 });
 

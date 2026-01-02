@@ -1,5 +1,7 @@
+import { iconback } from '@/assets/images';
 import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -25,19 +27,15 @@ export default function PasswordReset({ navigation }) {
             <View style={styles.headerRow}>
                 <TouchableOpacity onPress={() => router.back()}>
                     <Image
-                        source={require("@/assets/images/iconback.png")}
+                        source={iconback}
                         resizeMode="contain"
-                        style={{
-                            width: moderateScale(24),
-                            height: moderateScale(24),
-                            alignSelf: 'flex-end',
-                        }}
+                        style={styles.backIcon}
                     />
                 </TouchableOpacity>
-                <Text style={styles.backText}>Password Reset</Text>
+                <Text style={styles.backText}>{Strings.passwordReset_title}</Text>
             </View>
 
-            <Text style={styles.label}>Current Password</Text>
+            <Text style={styles.label}>{Strings.passwordReset_currentPassword}</Text>
             <TextInput
                 style={styles.input}
                 value={currentPassword}
@@ -45,7 +43,7 @@ export default function PasswordReset({ navigation }) {
                 placeholder=""
                 secureTextEntry
             />
-            <Text style={styles.label}>New Password</Text>
+            <Text style={styles.label}>{Strings.passwordReset_newPassword}</Text>
             <TextInput
                 style={styles.input}
                 value={newPassword}
@@ -53,7 +51,7 @@ export default function PasswordReset({ navigation }) {
                 placeholder=""
                 secureTextEntry
             />
-            <Text style={styles.label}>Confirm New Password</Text>
+            <Text style={styles.label}>{Strings.passwordReset_confirmNewPassword}</Text>
             <TextInput
                 style={styles.input}
                 value={confirmPassword}
@@ -62,7 +60,7 @@ export default function PasswordReset({ navigation }) {
                 secureTextEntry
             />
             <BaseButton
-                title="Update Password"
+                title={Strings.passwordReset_updatePassword}
                 gradientButton={true}
                 textStyle={styles.savePreference}
                 width={width * 0.92}
@@ -116,6 +114,11 @@ const styles = StyleSheet.create({
         borderWidth: moderateScale(1),
         borderColor: Colors.borderColor,
         height:verticalScale(42)
+    },
+    backIcon: {
+        width: moderateScale(24),
+        height: moderateScale(24),
+        alignSelf: 'flex-end',
     },
 
 });

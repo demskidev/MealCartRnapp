@@ -1,6 +1,8 @@
+import { browseicon, filtericon, gradientclose, mealfoodA, mealfoodB, mealfoodC, mealfoodD, mealfoodE, mealfoodF, mealfoodG, mealfoodH } from '@/assets/images';
 import { SearchIcon } from '@/assets/svg';
 import FilterModal from '@/components/FilterModal';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { FontFamily } from '@/utils/Fonts';
 import { useState } from 'react';
@@ -12,7 +14,6 @@ const MealsScreen: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
-  // width minus container padding minus space between items
 
   const [isMyMeals, setIsMyMeals] = useState(true);
 
@@ -24,30 +25,26 @@ const MealsScreen: React.FC = () => {
   });
 
   const mealData = [
-    { id: '1', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodA.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '2', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodB.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '3', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodC.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '4', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodD.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '5', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodE.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '6', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodF.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '7', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodG.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '8', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodH.png'), time: '30 min', difficulty: 'Moderate' },
-    // ...add more items as needed
+    { id: '1', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: mealfoodA, time: '30 min', difficulty: 'Moderate' },
+    { id: '2', title: 'Example Meal', tag: 'Lunch', image: mealfoodB, time: '30 min', difficulty: 'Moderate' },
+    { id: '3', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: mealfoodC, time: '30 min', difficulty: 'Moderate' },
+    { id: '4', title: 'Example Meal', tag: 'Lunch', image: mealfoodD, time: '30 min', difficulty: 'Moderate' },
+    { id: '5', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: mealfoodE, time: '30 min', difficulty: 'Moderate' },
+    { id: '6', title: 'Example Meal', tag: 'Lunch', image: mealfoodF, time: '30 min', difficulty: 'Moderate' },
+    { id: '7', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: mealfoodG, time: '30 min', difficulty: 'Moderate' },
+    { id: '8', title: 'Example Meal', tag: 'Lunch', image: mealfoodH, time: '30 min', difficulty: 'Moderate' },
   ];
   const filteredMeals = mealData.filter(item => {
-    // Category filter
     if (filters.category && item.tag !== filters.category) {
       return false;
     }
 
-    // Difficulty filter
     if (filters.difficulty && item.difficulty !== filters.difficulty) {
       return false;
     }
 
-    // Prep time filter
     if (filters.prepTime) {
-      const time = parseInt(item.time) || 0; // fallback to 0 if invalid
+      const time = parseInt(item.time) || 0;
       if (filters.prepTime === '< 5 Mins' && time >= 5) return false;
       if (filters.prepTime === '5 - 10 Mins' && (time < 5 || time > 10)) return false;
       if (filters.prepTime === '10 - 15 Mins' && (time < 10 || time > 15)) return false;
@@ -60,25 +57,14 @@ const MealsScreen: React.FC = () => {
 
 
   const renderMealCard = ({ item, index }) => (
-    <View style={{
-      backgroundColor: Colors.white,
-      borderRadius: moderateScale(8),
-      marginTop: moderateScale(8),
-      flex: 1,
-      elevation: 3,
-      shadowColor: '#000',
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      overflow: 'visible',
-
-      marginBottom: verticalScale(8),
-      marginRight: index % 2 === 0 ? horizontalScale(14) : 0,
-    }}>
-      <Image source={item.image} resizeMode="cover" style={{ width: '99%', height: verticalScale(105), backgroundColor: Colors.white, alignSelf: 'center', borderTopLeftRadius: moderateScale(8), borderTopRightRadius: moderateScale(8) }}
+    <View style={[
+      styles.mealCardContainer,
+      { marginRight: index % 2 === 0 ? horizontalScale(14) : 0 }
+    ]}>
+      <Image source={item.image} resizeMode="cover" style={styles.mealCardImage}
       />
 
-      <View style={{ padding: moderateScale(12) }}>
+      <View style={styles.mealCardContent}>
         <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
       </View>
@@ -90,18 +76,17 @@ const MealsScreen: React.FC = () => {
       <View style={styles.topTextParent}>
         <View style={styles.parentMymeal}>
           <View>
-            <Text style={styles.title}>{isMyMeals ? 'My Meals' : 'Browse Meals'}</Text>
-            <Text style={styles.subtitle}>{isMyMeals ? "Browse Meals" : "My Meals "}</Text>
+            <Text style={styles.title}>{isMyMeals ? Strings.meals_myMeals : Strings.meals_browseMeals}</Text>
+            <Text style={styles.subtitle}>{isMyMeals ? Strings.meals_browseMeals : Strings.meals_myMeals}</Text>
           </View>
 
-          <TouchableOpacity style={{ marginLeft: horizontalScale(6), }} onPress={() => setIsMyMeals(prev => !prev)}  >
-            <Image source={require("@/assets/images/browseicon.png")} resizeMode="contain" style={{ width: moderateScale(24), height: moderateScale(26), }} />
-
+          <TouchableOpacity style={styles.browseIconContainer} onPress={() => setIsMyMeals(prev => !prev)}  >
+            <Image source={browseicon} resizeMode="contain" style={styles.browseIcon} />
           </TouchableOpacity>
         </View>
 
 
-        <Image source={require("@/assets/images/gradientclose.png")} resizeMode="contain" style={{ width: moderateScale(56), height: moderateScale(56), alignSelf: 'flex-end', marginRight: horizontalScale(-17), }} />
+        <Image source={gradientclose} resizeMode="contain" style={styles.gradientCloseImage} />
 
       </View>
       <View style={styles.parentSearchBox}>
@@ -109,63 +94,60 @@ const MealsScreen: React.FC = () => {
           <SearchIcon width={verticalScale(22)} height={verticalScale(22)} color={Colors.tertiary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search your meals..."
+            placeholder={Strings.meals_searchPlaceholder}
             placeholderTextColor={Colors.tertiary}
             value={search}
             onChangeText={setSearch}
           />
         </View>
         <TouchableOpacity onPress={() => setFilterModalVisible(true)}>
-          <Image source={require("@/assets/images/filtericon.png")} resizeMode="contain" style={{ width: moderateScale(24), height: moderateScale(24), }} />
+          <Image source={filtericon} resizeMode="contain" style={styles.filterIcon} />
         </TouchableOpacity>
       </View>
 
       {isMyMeals ?
         <View >
-          <Text style={styles.recentText}>Recent Meals</Text>
+          <Text style={styles.recentText}>{Strings.meals_recentMeals}</Text>
 
-          <View style={{ height: height * 0.35, }}>
+          <View style={styles.recentMealsContainer}>
             <FlatList
               data={mealData}
               renderItem={renderMealCard}
               keyExtractor={item => item.id}
               numColumns={2}
-              columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: verticalScale(8) }}
-              contentContainerStyle={{ paddingBottom: 60 }}
+              columnWrapperStyle={styles.flatListColumnWrapper}
+              contentContainerStyle={styles.recentMealsContent}
               showsVerticalScrollIndicator={false}
-              ListEmptyComponent={<Text>No meals found</Text>}
+              ListEmptyComponent={<Text>{Strings.meals_noMealsFound}</Text>}
 
             />
           </View>
-          <Text style={styles.upcomingText}>Your Meals</Text>
-          <View style={{ height: height * 0.3, }} >
+          <Text style={styles.upcomingText}>{Strings.meals_yourMeals}</Text>
+          <View style={styles.yourMealsContainer} >
 
             <FlatList
               data={mealData}
               renderItem={renderMealCard}
               keyExtractor={item => item.id}
               numColumns={2}
-              columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: verticalScale(8) }}
-              contentContainerStyle={{
-                paddingBottom: verticalScale(100),
-
-              }}
+              columnWrapperStyle={styles.flatListColumnWrapper}
+              contentContainerStyle={styles.yourMealsContent}
               showsVerticalScrollIndicator={false}
-              ListEmptyComponent={<Text>No meals found</Text>}
+              ListEmptyComponent={<Text>{Strings.meals_noMealsFound}</Text>}
 
             />
           </View>
         </View> :
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.recentText, { marginVertical: verticalScale(10) }]}>All Meals</Text>
+        <View style={styles.browseMealsContainer}>
+          <Text style={styles.allMealsText}>{Strings.meals_allMeals}</Text>
 
           <FlatList
             data={mealData}
             renderItem={renderMealCard}
             keyExtractor={item => item.id}
             numColumns={2}
-            columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: verticalScale(8) }}
-            contentContainerStyle={{ paddingBottom: 160 }}
+            columnWrapperStyle={styles.flatListColumnWrapper}
+            contentContainerStyle={styles.browseMealsContent}
             showsVerticalScrollIndicator={false}
 
 
@@ -197,12 +179,9 @@ const MealsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // justifyContent: 'center',
-    // alignItems: 'center',
+
     backgroundColor: Colors.background,
     paddingHorizontal: horizontalScale(20),
-    // paddingTop: verticalScale(20),
     paddingBottom: verticalScale(15)
 
   },
@@ -215,7 +194,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
     fontSize: moderateScale(12),
-    color: '#667D4C',
+    color: Colors._667D4C,
     marginTop: verticalScale(3),
   },
   parentMymeal: {
@@ -236,7 +215,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderColor,
     paddingHorizontal: horizontalScale(12),
     height: verticalScale(44),
-    // marginBottom: verticalScale(8),
     width: width * 0.6
 
   },
@@ -258,7 +236,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // paddingHorizontal: horizontalScale(22)
 
   },
   recentText: {
@@ -277,6 +254,76 @@ const styles = StyleSheet.create({
     color: Colors.tertiary
   },
   upcomingText: { fontSize: moderateScale(21), fontWeight: '600', color: Colors.primary, fontFamily: FontFamily.ROBOTO_SEMI_BOLD, marginVertical: verticalScale(14) },
+  mealCardContainer: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    marginTop: moderateScale(8),
+    flex: 1,
+    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    overflow: 'visible',
+    marginBottom: verticalScale(8),
+  },
+  mealCardImage: {
+    width: '99%',
+    height: verticalScale(105),
+    backgroundColor: Colors.white,
+    alignSelf: 'center',
+    borderTopLeftRadius: moderateScale(8),
+    borderTopRightRadius: moderateScale(8),
+  },
+  mealCardContent: {
+    padding: moderateScale(12),
+  },
+  browseIconContainer: {
+    marginLeft: horizontalScale(6),
+  },
+  browseIcon: {
+    width: moderateScale(24),
+    height: moderateScale(26),
+  },
+  gradientCloseImage: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    alignSelf: 'flex-end',
+    marginRight: horizontalScale(-17),
+  },
+  filterIcon: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+  },
+  recentMealsContainer: {
+    height: height * 0.35,
+  },
+  yourMealsContainer: {
+    height: height * 0.3,
+  },
+  browseMealsContainer: {
+    flex: 1,
+  },
+  allMealsText: {
+    fontSize: moderateScale(21),
+    fontFamily: FontFamily.ROBOTO_SEMI_BOLD,
+    color: Colors.primary,
+    marginBottom: verticalScale(4),
+    marginVertical: verticalScale(10),
+  },
+  flatListColumnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: verticalScale(8),
+  },
+  recentMealsContent: {
+    paddingBottom: 60,
+  },
+  yourMealsContent: {
+    paddingBottom: verticalScale(100),
+  },
+  browseMealsContent: {
+    paddingBottom: 160,
+  },
 
 
 });

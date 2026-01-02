@@ -1,4 +1,6 @@
+import { closeIcon, googleicon, updateprofile } from '@/assets/images';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import {
   Dimensions,
@@ -34,78 +36,69 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
         </TouchableWithoutFeedback>
         <View style={styles.container}>
 
-          <Text style={styles.headerTitle}>Update Profile</Text>
+          <Text style={styles.headerTitle}>{Strings.updateProfileModal_title}</Text>
           <Text style={styles.headerSubtitle}>
-            You can set your meals servings for all your new meals.
+            {Strings.updateProfileModal_subtitle}
           </Text>
 
           <View style={styles.avatarRow}>
             <Image
-              source={require("@/assets/images/updateprofile.png")}
-              style={{ width: verticalScale(112), height: verticalScale(112) }}
+              source={updateprofile}
+              style={styles.updateProfileImage}
               resizeMode="contain"
             />
             <View style={styles.avatarBtnCol}>
 
               <BaseButton
-                title="Update"
+                title={Strings.updateProfileModal_update}
                 gradientButton={false}
                 backgroundColor={Colors.white}
-                //  width={width * 0.51}
-
                 textStyle={[styles.updateBtn]}
                 textStyleText={styles.updateBtnText}
-
-              // onPress={() => setSelectedMeal(item)}
               />
-
               <BaseButton
-                title="Remove"
+                title={Strings.updateProfileModal_remove}
                 gradientButton={true}
                 backgroundColor={Colors.white}
-                //  width={width * 0.51}
-                gradientStartColor="#A62A2A"
-                gradientEndColor="#FD4B4B"
-                // textStyle={[styles.updateBtn]}
+                gradientStartColor={Colors._A62A2A}
+                gradientEndColor={Colors._FD4B4B}
                 textStyle={styles.gradientbtnText}
-
-              // onPress={() => setSelectedMeal(item)}
               />
 
 
             </View>
           </View>
 
-          <Text style={styles.label}>Update Name</Text>
+          <Text style={styles.label}>{Strings.updateProfileModal_updateName}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Your Name"
+            placeholder={Strings.updateProfileModal_namePlaceholder}
             placeholderTextColor={Colors.tertiary}
           />
 
-          <Text style={styles.label}>Update Email</Text>
+          <Text style={styles.label}>{Strings.updateProfileModal_updateEmail}</Text>
           <TextInput
             style={styles.input}
-            placeholder="youemail@example.com"
+            placeholder={Strings.updateProfileModal_emailPlaceholder}
             placeholderTextColor={Colors.tertiary}
             keyboardType="email-address"
           />
 
-          <Text style={styles.socialLabel}>Social</Text>
+          <Text style={styles.socialLabel}>{Strings.updateProfileModal_social}</Text>
           <View style={styles.socialBox}>
             <View>
               <Image
-                source={require("@/assets/images/googleicon.png")}
-                style={{ width: verticalScale(16), height: verticalScale(16) }}
+                source={googleicon}
+                style={styles.googleIconImage}
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.socialText}>Connected with Google</Text>
+            <Text style={styles.socialText}>{Strings.updateProfileModal_connectedWithGoogle}</Text>
             <TouchableOpacity>
               <TouchableOpacity  >
                 <Image
-                  source={require("@/assets/images/close-icon.png")}
-                  style={{ width: verticalScale(24), height: verticalScale(24) }}
+                  source={closeIcon}
+                  style={styles.closeIconImage}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -116,18 +109,18 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
 
 
             <BaseButton
-              title="Cancel"
+              title={Strings.updateProfileModal_cancel}
               gradientButton={false}
-              textColor="#fff"
+              textColor={Colors.background}
               width={width * 0.4}
               textStyle={styles.cancelButton}
               textStyleText={styles.cancelButtonText}
               onPress={onClose}
             />
             <BaseButton
-              title="Update"
+              title={Strings.updateProfileModal_update}
               gradientButton={true}
-              textColor="#fff"
+              textColor={Colors.background}
               width={width * 0.4}
               textStyle={styles.confirmButton}
               textStyleText={styles.confirmButtonText}
@@ -149,6 +142,18 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
     color: Colors.primary,
     marginBottom: verticalScale(4),
+  },
+  updateProfileImage: {
+    width: verticalScale(112),
+    height: verticalScale(112),
+  },
+  googleIconImage: {
+    width: verticalScale(16),
+    height: verticalScale(16),
+  },
+  closeIconImage: {
+    width: verticalScale(24),
+    height: verticalScale(24),
   },
   headerSubtitle: {
     fontSize: moderateScale(12),
@@ -180,11 +185,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderColor: Colors.borderColor,
     borderWidth: moderateScale(1)
-    // elevation: 2,
-    // shadowColor: Colors.black,
-    // shadowOffset: { width: 0, height: 1 },
-    // shadowOpacity: 0.06,
-    // shadowRadius: 2,
+
   },
   updateBtnText: {
     fontSize: moderateScale(14),
@@ -196,14 +197,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: moderateScale(16)
   },
-  removeBtn: {
-    backgroundColor: 'linear-gradient(90deg, #D9534F 0%, #C0392B 100%)', // fallback for gradient
-    borderRadius: moderateScale(10),
-    paddingVertical: verticalScale(12),
-    alignItems: 'center',
-    justifyContent: 'center',
-    // backgroundColor: '#D9534F',
-  },
+
   removeBtnText: {
     fontSize: moderateScale(18),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -240,8 +234,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.buttonBackground,
     borderRadius: moderateScale(8),
-    // borderWidth: 1,
-    // borderColor: Colors.divider,
     paddingVertical: verticalScale(14),
     paddingHorizontal: horizontalScale(12),
     marginBottom: verticalScale(18),
@@ -259,7 +251,6 @@ const styles = StyleSheet.create({
     marginRight: horizontalScale(8),
   },
   socialText: {
-    // flex: 1,
     fontSize: moderateScale(16),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.textBlack,
@@ -338,10 +329,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(18),
     paddingTop: verticalScale(24),
     paddingBottom: verticalScale(24),
-    // Remove flex: 1
-    // Add minHeight or maxHeight if needed:
-    // minHeight: 400,
-    // maxHeight: '90%',
+
     elevation: 8,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
@@ -354,7 +342,6 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(18),
   },
   cancelButton: {
-    // flex: 1,
     backgroundColor: Colors.white,
     borderColor: Colors.borderColor,
     borderWidth: moderateScale(1),
@@ -369,12 +356,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
   },
   confirmButton: {
-    //  flex: 1,
-    // backgroundColor: '#9DAF89',
+
     borderRadius: moderateScale(8),
-    // paddingVertical: verticalScale(12),
     alignItems: 'center',
-    // marginLeft: horizontalScale(8),
   },
   confirmButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,

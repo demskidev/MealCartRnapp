@@ -4,9 +4,12 @@ import { Colors, FontFamilies, } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 
+import { mealcartLogo, mealfoodA, mealfoodB, mealfoodC, mealfoodD, mealfoodE, mealfoodF, mealfoodG, mealfoodH, userDummy } from '@/assets/images';
 import { IconPlus, MealsLogo } from "@/assets/svg";
 import CreateMealBottomSheet from '@/components/CreateMealBottomSheet';
 import MealDetail from '@/components/MealDetail';
+import { APP_ROUTES } from '@/constants/AppRoutes';
+import { Strings } from '@/constants/Strings';
 import { useLoader } from '@/context/LoaderContext';
 import { FontFamily } from '@/utils/Fonts';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -29,14 +32,14 @@ const HomeScreen: React.FC = () => {
   const router = useRouter();
 
   const mealData = [
-    { id: '1', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodA.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '2', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodB.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '3', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodC.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '4', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodD.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '5', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodE.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '6', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodF.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '7', title: 'Classic Spaghetti Bolo...', tag: 'Dinner', image: require('@/assets/images/mealfoodG.png'), time: '30 min', difficulty: 'Moderate' },
-    { id: '8', title: 'Example Meal', tag: 'Lunch', image: require('@/assets/images/mealfoodH.png'), time: '30 min', difficulty: 'Moderate' },
+    { id: '1', title: Strings.home_mealCart, tag: Strings.home_dinner, image: mealfoodA, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '2', title: 'Example Meal', tag: Strings.home_lunch, image: mealfoodB, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '3', title: Strings.home_mealCart, tag: Strings.home_dinner, image: mealfoodC, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '4', title: 'Example Meal', tag: Strings.home_lunch, image: mealfoodD, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '5', title: Strings.home_mealCart, tag: Strings.home_dinner, image: mealfoodE, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '6', title: 'Example Meal', tag: Strings.home_lunch, image: mealfoodF, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '7', title: Strings.home_mealCart, tag: Strings.home_dinner, image: mealfoodG, time: '30 min', difficulty: Strings.home_moderate },
+    { id: '8', title: 'Example Meal', tag: Strings.home_lunch, image: mealfoodH, time: '30 min', difficulty: Strings.home_moderate },
     // ...add more items as needed
   ];
 
@@ -44,7 +47,7 @@ const HomeScreen: React.FC = () => {
   const { hideLoader } = useLoader();
 
   useEffect(() => {
-    hideLoader(); // turn off loader when Home is ready
+    hideLoader();
   }, []);
   interface Meal {
     id: string;
@@ -58,7 +61,7 @@ const HomeScreen: React.FC = () => {
     eventEmitter,
   } = useTourGuideController()
 
-  // 🔹 Always start when Home screen is focused
+
   useFocusEffect(
     React.useCallback(() => {
       if (canStart) {
@@ -104,24 +107,19 @@ const HomeScreen: React.FC = () => {
         resizeMode="cover"
         style={styles.mealCardImage}
       />
-      {/* <View style={styles.mealCardTagContainer}>
-        <Text style={styles.mealCardTag}>{item.tag}</Text>
-      </View> */}
+
       <View style={styles.mealCardContent}>
         <View style={styles.mealCardTitleRow}>
           <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
         </View>
-        <Text style={styles.mealCardDescription}>Some sort of description etc. Big Card if we want more information here</Text>
-        {/* <TouchableOpacity style={styles.mealCardButton}>
-          <Text style={styles.mealCardButtonText}>View</Text>
-        </TouchableOpacity> */}
+        <Text style={styles.mealCardDescription}>{Strings.home_mealCardDescription}</Text>
+
 
         <BaseButton
-          title="View"
+          title={Strings.home_view}
           gradientButton={false}
           backgroundColor={Colors.white}
-          // width={width * 0.41}
 
           textStyle={[styles.mealCardButton]}
           textStyleText={styles.mealCardButtonText}
@@ -141,32 +139,19 @@ const HomeScreen: React.FC = () => {
   const renderEmptyList = () => (
     <View>
       <View style={[styles.emptyContainer, { width: width - horizontalScale(40) }]}>
-        <Text style={styles.emptyText}>No upcoming meals. Add one!</Text>
+        <Text style={styles.emptyText}>{Strings.home_noUpcomingMeals}</Text>
 
       </View>
     </View>
   );
   const renderMealCard = ({ item }) => (
 
-    <View style={{
-      backgroundColor: Colors.white,
-      borderRadius: moderateScale(8),
-      margin: moderateScale(8),
-      flex: 1,
-      elevation: 3,
-      shadowColor: '#000',
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      overflow: 'visible'
-    }}>
+    <View style={styles.mealCardContainer}>
       <TouchableOpacity onPress={() => setSelectedMeal(item)} >
-        <Image source={item.image} resizeMode="cover" style={{ width: '99%', height: verticalScale(160), backgroundColor: Colors.white, alignSelf: 'center', borderTopLeftRadius: moderateScale(8), borderTopRightRadius: moderateScale(8) }}
+        <Image source={item.image} resizeMode="cover" style={styles.mealCardMiniImage}
         />
-        {/* <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: '#F5F5F5', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 4 }}>
-        <Text style={styles.mealNametext}>{item.tag}</Text>
-      </View> */}
-        <View style={{ padding: moderateScale(12) }}>
+
+        <View style={styles.mealCardMiniContent}>
           <Text style={styles.mealNametext} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.timeText}>{item.time}  •  {item.difficulty}</Text>
         </View>
@@ -180,7 +165,6 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
 
       {selectedMeal ? (
-        // 👉 WHEN state changes (View button pressed)
         <MealDetail
           meal={selectedMeal}
           onBack={() => {
@@ -195,7 +179,7 @@ const HomeScreen: React.FC = () => {
 
 
             <LinearGradient
-              colors={['#667D4C', '#9DAF89']}
+              colors={[Colors._667D4C, Colors._9DAF89]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
@@ -204,24 +188,24 @@ const HomeScreen: React.FC = () => {
 
                 <View style={styles.mealcartLogoParent}>
                   <Image
-                    source={require("@/assets/images/mealcartLogo.png")}
-                    style={{ width: verticalScale(21), height: verticalScale(28) }}
+                    source={mealcartLogo}
+                    style={styles.mealcartLogoImage}
                     resizeMode="contain"
                   />
 
-                  <Text style={styles.text}>MealCart</Text>
+                  <Text style={styles.text}>{Strings.home_mealCart}</Text>
                 </View>
                 <View style={styles.parentGreetingAvatar}>
                   <View>
-                    <Text style={styles.greetingText}>Hello there!</Text>
-                    <Text style={styles.subgreetingText}>What delicious meal are you planning today?</Text>
+                    <Text style={styles.greetingText}>{Strings.home_greeting}</Text>
+                    <Text style={styles.subgreetingText}>{Strings.home_subgreeting}</Text>
                   </View>
                   <TourGuideZone zone={4} shape="circle" borderRadius={30} >
-                    <View style={{ minHeight: moderateScale(70), minWidth: moderateScale(70), justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={styles.avatarContainer}>
 
-                      <TouchableOpacity onPress={() => router.push('/appscreens/ProfileScreen')}>
+                      <TouchableOpacity onPress={() => router.push(APP_ROUTES.ProfileScreen as any)}>
                         <Image
-                          source={require('@/assets/images/userDummy.png')}
+                          source={userDummy}
                           style={styles.image}
                           resizeMode="contain"
                         />
@@ -234,13 +218,13 @@ const HomeScreen: React.FC = () => {
                   <View style={styles.upcomingHeader}>
                     <TourGuideZone zone={3} shape="circle" borderRadius={16}>
 
-                      <Text style={styles.upcomingText}>Your Next Meal</Text>
+                      <Text style={styles.upcomingText}>{Strings.home_nextMeal}</Text>
                     </TourGuideZone>
 
                     <TourGuideZone zone={1} shape="circle" borderRadius={100}>
 
                       <TouchableOpacity onPress={() => console.log('View All pressed')}>
-                        <Text style={styles.viewAllText}>View All</Text>
+                        <Text style={styles.viewAllText}>{Strings.home_viewAll}</Text>
                       </TouchableOpacity>
                     </TourGuideZone>
 
@@ -251,7 +235,7 @@ const HomeScreen: React.FC = () => {
                     data={mealData}
                     renderItem={renderMealItem}
                     keyExtractor={(item) => item.id}
-                    contentContainerStyle={{ paddingVertical: 0, marginTop: verticalScale(9), paddingLeft: moderateScale(8), paddingRight: moderateScale(8) }}
+                    contentContainerStyle={styles.upcomingListContent}
                   />
                 </View>
               </View>
@@ -261,39 +245,37 @@ const HomeScreen: React.FC = () => {
             <View style={styles.parentCreateMeal}>
               <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
                 <BaseButton
-                  title={'Add New Meal'}
+                  title={Strings.home_addNewMeal}
                   gradientButton={true}
                   width={width * 0.41}
-                  gradientStartColor="#667D4C"
-                  gradientEndColor="#9DAF89"
+                  gradientStartColor={Colors._667D4C}
+                  gradientEndColor={Colors._9DAF89}
                   gradientStart={{ x: 0, y: 0 }}
                   gradientEnd={{ x: 1, y: 0 }}
                   textColor={Colors.white}
                   rightChild={<IconPlus width={verticalScale(21)} height={verticalScale(21)} />}
                   textStyle={styles.createMeal}
                   onPress={goNext}
-                // showPressedShadow={true}
                 />
               </TourGuideZone>
               <TouchableOpacity
                 style={styles.myMeals}
                 activeOpacity={0.7}
-                onPress={() => router.push('/(tabs)/1_Meals')}
+                onPress={() => router.push(APP_ROUTES.MEALS)}
               >
-                <Text style={styles.myMealText}>My Meals</Text>
+                <Text style={styles.myMealText}>{Strings.home_myMeals}</Text>
                 <MealsLogo width={verticalScale(21)} height={verticalScale(21)} />
               </TouchableOpacity>
             </View>
 
 
             <View style={styles.parentOfRecentMeal}>
-              <Text style={styles.recentText}>Recent Meals</Text>
+              <Text style={styles.recentText}>{Strings.home_recentMeals}</Text>
               <TouchableOpacity
-                // style={styles.myMeals}
                 activeOpacity={0.7}
                 onPress={() => setShowAll(!showAll)}
               >
-                <Text style={styles.viewText}>View All</Text>
+                <Text style={styles.viewText}>{Strings.home_viewAllRecent}</Text>
               </TouchableOpacity>
             </View>
 
@@ -302,8 +284,8 @@ const HomeScreen: React.FC = () => {
               renderItem={renderMealCard}
               keyExtractor={item => item.id}
               numColumns={2}
-              columnWrapperStyle={{ justifyContent: 'space-between', marginHorizontal: 8 }}
-              contentContainerStyle={{ paddingBottom: 16 }}
+              columnWrapperStyle={styles.recentMealsColumnWrapper}
+              contentContainerStyle={styles.recentMealsContent}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
             />
@@ -328,7 +310,7 @@ const styles = StyleSheet.create({
     marginRight: moderateScale(16),
     width: width * 0.75,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOpacity: 0.10,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -346,7 +328,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.lightGray,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -459,7 +441,7 @@ const styles = StyleSheet.create({
 
   },
   upcomingText: { fontSize: moderateScale(19), fontWeight: '600', color: Colors.white, fontFamily: FontFamily.ROBOTO_SEMI_BOLD },
-  viewAllText: { fontSize: moderateScale(14), color: '#EBEBEB', fontWeight: '500', fontFamily: FontFamily.ROBOTO_MEDIUM },
+  viewAllText: { fontSize: moderateScale(14), color: Colors.background, fontWeight: '500', fontFamily: FontFamily.ROBOTO_MEDIUM },
   emptyText: {
     color: Colors.text,
     fontSize: moderateScale(14),
@@ -489,7 +471,7 @@ const styles = StyleSheet.create({
 
   },
   myMeals: {
-    backgroundColor: '#F5F9FB',
+    backgroundColor: Colors._F5F9FB,
     borderRadius: moderateScale(8),
     width: width * 0.41,
     flexDirection: 'row',
@@ -502,7 +484,7 @@ const styles = StyleSheet.create({
 
   },
   myMealText: {
-    color: "#0F0F0F",
+    color: Colors.textBlack,
     fontSize: moderateScale(14),
     paddingHorizontal: horizontalScale(12),
     fontWeight: '500',
@@ -545,6 +527,52 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     fontSize: moderateScale(10),
     color: Colors.tertiary
+  },
+  mealCardContainer: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    margin: moderateScale(8),
+    flex: 1,
+    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    overflow: 'visible'
+  },
+  mealCardMiniImage: {
+    width: '99%',
+    height: verticalScale(160),
+    backgroundColor: Colors.white,
+    alignSelf: 'center',
+    borderTopLeftRadius: moderateScale(8),
+    borderTopRightRadius: moderateScale(8)
+  },
+  mealCardMiniContent: {
+    padding: moderateScale(12)
+  },
+  mealcartLogoImage: {
+    width: verticalScale(21),
+    height: verticalScale(28)
+  },
+  avatarContainer: {
+    minHeight: moderateScale(70),
+    minWidth: moderateScale(70),
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  upcomingListContent: {
+    paddingVertical: 0,
+    marginTop: verticalScale(9),
+    paddingLeft: moderateScale(8),
+    paddingRight: moderateScale(8)
+  },
+  recentMealsColumnWrapper: {
+    justifyContent: 'space-between',
+    marginHorizontal: 8
+  },
+  recentMealsContent: {
+    paddingBottom: 16
   }
 
 

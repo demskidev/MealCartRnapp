@@ -9,7 +9,7 @@ export interface NewPasswordFormValues {
 export class NewPasswordViewModel {
   validationSchema = newPasswordValidationSchema;
 
-  constructor() {}
+  constructor() { }
 
   async handleNewPassword(values: NewPasswordFormValues): Promise<{ success: boolean; message: string }> {
     try {

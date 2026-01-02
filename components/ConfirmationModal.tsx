@@ -1,24 +1,34 @@
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
+import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { Dimensions, Modal, StyleSheet, Text, View } from 'react-native';
 import BaseButton from './BaseButton';
 
 const { width } = Dimensions.get('window');
 
+type ConfirmationModalProps = {
+    visible: boolean;
+    onCancel: () => void;
+    onConfirm: () => void;
+    title?: string;
+    description?: string;
+    cancelText?: string;
+    confirmText?: string;
+    confirmGradientStart?: string;
+    confirmGradientEnd?: string;
+};
+
 const ConfirmationModal = ({
     visible,
     onCancel,
     onConfirm,
-
-    title = 'Are you sure?',
-    description = 'This action cannot be undone.',
-    cancelText = 'Cancel',
-    confirmText = 'Confirm',
-
-    confirmGradientStart = '#A62A2A',
-    confirmGradientEnd = '#FD4B4B',
-
-}) => (
+    title = Strings.confirmationModal_title,
+    description = Strings.confirmationModal_description,
+    cancelText = Strings.confirmationModal_cancel,
+    confirmText = Strings.confirmationModal_confirm,
+    confirmGradientStart = Colors._A62A2A,
+    confirmGradientEnd = Colors._FD4B4B,
+}: ConfirmationModalProps) => (
     <Modal
         visible={visible}
         transparent
@@ -38,7 +48,7 @@ const ConfirmationModal = ({
                     <BaseButton
                         title={cancelText}
                         gradientButton={false}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         width={width * 0.38}
                         textStyle={styles.editButton}
                         textStyleText={styles.textstyle}
@@ -50,11 +60,11 @@ const ConfirmationModal = ({
                         title={confirmText}
                         gradientButton={true}
                         width={width * 0.38}
-                        gradientStartColor="#A62A2A"
-                        gradientEndColor="#FD4B4B"
+                        gradientStartColor={Colors._A62A2A}
+                        gradientEndColor={Colors._FD4B4B}
                         gradientStart={{ x: 0, y: 0 }}
                         gradientEnd={{ x: 1, y: 0 }}
-                        textColor="#fff"
+                        textColor={Colors.background}
                         textStyle={styles.deleteButton}
                         onPress={onConfirm}
                     />
@@ -124,21 +134,14 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(16),
     },
     editButton: {
-        // backgroundColor: Colors.olive,
-        // borderRadius: 8,
-        // paddingHorizontal: 32,
-        // paddingVertical: 10,
+
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
-        // color: Colors.primary,
         borderWidth: moderateScale(1),
         borderColor: Colors.borderColor
     },
     deleteButton: {
-        // backgroundColor: Colors.primary || '#D32F2F',
-        // borderRadius: 8,
-        // paddingHorizontal: 32,
-        // paddingVertical: 10,
+
         fontFamily: FontFamilies.ROBOTO_MEDIUM,
         fontSize: moderateScale(16),
         color: Colors.white
