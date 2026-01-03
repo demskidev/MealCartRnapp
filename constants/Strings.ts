@@ -83,6 +83,8 @@ export const Strings = {
   mealPlanSettings_addMoreType: "Add More Type",
   mealPlanSettings_limitReached: "Limit Reached (Max 9 Slots)",
   mealPlanSettings_save: "Save Settings",
+  mealPlanSettings_mealNameEmpty: "Meal name cannot be empty",
+  mealPlanSettings_noNewPlans: "No new meal plans to save",
   createMealPlan_backToPlans: "Back to Plans",
   createMealPlan_yourMealPlan: "Your Meal Plan",
   createMealPlan_mySpecialMealPlan: "My special Meal Plan",
@@ -355,4 +357,10 @@ export const Strings = {
   meat: "meat",
   liquid: "liquid",
   veggies: "veggie",
+  error_fetching_dietary_preferences: "Failed to fetch dietary preferences",
+  error_adding_meal_plan: "Failed to add meal plan",
+  error_deleting_meal_plan: "Failed to delete meal plan",
+  error_updating_meal_plan: "Failed to update meal plan",
+  error_fetching_meal_plans: "Failed to fetch meal plans"
+
 };
