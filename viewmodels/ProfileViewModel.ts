@@ -2,12 +2,11 @@
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { updateUserAsync } from "@/reduxStore/slices/authSlice";
 import {
-    addMealPlanAsync,
-    deleteMealPlanAsync,
-    fetchDietryPreferencesAsync,
-    fetchMealPlansAsync,
-    updateMealPlanAsync,
-    updateMealPlansBatchAsync
+  addMealPlanAsync,
+  deleteMealPlanAsync,
+  fetchDietryPreferencesAsync,
+  fetchMealPlansAsync,
+  updateMealPlansBatchAsync,
 } from "@/reduxStore/slices/profileSlice";
 
 export const useProfileViewModel = () => {
@@ -15,7 +14,9 @@ export const useProfileViewModel = () => {
   const user = useAppSelector((state) => state.auth.user);
   const loading = useAppSelector((state) => state.auth.loading);
   const error = useAppSelector((state) => state.auth.error);
-  const dietaryPreferences = useAppSelector((state) => state.profile.dietaryPreferences);
+  const dietaryPreferences = useAppSelector(
+    (state) => state.profile.dietaryPreferences
+  );
   const mealPlans = useAppSelector((state) => state.profile.mealPlans);
   const profileLoading = useAppSelector((state) => state.profile.loading);
   const profileError = useAppSelector((state) => state.profile.error);
@@ -87,9 +88,7 @@ export const useProfileViewModel = () => {
     onSuccess?: () => void,
     onError?: (error: string) => void
   ) => {
-    const resultAction = await dispatch(
-      updateMealPlansBatchAsync(mealPlans)
-    );
+    const resultAction = await dispatch(updateMealPlansBatchAsync(mealPlans));
     if (updateMealPlansBatchAsync.fulfilled.match(resultAction)) {
       onSuccess?.();
     } else {
@@ -116,8 +115,6 @@ export const useProfileViewModel = () => {
       onError?.(resultAction.payload as string);
     }
   };
-
-  
 
   return {
     user,
