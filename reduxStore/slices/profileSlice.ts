@@ -1,26 +1,25 @@
 // store/slices/profileSlice.ts
 import { Strings } from "@/constants/Strings";
 import {
-    addDocument,
-    deleteDocument,
-    getAllDocuments,
-    queryDocuments,
-    updateDocument,
+  addDocument,
+  deleteDocument,
+  getAllDocuments,
+  queryDocuments,
+  updateDocument,
 } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { serverTimestamp } from "firebase/firestore";
 import {
-    ADD_MEAL_PLAN,
-    DELETE_MEAL_PLAN,
-    FETCH_DIETARY_PREFERENCES,
-    FETCH_MEAL_PLANS,
-    PROFILE_SLICE,
-    UPDATE_MEAL_PLAN,
-    UPDATE_MEAL_PLANS_BATCH,
+  ADD_MEAL_PLAN,
+  DELETE_MEAL_PLAN,
+  FETCH_DIETARY_PREFERENCES,
+  FETCH_MEAL_PLANS,
+  PROFILE_SLICE,
+  UPDATE_MEAL_PLANS_BATCH,
 } from "../actionTypes";
 import {
-    DIETARY_PREFERENCES_COLLECTION,
-    MEAL_PLAN_COLLECTION,
+  DIETARY_PREFERENCES_COLLECTION,
+  MEAL_PLAN_COLLECTION,
 } from "../appKeys";
 
 export const fetchDietryPreferencesAsync = createAsyncThunk(
@@ -88,7 +87,6 @@ export const deleteMealPlanAsync = createAsyncThunk(
     }
   }
 );
-
 
 export const updateMealPlansBatchAsync = createAsyncThunk(
   UPDATE_MEAL_PLANS_BATCH,
@@ -201,7 +199,7 @@ const profileSlice = createSlice({
       .addCase(deleteMealPlanAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      }) 
+      })
       .addCase(updateMealPlansBatchAsync.pending, (state) => {
         state.loading = true;
         state.error = null;

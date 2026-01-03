@@ -15,7 +15,7 @@ import {
 } from "../actionTypes";
 import { MEAL_IMAGE_FOLDER, MEALS_COLLECTION } from "../appKeys";
 
-interface MealsState {
+export interface MealsState {
   meals: any[];
   loading: boolean;
   error: any;
