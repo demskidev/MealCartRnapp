@@ -29,71 +29,49 @@ const PlansScreen: React.FC = () => {
   const { setCurrentStepIndex } = useTourStep();
   const [zoneReady, setZoneReady] = useState(false);
 
+
+
+
+
+  // useFocusEffect(React.useCallback(() => {
+  //   if (!zoneReady) return;
+  //   setCurrentStepIndex(4);
+  //   const timeout = setTimeout(() => { start(1); }, 300);
+  //   return () => clearTimeout(timeout);
+  // }, [zoneReady]));
+
+
   useFocusEffect(
-    React.useCallback(() => {
-      if (!zoneReady) return;
+  React.useCallback(() => {
+    if (!zoneReady) return;
 
-      setCurrentStepIndex(4);
+    const timeout = setTimeout(() => {
+      start(5); // 🔥 order 1, zone 1
+    }, 100);
 
-      const timeout = setTimeout(() => {
-        start(5);
-      }, 300);
+    return () => clearTimeout(timeout);
+  }, [zoneReady])
+);
 
-      return () => clearTimeout(timeout);
-    }, [zoneReady])
-  );
 
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (didStartRef.current) return;
+  // useFocusEffect( React.useCallback(() => { if (didStartRef.current) return; didStartRef.current = true; requestAnimationFrame(() => { start(5);  }); return () => { }; }, []) );
 
-  //     didStartRef.current = true;
+  // useFocusEffect( React.useCallback(() => {  setCurrentStepIndex(4);  requestAnimationFrame(() => { start(5);  }); }, []) );
 
-  //     requestAnimationFrame(() => {
-  //       start(5); // 🔥 resume tour at zone 5
-  //     });
+  useFocusEffect(React.useCallback(() => {
+    stop();
+    let isActive = true;
+    const timeout = setTimeout(() => { if (isActive) { start(); } }, 200);
+    return () => { isActive = false; clearTimeout(timeout); };
+  }, []));
 
-  //     return () => { };
-  //   }, [])
-  // );
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     // when Plans screen is focused
-  //     setCurrentStepIndex(4);   // 🔥 move to step 4
-  //     requestAnimationFrame(() => {
-  //       start(5);               // zone 5
-  //     });
-  //   }, [])
-  // );
+  // useFocusEffect( React.useCallback(() => { return () => stop(); }, []) );
 
 
 
 
 
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     stop(); // reset the tour
 
-  //     let isActive = true;
-
-  //     const timeout = setTimeout(() => {
-  //       if (isActive) {
-  //         start(); // start the tour
-  //       }
-  //     }, 200); // small delay to let the layout finish
-
-  //     return () => {
-  //       isActive = false;
-  //       clearTimeout(timeout); // cleanup
-  //     };
-  //   }, [])
-  // );
-
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     return () => stop();
-  //   }, [])
-  // );
 
 
 
@@ -172,9 +150,9 @@ const PlansScreen: React.FC = () => {
 
           <TourGuideZone zone={5} shape="circle" maskOffset={10}>
             <View
-              collapsable={false}
+               collapsable={false}
               style={styles.tourTarget}
-              onLayout={() => setZoneReady(true)}
+               onLayout={() => setZoneReady(true)}
             >
               <TouchableOpacity onPress={() => router.push(APP_ROUTES.CreateMealPlan)}
 

@@ -27,6 +27,7 @@ import {
   SigninFormValues,
   SigninViewModel,
 } from "@/viewmodels/SigninViewModel";
+import { router } from "expo-router";
 import { Formik } from "formik";
 import { useEffect } from "react";
 
@@ -151,15 +152,16 @@ const SignInScreen = () => {
                       gradientButton={true}
                       textColor={Colors.white}
                       onPress={async () => {
-                        const formErrors = await validateForm();
-                        if (Object.keys(formErrors).length > 0) {
-                          setTouched({
-                            email: true,
-                            password: true,
-                          });
-                          return;
-                        }
-                        handleSignin(values);
+                        router.push(APP_ROUTES.HOME)
+                        // const formErrors = await validateForm();
+                        // if (Object.keys(formErrors).length > 0) {
+                        //   setTouched({
+                        //     email: true,
+                        //     password: true,
+                        //   });
+                        //   return;
+                        // }
+                        // handleSignin(values);
                       }}
                       disabled={isLoading}
                     />

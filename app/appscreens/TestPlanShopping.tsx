@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: verticalScale(8),
     },
     backText: {
         fontSize: moderateScale(14),

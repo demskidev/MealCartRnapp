@@ -4,12 +4,16 @@ import React, { createContext, useContext, useState } from "react";
 const TourStepContext = createContext({
   currentStepIndex: 0,
   setCurrentStepIndex: (i: number) => { },
+  openMealModal: false,
+  setOpenMealModal: (b: boolean) => { },
 });
 
 export const TourStepProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [openMealModal, setOpenMealModal] = useState(false);
+
   return (
-    <TourStepContext.Provider value={{ currentStepIndex, setCurrentStepIndex }}>
+    <TourStepContext.Provider value={{ currentStepIndex, setCurrentStepIndex ,openMealModal,setOpenMealModal}}>
       {children}
     </TourStepContext.Provider>
   );

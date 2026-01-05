@@ -111,16 +111,13 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: Colors.white,
         borderRadius: moderateScale(8),
-        // marginVertical: verticalScale(6),
         paddingVertical: verticalScale(17),
         marginTop: verticalScale(23),
         marginBottom: verticalScale(18),
         paddingHorizontal: horizontalScale(15),
 
-        // Android
         elevation: 4,
 
-        // iOS
         shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,

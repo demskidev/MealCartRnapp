@@ -65,24 +65,24 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       if (canStart) {
-        //  start()
+          start()
       }
     }, [canStart])
 
 
   )
 
-  React.useEffect(() => {
-    const onStop = () => {
-      console.log('Tour closed by user')
-    }
+  // React.useEffect(() => {
+  //   const onStop = () => {
+  //     console.log('Tour closed by user')
+  //   }
 
-    eventEmitter?.on('stop', onStop)
+  //   eventEmitter?.on('stop', onStop)
 
-    return () => {
-      eventEmitter?.off('stop', onStop)
-    }
-  }, [eventEmitter])
+  //   return () => {
+  //     eventEmitter?.off('stop', onStop)
+  //   }
+  // }, [eventEmitter])
 
 
   useEffect(() => {

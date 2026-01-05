@@ -5,6 +5,7 @@ import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
 import { useEffect, useState } from 'react';
 import { Dimensions, FlatList, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View, } from 'react-native';
+import { TourGuideZone, useTourGuideController } from 'rn-tourguide';
 import BaseButton from './BaseButton';
 import CustomStepper from './CustomStepper';
 import CustomTextInput from './CustomTextInput';
@@ -39,6 +40,11 @@ const AddItemToList = ({ visible, onClose }) => {
     const unitWeightOptions = ['100grm', '200grm', '1kg'];
     const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
     const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
+    
+    const { start } = useTourGuideController();
+    const [zoneReady, setZoneReady] = useState(false);
+
+
 
 
     useEffect(() => {
@@ -122,7 +128,18 @@ const AddItemToList = ({ visible, onClose }) => {
         <Modal
             visible={visible}
             transparent
-            animationType="slide"
+            animationType="fade"
+             onShow={() => {
+    console.log("Modal onShow - zoneReady:", zoneReady);
+    if (zoneReady) {
+
+      // Wait for modal slide animation to complete
+      setTimeout(() => {
+        console.log("Starting zone 7 tour");
+        start(7); // TourTooltip will automatically sync with this
+      }, 100);
+    }
+  }}
             onRequestClose={onClose}
         >
 
@@ -131,25 +148,36 @@ const AddItemToList = ({ visible, onClose }) => {
                 <TouchableWithoutFeedback onPress={onClose}>
                     <View style={StyleSheet.absoluteFillObject} />
                 </TouchableWithoutFeedback>
+                
+                <TourGuideZone zone={7} shape="rectangle" maskOffset={10}>
+                <View style={styles.container}
+                 onLayout={() => {
+                   console.log("Zone 7 layout ready");
+                   setZoneReady(true);
+                 }}
+                 collapsable={false} 
+                >
 
-                <View style={styles.container}>
                     <Text style={styles.title}>{Strings.addItemToList_title}</Text>
                     <Text style={styles.subtitle}>
                         {Strings.addItemToList_subtitle}
                     </Text>
-
-                    <View style={styles.searchBox}>
-                        <SearchIcon width={verticalScale(22)} height={verticalScale(22)} color={Colors.tertiary} />
-                        <TextInput
-                            style={styles.searchInput}
-                            placeholder={Strings.addItemToList_searchPlaceholder}
-                            placeholderTextColor={Colors.tertiary}
-                            value={search}
-                            onChangeText={setSearch}
-                        />
-                    </View>
+                  
+                   
+                        <View style={styles.searchBox}
+                        collapsable={false}
+                        >
+                            <SearchIcon width={verticalScale(22)} height={verticalScale(22)} color={Colors.tertiary} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder={Strings.addItemToList_searchPlaceholder}
+                                placeholderTextColor={Colors.tertiary}
+                                value={search}
+                                onChangeText={setSearch}
+                            />
+                        </View>
+                   
                     <View style={styles.dividerRow} />
-
 
                     <FlatList
                         data={mealsData}
@@ -164,13 +192,15 @@ const AddItemToList = ({ visible, onClose }) => {
 
                     <Text style={styles.addManualLabel}>{Strings.addItemToList_addManualLabel}</Text>
 
-                    <CustomTextInput
-                        placeholder={Strings.addItemToList_searchIngredient}
-                        style={styles.manualInput}
-                        placeholderTextColor={Colors.tertiary}
-                        onChangeText={handleSearch}
-                        value={searchText}
-                    />
+                    <View style={{ width: '100%', }}>
+                        <CustomTextInput
+                            placeholder={Strings.addItemToList_searchIngredient}
+                            style={styles.manualInput}
+                            placeholderTextColor={Colors.tertiary}
+                            onChangeText={handleSearch}
+                            value={searchText}
+                        />
+                    </View>
 
 
 
@@ -215,7 +245,8 @@ const AddItemToList = ({ visible, onClose }) => {
                                                         return {
                                                             ...prev,
                                                             [item]: Math.max(current - 1, 0),
-                                                        };                                                    })
+                                                        };
+                                                    })
                                                 }}
                                                 containerStyle={styles.stepperContainer}
                                             />
@@ -315,10 +346,15 @@ const AddItemToList = ({ visible, onClose }) => {
 
                     </View>
                 </View>
+                </TourGuideZone>
+
             </View>
 
 
-        </Modal>
+
+
+
+        </Modal >
     );
 };
 
@@ -418,6 +454,7 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(6),
     },
     manualInput: {
+        width: '100%',
         backgroundColor: Colors.white,
         borderRadius: moderateScale(8),
         borderWidth: moderateScale(1),

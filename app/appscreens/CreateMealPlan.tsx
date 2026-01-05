@@ -1,13 +1,17 @@
 import { calendaricon, iconback, plusmeal } from '@/assets/images';
 import { IconCartWhite } from '@/assets/svg';
+import AddItemToList from '@/components/AddItemToList';
 import BaseButton from '@/components/BaseButton';
 import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
-import { useRouter } from 'expo-router';
+import { useTourStep } from '@/context/TourStepContext';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TourGuideZone, useTourGuideController } from 'rn-tourguide';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 const meals = ['Breakfast', 'Lunch', 'Dinner'];
@@ -15,6 +19,44 @@ const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window')
 export default function CreateMealPlan({ navigation }) {
   const router = useRouter();
+  const [zoneReady, setZoneReady] = useState(false);
+  const [selectMeal, setSelectMeal] = useState(false);
+
+  const { start, stop } = useTourGuideController();
+  const { openMealModal, setOpenMealModal } = useTourStep();
+
+  //   useEffect(() => {
+  //     if (selectMeal) {
+  //       stop(); // 🔥 removes previous tooltip
+  //     }
+  //   }, [selectMeal]);
+  // useEffect(() => {
+  //   if (modalZoneReady) {
+  //     setTimeout(() => {
+  //       start(7); // 🔥 modal tooltip
+  //       setModalZoneReady(false);
+  //     }, 300);
+  //   }
+  // }, [modalZoneReady]);
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     if (openMealModal) {
+  //       setSelectMeal(true);
+
+  //       // ✅ reset so it doesn't reopen again
+  //       setOpenMealModal(false);
+  //     }
+  //   }, [openMealModal])
+  // );
+  // useEffect(() => {
+  //   console.log("openMealModal:", openMealModal);
+  //   if (openMealModal) {
+  //     console.log("Opening modal!");
+  //     setSelectMeal(true);
+  //     setOpenMealModal(false);
+  //   }
+  // }, [openMealModal, setOpenMealModal]);
+
   const days = [
     {
       title: 'Monday',
@@ -33,31 +75,114 @@ export default function CreateMealPlan({ navigation }) {
       meals: ['Breakfast', 'Lunch', 'Dinner'],
     },
   ];
-  function renderDayCard({ item }) {
-    return (
-      <View style={styles.daySection}>
+
+// Start zone 6 when screen is ready
+useFocusEffect(
+  React.useCallback(() => {
+    if (!zoneReady) return;
+
+    const timeout = setTimeout(() => {
+      start(6);
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [zoneReady])
+);
+
+// When tour triggers modal opening
+useEffect(() => {
+  console.log("openMealModal:", openMealModal);
+  if (openMealModal) {
+    console.log("Opening modal for tour!");
+    // start(8);
+    // DON'T stop() - let the tour continue from zone 6 to zone 7
+    setTimeout(() => {
+      setSelectMeal(true);
+      setOpenMealModal(false);
+    }, 100);
+  }
+}, [openMealModal, setOpenMealModal]);
+
+// Debug log for selectMeal changes
+useEffect(() => {
+  console.log("selectMeal changed to:", selectMeal);
+}, [selectMeal]);
+
+
+  // function renderDayCard({ item }) {
+  //   return (
+
+  //     <TourGuideZone zone={6} shape="rectangle" maskOffset={10}>
+
+  //       <View style={styles.daySection}  onLayout={() => setZoneReady(true)} collapsable={false}  >
+  //         <View style={styles.dayHeader}>
+  //           <Text style={styles.dayTitle}>{item.title}</Text>
+  //           <Text style={styles.dayDate}>[Date]</Text>
+  //         </View>
+  //         <View style={styles.mealRow}>
+  //           {item.meals.map((meal, idx) => (
+  //             <View key={meal + idx} style={styles.mealCol}>
+  //               <Text style={styles.mealLabel}>{meal}</Text>
+  //               <TouchableOpacity style={styles.mealBox}>
+  //                 <Image
+  //                   source={plusmeal}
+  //                   resizeMode="contain"
+  //                   style={styles.plusMealIcon}
+  //                 />
+
+  //               </TouchableOpacity>
+  //             </View>
+  //           ))}
+  //         </View>
+  //       </View>
+  //     </TourGuideZone>
+
+  //   );
+  // }
+  function renderDayCard({ item, index }) {
+    const Content = (
+
+
+      <View
+        style={styles.daySection}
+        onLayout={() => index === 0 && setZoneReady(true)}
+        collapsable={false}
+      >
         <View style={styles.dayHeader}>
           <Text style={styles.dayTitle}>{item.title}</Text>
           <Text style={styles.dayDate}>[Date]</Text>
         </View>
+
         <View style={styles.mealRow}>
           {item.meals.map((meal, idx) => (
             <View key={meal + idx} style={styles.mealCol}>
               <Text style={styles.mealLabel}>{meal}</Text>
-              <TouchableOpacity style={styles.mealBox}>
+              <TouchableOpacity style={styles.mealBox} onPress={() => setSelectMeal(true)}>
                 <Image
                   source={plusmeal}
                   resizeMode="contain"
                   style={styles.plusMealIcon}
                 />
-
               </TouchableOpacity>
             </View>
+
           ))}
         </View>
       </View>
     );
+
+    // ✅ Only first item gets highlighted
+    if (index === 0) {
+      return (
+        <TourGuideZone zone={6} shape="rectangle" maskOffset={10}>
+          {Content}
+        </TourGuideZone>
+      );
+    }
+
+    return Content;
   }
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -125,6 +250,10 @@ export default function CreateMealPlan({ navigation }) {
           onPress={() => router.push(APP_ROUTES.LISTS)}
         />
       </View>
+      <AddItemToList
+        visible={selectMeal}
+        onClose={() => setSelectMeal(false)}
+      />
     </SafeAreaView>
 
   );
