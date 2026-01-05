@@ -1,22 +1,40 @@
-import { activeImage, createlist, gradientclose } from '@/assets/images';
-import BaseButton from '@/components/BaseButton';
-import ConfirmationModal from '@/components/ConfirmationModal';
-import { APP_ROUTES } from '@/constants/AppRoutes';
-import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
-import { Strings } from '@/constants/Strings';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import { useTourStep } from '@/context/TourStepContext';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { TourGuideZone, useTourGuideController } from 'rn-tourguide';
-const { height } = Dimensions.get('window');
-const { width } = Dimensions.get('window')
+import { activeImage, createlist, gradientclose } from "@/assets/images";
+import BaseButton from "@/components/BaseButton";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { TourGuideZone, useTourGuideController } from "rn-tourguide";
+const { height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const shoppingLists = [
-  { id: '1', name: 'Test Plan', created: 'October 2, 2025', meals: '8 meals' },
-  { id: '2', name: 'Test Plan 2', created: 'October 1, 2025', meals: '24 meals' },
+  { id: "1", name: "Test Plan", created: "October 2, 2025", meals: "8 meals" },
+  {
+    id: "2",
+    name: "Test Plan 2",
+    created: "October 1, 2025",
+    meals: "24 meals",
+  },
 ];
 const PlansScreen: React.FC = () => {
   const [pausePlan, setPausePlan] = useState(false);
@@ -71,12 +89,9 @@ const PlansScreen: React.FC = () => {
 
 
 
-
-
-
-
-
-
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     stop(); // reset the tour
 
 
   const renderShoppingList = ({ item }) => (
@@ -85,14 +100,13 @@ const PlansScreen: React.FC = () => {
 
       <View style={styles.listItem}>
         <View>
-          <Text style={styles.listDate}>{showResumePlan ? Strings.plans_started : Strings.plans_created} {item.created}</Text>
-
+          <Text style={styles.listDate}>
+            {showResumePlan ? Strings.plans_started : Strings.plans_created}{" "}
+            {item.created}
+          </Text>
         </View>
 
         <Text style={styles.listDate}> {item.meals}</Text>
-
-
-
       </View>
       <View style={styles.dividerRow} />
       <View style={styles.parentOfMarkDone}>
@@ -115,38 +129,22 @@ const PlansScreen: React.FC = () => {
           textStyle={styles.addButton}
           textStyleText={styles.addButtonText}
 
-        // onPress={handleEditPress}
+          // onPress={handleEditPress}
         />
-
-
-
       </View>
-
     </View>
-  )
-
-
-
-
-
+  );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View
         style={styles.headerRow}
         onLayout={() => setLayoutReady(true)}
       ></View>
 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-
-
-
-
-
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{Strings.plans_mealPlans}</Text>
-
 
           <TourGuideZone zone={5} shape="circle" maskOffset={10}>
             <View
@@ -154,56 +152,67 @@ const PlansScreen: React.FC = () => {
               style={styles.tourTarget}
                onLayout={() => setZoneReady(true)}
             >
-              <TouchableOpacity onPress={() => router.push(APP_ROUTES.CreateMealPlan)}
-
+              <TouchableOpacity
+                onPress={() => router.push(APP_ROUTES.CreateMealPlan)}
               >
-                <Image source={gradientclose} style={styles.gradientCloseImage} />
+                <Image
+                  source={gradientclose}
+                  style={styles.gradientCloseImage}
+                />
               </TouchableOpacity>
             </View>
           </TourGuideZone>
         </View>
-        {showResumePlan ?
+        {showResumePlan ? (
           <>
             <View style={styles.noActivePlan}>
-
-              <Text style={styles.noActiveText}>{Strings.plans_noActivePlan}</Text>
-
-
+              <Text style={styles.noActiveText}>
+                {Strings.plans_noActivePlan}
+              </Text>
             </View>
             <View style={styles.dividerRowSpaced} />
           </>
-
-          :
+        ) : (
           <View style={styles.activeCard}>
             <View style={styles.activeBadge}>
-              <Image source={activeImage} resizeMode="contain" style={styles.activeImage} />
-
+              <Image
+                source={activeImage}
+                resizeMode="contain"
+                style={styles.activeImage}
+              />
             </View>
             <Text style={styles.planTitle}>{Strings.plans_testPlan}</Text>
             <Text style={styles.planSubTitle}>{Strings.plans_dayOf}</Text>
             <View style={styles.mealBox}>
-              <Text style={styles.mealBoxTitle}>{Strings.plans_todaysMeal}</Text>
+              <Text style={styles.mealBoxTitle}>
+                {Strings.plans_todaysMeal}
+              </Text>
               <View style={styles.mealRow}>
-
-
-
                 <View style={styles.mealColumn}>
-                  <Text style={styles.mealLabelTop}>{Strings.plans_breakfast}</Text>
-                  <Text style={styles.mealValue}>{Strings.plans_avocadoToast}</Text>
+                  <Text style={styles.mealLabelTop}>
+                    {Strings.plans_breakfast}
+                  </Text>
+                  <Text style={styles.mealValue}>
+                    {Strings.plans_avocadoToast}
+                  </Text>
                 </View>
                 <View style={styles.mealColumn}>
                   <Text style={styles.mealLabelTop}>{Strings.plans_lunch}</Text>
-                  <Text style={styles.mealLabel}>{Strings.plans_notPlanned}</Text>
+                  <Text style={styles.mealLabel}>
+                    {Strings.plans_notPlanned}
+                  </Text>
                 </View>
                 <View style={styles.mealColumn}>
-                  <Text style={styles.mealLabelTop}>{Strings.plans_dinner}</Text>
-                  <Text style={styles.mealLabel}>{Strings.plans_notPlanned}</Text>
+                  <Text style={styles.mealLabelTop}>
+                    {Strings.plans_dinner}
+                  </Text>
+                  <Text style={styles.mealLabel}>
+                    {Strings.plans_notPlanned}
+                  </Text>
                 </View>
               </View>
             </View>
             <View style={styles.footer}>
-
-
               <BaseButton
                 title={Strings.plans_getShoppingList}
                 gradientButton={true}
@@ -211,11 +220,13 @@ const PlansScreen: React.FC = () => {
                 width={width * 0.53}
                 textStyle={styles.createButtonText}
                 rightChild={
-                  <Image source={createlist} resizeMode="contain" style={styles.createListIcon} />
-
+                  <Image
+                    source={createlist}
+                    resizeMode="contain"
+                    style={styles.createListIcon}
+                  />
                 }
                 onPress={() => router.push(APP_ROUTES.LISTS)}
-
               />
               <BaseButton
                 title={Strings.plans_viewPlan}
@@ -226,27 +237,23 @@ const PlansScreen: React.FC = () => {
                 textStyleText={styles.confirmButtonText}
                 onPress={() => router.push(APP_ROUTES.TestMealPlan)}
               />
-
             </View>
-            <TouchableOpacity style={styles.pauseButton} onPress={() => setPausePlan(true)}>
+            <TouchableOpacity
+              style={styles.pauseButton}
+              onPress={() => setPausePlan(true)}
+            >
               <Text style={styles.pauseText}>{Strings.plans_pausePlan}</Text>
             </TouchableOpacity>
           </View>
-        }
+        )}
         <Text style={styles.sectionTitle}>{Strings.plans_yourOtherPlans}</Text>
 
         <FlatList
           data={shoppingLists}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderShoppingList}
           scrollEnabled={false}
-
-
-
         />
-
-
-
       </ScrollView>
 
       <ConfirmationModal
@@ -258,7 +265,7 @@ const PlansScreen: React.FC = () => {
         onCancel={() => setPausePlan(false)}
         onConfirm={() => {
           setShowResumePlan(true);
-          setPausePlan(false)
+          setPausePlan(false);
         }}
       />
     </SafeAreaView>
@@ -266,10 +273,9 @@ const PlansScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-
   text: {
     fontSize: moderateScale(18),
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.primary,
   },
   container: {
@@ -278,16 +284,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(20),
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   headerTitle: {
     fontSize: moderateScale(21),
     color: Colors.primary,
-    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD
-
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
   },
 
   activeCard: {
@@ -296,10 +301,9 @@ const styles = StyleSheet.create({
     borderColor: Colors._667D4C,
     padding: horizontalScale(18),
     marginBottom: verticalScale(20),
-
   },
   activeBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: moderateScale(-20),
     right: moderateScale(-6),
     borderTopRightRadius: 18,
@@ -321,7 +325,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     marginTop: verticalScale(8),
 
-
     marginBottom: verticalScale(12),
   },
   mealBox: {
@@ -337,16 +340,16 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   mealRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: width * 0.9
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: width * 0.9,
   },
   mealLabelTop: {
     fontSize: moderateScale(12),
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.tertiary,
-    marginVertical: verticalScale(8)
+    marginVertical: verticalScale(8),
   },
   mealLabel: {
     fontSize: moderateScale(12),
@@ -359,15 +362,15 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
   },
   cardBtnRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
   primaryBtn: {
     flex: 1,
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     marginRight: 8,
   },
@@ -382,7 +385,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.error,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 6,
   },
   sectionTitle: {
@@ -393,9 +396,9 @@ const styles = StyleSheet.create({
   },
 
   otherCardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 2,
   },
   otherPlanTitle: {
@@ -409,8 +412,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   otherBtnRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 8,
   },
 
@@ -418,8 +421,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: verticalScale(18),
   },
   cancelButton: {
@@ -430,7 +433,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(12),
     marginRight: horizontalScale(8),
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -439,10 +442,9 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     borderRadius: moderateScale(8),
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: moderateScale(1),
-    borderColor: Colors.borderColor
-
+    borderColor: Colors.borderColor,
   },
   confirmButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -455,14 +457,13 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
   },
   pauseButton: {
-    marginTop: verticalScale(10)
+    marginTop: verticalScale(10),
   },
   listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: verticalScale(3)
-
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: verticalScale(3),
   },
   listTitle: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -482,21 +483,18 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(3),
     paddingHorizontal: horizontalScale(4),
-
   },
   addButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.primary,
     fontSize: moderateScale(14),
-
   },
   dividerRow: {
     height: moderateScale(1),
     backgroundColor: Colors.divider,
     flex: 1,
     marginVertical: verticalScale(10),
-    marginTop: verticalScale(15)
-
+    marginTop: verticalScale(15),
   },
   listCard: {
     backgroundColor: Colors.white,
@@ -514,26 +512,25 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   parentOfMarkDone: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   noActivePlan: {
     borderRadius: moderateScale(4),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: Colors.white,
-    paddingVertical: verticalScale(35)
+    paddingVertical: verticalScale(35),
   },
   noActiveText: {
     fontSize: moderateScale(14),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    color: Colors.tertiary
-
+    color: Colors.tertiary,
   },
   addButtonWrapper: {
     width: moderateScale(56),
@@ -542,15 +539,15 @@ const styles = StyleSheet.create({
   tourTarget: {
     width: 56,
     height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   touchable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   image: {
@@ -563,7 +560,7 @@ const styles = StyleSheet.create({
   gradientCloseImage: {
     width: moderateScale(56),
     height: moderateScale(56),
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginRight: horizontalScale(-11),
   },
   dividerRowSpaced: {
@@ -575,7 +572,7 @@ const styles = StyleSheet.create({
   activeImage: {
     width: moderateScale(56),
     height: moderateScale(56),
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginRight: horizontalScale(-11),
   },
   mealColumn: {
@@ -585,8 +582,6 @@ const styles = StyleSheet.create({
     width: moderateScale(18),
     height: moderateScale(18),
   },
-
-
 });
 
 export default PlansScreen;

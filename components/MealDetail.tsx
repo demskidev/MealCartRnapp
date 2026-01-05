@@ -1,4 +1,10 @@
-import { addtomeallist, addwishlisticon, backIcon, icon_edit, mealfoodH } from "@/assets/images";
+import {
+  addtomeallist,
+  addwishlisticon,
+  backIcon,
+  icon_edit,
+  mealfoodH,
+} from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import {
   addDotAtEnd,
@@ -8,7 +14,7 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
-import { FontFamily } from "@/utils/Fonts";
+import { FontFamily, fontSize } from "@/utils/Fonts";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import BottomSheet from "@gorhom/bottom-sheet";
@@ -80,11 +86,7 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
     <View style={styles.container}>
       <View style={styles.headerImageContainer}>
         <ImageBackground
-          source={
-            meal.image
-              ? { uri: meal.image }
-              : mealfoodH
-          }
+          source={meal.image ? { uri: meal.image } : mealfoodH}
           style={{ height: verticalScale(300), width: "100%" }}
         >
           <View style={styles.topRow}>
@@ -96,16 +98,19 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
               />
             </TouchableOpacity>
 
-            <View style={styles.tagContainer}>
-              <Text style={styles.tagText}>{meal.category || "Dinner"}</Text>
-            </View>
+            {meal.category && (
+              <View style={styles.tagContainer}>
+                <Text style={styles.tagText}>{meal.category}</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.headerOverlayContent1}>
             <View style={styles.parentOfname}>
-              <Text style={styles.title}>{meal.title}</Text>
+              <Text style={styles.title}>{meal.name}</Text>
               <Text style={styles.info}>
-                {meal.time && `${meal.time} •`} {meal.servings || 0} Servings{" "}
+                {meal.time && `${meal.time} •`} {meal.servings || 0}{" "}
+                {Strings.createMeal_servings}{" "}
                 {meal.difficulty && `• ${meal.difficulty}`}
               </Text>
             </View>
@@ -137,7 +142,7 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
 
         <View style={styles.buttonRow}>
           <BaseButton
-            title="Edit"
+            title={Strings.mealDetail_edit}
             gradientButton={true}
             textColor={Colors.white}
             width={width * 0.47}
@@ -153,7 +158,7 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
           />
 
           <BaseButton
-            title="Delete"
+            title={Strings.mealDetail_delete}
             gradientButton={true}
             width={width * 0.47}
             gradientStartColor={Colors._A62A2A}
@@ -167,7 +172,9 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
         </View>
         {meal.ingredients && meal.ingredients.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>{Strings.createMeal_ingredients}</Text>
+            <Text style={styles.sectionTitle}>
+              {Strings.createMeal_ingredients}
+            </Text>
             <View style={styles.divider} />
             {meal.ingredients.map((ingredient: any, index: number) => (
               <View style={styles.ingredientRow} key={index}>
@@ -184,7 +191,9 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
 
         {meal.steps && meal.steps.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>{Strings.mealDetail_instructions}</Text>
+            <Text style={styles.sectionTitle}>
+              {Strings.mealDetail_instructions}
+            </Text>
             <View style={styles.divider} />
             {meal.steps.map((step: string, index: number) => (
               <View style={styles.instructionRow} key={index}>
@@ -239,11 +248,11 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(55),
   },
   backButton: {
-    padding: 8,
-    borderRadius: 20,
+    padding: moderateScale(8),
+    borderRadius: moderateScale(20),
   },
   backButtonText: {
-    fontSize: 28,
+    fontSize: fontSize(28),
     color: Colors.white,
   },
   tagContainer: {
@@ -260,9 +269,9 @@ const styles = StyleSheet.create({
   },
   detailContent: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -24,
+    borderTopLeftRadius: moderateScale(24),
+    borderTopRightRadius: moderateScale(24),
+    marginTop: moderateScale(-24),
     padding: moderateScale(20),
     flex: 1,
   },
@@ -296,8 +305,8 @@ const styles = StyleSheet.create({
   },
   editIcon: {
     color: Colors.white,
-    fontSize: 16,
-    marginLeft: 8,
+    fontSize: fontSize(16),
+    marginLeft: horizontalScale(8),
   },
   deleteButton: {
     fontFamily: FontFamily.ROBOTO_MEDIUM,
@@ -326,8 +335,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
-    paddingVertical: 2,
+    marginBottom: verticalScale(4),
+    paddingVertical: verticalScale(2),
   },
   ingredientName: {
     fontSize: moderateScale(14),
@@ -342,8 +351,8 @@ const styles = StyleSheet.create({
   instructionRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 8,
-    marginTop: 4,
+    marginBottom: verticalScale(8),
+    marginTop: verticalScale(4),
   },
   instructionNumber: {
     fontSize: moderateScale(14),
@@ -361,7 +370,7 @@ const styles = StyleSheet.create({
   parentOfAddList: {
     flexDirection: "row",
     alignItems: "center",
-    width: width * 0.3,
+    width: width * moderateScale(0.3),
     justifyContent: "space-between",
   },
   image: {
@@ -377,14 +386,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: verticalScale(40),
     left: horizontalScale(16),
-    width: width * 0.92,
+    width: width * moderateScale(0.96),
   },
   backImage: {
     width: moderateScale(30),
     height: moderateScale(30),
   },
   parentOfname: {
-    width: width * 0.5,
+    width: width * moderateScale(0.5),
   },
   editImage: {
     width: moderateScale(20),

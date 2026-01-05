@@ -12,11 +12,23 @@ import { useEffect, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function DietaryPreferences({ navigation }) {
+export default function DietaryPreferences({ navigation }: { navigation: any }) {
     const [removePlan, setRemovePlan] = useState(false);
     const router = useRouter();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const { user, loading, dietaryPreferences, updateUserData } = useProfileViewModel();
+    const { user, loading, dietaryPreferences, profileLoading, updateUserData, fetchDietaryPreferences } = useProfileViewModel();
+
+    useEffect(() => {
+        // Fetch the list of all dietary preferences from Firestore
+        fetchDietaryPreferences(
+            () => {
+                console.log('Dietary preferences fetched successfully');
+            },
+            (error) => {
+                console.error('Error fetching dietary preferences:', error);
+            }
+        );
+    }, []);
 
     useEffect(() => {
         // Load user's existing dietary preferences
@@ -46,7 +58,7 @@ export default function DietaryPreferences({ navigation }) {
         );
     };
 
-    const renderDietaryItem = ({ item, index }) => (
+    const renderDietaryItem = ({ item, index }: { item: any; index: number }) => (
         <>
             <TouchableOpacity style={styles.row} onPress={() => toggleSelection(item.id)}>
                 <View>
@@ -90,7 +102,7 @@ export default function DietaryPreferences({ navigation }) {
 
                 <FlatList
                     data={dietaryPreferences || []}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => String(item.id)}
                     scrollEnabled={false}
                     renderItem={renderDietaryItem}
 
@@ -107,7 +119,7 @@ export default function DietaryPreferences({ navigation }) {
                 onPress={handleSavePreferences}
             />
 
-            {loading && <Loader />}
+            {(loading || profileLoading) && <Loader />}
         </SafeAreaView>
 
     );

@@ -1,15 +1,15 @@
 // reduxStore/slices/ingredientCategorySlice.ts
-import { getAllDocuments } from '@/services/firestore';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { ING_CAT, INGREDIENT_CATEGORY_SLICE } from '../actionTypes';
-import { INGREDIENTS_CATEGORY_COLLECTION } from '../appKeys';
+import { getAllDocuments } from "@/services/firestore";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { ING_CAT, INGREDIENT_CATEGORY_SLICE } from "../actionTypes";
+import { INGREDIENTS_CATEGORY_COLLECTION } from "../appKeys";
 
 export interface IngredientCategory {
   id: string;
   title: string;
 }
 
-interface IngredientCategoryState {
+export interface IngredientCategoryState {
   categories: IngredientCategory[];
   loading: boolean;
   error: string | null;
@@ -29,7 +29,9 @@ export const fetchIngredientCategories = createAsyncThunk(
       const data = await getAllDocuments(INGREDIENTS_CATEGORY_COLLECTION);
       return data;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch ingredient categories');
+      return rejectWithValue(
+        error.message || "Failed to fetch ingredient categories"
+      );
     }
   }
 );

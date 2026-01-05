@@ -9,6 +9,17 @@ import {
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useLoader } from "@/context/LoaderContext";
+import {
+  CATEGORY_KEY,
+  DESCRIPTION_KEY,
+  DIFFICULTY_KEY,
+  IMAGEURL_KEY,
+  INGREDIENTS_KEY,
+  NAME_KEY,
+  PREPTIME_KEY,
+  SERVINGS_KEY,
+  STEPS_KEY,
+} from "@/reduxStore/appKeys";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
 import { getUnitOptions } from "@/utils/unitOptions";
@@ -54,11 +65,9 @@ const CreateMealBottomSheet = forwardRef<
     useCreateMealViewModel();
 
   const snapPoints = useMemo(() => ["100%"], []);
-  const { height } = Dimensions.get("window");
   const { width } = Dimensions.get("window");
 
-  const prepTimeOptions = ["5 Mins", "10 Mins", "15 Mins"];
-  const unitWeightOptions = ["100 grm", "200 grm", "1 kg"];
+  const prepTimeOptions = [Strings._5_mins, Strings._10_mins, Strings._15_mins];
 
   const { showLoader, hideLoader } = useLoader();
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
@@ -70,10 +79,10 @@ const CreateMealBottomSheet = forwardRef<
         name: mealData.name || "",
         description: mealData.description || "",
         imageUrl: mealData.imageUrl || "",
-        prepTime: mealData.prepTime || "5 Mins",
+        prepTime: mealData.prepTime || Strings._5_mins,
         servings: String(mealData.servings || "1"),
-        difficulty: mealData.difficulty || "Easy",
-        category: mealData.category || "Breakfast",
+        difficulty: mealData.difficulty || Strings.filterModal_easy,
+        category: mealData.category || Strings.plans_breakfast,
         ingredients: (mealData.ingredients || []).map((ing) => {
           const category =
             typeof ing.category === "string"
@@ -95,16 +104,14 @@ const CreateMealBottomSheet = forwardRef<
       name: "",
       description: "",
       imageUrl: "",
-      prepTime: "5 Mins",
+      prepTime: Strings._5_mins,
       servings: "1",
-      difficulty: "Easy",
-      category: "Breakfast",
+      difficulty: Strings.filterModal_easy,
+      category: Strings.plans_breakfast,
       ingredients: [],
       steps: [{ text: "" }],
     };
   }, [isEdit, mealData]);
-
-  console.log("Initial Values:", initialValues);
 
   useEffect(() => {
     if (loading) showLoader();
@@ -116,20 +123,20 @@ const CreateMealBottomSheet = forwardRef<
     ({ item, index }) => {
       // Check if the current unit is tablespoon (or similar volume measurements)
       const isVolumeUnit =
-        item?.unit?.toLowerCase().includes("tablespoon") ||
-        item?.unit?.toLowerCase().includes("teaspoon") ||
-        item?.unit?.toLowerCase().includes("cup");
+        item?.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
+        item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
+        item?.unit?.toLowerCase().includes(Strings.units.cup);
 
       return (
         <View>
           <Text style={styles.label}>Ingredient Name</Text>
           <CustomTextInput
-            placeholder="e.g. Tomato"
+            placeholder={Strings.createMeal_ingredientName_placeholder}
             value={item.name}
             onChangeText={(text) => {
               const updated = [...ingredients];
               updated[index] = { ...updated[index], name: text };
-              setFieldValue("ingredients", updated);
+              setFieldValue(INGREDIENTS_KEY, updated);
               if (
                 touched.ingredients?.[index]?.name &&
                 errors.ingredients?.[index]?.name
@@ -169,7 +176,7 @@ const CreateMealBottomSheet = forwardRef<
                     ...updated[index],
                     count: String(Number(item?.count || 0) + 1),
                   };
-                  setFieldValue("ingredients", updated);
+                  setFieldValue(INGREDIENTS_KEY, updated);
                 }}
                 onDecrement={() => {
                   if (!isVolumeUnit) return;
@@ -178,13 +185,13 @@ const CreateMealBottomSheet = forwardRef<
                     ...updated[index],
                     count: String(Math.max(1, Number(item?.count || 1) - 1)),
                   };
-                  setFieldValue("ingredients", updated);
+                  setFieldValue(INGREDIENTS_KEY, updated);
                 }}
               />
             </View>
 
             <View style={styles.rowItem}>
-              <Text style={styles.label}>Unit (weight)</Text>
+              <Text style={styles.label}>{Strings.createMeal_unit}</Text>
 
               <CustomStepper
                 value={item?.unit}
@@ -199,13 +206,17 @@ const CreateMealBottomSheet = forwardRef<
                       unit: newUnit,
                       // Reset count if switching from volume to non-volume unit
                       count:
-                        newUnit?.toLowerCase().includes("tablespoon") ||
-                        newUnit?.toLowerCase().includes("teaspoon") ||
-                        newUnit?.toLowerCase().includes("cup")
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.tablespoon) ||
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.teaspoon) ||
+                        newUnit?.toLowerCase().includes(Strings.units.cup)
                           ? updated[index].count
                           : "0",
                     };
-                    setFieldValue("ingredients", updated);
+                    setFieldValue(INGREDIENTS_KEY, updated);
                   }
                 }}
                 onDecrement={() => {
@@ -219,20 +230,24 @@ const CreateMealBottomSheet = forwardRef<
                       unit: newUnit,
                       // Reset count if switching from volume to non-volume unit
                       count:
-                        newUnit?.toLowerCase().includes("tablespoon") ||
-                        newUnit?.toLowerCase().includes("teaspoon") ||
-                        newUnit?.toLowerCase().includes("cup")
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.tablespoon) ||
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.teaspoon) ||
+                        newUnit?.toLowerCase().includes(Strings.units.cup)
                           ? updated[index].count
                           : "0",
                     };
-                    setFieldValue("ingredients", updated);
+                    setFieldValue(INGREDIENTS_KEY, updated);
                   }
                 }}
               />
             </View>
 
             <View style={styles.rowItem}>
-              <Text style={styles.label}>Category</Text>
+              <Text style={styles.label}>{Strings.createMeal_category}</Text>
 
               <CustomDropdown
                 value={item?.category}
@@ -247,7 +262,7 @@ const CreateMealBottomSheet = forwardRef<
                     // Reset count when category changes
                     count: "0",
                   };
-                  setFieldValue("ingredients", updated);
+                  setFieldValue(INGREDIENTS_KEY, updated);
                 }}
                 icon={IconDown}
               />
@@ -257,7 +272,7 @@ const CreateMealBottomSheet = forwardRef<
               style={styles.deleteButton}
               onPress={() => {
                 const updated = ingredients.filter((_, i) => i !== index);
-                setFieldValue("ingredients", updated);
+                setFieldValue(INGREDIENTS_KEY, updated);
               }}
             >
               <Image
@@ -305,17 +320,13 @@ const CreateMealBottomSheet = forwardRef<
                   paddingTop: moderateScale(10),
                   textAlignVertical: "top",
                 }}
-                placeholder={
-                  isEdit
-                    ? "Heat olive oil in large pan. saute diced onion and garlic"
-                    : "A short summary of the meal..."
-                }
+                placeholder={Strings.createMeal_mealDescription_placeholder}
                 multiline
                 value={item?.text}
                 onChangeText={(text) => {
                   const updated = [...steps];
                   updated[index] = { ...updated[index], text };
-                  setFieldValue("steps", updated);
+                  setFieldValue(STEPS_KEY, updated);
                 }}
               />
             </View>
@@ -324,7 +335,7 @@ const CreateMealBottomSheet = forwardRef<
               <TouchableOpacity
                 onPress={() => {
                   const updated = steps.filter((_, i) => i !== index);
-                  setFieldValue("steps", updated);
+                  setFieldValue(STEPS_KEY, updated);
                 }}
                 style={{
                   marginTop: verticalScale(5),
@@ -348,9 +359,9 @@ const CreateMealBottomSheet = forwardRef<
     try {
       const mappedIngredients = values.ingredients.map((ing) => {
         const isVolumeUnit =
-          ing.unit?.toLowerCase().includes("tablespoon") ||
-          ing.unit?.toLowerCase().includes("teaspoon") ||
-          ing.unit?.toLowerCase().includes("cup");
+          ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
+          ing.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
+          ing.unit?.toLowerCase().includes(Strings.units.cup);
 
         return {
           name: ing.name,
@@ -394,53 +405,13 @@ const CreateMealBottomSheet = forwardRef<
     }
   };
 
-  // const handleEditMeal = async (values) => {
-  //   try {
-  //     const mappedIngredients = values.ingredients.map((ing) => ({
-  //       ...ing,
-  //       category:
-  //         typeof ing.category === "object" && ing.category.id
-  //           ? ing.category.id
-  //           : ing.category,
-  //     }));
-  //     const mappedSteps = values.steps.map((step) => step.text);
-  //     const mealData = {
-  //       id: values.id,
-  //       name: values.name,
-  //       description: values.description,
-  //       imageUrl: values.imageUrl,
-  //       prepTime: values.prepTime,
-  //       servings: values.servings,
-  //       difficulty: values.difficulty,
-  //       category: values.category,
-  //       ingredients: mappedIngredients,
-  //       steps: mappedSteps,
-  //       uid: user?.id,
-  //     };
-  //     updateMealData(
-  //       mealData,
-  //       () => {
-  //         alert(Strings.mealUpdated);
-  //         if (ref && typeof ref !== "function" && ref.current?.close) {
-  //           ref.current.close();
-  //         }
-  //       },
-  //       (error) => {
-  //         alert(Strings.error_updating_meal + error);
-  //       }
-  //     );
-  //   } catch (error) {
-  //     alert(Strings.error_updating_meal + error);
-  //   }
-  // };
-
   const handleEditMeal = async (values) => {
     try {
       const mappedIngredients = values.ingredients.map((ing) => {
         const isVolumeUnit =
-          ing.unit?.toLowerCase().includes("tablespoon") ||
-          ing.unit?.toLowerCase().includes("teaspoon") ||
-          ing.unit?.toLowerCase().includes("cup");
+          ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
+          ing.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
+          ing.unit?.toLowerCase().includes(Strings.units.cup);
 
         return {
           name: ing.name,
@@ -534,7 +505,9 @@ const CreateMealBottomSheet = forwardRef<
             <View style={styles.emptyView}></View>
             <View style={styles.parentCreateMealText}>
               <Text style={styles.header}>
-                {isEdit ? "Edit Meal" : "Create Meal"}
+                {isEdit
+                  ? Strings.createMeal_editMeal
+                  : Strings.createMeal_createMeal}
               </Text>
               <TouchableOpacity
                 onPress={() =>
@@ -560,13 +533,15 @@ const CreateMealBottomSheet = forwardRef<
               keyboardShouldPersistTaps="handled"
             >
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Basic Information</Text>
-                <Text style={styles.label}>Meal Name</Text>
+                <Text style={styles.sectionTitle}>
+                  {Strings.createMeal_basicInfo}
+                </Text>
+                <Text style={styles.label}>{Strings.createMeal_mealName}</Text>
                 <CustomTextInput
-                  placeholder="e.g. Classic Spaghetti"
+                  placeholder={Strings.createMeal_mealName_placeholder}
                   value={values.name}
                   onChangeText={(text) => {
-                    setFieldValue("name", text);
+                    setFieldValue(NAME_KEY, text);
                     if (touched.name && errors.name) {
                       setTouched({ ...touched, name: false });
                     }
@@ -574,7 +549,9 @@ const CreateMealBottomSheet = forwardRef<
                   error={touched.name && errors.name}
                 />
 
-                <Text style={styles.label}>Meal Description</Text>
+                <Text style={styles.label}>
+                  {Strings.createMeal_mealDescription}
+                </Text>
                 <CustomTextInput
                   style={{
                     height: verticalScale(80),
@@ -583,16 +560,12 @@ const CreateMealBottomSheet = forwardRef<
                     paddingHorizontal: horizontalScale(10),
                     marginBottom: moderateScale(8),
                   }}
-                  placeholder={
-                    isEdit
-                      ? "A rich and meaty sauce served over a bed of perfectly cooked spaghetti. A timeless family favorite that everyone will love."
-                      : "A short summary of the meal..."
-                  }
+                  placeholder={Strings.createMeal_mealDescription_placeholder}
                   multiline={true}
                   value={values.description}
                   numberOfLines={4}
                   onChangeText={(text) => {
-                    setFieldValue("description", text);
+                    setFieldValue(DESCRIPTION_KEY, text);
                     if (touched.description && errors.description) {
                       setTouched({ ...touched, description: false });
                     }
@@ -600,7 +573,7 @@ const CreateMealBottomSheet = forwardRef<
                   error={touched.description && errors.description}
                 />
 
-                <Text style={styles.label}>Image URL</Text>
+                <Text style={styles.label}>{Strings.createMeal_imageUrl}</Text>
                 <View
                   style={{
                     flexDirection: "row",
@@ -618,13 +591,11 @@ const CreateMealBottomSheet = forwardRef<
                     <View style={{ flex: 1 }}>
                       <CustomTextInput
                         style={{ marginBottom: 0 }}
-                        placeholder={
-                          isEdit
-                            ? "https://myfood.com/image/Classic Spaghetti Bolognese"
-                            : "https://..."
-                        }
+                        placeholder={Strings.createMeal_imageUrl_placeholder}
                         value={values.imageUrl}
-                        onChangeText={(text) => setFieldValue("imageUrl", text)}
+                        onChangeText={(text) =>
+                          setFieldValue(IMAGEURL_KEY, text)
+                        }
                       />
                     </View>
                     <TouchableOpacity
@@ -632,7 +603,9 @@ const CreateMealBottomSheet = forwardRef<
                       onPress={() => handleUpload(setFieldValue)}
                     >
                       <Text style={styles.uploadButtonText}>
-                        {isEdit ? "Remove" : "Upload"}
+                        {isEdit
+                          ? Strings.createMeal_remove
+                          : Strings.createMeal_upload}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -640,20 +613,28 @@ const CreateMealBottomSheet = forwardRef<
 
                 <View style={styles.row}>
                   <View style={styles.rowItem}>
-                    <Text style={styles.label}>Prep Time (min)</Text>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_prepTime}
+                    </Text>
 
                     <CustomStepper
                       value={values.prepTime}
                       onIncrement={() => {
                         const index = prepTimeOptions.indexOf(values.prepTime);
                         if (index < prepTimeOptions.length - 1) {
-                          setFieldValue("prepTime", prepTimeOptions[index + 1]);
+                          setFieldValue(
+                            PREPTIME_KEY,
+                            prepTimeOptions[index + 1]
+                          );
                         }
                       }}
                       onDecrement={() => {
                         const index = prepTimeOptions.indexOf(values.prepTime);
                         if (index > 0) {
-                          setFieldValue("prepTime", prepTimeOptions[index - 1]);
+                          setFieldValue(
+                            PREPTIME_KEY,
+                            prepTimeOptions[index - 1]
+                          );
                         }
                       }}
                       showUp={true}
@@ -661,18 +642,20 @@ const CreateMealBottomSheet = forwardRef<
                     />
                   </View>
                   <View style={styles.rowItem}>
-                    <Text style={styles.label}>Servings</Text>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_servings}
+                    </Text>
                     <CustomStepper
                       value={values.servings}
                       onIncrement={() =>
                         setFieldValue(
-                          "servings",
+                          SERVINGS_KEY,
                           String(Number(values.servings) + 1)
                         )
                       }
                       onDecrement={() =>
                         setFieldValue(
-                          "servings",
+                          SERVINGS_KEY,
                           String(Math.max(1, Number(values.servings) - 1))
                         )
                       }
@@ -682,20 +665,32 @@ const CreateMealBottomSheet = forwardRef<
 
                 <View style={styles.row}>
                   <View style={styles.rowItem}>
-                    <Text style={styles.label}>Difficulty</Text>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_difficulty}
+                    </Text>
                     <CustomDropdown
                       value={values.difficulty}
-                      options={["Easy", "Medium", "Hard"]}
-                      onSelect={(val) => setFieldValue("difficulty", val)}
+                      options={[
+                        Strings.testMealPlan_easy,
+                        Strings.testMealPlan_medium,
+                        Strings.testMealPlan_hard,
+                      ]}
+                      onSelect={(val) => setFieldValue(DIFFICULTY_KEY, val)}
                       icon={IconDown}
                     />
                   </View>
                   <View style={styles.rowItem}>
-                    <Text style={styles.label}>Category</Text>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_category}
+                    </Text>
                     <CustomDropdown
                       value={values.category}
-                      options={["Breakfast", "Lunch", "Dinner"]}
-                      onSelect={(val) => setFieldValue("category", val)}
+                      options={[
+                        Strings.plans_breakfast,
+                        Strings.plans_lunch,
+                        Strings.plans_dinner,
+                      ]}
+                      onSelect={(val) => setFieldValue(CATEGORY_KEY, val)}
                       icon={IconDown}
                     />
                   </View>
@@ -703,7 +698,9 @@ const CreateMealBottomSheet = forwardRef<
               </View>
 
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Ingredients</Text>
+                <Text style={styles.sectionTitle}>
+                  {Strings.createMeal_ingredients}
+                </Text>
 
                 <FlatList
                   data={values.ingredients}
@@ -732,7 +729,7 @@ const CreateMealBottomSheet = forwardRef<
                         : null;
                     const unitOptions = getUnitOptions(firstCategory);
 
-                    setFieldValue("ingredients", [
+                    setFieldValue(INGREDIENTS_KEY, [
                       ...values.ingredients,
                       {
                         name: "",
@@ -749,15 +746,19 @@ const CreateMealBottomSheet = forwardRef<
                   <IconPlus
                     width={verticalScale(21)}
                     height={verticalScale(21)}
-                    color="black"
+                    color={Colors.primary}
                   />
                   <Text style={styles.plusicon}>+</Text>
-                  <Text style={styles.addIngredientText}>Add Ingredient</Text>
+                  <Text style={styles.addIngredientText}>
+                    {Strings.createMeal_addIngredient}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Instruction</Text>
+                <Text style={styles.sectionTitle}>
+                  {Strings.createMeal_instruction}
+                </Text>
 
                 <FlatList
                   data={values.steps}
@@ -771,16 +772,22 @@ const CreateMealBottomSheet = forwardRef<
                 <TouchableOpacity
                   style={styles.addIngredient}
                   onPress={() =>
-                    setFieldValue("steps", [...values.steps, { text: "" }])
+                    setFieldValue(STEPS_KEY, [...values.steps, { text: "" }])
                   }
                 >
                   <Text style={styles.plusicon}>+</Text>
-                  <Text style={styles.addIngredientText}>Add Step</Text>
+                  <Text style={styles.addIngredientText}>
+                    {Strings.createMeal_addStep}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.parentOfConfirmButton}>
                 <BaseButton
-                  title={isEdit ? "Discard" : "Cancel"}
+                  title={
+                    isEdit
+                      ? Strings.createMeal_discard
+                      : Strings.createMeal_cancel
+                  }
                   gradientButton={false}
                   backgroundColor={Colors.white}
                   width={isEdit ? width * 0.28 : width * 0.41}
@@ -789,11 +796,14 @@ const CreateMealBottomSheet = forwardRef<
                     { color: isEdit ? Colors.error : Colors.primary },
                   ]}
                   textColor={isEdit ? Colors.error : Colors.primary}
-
-                  onPress={()=> ref?.current?.close()}
+                  onPress={() => ref?.current?.close()}
                 />
                 <BaseButton
-                  title={isEdit ? "Update Meal" : "Confirm"}
+                  title={
+                    isEdit
+                      ? Strings.createMeal_updateMeal
+                      : Strings.createMeal_confirm
+                  }
                   gradientButton={true}
                   width={isEdit ? width * 0.65 : width * 0.41}
                   gradientStartColor={Colors._667D4C}
@@ -868,12 +878,11 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     padding: moderateScale(10),
     marginBottom: verticalScale(10),
-    elevation: 2,
-    // iOS shadow
+    elevation: moderateScale(3),
     shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: moderateScale(2) },
+    shadowOpacity: moderateScale(0.15),
+    shadowRadius: moderateScale(4),
   },
   sectionTitle: {
     fontSize: moderateScale(12),
@@ -890,21 +899,20 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: Colors._F6F6F6,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
-    marginBottom: 8,
-    borderWidth: 1,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(10),
+    fontSize: fontSize(14),
+    marginBottom: verticalScale(8),
+    borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
   },
   uploadButton: {
-    marginLeft: 8,
+    marginLeft: horizontalScale(8),
     paddingHorizontal: horizontalScale(16),
     paddingVertical: verticalScale(10),
     borderRadius: moderateScale(8),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
-
     backgroundColor: Colors.white,
   },
   uploadButtonText: {
@@ -913,7 +921,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
   },
   row: { flexDirection: "row", justifyContent: "flex-start", gap: 8 },
-  rowItem: { flex: 1, minWidth: 80 },
+  rowItem: { flex: 1, minWidth: moderateScale(80) },
   deleteButton: {
     alignSelf: "flex-end",
     marginBottom: verticalScale(18),

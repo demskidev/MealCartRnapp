@@ -8,6 +8,7 @@ import { AUTH_SLICE, LOGOUT, ROOT } from "./actionTypes";
 import authReducer from "./slices/authSlice";
 import ingredientCategoryReducer from "./slices/ingredientCategorySlice";
 import MealReducer from "./slices/mealsSlice";
+import profileReducer from "./slices/profileSlice";
 
 
 const persistConfig = {
@@ -20,6 +21,7 @@ const appReducer = combineReducers({
  auth : authReducer,
  ingredientCategory: ingredientCategoryReducer,
  meal : MealReducer,
+ profile: profileReducer,
  // home: homeReducer,
 });
 

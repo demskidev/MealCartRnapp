@@ -1,163 +1,121 @@
-import { calendaricon, iconback, plusmeal } from '@/assets/images';
-import { IconCartWhite } from '@/assets/svg';
-import AddItemToList from '@/components/AddItemToList';
-import BaseButton from '@/components/BaseButton';
-import { APP_ROUTES } from '@/constants/AppRoutes';
-import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
-import { Strings } from '@/constants/Strings';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import { useTourStep } from '@/context/TourStepContext';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { TourGuideZone, useTourGuideController } from 'rn-tourguide';
+import { calendaricon, iconback, plusmeal } from "@/assets/images";
+import { IconCartWhite } from "@/assets/svg";
+import AddItemToList from "@/components/AddItemToList";
+import BaseButton from "@/components/BaseButton";
+import CustomDateTimePicker from "@/components/DateTimePicker";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { CREATE_MEAL_PLAN } from "@/reduxStore/appKeys";
+import { backNavigation, pushNavigation } from "@/utils/Navigation";
+import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday'];
-const meals = ['Breakfast', 'Lunch', 'Dinner'];
-const { height } = Dimensions.get('window');
-const { width } = Dimensions.get('window')
-export default function CreateMealPlan({ navigation }) {
+const days = ["Monday", "Tuesday", "Wednesday", "Thursday"];
+const meals = ["Breakfast", "Lunch", "Dinner"];
+const { height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
+
+export default function CreateMealPlan({}) {
   const router = useRouter();
-  const [zoneReady, setZoneReady] = useState(false);
-  const [selectMeal, setSelectMeal] = useState(false);
+  const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
+  const [startDate, setStartDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [addToListVisible, setAddToListVisible] = useState(false);
 
-  const { start, stop } = useTourGuideController();
-  const { openMealModal, setOpenMealModal } = useTourStep();
+  useEffect(() => {
+    fetchMealPlans();
+  }, []);
 
-  //   useEffect(() => {
-  //     if (selectMeal) {
-  //       stop(); // 🔥 removes previous tooltip
-  //     }
-  //   }, [selectMeal]);
-  // useEffect(() => {
-  //   if (modalZoneReady) {
-  //     setTimeout(() => {
-  //       start(7); // 🔥 modal tooltip
-  //       setModalZoneReady(false);
-  //     }, 300);
-  //   }
-  // }, [modalZoneReady]);
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (openMealModal) {
-  //       setSelectMeal(true);
+  const formatDisplayDate = (date: Date) => {
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  };
 
-  //       // ✅ reset so it doesn't reopen again
-  //       setOpenMealModal(false);
-  //     }
-  //   }, [openMealModal])
-  // );
-  // useEffect(() => {
-  //   console.log("openMealModal:", openMealModal);
-  //   if (openMealModal) {
-  //     console.log("Opening modal!");
-  //     setSelectMeal(true);
-  //     setOpenMealModal(false);
-  //   }
-  // }, [openMealModal, setOpenMealModal]);
+  const getDayName = (dayIndex: number) => {
+    const dayNames = [
+      Strings.days.sunday,
+      Strings.days.monday,
+      Strings.days.tuesday,
+      Strings.days.wednesday,
+      Strings.days.thursday,
+      Strings.days.friday,
+      Strings.days.saturday,
+    ];
+    return dayNames[dayIndex];
+  };
 
-  const days = [
-    {
-      title: 'Monday',
-      meals: ['Breakfast', 'Lunch', 'Dinner'],
-    },
-    {
-      title: 'Tuesday',
-      meals: ['Breakfast', 'Lunch', 'Dinner'],
-    },
-    {
-      title: 'Wednesday',
-      meals: ['Breakfast', 'Lunch', 'Dinner'],
-    },
-    {
-      title: 'Thursday',
-      meals: ['Breakfast', 'Lunch', 'Dinner'],
-    },
-  ];
+  const generateWeekDays = (selectedDate: Date) => {
+    const days = [];
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-// Start zone 6 when screen is ready
-useFocusEffect(
-  React.useCallback(() => {
-    if (!zoneReady) return;
+    // Calculate days remaining in the week (until Sunday)
+    // If Sunday (0), that's the end of week, so 0 days remaining
+    // If Monday (1), 6 days remaining, etc.
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
 
-    const timeout = setTimeout(() => {
-      start(6);
-    }, 100);
+    // Get meal plan names from fetched meal plans
+    const mealPlanNames =
+      mealPlans.length > 0
+        ? mealPlans.map((plan) => plan.name)
+        : [Strings.plans_breakfast, Strings.plans_lunch, Strings.plans_dinner];
 
-    return () => clearTimeout(timeout);
-  }, [zoneReady])
-);
+    for (let i = 0; i <= daysUntilSunday; i++) {
+      const currentDate = new Date(selectedDate);
+      currentDate.setDate(selectedDate.getDate() + i);
 
-// When tour triggers modal opening
-useEffect(() => {
-  console.log("openMealModal:", openMealModal);
-  if (openMealModal) {
-    console.log("Opening modal for tour!");
-    // start(8);
-    // DON'T stop() - let the tour continue from zone 6 to zone 7
-    setTimeout(() => {
-      setSelectMeal(true);
-      setOpenMealModal(false);
-    }, 100);
-  }
-}, [openMealModal, setOpenMealModal]);
+      days.push({
+        title: getDayName(currentDate.getDay()),
+        date: currentDate,
+        meals: mealPlanNames,
+      });
+    }
 
-// Debug log for selectMeal changes
-useEffect(() => {
-  console.log("selectMeal changed to:", selectMeal);
-}, [selectMeal]);
+    return days;
+  };
 
+  const days = generateWeekDays(startDate);
+  function renderDayCard({ item }) {
+    const formattedDate = `${item.date.getDate()}/${
+      item.date.getMonth() + 1
+    }/${item.date.getFullYear()}`;
 
-  // function renderDayCard({ item }) {
-  //   return (
-
-  //     <TourGuideZone zone={6} shape="rectangle" maskOffset={10}>
-
-  //       <View style={styles.daySection}  onLayout={() => setZoneReady(true)} collapsable={false}  >
-  //         <View style={styles.dayHeader}>
-  //           <Text style={styles.dayTitle}>{item.title}</Text>
-  //           <Text style={styles.dayDate}>[Date]</Text>
-  //         </View>
-  //         <View style={styles.mealRow}>
-  //           {item.meals.map((meal, idx) => (
-  //             <View key={meal + idx} style={styles.mealCol}>
-  //               <Text style={styles.mealLabel}>{meal}</Text>
-  //               <TouchableOpacity style={styles.mealBox}>
-  //                 <Image
-  //                   source={plusmeal}
-  //                   resizeMode="contain"
-  //                   style={styles.plusMealIcon}
-  //                 />
-
-  //               </TouchableOpacity>
-  //             </View>
-  //           ))}
-  //         </View>
-  //       </View>
-  //     </TourGuideZone>
-
-  //   );
-  // }
-  function renderDayCard({ item, index }) {
-    const Content = (
-
-
-      <View
-        style={styles.daySection}
-        onLayout={() => index === 0 && setZoneReady(true)}
-        collapsable={false}
-      >
+    return (
+      <View style={styles.daySection}>
         <View style={styles.dayHeader}>
           <Text style={styles.dayTitle}>{item.title}</Text>
-          <Text style={styles.dayDate}>[Date]</Text>
+          <Text style={styles.dayDate}>{formattedDate}</Text>
         </View>
-
-        <View style={styles.mealRow}>
+        <ScrollView
+          contentContainerStyle={styles.mealRow}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {item.meals.map((meal, idx) => (
             <View key={meal + idx} style={styles.mealCol}>
               <Text style={styles.mealLabel}>{meal}</Text>
-              <TouchableOpacity style={styles.mealBox} onPress={() => setSelectMeal(true)}>
+              <TouchableOpacity
+                style={styles.mealBox}
+                onPress={() => setAddToListVisible(true)}
+              >
                 <Image
                   source={plusmeal}
                   resizeMode="contain"
@@ -165,27 +123,14 @@ useEffect(() => {
                 />
               </TouchableOpacity>
             </View>
-
           ))}
-        </View>
+        </ScrollView>
       </View>
     );
-
-    // ✅ Only first item gets highlighted
-    if (index === 0) {
-      return (
-        <TourGuideZone zone={6} shape="rectangle" maskOffset={10}>
-          {Content}
-        </TourGuideZone>
-      );
-    }
-
-    return Content;
   }
 
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
           <Image
@@ -194,7 +139,9 @@ useEffect(() => {
             style={styles.backIconImage}
           />
         </TouchableOpacity>
-        <Text style={styles.backText}>{Strings.createMealPlan_backToPlans}</Text>
+        <Text style={styles.backText}>
+          {Strings.createMealPlan_backToPlans}
+        </Text>
       </View>
       <Text style={styles.label}>{Strings.createMealPlan_yourMealPlan}</Text>
       <TextInput
@@ -207,19 +154,30 @@ useEffect(() => {
       <View style={styles.inputRow}>
         <TextInput
           style={styles.dateInput}
-          value="4/10/2025"
+          value={formatDisplayDate(startDate)}
           editable={false}
         />
-        <Image
-          source={calendaricon}
-          style={styles.calendarIcon}
-          resizeMode="contain"
-        />
+        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+          <Image
+            source={calendaricon}
+            style={styles.calendarIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
 
+      <CustomDateTimePicker
+        mode="date"
+        value={startDate}
+        visible={showDatePicker}
+        onChange={(date) => {
+          setStartDate(date);
+        }}
+        onClose={() => setShowDatePicker(false)}
+      />
       <FlatList
         data={days}
-        keyExtractor={item => item.title}
+        keyExtractor={(item) => item.title}
         renderItem={renderDayCard}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.flatListContent}
@@ -233,7 +191,7 @@ useEffect(() => {
           textStyle={styles.discardButton}
           textColor={Colors.error}
           textStyleText={styles.discardText}
-          onPress={() => router.push(APP_ROUTES.LISTS)}
+          onPress={() => backNavigation()}
         />
         <BaseButton
           title={Strings.createMealPlan_save}
@@ -244,18 +202,24 @@ useEffect(() => {
           gradientStart={{ x: 0, y: 0 }}
           gradientEnd={{ x: 1, y: 0 }}
           textColor={Colors.white}
-          rightChild={<IconCartWhite width={verticalScale(21)} height={verticalScale(21)} />}
-          textStyle={[styles.confirmButton,]}
+          rightChild={
+            <IconCartWhite
+              width={verticalScale(21)}
+              height={verticalScale(21)}
+            />
+          }
+          textStyle={[styles.confirmButton]}
           textStyleText={styles.saveShopping}
-          onPress={() => router.push(APP_ROUTES.LISTS)}
+          onPress={() => pushNavigation(APP_ROUTES.LISTS)}
         />
       </View>
+
       <AddItemToList
-        visible={selectMeal}
-        onClose={() => setSelectMeal(false)}
+        visible={addToListVisible}
+        onClose={() => setAddToListVisible(false)}
+        from={CREATE_MEAL_PLAN}
       />
     </SafeAreaView>
-
   );
 }
 
@@ -271,8 +235,8 @@ const styles = StyleSheet.create({
     height: moderateScale(24),
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   backText: {
@@ -297,19 +261,17 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: Colors.tertiary,
     fontFamily: FontFamilies.ROBOTO_REGULAR,
-    height: verticalScale(50)
+    height: verticalScale(50),
   },
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: verticalScale(10),
     backgroundColor: Colors.greysoft,
     borderRadius: moderateScale(4),
     paddingVertical: verticalScale(12),
     paddingRight: horizontalScale(10),
-    height: verticalScale(50)
-
-
+    height: verticalScale(50),
   },
   calendarIcon: {
     width: moderateScale(24),
@@ -329,9 +291,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   dayHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: verticalScale(8),
   },
   dayTitle: {
@@ -345,12 +307,11 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
   },
   mealRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    gap: moderateScale(10),
+    justifyContent: "space-between",
   },
-  mealCol: {
-
-  },
+  mealCol: {},
   mealLabel: {
     fontSize: moderateScale(12),
     color: Colors.tertiary,
@@ -358,14 +319,14 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(6),
   },
   mealBox: {
-    width: width * 0.25,
+    width: width * 0.24,
     height: moderateScale(40),
     borderRadius: moderateScale(4),
     borderWidth: moderateScale(1),
     borderColor: Colors.tertiary,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: Colors.white,
   },
   plus: {
@@ -381,36 +342,36 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderColor,
   },
   parentOfConfirmButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: verticalScale(55),
-    marginHorizontal: moderateScale(-5)
+    marginHorizontal: moderateScale(-5),
   },
   discardText: {
     fontSize: moderateScale(14),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    color: Colors.error
+    color: Colors.error,
   },
   saveShopping: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     fontSize: moderateScale(16),
-    color: Colors.white
+    color: Colors.white,
   },
   confirmButton: {
     color: Colors.white,
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: moderateScale(13)
+    fontSize: moderateScale(13),
   },
   plusMealIcon: {
     width: moderateScale(24),
     height: moderateScale(24),
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   backIconImage: {
     width: moderateScale(24),
     height: moderateScale(24),
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginRight: horizontalScale(-11),
   },
   dateInput: {

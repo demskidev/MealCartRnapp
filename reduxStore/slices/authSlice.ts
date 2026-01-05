@@ -2,7 +2,6 @@
 import { Strings } from "@/constants/Strings";
 import { auth } from "@/services/firebase";
 import {
-  getAllDocuments,
   getDocumentById,
   setDocumentById,
   updateDocument,
@@ -15,12 +14,11 @@ import {
 import { serverTimestamp } from "firebase/firestore";
 import {
   AUTH_SLICE,
-  FETCH_DIETARY_PREFERENCES,
   LOGIN,
   REGISTER,
   UPDATE_USER,
 } from "../actionTypes";
-import { DIETARY_PREFERENCES_COLLECTION, USERS_COLLECTION } from "../appKeys";
+import { USERS_COLLECTION } from "../appKeys";
 // Utility to map Firebase Auth error codes to user-friendly messages
 function getFirebaseAuthErrorMessage(error: any): string {
   console.log("Firebase Auth Error:", JSON.stringify(error));
@@ -124,39 +122,9 @@ export const updateUserAsync = createAsyncThunk(
   }
 );
 
-export const fetchDietryPreferencesAsync = createAsyncThunk(
-  FETCH_DIETARY_PREFERENCES,
-  async (_, { rejectWithValue }) => {
-    try {
-      // Update user data in Firestore
-      const dietaryPreferences = await getAllDocuments(
-        DIETARY_PREFERENCES_COLLECTION
-      );
-
-      // Fetch the updated user data
-
-      if (!dietaryPreferences) {
-        return rejectWithValue("Failed to fetch dietary preferences");
-      }
-
-      return dietaryPreferences;
-    } catch (error: any) {
-      return rejectWithValue(
-        error.message || "Failed to fetch dietary preferences"
-      );
-    }
-  }
-);
-
-export interface DietaryPreferences {
-  id: number;
-  name: string;
-}
-
 const initialState = {
   isAuthenticated: false,
   user: null as any,
-  dietaryPreferences: [] as DietaryPreferences[],
   loading: false,
   error: null as any,
 };
@@ -208,21 +176,6 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(updateUserAsync.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(fetchDietryPreferencesAsync.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchDietryPreferencesAsync.fulfilled, (state, action) => {
-        state.loading = false;
-
-        state.dietaryPreferences = action.payload as [] as DietaryPreferences[];
-        console.log("Fetched dietary preferences:", state.dietaryPreferences);
-        state.error = null;
-      })
-      .addCase(fetchDietryPreferencesAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
