@@ -1,16 +1,16 @@
 import {
-    deleteicon,
-    icon_edit,
-    iconback,
-    plusblackicon,
-    tikicon,
+  deleteicon,
+  icon_edit,
+  iconback,
+  plusblackicon,
+  tikicon,
 } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import Loader from "@/components/Loader";
 import {
-    horizontalScale,
-    moderateScale,
-    verticalScale,
+  horizontalScale,
+  moderateScale,
+  verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
@@ -18,15 +18,15 @@ import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -42,7 +42,6 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
     addMealPlans,
     profileLoading,
     deleteMealPlan,
-    updateMealPlan,
     updateMealPlans,
   } = useProfileViewModel();
 

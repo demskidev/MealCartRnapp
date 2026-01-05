@@ -32,6 +32,11 @@ export const DIFFICULTY_KEY = 'difficulty';
 export const DIETARY_PREFERENCES_KEY = 'dietaryPreferences';
 
 
+//prop keys
+export const CREATE_MEAL_PLAN = "createMealPlan"
+export const SHOPPING_LIST = "shoppingList"
+
+
 
 
 
