@@ -21,3 +21,8 @@ export const ADD_MEAL_PLAN = 'profile/addMealPlan';
 export const DELETE_MEAL_PLAN = 'profile/deleteMealPlan';
 export const UPDATE_MEAL_PLANS_BATCH = 'profile/updateMealPlansBatch';
 export const FETCH_MEAL_PLANS = 'profile/fetchMealPlans';
+export const ADD_PLAN = "plans/addPlan";
+export const UPDATE_PLAN = "plans/updatePlan";
+export const DELETE_PLAN = "plans/deletePlan";
+export const FETCH_PLANS = "plans/fetchPlans";
+

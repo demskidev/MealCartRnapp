@@ -6,11 +6,11 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import { AUTH_SLICE, LOGOUT, ROOT } from "./actionTypes";
 import authReducer from "./slices/authSlice";
+import homeReducer from "./slices/homeSlice";
 import ingredientCategoryReducer from "./slices/ingredientCategorySlice";
 import MealReducer from "./slices/mealsSlice";
+import plansReducer from "./slices/planSlice";
 import profileReducer from "./slices/profileSlice";
-
-
 const persistConfig = {
   key: ROOT,
   storage: AsyncStorage,
@@ -18,11 +18,12 @@ const persistConfig = {
 };
 
 const appReducer = combineReducers({
- auth : authReducer,
- ingredientCategory: ingredientCategoryReducer,
- meal : MealReducer,
- profile: profileReducer,
- // home: homeReducer,
+  auth: authReducer,
+  home: homeReducer,
+  ingredientCategory: ingredientCategoryReducer,
+  meal: MealReducer,
+  profile: profileReducer,
+  plans: plansReducer,
 });
 
 // Root reducer that resets all state on LOGOUT

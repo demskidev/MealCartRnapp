@@ -7,7 +7,7 @@ export interface HomeItem {
   [key: string]: any;
 }
 
-interface HomeState {
+export interface HomeState {
   items: HomeItem[];
   loading: boolean;
   error: string | null;

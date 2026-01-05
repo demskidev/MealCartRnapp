@@ -1,13 +1,15 @@
 // viewmodels/ProfileViewModel.ts
+import { MEAL_PLAN_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { updateUserAsync } from "@/reduxStore/slices/authSlice";
 import {
-  addMealPlanAsync,
-  deleteMealPlanAsync,
-  fetchDietryPreferencesAsync,
-  fetchMealPlansAsync,
-  updateMealPlansBatchAsync,
+    addMealPlanAsync,
+    deleteMealPlanAsync,
+    fetchDietryPreferencesAsync,
+    fetchMealPlansAsync,
+    updateMealPlansBatchAsync,
 } from "@/reduxStore/slices/profileSlice";
+import { getDocumentById } from "@/services/firestore";
 
 export const useProfileViewModel = () => {
   const dispatch = useAppDispatch();
@@ -116,6 +118,23 @@ export const useProfileViewModel = () => {
     }
   };
 
+  const getMealPlanById = async (
+    mealPlanId: string,
+    onSuccess?: (mealPlan: any) => void,
+    onError?: (error: string) => void
+  ) => {
+    try {
+      const mealPlan = await getDocumentById(MEAL_PLAN_COLLECTION, mealPlanId);
+      if (mealPlan) {
+        onSuccess?.(mealPlan);
+      } else {
+        onError?.("Meal plan not found");
+      }
+    } catch (e: any) {
+      onError?.(e.message);
+    }
+  };
+
   return {
     user,
     loading,
@@ -130,5 +149,6 @@ export const useProfileViewModel = () => {
     addMealPlans,
     deleteMealPlan,
     updateMealPlans,
+    getMealPlanById
   };
 };

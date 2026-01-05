@@ -125,6 +125,7 @@ export const Strings = {
   plans_avocadoToast: "Avocado Toast with...",
   plans_getShoppingList: "Get Shopping List",
   plans_pausePlan: "Pause Plan",
+  plans_resumePlan: "Resume Plan",
   plans_yourOtherPlans: "Your Other Plans",
   plans_pauseMealPlan: "Pause Meal Plan?",
   plans_pauseDescription:
@@ -392,4 +393,13 @@ export const Strings = {
   error_deleting_meal_plan: "Failed to delete meal plan",
   error_updating_meal_plan: "Failed to update meal plan",
   error_fetching_meal_plans: "Failed to fetch meal plans",
+  error_adding_plan: "Failed to add plan",
+  error_fetching_plans: "Failed to fetch plans",
+  error_updating_plan: "Failed to update plan",
+  error_deleting_plan: "Failed to delete plan",
+  plan_saved_successfully: "Plan saved successfully!",
+  plan_updated_successfully: "Plan updated successfully!",
+
+  meals: "meals",
+  unknown_plan: "Unknown Plan",
 };

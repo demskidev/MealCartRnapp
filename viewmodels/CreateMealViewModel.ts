@@ -3,7 +3,6 @@ import { INGREDIENTS_CATEGORY_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { fetchIngredientCategories } from "@/reduxStore/slices/ingredientCategorySlice";
 import { addMeal, updateMeal } from "@/reduxStore/slices/mealsSlice";
-import { getDocumentById } from "@/services/firestore";
 import { useEffect } from "react";
 
 export const useCreateMealViewModel = () => {

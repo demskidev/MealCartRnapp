@@ -1,5 +1,7 @@
+import { MEALS_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { deleteMeal, fetchUserMeals } from "@/reduxStore/slices/mealsSlice";
+import { getDocumentById } from "@/services/firestore";
 import { useEffect } from "react";
 
 export const useMealsViewModel = () => {
@@ -40,5 +42,22 @@ export const useMealsViewModel = () => {
     }
   };
 
-  return { meals, loading, error, fetchMeals, deleteTheMeal };
+  const getMealById = async (
+    mealId: string,
+    onSuccess?: (meal: any) => void,
+    onError?: (error: string) => void
+  ) => {
+    try {
+      const meal = await getDocumentById(MEALS_COLLECTION, mealId);
+      if (meal) {
+        onSuccess?.(meal);
+      } else {
+        onError?.("Meal not found");
+      }
+    } catch (e: any) {
+      onError?.(e.message);
+    }
+  };
+
+  return { meals, loading, error, fetchMeals, deleteTheMeal, getMealById };
 };

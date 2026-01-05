@@ -8,6 +8,7 @@ export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';
 export const DIETARY_PREFERENCES_COLLECTION = 'dietryPreferences';
 export const MEAL_PLAN_COLLECTION = 'mealPlan';
+
 // Add more collection keys as needed
 
 
@@ -30,6 +31,14 @@ export const PREPTIME_KEY = 'prepTime';
 export const SERVINGS_KEY = 'servings';
 export const DIFFICULTY_KEY = 'difficulty';
 export const DIETARY_PREFERENCES_KEY = 'dietaryPreferences';
+
+export enum MealStatus{
+    CREATED = "created",
+    STARTED = "started",
+    RESUMED = "resumed",
+    PAUSED = "paused",
+    COMPLETED = "completed"
+}
 
 
 //prop keys

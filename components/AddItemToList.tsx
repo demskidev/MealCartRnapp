@@ -8,6 +8,7 @@ import {
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
+import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useEffect, useState } from "react";
 import {
     Dimensions,
@@ -32,29 +33,19 @@ const mealsData = [
 ];
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
-const renderMealItem = ({ item }) => (
-  <View style={styles.mealCard}>
-    <Image source={item.image} style={styles.mealImage} resizeMode="cover" />
-    <Text style={styles.mealName}>{item.name}</Text>
-    <CheckBox
-      width={verticalScale(22)}
-      height={verticalScale(22)}
-      color={Colors.tertiary}
-      style={styles.checkboxIcon}
-    />
-  </View>
-);
 
 interface AddItemToListProps {
   visible: boolean;
   onClose: () => void;
   from?: typeof CREATE_MEAL_PLAN | typeof SHOPPING_LIST;
+  onMealSelect?: (meal: any) => void;
 }
 
 const AddItemToList = ({
   visible,
   onClose,
   from = "shoppingList",
+  onMealSelect,
 }: AddItemToListProps) => {
   const [search, setSearch] = useState("");
 
@@ -73,6 +64,36 @@ const AddItemToList = ({
   const unitWeightOptions = ["100grm", "200grm", "1kg"];
   const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
   const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
+
+  const { meals, loading, fetchMeals } = useMealsViewModel();
+  const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
+  const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
+
+  // Fetch meals when component mounts
+  useEffect(() => {
+    if (visible) {
+      fetchMeals(
+        (data) => {
+          console.log("✅ Meals fetched successfully:", data);
+        },
+        (error) => {
+          console.error("❌ Error fetching meals:", error);
+        }
+      );
+    }
+  }, [visible]);
+
+  // Filter meals based on search
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredMeals(meals);
+    } else {
+      const filtered = meals.filter((meal) =>
+        meal.name.toLowerCase().includes(search.toLowerCase())
+      );
+      setFilteredMeals(filtered);
+    }
+  }, [search, meals]);
 
   useEffect(() => {
     const initialWeights: Record<string, number> = {};
@@ -138,6 +159,52 @@ const AddItemToList = ({
     setFilteredSuggestions([]);
   };
 
+  const handleMealPress = (meal: any) => {
+    if (from === CREATE_MEAL_PLAN) {
+      // For meal plan: single selection, call callback immediately
+      onMealSelect?.(meal);
+      onClose();
+    } else {
+      // For shopping list: multi-selection with checkboxes
+      setSelectedMeals((prev) => {
+        if (prev.includes(meal.id)) {
+          return prev.filter((id) => id !== meal.id);
+        } else {
+          return [...prev, meal.id];
+        }
+      });
+    }
+  };
+
+  const handleGenerateList = () => {
+  
+    // const selected = meals.filter((meal) => selectedMeals.includes(meal.id));
+    // onMealSelect?.(selected);
+    onClose();
+  };
+
+  const renderMealItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.mealCard}
+      onPress={() => handleMealPress(item)}
+    >
+      <Image
+        source={item.image ? { uri: item.image } : burger}
+        style={styles.mealImage}
+        resizeMode="cover"
+      />
+      <Text style={styles.mealName}>{item.name}</Text>
+      {from !== CREATE_MEAL_PLAN && (
+        <CheckBox
+          width={verticalScale(22)}
+          height={verticalScale(22)}
+          color={Colors.tertiary}
+          style={styles.checkboxIcon}
+        />
+      )}
+    </TouchableOpacity>
+  );
+
   return (
     <Modal
       visible={visible}
@@ -179,7 +246,8 @@ const AddItemToList = ({
           <View style={styles.dividerRow} />
 
           <FlatList
-            data={mealsData}
+            data={filteredMeals}
+            showsVerticalScrollIndicator={false}
             keyExtractor={(item) => item.id}
             renderItem={renderMealItem}
             contentContainerStyle={styles.mealsListContent}
@@ -327,7 +395,7 @@ const AddItemToList = ({
                 width={width * 0.42}
                 textStyle={styles.confirmButton}
                 textStyleText={styles.confirmButtonText}
-                onPress={onClose}
+                onPress={handleGenerateList}
               />
             )}
           </View>
@@ -590,6 +658,7 @@ const styles = StyleSheet.create({
   },
   mealsListStyle: {
     marginTop: verticalScale(10),
+    maxHeight: verticalScale(200),
   },
   suggestionsListStyle: {
     maxHeight: 200,
