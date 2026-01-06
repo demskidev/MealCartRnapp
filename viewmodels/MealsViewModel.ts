@@ -14,6 +14,8 @@ export const useMealsViewModel = () => {
   useEffect(() => {
     if (userId) {
       fetchMeals();
+    }else{
+        console.log("User ID not found, cannot fetch meals.");
     }
   }, [dispatch, userId]);
 

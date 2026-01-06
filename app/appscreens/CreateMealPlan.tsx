@@ -290,6 +290,19 @@ export default function CreateMealPlan({}) {
     console.log("3. Selected Meal Slots:", selectedMealSlots);
     console.log("4. Meal Plans:", mealPlans);
 
+    // Validation: Ensure at least one meal is selected for the entire week
+    const anyMealSelected = Object.keys(selectedMealSlots).length > 0;
+
+    if (planName.trim() === "") {
+      alert(Strings.error_enter_plan_name);
+      return;
+    }
+
+    if (!anyMealSelected) {
+      alert(Strings.error_select_meal_for_any_day);
+      return;
+    }
+
     showLoader();
 
     const getMealPlanId = (mealPlanName: string) => {

@@ -12,12 +12,7 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { serverTimestamp } from "firebase/firestore";
-import {
-  AUTH_SLICE,
-  LOGIN,
-  REGISTER,
-  UPDATE_USER,
-} from "../actionTypes";
+import { AUTH_SLICE, LOGIN, REGISTER, UPDATE_USER } from "../actionTypes";
 import { USERS_COLLECTION } from "../appKeys";
 // Utility to map Firebase Auth error codes to user-friendly messages
 function getFirebaseAuthErrorMessage(error: any): string {
@@ -142,7 +137,9 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.isAuthenticated = true;
+  
         state.user = action.payload;
+        console.log("User logged in:", action.payload);
         state.loading = false;
         state.error = null;
       })

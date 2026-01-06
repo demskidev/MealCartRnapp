@@ -11,10 +11,11 @@ import { serverTimestamp, Timestamp } from "firebase/firestore";
 import {
   ADD_PLAN,
   DELETE_PLAN,
+  FETCH_ACTIVE_PLAN,
   FETCH_PLANS,
   UPDATE_PLAN,
 } from "../actionTypes";
-import { PLANS_COLLECTION } from "../appKeys";
+import { MealStatus, PLANS_COLLECTION } from "../appKeys";
 
 export interface MealSlot {
   mealPlanId: string;
@@ -39,17 +40,39 @@ export interface Plan {
   days: DayData[];
 }
 
+
 export interface PlansState {
   plans: Plan[];
+  activePlan: Plan | null;
   loading: boolean;
   error: string | null;
 }
 
+
 const initialState: PlansState = {
   plans: [],
+  activePlan: null,
   loading: false,
   error: null,
 };
+
+// Fetch Active Plan
+export const fetchActivePlanAsync = createAsyncThunk(
+  FETCH_ACTIVE_PLAN,
+  async (uid: string, { rejectWithValue }) => {
+    try {
+      const plans = await queryDocuments(PLANS_COLLECTION, "uid", "==", uid);
+      const activePlan = Array.isArray(plans)
+        ? plans.find((plan: any) => plan.status === MealStatus.STARTED)
+        : null;
+      return activePlan || null;
+    } catch (error: any) {
+      return rejectWithValue(error.message || Strings.error_fetching_plans);
+    }
+  }
+);
+
+
 
 // Add Plan
 export const addPlanAsync = createAsyncThunk(
@@ -174,6 +197,7 @@ export const deletePlanAsync = createAsyncThunk(
   }
 );
 
+
 const plansSlice = createSlice({
   name: "plans",
   initialState,
@@ -188,6 +212,10 @@ const plansSlice = createSlice({
       .addCase(addPlanAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.plans.push(action.payload);
+        // If the new plan is started, set as activePlan
+        if (action.payload.status === "STARTED") {
+          state.activePlan = action.payload;
+        }
       })
       .addCase(addPlanAsync.rejected, (state, action) => {
         state.loading = false;
@@ -201,8 +229,24 @@ const plansSlice = createSlice({
       .addCase(fetchPlansAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.plans = action.payload as Plan[];
+        // Update activePlan as well
+        const active = (action.payload as Plan[]).find((plan) => plan.status === MealStatus.STARTED);
+        state.activePlan = active || null;
       })
       .addCase(fetchPlansAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Fetch Active Plan
+      .addCase(fetchActivePlanAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchActivePlanAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.activePlan = action.payload as Plan | null;
+      })
+      .addCase(fetchActivePlanAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -217,6 +261,13 @@ const plansSlice = createSlice({
         if (index !== -1) {
           state.plans[index] = action.payload;
         }
+        // Update activePlan if status changed
+        if (action.payload.status === MealStatus.STARTED) {
+          state.activePlan = action.payload;
+        } else if (state.activePlan && state.activePlan.id === action.payload.id) {
+          // If the updated plan was the active one but is no longer started, clear activePlan
+          state.activePlan = null;
+        }
       })
       .addCase(updatePlanAsync.rejected, (state, action) => {
         state.loading = false;
@@ -230,6 +281,10 @@ const plansSlice = createSlice({
       .addCase(deletePlanAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.plans = state.plans.filter((p) => p.id !== action.payload);
+        // If the deleted plan was the active one, clear activePlan
+        if (state.activePlan && state.activePlan.id === action.payload) {
+          state.activePlan = null;
+        }
       })
       .addCase(deletePlanAsync.rejected, (state, action) => {
         state.loading = false;

@@ -399,7 +399,8 @@ export const Strings = {
   error_deleting_plan: "Failed to delete plan",
   plan_saved_successfully: "Plan saved successfully!",
   plan_updated_successfully: "Plan updated successfully!",
-
+  error_enter_plan_name: "Please enter a name for the meal plan.",
+  error_select_meal_for_any_day: "Please select at least one meal for any day.",
   meals: "meals",
   unknown_plan: "Unknown Plan",
 };
