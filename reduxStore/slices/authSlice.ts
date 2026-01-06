@@ -6,14 +6,19 @@ import {
   setDocumentById,
   updateDocument,
 } from "@/services/firestore";
+import { waitForAuthReady } from "@/services/waitForAuth";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   signInWithEmailAndPassword,
+  updatePassword,
 } from "firebase/auth";
 import { serverTimestamp } from "firebase/firestore";
 import {
   AUTH_SLICE,
+  CHANGE_PASSWORD,
   LOGIN,
   REGISTER,
   UPDATE_USER,
@@ -121,6 +126,46 @@ export const updateUserAsync = createAsyncThunk(
     }
   }
 );
+export const changePasswordAsync = createAsyncThunk<
+  boolean,
+  { currentPassword: string; newPassword: string },
+  { rejectValue: string }
+>(
+  CHANGE_PASSWORD,
+  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      // ⏳ WAIT FOR FIREBASE AUTH
+      await waitForAuthReady();
+
+      const user = auth.currentUser;
+
+      if (!user || !user.email) {
+        return rejectWithValue("Session expired. Please login again.");
+      }
+
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        currentPassword
+      );
+
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+
+      return true;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.code === "auth/wrong-password"
+          ? "Current password is incorrect"
+          : error.message
+      );
+    }
+  }
+);
+
+
+
+
+
 
 const initialState = {
   isAuthenticated: false,
@@ -178,7 +223,20 @@ const authSlice = createSlice({
       .addCase(updateUserAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+
+      .addCase(changePasswordAsync.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(changePasswordAsync.fulfilled, (state) => {
+  state.loading = false;
+})
+.addCase(changePasswordAsync.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload as string;
+});
+
   },
 });
 

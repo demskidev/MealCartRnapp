@@ -1,7 +1,7 @@
 // viewmodels/ProfileViewModel.ts
 import { MEAL_PLAN_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
-import { updateUserAsync } from "@/reduxStore/slices/authSlice";
+import { changePasswordAsync, updateUserAsync } from "@/reduxStore/slices/authSlice";
 import {
     addMealPlanAsync,
     deleteMealPlanAsync,
@@ -134,6 +134,39 @@ export const useProfileViewModel = () => {
       onError?.(e.message);
     }
   };
+  const changePassword = async (
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+  onSuccess?: () => void,
+  onError?: (error: string) => void
+) => {
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    onError?.("All fields are required");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    onError?.("Passwords do not match");
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    onError?.("Password must be at least 6 characters");
+    return;
+  }
+
+  const resultAction = await dispatch(
+    changePasswordAsync({ currentPassword, newPassword })
+  );
+
+  if (changePasswordAsync.fulfilled.match(resultAction)) {
+    onSuccess?.();
+  } else {
+    onError?.(resultAction.payload as string);
+  }
+};
+
 
   return {
     user,
@@ -149,6 +182,7 @@ export const useProfileViewModel = () => {
     addMealPlans,
     deleteMealPlan,
     updateMealPlans,
-    getMealPlanById
+    getMealPlanById,
+    changePassword
   };
 };

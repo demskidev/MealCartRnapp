@@ -6,8 +6,12 @@ import { APP_ROUTES } from '@/constants/AppRoutes';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useLoader } from '@/context/LoaderContext';
 import { useAppDispatch } from '@/reduxStore/hooks';
+import { deleteAccountAsync } from '@/reduxStore/slices/profileSlice';
 import { performLogout } from '@/utils/auth';
+import { resetAndNavigate } from '@/utils/Navigation';
+import { showErrorToast, showSuccessToast } from '@/utils/Toast';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -42,7 +46,7 @@ export default function ProfileScreen() {
     const [deleteAccount, setDeleteAccount] = useState(false);
     const [defaultServings, setDefaultServings] = useState(false);
     const dispatch = useAppDispatch();
-
+    const { showLoader, hideLoader } = useLoader();
 
 
     const onPressItem = (index: any) => {
@@ -173,10 +177,24 @@ export default function ProfileScreen() {
                 cancelText={Strings.profile_cancel}
                 confirmText={Strings.profile_confirmDelete}
                 onCancel={() => setDeleteAccount(false)}
-                onConfirm={() => {
-                    setDeleteAccount(false);
-
-                }}
+                onConfirm={async () => {
+        //   setDeleteAccount(false);
+          showLoader();
+          try {
+            await dispatch(deleteAccountAsync()).unwrap(); // ✅ async + unwrap
+            showSuccessToast("Account deleted successfully");
+            resetAndNavigate(APP_ROUTES.WelcomeScreen); // redirect to welcome/login
+          } catch (error: any) {
+            // ✅ ensure we pass string to toast
+            const message =
+              typeof error === "string"
+                ? error
+                : error?.message || "Failed to delete account";
+            showErrorToast(message);
+          } finally {
+            hideLoader();
+          }
+        }}
             />
             <DefaultServingsModal
                 visible={defaultServings}

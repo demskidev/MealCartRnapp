@@ -3,6 +3,7 @@ import BaseButton from '@/components/BaseButton';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useProfileViewModel } from '@/viewmodels/ProfileViewModel';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -21,7 +22,23 @@ export default function PasswordReset({ navigation }) {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const { changePassword, loading } = useProfileViewModel();
 
+
+    const handleUpdatePassword = () => {
+        changePassword(
+            currentPassword,
+            newPassword,
+            confirmPassword,
+            () => {
+                alert("Password updated successfully");
+                router.back();
+            },
+            (error) => {
+                alert(error);
+            }
+        );
+    };
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <View style={styles.headerRow}>
@@ -64,6 +81,7 @@ export default function PasswordReset({ navigation }) {
                 gradientButton={true}
                 textStyle={styles.savePreference}
                 width={width * 0.92}
+                onPress={handleUpdatePassword}
             />
 
 
@@ -113,7 +131,7 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(10),
         borderWidth: moderateScale(1),
         borderColor: Colors.borderColor,
-        height:verticalScale(42)
+        height: verticalScale(42)
     },
     backIcon: {
         width: moderateScale(24),
