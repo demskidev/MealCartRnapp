@@ -9,7 +9,6 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
-import { getDocumentById } from "@/services/firestore";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -82,24 +81,26 @@ const AddItemToList = ({
   // Helper function: Fetch all ingredients data for a meal
   // Fetch from ingredient collection using ingredientId
 
- 
+ useEffect(() => {
+  // Only fetch if meals array is empty
+  if (visible && meals.length === 0) {
+    console.log("Loading initial meals");
+    fetchMeals(
+      (data) => {
+        console.log("addmealtolist meals fetched:", data.length);
+      },
+      (error) => {
+        console.error("Error fetching initial meals:", error);
+      },
+      3,
+      null
+    );
+  }
+}, [visible]);
 
-  useEffect(() => {
-    if (visible) {
-      fetchMeals(
-        (data) => {
-          console.log("Fetched meals in plan:", data);
-          // setMealsList(data.slice(0, 3)); // Only keep 3 meals
-        },
-        (error) => {
-          // setMealsList([]);
-          console.error("Error fetching meals:", error);
-        },
-        3,
-        null
-      );
-    }
-  }, [visible]);
+
+
+
 
   // Filter meals based on search
   useEffect(() => {
@@ -347,7 +348,7 @@ const AddItemToList = ({
             />
           </View>
           <View style={styles.dividerRow} />
-
+              {console.log('dsgfdsfgjhds',meals)}
           <FlatList
             data={search.trim() ? filteredMeals : meals}
             showsVerticalScrollIndicator={false}
