@@ -65,7 +65,7 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       if (canStart) {
-          start()
+          // start()
       }
     }, [canStart])
 

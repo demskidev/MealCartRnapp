@@ -120,6 +120,7 @@ export const updateUserAsync = createAsyncThunk(
         userId,
         userData
       );
+      console.log('upppppppp8888',updatedUser)
       return updatedUser;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to update user data");

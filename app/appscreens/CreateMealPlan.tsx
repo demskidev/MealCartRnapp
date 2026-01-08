@@ -1,5 +1,4 @@
-import { calendaricon, closeIcon, iconback, plusmeal } from "@/assets/images";
-import { IconCartWhite } from "@/assets/svg";
+import { calendaricon, closeIcon, iconback, iconCalendar, plusmeal } from "@/assets/images";
 import AddItemToList from "@/components/AddItemToList";
 import BaseButton from "@/components/BaseButton";
 import CustomDateTimePicker from "@/components/DateTimePicker";
@@ -43,7 +42,7 @@ interface SelectedMealSlot {
   meal: any;
 }
 
-export default function CreateMealPlan({}) {
+export default function CreateMealPlan({ }) {
   const router = useRouter();
   const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
   const { addPlan, loading: planLoading } = usePlanViewModel();
@@ -151,9 +150,8 @@ export default function CreateMealPlan({}) {
   const days = generateWeekDays(startDate);
 
   function renderDayCard({ item }) {
-    const formattedDate = `${item.date.getDate()}/${
-      item.date.getMonth() + 1
-    }/${item.date.getFullYear()}`;
+    const formattedDate = `${item.date.getDate()}/${item.date.getMonth() + 1
+      }/${item.date.getFullYear()}`;
 
     return (
       <View style={styles.daySection}>
@@ -439,9 +437,11 @@ export default function CreateMealPlan({}) {
           gradientEnd={{ x: 1, y: 0 }}
           textColor={Colors.white}
           rightChild={
-            <IconCartWhite
-              width={verticalScale(21)}
-              height={verticalScale(21)}
+            <Image
+              source={iconCalendar}
+              style={{ width: verticalScale(21), height: verticalScale(21), tintColor: Colors.white }}
+
+              resizeMode="contain"
             />
           }
           textStyle={[styles.confirmButton]}
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     color: Colors.white,
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: moderateScale(13),
+    fontSize: moderateScale(14),
   },
   plusMealIcon: {
     width: moderateScale(24),

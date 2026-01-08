@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Colors.buttonBackground,
     paddingVertical: moderateScale(12),
-    paddingHorizontal: moderateScale(20),
+    paddingHorizontal: moderateScale(6),
     borderRadius: moderateScale(8),
     gap: horizontalScale(10),
     height: verticalScale(48)

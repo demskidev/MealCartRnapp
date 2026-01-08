@@ -7,10 +7,20 @@ import BaseButton from './BaseButton';
 import CustomStepper from './CustomStepper';
 const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
-export default function DefaultServingsModal({ visible, onClose, onSave }) {
+
+interface DefaultServingsModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (selectedServings: number) => void;
+}
+const DefaultServingsModal: React.FC<DefaultServingsModalProps> = ({
+  visible,
+  onClose,
+  onSave,
+}) => {
     const [selected, setSelected] = useState('1');
     const servingsOptions = ['1', '2', '3', '4', '5', '6'];
-    const [servings, setServings] = useState('1');
+    const [servings, setServings] = useState(1);
 
 
     return (
@@ -54,7 +64,7 @@ export default function DefaultServingsModal({ visible, onClose, onSave }) {
                             width={width * 0.35}
                             textStyle={styles.confirmButton}
                             textStyleText={styles.confirmButtonText}
-                            onPress={onClose}
+                              onPress={() => onSave(servings)}
                         />
 
                     </View>
@@ -145,3 +155,5 @@ const styles = StyleSheet.create({
     },
 
 });
+
+export default DefaultServingsModal;

@@ -32,7 +32,8 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
         <TouchableOpacity
           onPress={onIncrement}
           style={styles.iconBtn}
-
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <IconUp style={styles.iconUp} />
         </TouchableOpacity>
@@ -42,7 +43,8 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
         <TouchableOpacity
           onPress={onDecrement}
           style={styles.iconBtn}
-
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <IconDown style={styles.iconDown} />
         </TouchableOpacity>

@@ -46,4 +46,10 @@ export { default as backIcon } from "./backIcon.png";
 
 export { default as googleicon } from "./googleicon.png";
 export { default as updateprofile } from "./updateprofile.png";
+export { default as iconCalendar } from "./iconCalendar.png";
+export { default as iconMeal } from "./iconmeal.png";
+export { default as filledcheckbox } from "./filledcheckbox.png";
+
+
+
 

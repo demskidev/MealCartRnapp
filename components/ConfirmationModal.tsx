@@ -84,7 +84,10 @@ const styles = StyleSheet.create({
     width: width * moderateScale(0.85),
     backgroundColor: Colors.white,
     borderRadius: moderateScale(14),
-    padding: moderateScale(22),
+    paddingHorizontal: moderateScale(22),
+    paddingTop:verticalScale(18),
+    paddingBottom:verticalScale(10),
+
     alignItems: "center",
   },
   title: {
@@ -99,15 +102,16 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: Colors.tertiary,
     textAlign: "center",
-    marginBottom: verticalScale(24),
+    marginBottom: verticalScale(15),
     lineHeight: moderateScale(20),
+    paddingHorizontal:horizontalScale(30)
   },
 
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: verticalScale(24),
-    marginBottom: verticalScale(16),
+    // marginBottom: verticalScale(16),
     gap: horizontalScale(16),
   },
   cancelButton: {

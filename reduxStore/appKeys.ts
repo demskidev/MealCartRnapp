@@ -3,6 +3,8 @@
 
 export const USERS_COLLECTION = 'users';
 export const INGREDIENTS_CATEGORY_COLLECTION = 'ingredientCategory';
+export const MEAL_INGREDIENTS_COLLECTION = 'mealIngredients';
+export const INGREDIENTS_COLLECTION = 'ingredients';
 export const MEALS_COLLECTION = 'meals';
 export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';

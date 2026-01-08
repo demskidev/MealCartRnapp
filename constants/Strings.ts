@@ -402,4 +402,5 @@ export const Strings = {
 
   meals: "meals",
   unknown_plan: "Unknown Plan",
+  profile_servings:'People'
 };

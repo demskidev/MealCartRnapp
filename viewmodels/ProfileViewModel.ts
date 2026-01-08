@@ -3,11 +3,11 @@ import { MEAL_PLAN_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { changePasswordAsync, updateUserAsync } from "@/reduxStore/slices/authSlice";
 import {
-    addMealPlanAsync,
-    deleteMealPlanAsync,
-    fetchDietryPreferencesAsync,
-    fetchMealPlansAsync,
-    updateMealPlansBatchAsync,
+  addMealPlanAsync,
+  deleteMealPlanAsync,
+  fetchDietryPreferencesAsync,
+  fetchMealPlansAsync,
+  updateMealPlansBatchAsync,
 } from "@/reduxStore/slices/profileSlice";
 import { getDocumentById } from "@/services/firestore";
 
@@ -107,6 +107,8 @@ export const useProfileViewModel = () => {
       onError?.("User not found");
       return;
     }
+    console.log('wearecallinguserupdate333335555',userData)
+
 
     const resultAction = await dispatch(
       updateUserAsync({ userId: user.id, userData })

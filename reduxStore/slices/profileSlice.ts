@@ -1,6 +1,6 @@
 // store/slices/profileSlice.ts
 import { Strings } from "@/constants/Strings";
-import { auth } from "@/services/firebase";
+import { auth, db } from "@/services/firebase";
 import {
   addDocument,
   deleteDocument,
@@ -13,7 +13,7 @@ import {
   deleteUser,
   signOut
 } from "firebase/auth";
-import { serverTimestamp } from "firebase/firestore";
+import { deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import {
   ADD_MEAL_PLAN,
   DELETE_MEAL_PLAN,
@@ -163,25 +163,30 @@ const initialState = {
 
 
 export const deleteAccountAsync = createAsyncThunk<
-  void,   // return type
-  void,   // argument type
-  { rejectValue: string } // reject type
+  void,
+  void,
+  { rejectValue: string }
 >("profile/deleteAccount", async (_, { rejectWithValue }) => {
   try {
     const user = auth.currentUser;
+
     if (!user) {
       return rejectWithValue("No user is currently logged in");
     }
 
-    // Delete Firebase user
+    const uid = user.uid;
+
+    // 🔥 1. Delete user from Firestore
+    await deleteDoc(doc(db, "users", uid));
+
+    // 🔥 2. Delete user from Firebase Authentication
     await deleteUser(user);
 
-    // Sign out after deletion
+    // 🔥 3. Sign out
     await signOut(auth);
 
     return;
   } catch (error: any) {
-    // Always return string to avoid toast rendering error
     return rejectWithValue(error?.message || "Failed to delete account");
   }
 });
@@ -270,24 +275,24 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-    
- 
-  .addCase(deleteAccountAsync.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(deleteAccountAsync.fulfilled, (state) => {
-    state.loading = false;
-    state.error = null;
 
-    // Optional: clear user data after account deletion
-    state.mealPlans = [];
-    state.dietaryPreferences = [];
-  })
-  .addCase(deleteAccountAsync.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload || "Failed to delete account";
-  });
+
+      .addCase(deleteAccountAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAccountAsync.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+
+        // Optional: clear user data after account deletion
+        state.mealPlans = [];
+        state.dietaryPreferences = [];
+      })
+      .addCase(deleteAccountAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to delete account";
+      });
   },
 });
 

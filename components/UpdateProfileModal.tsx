@@ -2,6 +2,10 @@ import { closeIcon, googleicon, updateprofile } from '@/assets/images';
 import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
 import { Strings } from '@/constants/Strings';
 import { Colors, FontFamilies } from '@/constants/Theme';
+import { useLoader } from '@/context/LoaderContext';
+import { showErrorToast, showSuccessToast } from '@/utils/Toast';
+import { useProfileViewModel } from '@/viewmodels/ProfileViewModel';
+import { useEffect, useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -14,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import BaseButton from './BaseButton';
+import ImagePickerModal from './ImagePickerModal';
 
 type Props = {
   visible: boolean;
@@ -23,6 +28,55 @@ const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 
 export default function UpdateProfileModal({ visible, onClose }: Props) {
+  const { showLoader, hideLoader } = useLoader();
+  const { updateUserData, user } = useProfileViewModel();
+  const [name, setName] = useState('');
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  // Load current user name when modal opens
+  useEffect(() => {
+    if (visible && user?.name) {
+      setName(user.name);
+    }
+  }, [visible, user?.name]);
+
+  const handleUpdate = async () => {
+    if (!name.trim()) {
+      showErrorToast('Please enter a name');
+      return;
+    }
+
+    showLoader();
+
+    await updateUserData(
+      { name: name.trim() },
+      () => {
+        hideLoader();
+        showSuccessToast('Profile updated successfully!');
+        onClose();
+      },
+      (error) => {
+        hideLoader();
+        showErrorToast(error || 'Failed to update profile');
+      }
+    );
+  };
+   const handleUpload = () => {
+    setShowImagePickerModal(true);
+  };
+
+  const handleImagePicked = (url: string) => {
+    console.log('Selected Image URI:', url);
+    console.log('Image Details:', {
+      uri: url,
+      type: url.includes('data:') ? 'base64' : 'file',
+      extension: url.split('.').pop(),
+      timestamp: new Date().toISOString()
+    });
+    setImageUri(url);
+  };
+
   return (
     <Modal
       visible={visible}
@@ -35,6 +89,11 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
           <View style={StyleSheet.absoluteFillObject} />
         </TouchableWithoutFeedback>
         <View style={styles.container}>
+           <ImagePickerModal
+            visible={showImagePickerModal}
+            onClose={() => setShowImagePickerModal(false)}
+            onImagePicked={handleImagePicked}
+          />
 
           <Text style={styles.headerTitle}>{Strings.updateProfileModal_title}</Text>
           <Text style={styles.headerSubtitle}>
@@ -42,11 +101,13 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
           </Text>
 
           <View style={styles.avatarRow}>
-            <Image
-              source={updateprofile}
-              style={styles.updateProfileImage}
-              resizeMode="contain"
-            />
+            <TouchableOpacity onPress={handleUpload}>
+              <Image
+                source={imageUri ? { uri: imageUri } : updateprofile}
+                style={styles.updateProfileImage}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
             <View style={styles.avatarBtnCol}>
 
               <BaseButton
@@ -74,6 +135,8 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
             style={styles.input}
             placeholder={Strings.updateProfileModal_namePlaceholder}
             placeholderTextColor={Colors.tertiary}
+            value={name}
+            onChangeText={setName}
           />
 
           <Text style={styles.label}>{Strings.updateProfileModal_updateEmail}</Text>
@@ -82,6 +145,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
             placeholder={Strings.updateProfileModal_emailPlaceholder}
             placeholderTextColor={Colors.tertiary}
             keyboardType="email-address"
+            editable={false}
           />
 
           <Text style={styles.socialLabel}>{Strings.updateProfileModal_social}</Text>
@@ -124,7 +188,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
               width={width * 0.4}
               textStyle={styles.confirmButton}
               textStyleText={styles.confirmButtonText}
-              onPress={onClose}
+              onPress={handleUpdate}
             />
 
           </View>

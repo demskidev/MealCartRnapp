@@ -11,44 +11,48 @@ import { useAppDispatch } from '@/reduxStore/hooks';
 import { deleteAccountAsync } from '@/reduxStore/slices/profileSlice';
 import { performLogout } from '@/utils/auth';
 import { resetAndNavigate } from '@/utils/Navigation';
-import { showErrorToast, showSuccessToast } from '@/utils/Toast';
+import { showErrorToast, showSuccessToast, showToast } from '@/utils/Toast';
+import { useProfileViewModel } from '@/viewmodels/ProfileViewModel';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const preferencesData = [
-    {
-        id: '1',
-        title: 'Dietary Preferences',
-        subtitle: 'Vegetarian',
-    },
-    {
-        id: '2',
-        title: Strings.profile_allergies,
-        subtitle: Strings.profile_peanuts,
-    },
-    {
-        id: '3',
-        title: Strings.profile_mealPlanSettings,
-        subtitle: '',
-    },
-    {
-        id: '4',
-        title: Strings.profile_defaultServings,
-        subtitle: Strings.profile_defaultServingsSubtitle,
-    },
-];
+
 
 export default function ProfileScreen() {
     const router = useRouter();
     const [showModal, setShowModal] = useState(false);
     const [deleteAccount, setDeleteAccount] = useState(false);
     const [defaultServings, setDefaultServings] = useState(false);
+    const [servingData, setServingData] = useState();
+
     const dispatch = useAppDispatch();
     const { showLoader, hideLoader } = useLoader();
-
-
+    const { user, loading, dietaryPreferences, profileLoading, updateUserData, fetchDietaryPreferences } = useProfileViewModel();
+    const preferencesData = [
+        {
+            id: '1',
+            title: 'Dietary Preferences',
+            subtitle: 'Vegetarian',
+        },
+        {
+            id: '2',
+            title: Strings.profile_allergies,
+            subtitle: Strings.profile_peanuts,
+        },
+        {
+            id: '3',
+            title: Strings.profile_mealPlanSettings,
+            subtitle: '',
+        },
+        {
+            id: '4',
+            title: Strings.profile_defaultServings,
+            subtitle: user?.servings ? `${user.servings} ${Strings.profile_servings}` : `1 ${Strings.profile_servings}`,
+        },
+    ];
+    console.log('user666666', user)
     const onPressItem = (index: any) => {
         if (index === 0) {
             router.push(APP_ROUTES.DietaryPreferences);
@@ -63,6 +67,25 @@ export default function ProfileScreen() {
             //    router.push('');
         }
     }
+
+
+    const handleSaveServings = (selectedServings: number) => {
+        showLoader()
+        updateUserData(
+            { servings: selectedServings },
+            () => {
+                hideLoader();
+                setDefaultServings(false);
+                showToast('success', 'Servings saved successfully!');
+                router.back();
+            },
+            (error) => {
+                hideLoader();
+                showToast('error', error || 'Failed to save servings');
+            }
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <View style={styles.parentCreateMealText}>
@@ -85,8 +108,8 @@ export default function ProfileScreen() {
                         resizeMode="contain"
                     />
                 </TouchableOpacity>
-                <Text style={styles.name}>{Strings.profile_name}</Text>
-                <Text style={styles.email}>{Strings.profile_email}</Text>
+                <Text style={styles.name}>{user.name}</Text>
+                <Text style={styles.email}>{user.email}</Text>
             </View>
             <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
 
@@ -178,30 +201,30 @@ export default function ProfileScreen() {
                 confirmText={Strings.profile_confirmDelete}
                 onCancel={() => setDeleteAccount(false)}
                 onConfirm={async () => {
-        //   setDeleteAccount(false);
-          showLoader();
-          try {
-            await dispatch(deleteAccountAsync()).unwrap(); // ✅ async + unwrap
-            showSuccessToast("Account deleted successfully");
-            resetAndNavigate(APP_ROUTES.WelcomeScreen); // redirect to welcome/login
-          } catch (error: any) {
-            // ✅ ensure we pass string to toast
-            const message =
-              typeof error === "string"
-                ? error
-                : error?.message || "Failed to delete account";
-            showErrorToast(message);
-          } finally {
-            hideLoader();
-          }
-        }}
+                    //   setDeleteAccount(false);
+                    showLoader();
+                    try {
+                        await dispatch(deleteAccountAsync()).unwrap(); // ✅ async + unwrap
+                        showSuccessToast("Account deleted successfully");
+                        resetAndNavigate(APP_ROUTES.WelcomeScreen); // redirect to welcome/login
+                    } catch (error: any) {
+                        // ✅ ensure we pass string to toast
+                        const message =
+                            typeof error === "string"
+                                ? error
+                                : error?.message || "Failed to delete account";
+                        showErrorToast(message);
+                    } finally {
+                        hideLoader();
+                    }
+                }}
             />
             <DefaultServingsModal
                 visible={defaultServings}
                 onClose={() => setDefaultServings(false)}
-                onSave={(selected) => {
-                    setDefaultServings(false);
-                }}
+                onSave={(selectedServings: number) => handleSaveServings(selectedServings)}
+
+
             />
         </SafeAreaView>
     );
