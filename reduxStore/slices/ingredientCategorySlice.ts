@@ -7,6 +7,7 @@ import { INGREDIENTS_CATEGORY_COLLECTION } from "../appKeys";
 export interface IngredientCategory {
   id: string;
   title: string;
+  unit: string[];
 }
 
 export interface IngredientCategoryState {

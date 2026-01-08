@@ -35,7 +35,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
           React.createElement(icon, {
             width: moderateScale(20),
             height: moderateScale(20),
-            style: styles.icon,})}
+            style: styles.icon,
+          })}
       </TouchableOpacity>
 
       {open && (

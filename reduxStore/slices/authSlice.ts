@@ -117,6 +117,8 @@ export const updateUserAsync = createAsyncThunk(
   }
 );
 
+
+
 const initialState = {
   isAuthenticated: false,
   user: null as any,

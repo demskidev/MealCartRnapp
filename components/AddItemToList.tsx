@@ -1,26 +1,27 @@
-import { burger, closeIcon } from "@/assets/images";
+import { burger, closeIcon, mealfoodA } from "@/assets/images";
 import { CheckBox, SearchIcon } from "@/assets/svg";
 import {
-    horizontalScale,
-    moderateScale,
-    verticalScale,
+  horizontalScale,
+  moderateScale,
+  verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
+import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import BaseButton from "./BaseButton";
 import CustomStepper from "./CustomStepper";
@@ -65,35 +66,57 @@ const AddItemToList = ({
   const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
   const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
 
-  const { meals, loading, fetchMeals } = useMealsViewModel();
+  const { meals, loading, fetchMeals, searchMealsCombined } =
+    useMealsViewModel();
   const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
   const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch meals when component mounts
   useEffect(() => {
     if (visible) {
       fetchMeals(
         (data) => {
-          console.log("✅ Meals fetched successfully:", data);
+          console.log("Fetched meals in plan:", data);
+          // setMealsList(data.slice(0, 3)); // Only keep 3 meals
         },
         (error) => {
-          console.error("❌ Error fetching meals:", error);
-        }
+          // setMealsList([]);
+          console.error("Error fetching meals:", error);
+        },
+        3,
+        null
       );
     }
   }, [visible]);
 
   // Filter meals based on search
   useEffect(() => {
-    if (!search.trim()) {
-      setFilteredMeals(meals);
-    } else {
-      const filtered = meals.filter((meal) =>
-        meal.name.toLowerCase().includes(search.toLowerCase())
-      );
-      setFilteredMeals(filtered);
+    if (!visible) return;
+    if (!search.trim()) return; // Don't search if empty
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
     }
-  }, [search, meals]);
+    debounceTimeout.current = setTimeout(() => {
+      searchMealsCombined(
+        { searchText: search.trim().toLowerCase() },
+        (data) => {
+          setFilteredMeals(data);
+        },
+        (error) => {
+          setFilteredMeals([]);
+          console.error("❌ Error searching meals:", error);
+        }
+      );
+    }, 400); // 400ms debounce
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [search, visible]);
 
   useEffect(() => {
     const initialWeights: Record<string, number> = {};
@@ -177,19 +200,18 @@ const AddItemToList = ({
   };
 
   const handleGenerateList = () => {
-  
-    // const selected = meals.filter((meal) => selectedMeals.includes(meal.id));
-    // onMealSelect?.(selected);
+    const selected = meals.filter((meal) => selectedMeals.includes(meal.id));
+    onMealSelect?.(selected);
     onClose();
   };
 
-  const renderMealItem = ({ item }) => (
+  const renderMealItem = ({ item }: { item: Meal }) => (
     <TouchableOpacity
       style={styles.mealCard}
       onPress={() => handleMealPress(item)}
     >
       <Image
-        source={item.image ? { uri: item.image } : burger}
+        source={item.imageUrl ? { uri: item.imageUrl } : mealfoodA}
         style={styles.mealImage}
         resizeMode="cover"
       />
@@ -246,7 +268,7 @@ const AddItemToList = ({
           <View style={styles.dividerRow} />
 
           <FlatList
-            data={filteredMeals}
+            data={search.trim() ? filteredMeals : meals}
             showsVerticalScrollIndicator={false}
             keyExtractor={(item) => item.id}
             renderItem={renderMealItem}
@@ -395,7 +417,7 @@ const AddItemToList = ({
                 width={width * 0.42}
                 textStyle={styles.confirmButton}
                 textStyleText={styles.confirmButtonText}
-                onPress={handleGenerateList}
+                // onPress={handleGenerateList}
               />
             )}
           </View>
@@ -470,8 +492,11 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(3),
   },
   mealImage: {
-    borderRadius: moderateScale(8),
+    borderTopLeftRadius: moderateScale(8),
+    borderBottomLeftRadius: moderateScale(8),
     marginRight: horizontalScale(12),
+    width: horizontalScale(65),
+    height: verticalScale(55),
   },
   mealName: {
     flex: 1,

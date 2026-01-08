@@ -1,6 +1,12 @@
-import { browseicon, filtericon, gradientclose, mealfoodA, mealfoodB, mealfoodC, mealfoodD, mealfoodE, mealfoodF, mealfoodG, mealfoodH } from '@/assets/images';
+import {
+  browseicon,
+  filtericon,
+  foodimage,
+  gradientclose,
+} from "@/assets/images";
 
 import { SearchIcon } from "@/assets/svg";
+import CreateMealBottomSheet from "@/components/CreateMealBottomSheet";
 import FilterModal from "@/components/FilterModal";
 import Loader from "@/components/Loader";
 import {
@@ -8,12 +14,15 @@ import {
   moderateScale,
   verticalScale,
 } from "@/constants/Constants";
-import { Strings } from '@/constants/Strings';
+import { Filters } from "@/constants/interfaces";
+import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily } from "@/utils/Fonts";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -33,84 +42,183 @@ const MealsScreen: React.FC = () => {
   const [search, setSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [isMyMeals, setIsMyMeals] = useState(true);
 
   const [searchText, setSearchText] = useState("");
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     category: null,
     difficulty: null,
     prepTime: null,
   });
 
- 
-  const { meals, loading, error } = useMealsViewModel();
+  const {
+    fetchMeals,
+    searchMealsCombined,
+    fetchTheRecentMeals,
+    loading,
+    error,
+    recentMeals,
+  } = useMealsViewModel();
 
-  const filteredMeals = meals.filter((item) => {
-    // Search filter
-    if (search && !item.name?.toLowerCase().includes(search.toLowerCase())) {
-      return false;
+  const [normalMeals, setNormalMeals] = useState<Meal[]>([]);
+  const [lastDoc, setLastDoc] = useState<any>(null); // Changed from lastVisible
+  const [isEndReached, setIsEndReached] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const PAGE_SIZE = 2;
+
+  const [filteredMeals, setFilteredMeals] = useState<Meal[]>([]);
+  const [isLoadingFiltered, setIsLoadingFiltered] = useState(false);
+  const hasActiveFilters =
+    filters.category || filters.difficulty || filters.prepTime || search;
+
+  // Display meals: show filtered meals if filters active, otherwise normal meals
+  const displayMeals = hasActiveFilters ? filteredMeals : normalMeals;
+
+  useEffect(() => {
+    loadInitialMeals();
+    fetchTheRecentMeals();
+  }, []);
+
+  useEffect(() => {
+    if (hasActiveFilters) {
+      loadFilteredMeals();
+    }
+  }, [filters, search]);
+
+  // useEffect(() => {
+  //   const result = paginatedMeals.filter((item: Meal) => {
+  //     if (search && !item.name?.toLowerCase().includes(search.toLowerCase())) {
+  //       return false;
+  //     }
+  //     if (filters.category && item.category !== filters.category) {
+  //       return false;
+  //     }
+  //     if (filters.difficulty && item.difficulty !== filters.difficulty) {
+  //       return false;
+  //     }
+  //     if (filters.prepTime) {
+  //       const time = getPrepTimeMinutes(item.prepTime);
+  //       if (filters.prepTime === "< 5 Mins" && time >= 5) return false;
+  //       if (filters.prepTime === "5 - 10 Mins" && (time < 5 || time > 10))
+  //         return false;
+  //       if (filters.prepTime === "10 - 15 Mins" && (time < 10 || time > 15))
+  //         return false;
+  //       if (filters.prepTime === "> 15 Mins" && time <= 15) return false;
+  //     }
+  //     return true;
+  //   });
+  //   setFilteredMeals(result);
+  // }, [paginatedMeals, search, filters]);
+
+  const loadInitialMeals = async () => {
+    console.log("Loading initial meals");
+    setNormalMeals([]);
+    setLastDoc(null);
+    setIsEndReached(false);
+
+    fetchMeals(
+      (data) => {
+        console.log("Initial meals fetched:", data.length);
+        if (data.length < PAGE_SIZE) {
+          setIsEndReached(true);
+        }
+        setNormalMeals(data);
+        if (data.length > 0) {
+          setLastDoc(data[data.length - 1]);
+        }
+      },
+      (error) => {
+        console.error("Error fetching initial meals:", error);
+      },
+      PAGE_SIZE,
+      null
+    );
+  };
+
+  const loadMoreMeals = async () => {
+    if (
+      isEndReached ||
+      loading ||
+      isLoadingMore ||
+      !lastDoc ||
+      hasActiveFilters
+    ) {
+      console.log("Skipping load more:", {
+        isEndReached,
+        loading,
+        isLoadingMore,
+        hasLastDoc: !!lastDoc,
+        hasActiveFilters,
+      });
+      return;
     }
 
-    // Category filter
-    if (filters.category && item.category !== filters.category) {
-      return false;
+    console.log("Loading more meals");
+    setIsLoadingMore(true);
+
+    fetchMeals(
+      (data) => {
+        console.log("More meals fetched:", data.length);
+        if (data.length < PAGE_SIZE) {
+          setIsEndReached(true);
+        }
+
+        setNormalMeals((prev) => {
+          const existingIds = new Set(prev.map((meal: Meal) => meal.id));
+          const newMeals = data.filter(
+            (meal: Meal) => !existingIds.has(meal.id)
+          );
+          console.log("New meals to add:", newMeals.length);
+          return [...prev, ...newMeals];
+        });
+
+        if (data.length > 0) {
+          setLastDoc(data[data.length - 1]);
+        }
+        setIsLoadingMore(false);
+      },
+      (error) => {
+        console.error("Error loading more meals:", error);
+        setIsLoadingMore(false);
+      },
+      PAGE_SIZE,
+      lastDoc
+    );
+  };
+
+  const loadFilteredMeals = async () => {
+    console.log("Loading filtered meals with:", { filters, search });
+    setIsLoadingFiltered(true);
+
+    searchMealsCombined(
+      {
+        category: filters.category,
+        difficulty: filters.difficulty,
+        prepTime: filters.prepTime,
+        searchText: search,
+      },
+      (data) => {
+        console.log("Filtered meals fetched:", data.length);
+        setFilteredMeals(data);
+        setIsLoadingFiltered(false);
+      },
+      (error) => {
+        console.error("Error fetching filtered meals:", error);
+        setIsLoadingFiltered(false);
+      }
+    );
+  };
+
+  const handleEndReached = () => {
+    console.log("End reached", { isEndReached, loading, isLoadingMore });
+    if (!isEndReached && !loading && !isLoadingMore) {
+      loadMoreMeals();
     }
+  };
 
-    if (filters.difficulty && item.difficulty !== filters.difficulty) {
-      return false;
-    }
-
-    if (filters.prepTime) {
-      const time = parseInt(item.prepTime) || 0;
-      if (filters.prepTime === "< 5 Mins" && time >= 5) return false;
-      if (filters.prepTime === "5 - 10 Mins" && (time < 5 || time > 10))
-        return false;
-      if (filters.prepTime === "10 - 15 Mins" && (time < 10 || time > 15))
-        return false;
-      if (filters.prepTime === "> 15 Mins" && time <= 15) return false;
-    }
-
-    return true;
-  });
-
-    const mealData = [
-    {
-      id: "1",
-      name: "Classic Spaghetti Bolo...",
-      category: "Dinner",
-      image: require("@/assets/images/mealfoodA.png"),
-      prepTime: "30 min",
-      difficulty: "Moderate",
-    },
-    {
-      id: "2",
-      name: "Example Meal",
-      category: "Lunch",
-      image: require("@/assets/images/mealfoodB.png"),
-      prepTime: "30 min",
-      difficulty: "Moderate",
-    },
-    {
-      id: "3",
-      name: "Classic Spaghetti Bolo...",
-      category: "Dinner",
-      image: require("@/assets/images/mealfoodC.png"),
-      prepTime: "30 min",
-      difficulty: "Moderate",
-    },
-    {
-      id: "4",
-      name: "Example Meal",
-      category: "Lunch",
-      image: require("@/assets/images/mealfoodD.png"),
-      prepTime: "30 min",
-      difficulty: "Moderate",
-    },
-  ];
- 
-
-  const renderMealCard = ({ item, index }) => (
+  const renderMealCard = ({ item, index }: { item: Meal; index: number }) => (
     <Pressable
       style={{
         backgroundColor: Colors.white,
@@ -135,11 +243,7 @@ const MealsScreen: React.FC = () => {
       }}
     >
       <Image
-        source={
-          item.imageUrl
-            ? { uri: item.imageUrl }
-            : mealfoodA
-        }
+        source={item.imageUrl ? { uri: item.imageUrl } : foodimage}
         resizeMode="cover"
         style={{
           width: "99%",
@@ -150,6 +254,10 @@ const MealsScreen: React.FC = () => {
           borderTopRightRadius: moderateScale(8),
         }}
       />
+
+      <View style={styles.tagContainer}>
+        <Text style={styles.tagText}>{item.category}</Text>
+      </View>
 
       <View style={{ padding: moderateScale(12) }}>
         <Text style={styles.mealNametext} numberOfLines={1}>
@@ -162,14 +270,6 @@ const MealsScreen: React.FC = () => {
     </Pressable>
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <Loader visible={loading} />
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View>
@@ -179,36 +279,46 @@ const MealsScreen: React.FC = () => {
               <Text style={styles.title}>
                 {isMyMeals ? Strings.meals_myMeals : Strings.meals_browseMeals}
               </Text>
-              <Text style={styles.subtitle}>
-                {isMyMeals ? Strings.meals_browseMeals : Strings.meals_myMeals}
-              </Text>
+              {!hasActiveFilters && (
+                <Text style={styles.subtitle}>
+                  {isMyMeals
+                    ? Strings.meals_browseMeals
+                    : Strings.meals_myMeals}
+                </Text>
+              )}
             </View>
 
-            <TouchableOpacity
-              style={{ marginLeft: horizontalScale(6) }}
-              onPress={() => setIsMyMeals((prev) => !prev)}
-            >
-              <Image
-                source={browseicon}
-                resizeMode="contain"
-                style={{
-                  width: moderateScale(24),
-                  height: moderateScale(26),
-                }}
-              />
-            </TouchableOpacity>
+            {!hasActiveFilters && (
+              <TouchableOpacity
+                style={{ marginLeft: horizontalScale(6) }}
+                onPress={() => setIsMyMeals((prev) => !prev)}
+              >
+                <Image
+                  source={browseicon}
+                  resizeMode="contain"
+                  style={{
+                    width: moderateScale(24),
+                    height: moderateScale(26),
+                  }}
+                />
+              </TouchableOpacity>
+            )}
           </View>
 
-          <Image
-            source={gradientclose}
-            resizeMode="contain"
-            style={{
-              width: moderateScale(56),
-              height: moderateScale(56),
-              alignSelf: "flex-end",
-              marginRight: horizontalScale(-17),
-            }}
-          />
+          <TouchableOpacity
+            onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+          >
+            <Image
+              source={gradientclose}
+              resizeMode="contain"
+              style={{
+                width: moderateScale(56),
+                height: moderateScale(56),
+                alignSelf: "flex-end",
+                marginRight: horizontalScale(-17),
+              }}
+            />
+          </TouchableOpacity>
         </View>
         <View style={styles.parentSearchBox}>
           <View style={styles.searchBox}>
@@ -234,58 +344,90 @@ const MealsScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {isMyMeals ? (
-          <View>
-            <Text style={styles.recentText}>Recent Meals</Text>
+        {!hasActiveFilters && isMyMeals ? (
+          <View style={{ marginTop: verticalScale(10) }}>
+            {!recentMeals && !normalMeals ? (
+              <Text style={styles.emptyText}>{Strings.meals_noMealsFound}</Text>
+            ) : (
+              <View>
+                {recentMeals && recentMeals.length > 0 ? (
+                  <View>
+                    <Text style={styles.recentText}>
+                      {Strings.home_recentMeals}
+                    </Text>
 
-            <View style={{ height: height * 0.35 }}>
-              <FlatList
-                data={filteredMeals.slice(0, 0)}
-                renderItem={renderMealCard}
-                keyExtractor={(item) => item.id}
-                numColumns={2}
-                columnWrapperStyle={{
-                  justifyContent: "space-between",
-                  marginBottom: verticalScale(8),
-                }}
-                contentContainerStyle={{ paddingBottom: 60 }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No meals found</Text>
-                }
-              />
-            </View>
-            <Text style={styles.upcomingText}>Your Meals</Text>
-            <View style={{ height: height * 0.3 }}>
-              <FlatList
-                data={filteredMeals}
-                renderItem={renderMealCard}
-                keyExtractor={(item) => item.id}
-                numColumns={2}
-                columnWrapperStyle={{
-                  justifyContent: "space-between",
-                  marginBottom: verticalScale(8),
-                }}
-                contentContainerStyle={{
-                  paddingBottom: verticalScale(100),
-                }}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No meals found</Text>
-                }
-              />
-            </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        justifyContent: "space-between",
+                        marginBottom: verticalScale(8),
+                      }}
+                    >
+                      {recentMeals.slice(0, 4).map((item, index) => (
+                        <View
+                          key={item.id}
+                          style={{
+                            width: itemWidth,
+                            marginBottom: verticalScale(8),
+                          }}
+                        >
+                          {renderMealCard({ item, index })}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.emptyText}>
+                    {Strings.meals_noMealsFound}
+                  </Text>
+                )}
+
+                {normalMeals && normalMeals.length > 0 && (
+                  <View>
+                    <Text style={styles.upcomingText}>
+                      {Strings.meals_yourMeals}
+                    </Text>
+                    <View style={{ height: height * 0.3 }}>
+                      <FlatList
+                        data={normalMeals}
+                        renderItem={renderMealCard}
+                        keyExtractor={(item) => item.id}
+                        numColumns={2}
+                        columnWrapperStyle={{
+                          justifyContent: "space-between",
+                          marginBottom: verticalScale(8),
+                        }}
+                        contentContainerStyle={{
+                          paddingBottom: verticalScale(100),
+                        }}
+                        showsVerticalScrollIndicator={false}
+                        onEndReached={handleEndReached}
+                        onEndReachedThreshold={1}
+                        ListFooterComponent={
+                          !hasActiveFilters &&
+                          isLoadingMore &&
+                          normalMeals.length > 0 ? (
+                            <Loader visible={true} />
+                          ) : null
+                        }
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         ) : (
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, marginTop: verticalScale(10) }}>
             <Text
               style={[styles.recentText, { marginVertical: verticalScale(10) }]}
             >
-              All Meals
+              {Strings.meals_allMeals}
             </Text>
 
             <FlatList
-              data={mealData}
+              data={displayMeals}
               renderItem={renderMealCard}
               keyExtractor={(item) => item.id}
               numColumns={2}
@@ -295,6 +437,11 @@ const MealsScreen: React.FC = () => {
               }}
               contentContainerStyle={{ paddingBottom: 160 }}
               showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>
+                  {Strings.meals_recentMealsFound}
+                </Text>
+              }
             />
           </View>
         )}
@@ -302,7 +449,7 @@ const MealsScreen: React.FC = () => {
         <FilterModal
           visible={filterModalVisible}
           onClose={() => setFilterModalVisible(false)}
-          onConfirm={(selectedFilters) => {
+          onConfirm={(selectedFilters: Filters) => {
             setFilters(selectedFilters);
             setFilterModalVisible(false);
           }}
@@ -315,17 +462,17 @@ const MealsScreen: React.FC = () => {
           }}
         />
       </View>
+      <CreateMealBottomSheet ref={bottomSheetRef} />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-
+    flex: 1,
     backgroundColor: Colors.background,
     paddingHorizontal: horizontalScale(20),
-    paddingBottom: verticalScale(15)
-
+    paddingBottom: verticalScale(15),
   },
 
   title: {
@@ -357,8 +504,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderColor,
     paddingHorizontal: horizontalScale(12),
     height: verticalScale(44),
-    width: width * 0.6
-
+    width: width * 0.6,
   },
   searchInput: {
     flex: 1,
@@ -374,10 +520,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   parentOfRecentMeal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   recentText: {
     fontSize: moderateScale(21),
@@ -408,7 +553,6 @@ const styles = StyleSheet.create({
     color: Colors.tertiary,
     textAlign: "center",
   },
-  upcomingText: { fontSize: moderateScale(21), fontWeight: '600', color: Colors.primary, fontFamily: FontFamily.ROBOTO_SEMI_BOLD, marginVertical: verticalScale(14) },
   mealCardContainer: {
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
@@ -419,14 +563,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    overflow: 'visible',
+    overflow: "visible",
     marginBottom: verticalScale(8),
   },
   mealCardImage: {
-    width: '99%',
+    width: "99%",
     height: verticalScale(105),
     backgroundColor: Colors.white,
-    alignSelf: 'center',
+    alignSelf: "center",
     borderTopLeftRadius: moderateScale(8),
     borderTopRightRadius: moderateScale(8),
   },
@@ -443,7 +587,7 @@ const styles = StyleSheet.create({
   gradientCloseImage: {
     width: moderateScale(56),
     height: moderateScale(56),
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginRight: horizontalScale(-17),
   },
   filterIcon: {
@@ -467,7 +611,7 @@ const styles = StyleSheet.create({
     marginVertical: verticalScale(10),
   },
   flatListColumnWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginBottom: verticalScale(8),
   },
   recentMealsContent: {
@@ -479,8 +623,21 @@ const styles = StyleSheet.create({
   browseMealsContent: {
     paddingBottom: 160,
   },
-
-
+  tagContainer: {
+    backgroundColor: Colors._FFFFFF97,
+    borderRadius: moderateScale(16),
+    paddingHorizontal: horizontalScale(12),
+    position: "absolute",
+    end: 0,
+    marginTop: verticalScale(10),
+    paddingVertical: verticalScale(8),
+    marginRight: horizontalScale(10),
+  },
+  tagText: {
+    fontSize: moderateScale(13),
+    fontFamily: FontFamily.ROBOTO_REGULAR,
+    color: Colors.primary,
+  },
 });
 
 export default MealsScreen;

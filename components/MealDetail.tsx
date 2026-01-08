@@ -14,6 +14,7 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
+import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily, fontSize } from "@/utils/Fonts";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
@@ -35,7 +36,13 @@ import SendToShoppingList from "./SendShoppingList";
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
-const MealDetail = ({ meal: initialMeal, onBack }) => {
+
+type MealDetailProps = {
+  meal: Meal;
+  onBack: () => void;
+};
+
+const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
@@ -86,7 +93,7 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
     <View style={styles.container}>
       <View style={styles.headerImageContainer}>
         <ImageBackground
-          source={meal.image ? { uri: meal.image } : mealfoodH}
+          source={meal.imageUrl ? { uri: meal.imageUrl } : mealfoodH}
           style={{ height: verticalScale(300), width: "100%" }}
         >
           <View style={styles.topRow}>
@@ -109,7 +116,7 @@ const MealDetail = ({ meal: initialMeal, onBack }) => {
             <View style={styles.parentOfname}>
               <Text style={styles.title}>{meal.name}</Text>
               <Text style={styles.info}>
-                {meal.time && `${meal.time} •`} {meal.servings || 0}{" "}
+                {meal.prepTime && `${meal.prepTime} •`} {meal.servings || 0}{" "}
                 {Strings.createMeal_servings}{" "}
                 {meal.difficulty && `• ${meal.difficulty}`}
               </Text>

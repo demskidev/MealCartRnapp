@@ -24,7 +24,7 @@ export interface MealSlot {
 
 export interface DayData {
   dayTitle: string;
-  date: Timestamp;
+  date: Date;
   mealSlots: MealSlot[];
 }
 
@@ -32,11 +32,11 @@ export interface Plan {
   id: string;
   uid: string;
   planName: string;
-  startDate: Timestamp;
+  startDate: Date;
   status: string;
-  endDate: Timestamp;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  endDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
   days: DayData[];
 }
 

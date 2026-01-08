@@ -54,3 +54,9 @@ export const androidReelHeight: number = screenFullHeight - getHeight(70);
 export const addDotAtEnd = (data: string): string => {
   return data.trim().endsWith(".") ? data : `${data}.`;
 };
+
+export function getPrepTimeMinutes(prepTime?: string): number {
+  if (!prepTime) return 0;
+  const match = prepTime.match(/\d+/);
+  return match ? parseInt(match[0]) : 0;
+}
