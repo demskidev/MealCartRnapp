@@ -1,7 +1,4 @@
-import { setDoc } from "firebase/firestore";
-
-// services/firestore.ts
-// Firestore service for common queries
+import { orderBy, setDoc, Timestamp } from "firebase/firestore";
 
 import {
   addDoc,
@@ -10,6 +7,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit as qLimit,
+  startAfter as qStartAfter,
   query,
   updateDoc,
   where,
@@ -17,7 +16,6 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "./firebase";
 
-// Get all documents from a collection
 export const getAllDocuments = async (collectionName: string) => {
   try {
     console.log("getAllDocuments called with:", collectionName);
@@ -32,7 +30,6 @@ export const getAllDocuments = async (collectionName: string) => {
   }
 };
 
-// Get a single document by ID
 export const getDocumentById = async (collectionName: string, id: string) => {
   const docRef = doc(db, collectionName, id);
   const docSnap = await getDoc(docRef);
@@ -43,14 +40,13 @@ export const getDocumentById = async (collectionName: string, id: string) => {
   }
 };
 
-// Add a new document
 export const addDocument = async (collectionName: string, data: any) => {
   const colRef = collection(db, collectionName);
-  const docRef = await addDoc(colRef, data);
-  return { id: docRef.id, ...data };
+  const realData = { ...data, createdAt: new Date() }; // Ensure createdAt is a Date object
+  const docRef = await addDoc(colRef, realData);
+  return { id: docRef.id, ...realData };
 };
 
-// Set a document by ID (create or overwrite)
 export const setDocumentById = async (
   collectionName: string,
   id: string,
@@ -60,7 +56,6 @@ export const setDocumentById = async (
   await setDoc(docRef, data);
 };
 
-// Update a document
 export const updateDocument = async (
   collectionName: string,
   id: string,
@@ -68,7 +63,6 @@ export const updateDocument = async (
 ) => {
   const docRef = doc(db, collectionName, id);
   await updateDoc(docRef, data);
-  // Fetch and return the actual document from Firestore
   const updatedDoc = await getDoc(docRef);
   if (updatedDoc.exists()) {
     return { id: updatedDoc.id, ...updatedDoc.data() };
@@ -76,41 +70,131 @@ export const updateDocument = async (
   return { id, ...data };
 };
 
-// Delete a document
 export const deleteDocument = async (collectionName: string, id: string) => {
   const docRef = doc(db, collectionName, id);
   await deleteDoc(docRef);
 };
 
-// Query documents with a condition
 export const queryDocuments = async (
   collectionName: string,
   field: string,
   op: any,
-  value: any
+  value: any,
+  options?: {
+    limit?: number;
+    startAfter?: any;
+    orderBy?: string;
+    orderDirection?: "asc" | "desc";
+  }
 ) => {
   const colRef = collection(db, collectionName);
-  const q = query(colRef, where(field, op, value));
+
+  let queryConstraints: any[] = [where(field, op, value)];
+
+  if (options?.orderBy) {
+    queryConstraints.push(
+      orderBy(options.orderBy, options.orderDirection || "asc")
+    );
+  }
+
+  if (options?.startAfter) {
+    let cursorValue;
+
+    if (options.startAfter.createdAt) {
+      if (options.startAfter.createdAt instanceof Timestamp) {
+        cursorValue = options.startAfter.createdAt;
+      } else if (options.startAfter.createdAt instanceof Date) {
+        cursorValue = Timestamp.fromDate(options.startAfter.createdAt);
+      } else if (options.startAfter.createdAt.seconds) {
+        cursorValue = new Timestamp(
+          options.startAfter.createdAt.seconds,
+          options.startAfter.createdAt.nanoseconds || 0
+        );
+      } else {
+        cursorValue = Timestamp.fromDate(
+          new Date(options.startAfter.createdAt)
+        );
+      }
+
+      queryConstraints.push(qStartAfter(cursorValue));
+    }
+  }
+
+  if (options?.limit) {
+    queryConstraints.push(qLimit(options.limit));
+  }
+
+  const q = query(colRef, ...queryConstraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
-// Get all dietary preferences
+export const compoundQueryDocuments = async (
+  collectionName: string,
+  whereConditions: Array<{ field: string; op: any; value: any }>,
+  options?: {
+    limit?: number;
+    startAfter?: any;
+    orderBy?: string;
+    orderDirection?: "asc" | "desc";
+  }
+) => {
+  const colRef = collection(db, collectionName);
 
-// Upload an image to Firebase Storage and return the download URL
+  let queryConstraints: any[] = [];
+
+  // Add all where conditions
+  if (Array.isArray(whereConditions)) {
+    whereConditions.forEach((cond) => {
+      queryConstraints.push(where(cond.field, cond.op, cond.value));
+    });
+  }
+
+  if (options?.orderBy) {
+    queryConstraints.push(
+      orderBy(options.orderBy, options.orderDirection || "asc")
+    );
+  }
+
+  if (options?.startAfter) {
+    let cursorValue;
+    if (options.startAfter.createdAt) {
+      if (options.startAfter.createdAt instanceof Timestamp) {
+        cursorValue = options.startAfter.createdAt;
+      } else if (options.startAfter.createdAt instanceof Date) {
+        cursorValue = Timestamp.fromDate(options.startAfter.createdAt);
+      } else if (options.startAfter.createdAt.seconds) {
+        cursorValue = new Timestamp(
+          options.startAfter.createdAt.seconds,
+          options.startAfter.createdAt.nanoseconds || 0
+        );
+      } else {
+        cursorValue = Timestamp.fromDate(
+          new Date(options.startAfter.createdAt)
+        );
+      }
+      queryConstraints.push(qStartAfter(cursorValue));
+    }
+  }
+
+  if (options?.limit) {
+    queryConstraints.push(qLimit(options.limit));
+  }
+
+  const q = query(colRef, ...queryConstraints);
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+};
+
 export const uploadImageToFirebase = async (uri: string, path: string) => {
   try {
-    // Convert local URI to blob
     let blob;
 
     const response = await fetch(uri);
     blob = await response.blob();
 
-    // Create a storage reference
     const storageRef = ref(storage, path);
-    // Upload the blob
     await uploadBytes(storageRef, blob);
-    // Get the download URL
     const downloadURL = await getDownloadURL(storageRef);
     return downloadURL;
   } catch (error: any) {

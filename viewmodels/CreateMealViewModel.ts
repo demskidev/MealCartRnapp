@@ -1,9 +1,9 @@
 // viewmodels/CreateMealViewModel.ts
-import { INGREDIENTS_CATEGORY_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { fetchIngredientCategories } from "@/reduxStore/slices/ingredientCategorySlice";
 import { addMeal, updateMeal } from "@/reduxStore/slices/mealsSlice";
 import { useEffect } from "react";
+import { useMealsViewModel } from "./MealsViewModel";
 
 export const useCreateMealViewModel = () => {
   const dispatch = useAppDispatch();
@@ -18,6 +18,7 @@ export const useCreateMealViewModel = () => {
   );
   const loadingMeal = useAppSelector((state) => state.meal.loading);
   const errorMeal = useAppSelector((state) => state.meal.error);
+  const {fetchTheRecentMeals} =  useMealsViewModel()
 
   useEffect(() => {
     fetchCategories();
@@ -48,6 +49,7 @@ export const useCreateMealViewModel = () => {
     const resultAction = await dispatch(updateMeal(mealData));
     if (updateMeal.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
+      fetchTheRecentMeals()
     } else {
       onError?.(resultAction.payload as string);
     }

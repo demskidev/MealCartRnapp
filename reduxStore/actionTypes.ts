@@ -26,5 +26,5 @@ export const UPDATE_PLAN = "plans/updatePlan";
 export const DELETE_PLAN = "plans/deletePlan";
 export const FETCH_PLANS = "plans/fetchPlans";
 export const CHANGE_PASSWORD = 'auth/changePassword';
-
+export const FETCH_ACTIVE_PLAN = "plans/fetchActivePlan";
 

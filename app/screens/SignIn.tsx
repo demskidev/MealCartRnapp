@@ -45,8 +45,6 @@ const SignInScreen = () => {
 
 
   const handleSignin = async (values: SigninFormValues) => {
-
-
     await signinViewModel.handleSignin(
       values,
       (payload) => {

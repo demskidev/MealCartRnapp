@@ -49,11 +49,14 @@ const PlansScreen: React.FC = () => {
   const [zoneReady, setZoneReady] = useState(false);
   const router = useRouter();
   const { start, stop } = useTourGuideController();
+
   const { setCurrentStepIndex } = useTourStep();
   const { enrichedPlans, loading, fetchPlans, updatePlan } = usePlanViewModel();
   const { getMealById } = useMealsViewModel();
   const { getMealPlanById } = useProfileViewModel();
   const { showLoader, hideLoader } = useLoader();
+  // Use filteredPlans from viewmodel (date filtering logic is now in the viewmodel)
+  const filteredPlans = usePlanViewModel().enrichedPlans;
 
   useEffect(() => {
     showLoader();
@@ -64,11 +67,7 @@ const PlansScreen: React.FC = () => {
         console.error("❌ Error fetching plans:", error);
       }
     );
-    // eslint-disable-next-line
   }, []);
-
-  // Use filteredPlans from viewmodel (date filtering logic is now in the viewmodel)
-  const filteredPlans = usePlanViewModel().enrichedPlans;
 
   const activePlan = filteredPlans.find(
     (plan) => plan.status === MealStatus.STARTED
@@ -79,38 +78,34 @@ const PlansScreen: React.FC = () => {
 
   console.log("🏆 Active Plan:", activePlan);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!zoneReady) return;
 
+      const timeout = setTimeout(() => {
+        start(5); // 🔥 order 1, zone 1
+      }, 100);
 
-
-
-  // useFocusEffect(React.useCallback(() => {
-  //   if (!zoneReady) return;
-  //   setCurrentStepIndex(4);
-  //   const timeout = setTimeout(() => { start(1); }, 300);
-  //   return () => clearTimeout(timeout);
-  // }, [zoneReady]));
-
+      return () => clearTimeout(timeout);
+    }, [zoneReady])
+  );
 
   useFocusEffect(
-  React.useCallback(() => {
-    if (!zoneReady) return;
+    React.useCallback(() => {
+      stop();
+      let isActive = true;
+      const timeout = setTimeout(() => {
+        if (isActive) {
+          start();
+        }
+      }, 200);
+      return () => {
+        isActive = false;
+        clearTimeout(timeout);
+      };
+    }, [])
+  );
 
-    const timeout = setTimeout(() => {
-      start(5); // 🔥 order 1, zone 1
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [zoneReady])
-);
-
-  useFocusEffect(React.useCallback(() => {
-    stop();
-    let isActive = true;
-    const timeout = setTimeout(() => { if (isActive) { start(); } }, 200);
-    return () => { isActive = false; clearTimeout(timeout); };
-  }, []));
-
- 
   // Utility to normalize Firestore/JS timestamps to JS Date
   const toDateObject = (timestamp: any): Date | null => {
     if (!timestamp) return null;
@@ -149,7 +144,7 @@ const PlansScreen: React.FC = () => {
       const start = toDateObject(plan.startDate);
       const now = new Date();
       if (start && start > now) {
-        alert('You cannot start an upcoming plan.');
+        alert("You cannot start an upcoming plan.");
         return;
       }
       if (activePlan && activePlan.id !== plan.id) {
@@ -177,9 +172,11 @@ const PlansScreen: React.FC = () => {
   const renderShoppingList = ({ item }: { item: any }) => {
     const totalMeals = getTotalMeals(item);
     const startDate = formatDate(item.startDate);
+
     return (
       <View style={styles.listCard}>
         <Text style={styles.listTitle}>{item.planName}</Text>
+
         <View style={styles.listItem}>
           <View>
             <Text style={styles.listDate}>
@@ -244,9 +241,9 @@ const PlansScreen: React.FC = () => {
 
           <TourGuideZone zone={5} shape="circle" maskOffset={10}>
             <View
-               collapsable={false}
+              collapsable={false}
               style={styles.tourTarget}
-               onLayout={() => setZoneReady(true)}
+              onLayout={() => setZoneReady(true)}
             >
               <TouchableOpacity
                 onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
@@ -347,7 +344,7 @@ const PlansScreen: React.FC = () => {
                     style={styles.createListIcon}
                   />
                 }
-                onPress={() => router.push(APP_ROUTES.LISTS)}
+                onPress={() => pushNavigation(APP_ROUTES.LISTS)}
               />
               <BaseButton
                 title={Strings.plans_viewPlan}
@@ -356,7 +353,7 @@ const PlansScreen: React.FC = () => {
                 width={width * 0.3}
                 textStyle={styles.confirmButton}
                 textStyleText={styles.confirmButtonText}
-                onPress={() => router.push(APP_ROUTES.TestMealPlan)}
+                onPress={() => pushNavigation(APP_ROUTES.TestMealPlan)}
               />
             </View>
             <TouchableOpacity

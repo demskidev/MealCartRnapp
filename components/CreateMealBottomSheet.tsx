@@ -22,14 +22,14 @@ import {
 } from "@/reduxStore/appKeys";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
-import { getUnitOptions } from "@/utils/unitOptions";
+// import { getUnitOptions } from "@/utils/unitOptions";
 import { createMealValidationSchema } from "@/utils/validators/MealValidators";
 import { useCreateMealViewModel } from "@/viewmodels/CreateMealViewModel";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { serverTimestamp } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import { Formik } from "formik";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import {
@@ -67,7 +67,20 @@ const CreateMealBottomSheet = forwardRef<
   const snapPoints = useMemo(() => ["100%"], []);
   const { width } = Dimensions.get("window");
 
-  const prepTimeOptions = [Strings._5_mins, Strings._10_mins, Strings._15_mins];
+  const prepTimeOptions = [
+    Strings._5_mins,
+    Strings._10_mins,
+    Strings._15_mins,
+    Strings._20_mins,
+    Strings._25_mins,
+    Strings._30_mins,
+    Strings._35_mins,
+    Strings._40_mins,
+    Strings._45_mins,
+    Strings._50_mins,
+    Strings._55_mins,
+    Strings._60_mins,
+  ];
 
   const { showLoader, hideLoader } = useLoader();
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
@@ -118,176 +131,193 @@ const CreateMealBottomSheet = forwardRef<
     else hideLoader();
   }, [loading]);
 
+  // Helper to get units for a given category (object or id)
+  const getUnitsForCategory = (category) => {
+    if (!category) return [];
+    // If category is an object with id
+    if (typeof category === "object" && category.id) {
+      const found = ingredientCategories.find((cat) => cat.id === category.id);
+      return found && Array.isArray(found.unit) ? found.unit : [];
+    }
+    // If category is a string (id)
+    if (typeof category === "string") {
+      const found = ingredientCategories.find((cat) => cat.id === category);
+      return found && Array.isArray(found.unit) ? found.unit : [];
+    }
+    return [];
+  };
+
   const renderIngredientItem =
     (ingredients, setFieldValue, errors, touched, setTouched) =>
-      ({ item, index }) => {
-        // Check if the current unit is tablespoon (or similar volume measurements)
-        const isVolumeUnit =
-          item?.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
-          item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
-          item?.unit?.toLowerCase().includes(Strings.units.cup);
-
-        return (
-          <View>
-            <Text style={styles.label}>Ingredient Name</Text>
-            <CustomTextInput
-              placeholder={Strings.createMeal_ingredientName_placeholder}
-              value={item.name}
-              onChangeText={(text) => {
-                const updated = [...ingredients];
-                updated[index] = { ...updated[index], name: text };
-                setFieldValue(INGREDIENTS_KEY, updated);
-                if (
-                  touched.ingredients?.[index]?.name &&
-                  errors.ingredients?.[index]?.name
-                ) {
-                  const updatedTouched = { ...touched };
-                  if (Array.isArray(updatedTouched.ingredients)) {
-                    updatedTouched.ingredients[index] = {
-                      ...updatedTouched.ingredients[index],
-                      name: false,
-                    };
-                    setTouched(updatedTouched);
-                  }
-                }
-              }}
-              error={
+    ({ item, index }) => {
+      // Check if the current unit is tablespoon (or similar volume measurements)
+      const isVolumeUnit =
+        item?.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
+        item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
+        item?.unit?.toLowerCase().includes(Strings.units.cup);
+ 
+      // Get units for the selected category
+      const unitOptions = getUnitsForCategory(item?.category);
+ 
+      return (
+        <View>
+          <Text style={styles.label}>{Strings.createMeal_ingredientName}</Text>
+          <CustomTextInput
+            placeholder={Strings.createMeal_ingredientName_placeholder}
+            value={item.name}
+            onChangeText={(text) => {
+              const updated = [...ingredients];
+              updated[index] = { ...updated[index], name: text };
+              setFieldValue(INGREDIENTS_KEY, updated);
+              if (
                 touched.ingredients?.[index]?.name &&
                 errors.ingredients?.[index]?.name
+              ) {
+                const updatedTouched = { ...touched };
+                if (Array.isArray(updatedTouched.ingredients)) {
+                  updatedTouched.ingredients[index] = {
+                    ...updatedTouched.ingredients[index],
+                    name: false,
+                  };
+                  setTouched(updatedTouched);
+                }
               }
-            />
-            <View style={styles.row}>
-              <View style={styles.rowItem}>
-                <Text
-                  style={[
-                    styles.label,
-                    !isVolumeUnit && { color: Colors.tertiary },
-                  ]}
-                >
-                  Count
-                </Text>
-                <CustomStepper
-                  value={isVolumeUnit ? item?.count : "0"}
-                  disabled={!isVolumeUnit}
-                  onIncrement={() => {
-                    if (!isVolumeUnit) return;
-                    const updated = [...ingredients];
-                    updated[index] = {
-                      ...updated[index],
-                      count: String(Number(item?.count || 0) + 1),
-                    };
-                    setFieldValue(INGREDIENTS_KEY, updated);
-                  }}
-                  onDecrement={() => {
-                    if (!isVolumeUnit) return;
-                    const updated = [...ingredients];
-                    updated[index] = {
-                      ...updated[index],
-                      count: String(Math.max(1, Number(item?.count || 1) - 1)),
-                    };
-                    setFieldValue(INGREDIENTS_KEY, updated);
-                  }}
-                />
-              </View>
-
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>{Strings.createMeal_unit}</Text>
-
-                <CustomStepper
-                  value={item?.unit}
-                  onIncrement={() => {
-                    const unitWeightOptions = getUnitOptions(item?.category); // USE getUnitOptions
-                    const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
-                    if (unitWeightIndex < unitWeightOptions.length - 1) {
-                      const updated = [...ingredients];
-                      const newUnit = unitWeightOptions[unitWeightIndex + 1];
-                      updated[index] = {
-                        ...updated[index],
-                        unit: newUnit,
-                        // Reset count if switching from volume to non-volume unit
-                        count:
-                          newUnit
-                            ?.toLowerCase()
-                            .includes(Strings.units.tablespoon) ||
-                            newUnit
-                              ?.toLowerCase()
-                              .includes(Strings.units.teaspoon) ||
-                            newUnit?.toLowerCase().includes(Strings.units.cup)
-                            ? updated[index].count
-                            : "0",
-                      };
-                      setFieldValue(INGREDIENTS_KEY, updated);
-                    }
-                  }}
-                  onDecrement={() => {
-                    const unitWeightOptions = getUnitOptions(item?.category); // USE getUnitOptions
-                    const unitWeightIndex = unitWeightOptions.indexOf(item?.unit);
-                    if (unitWeightIndex > 0) {
-                      const updated = [...ingredients];
-                      const newUnit = unitWeightOptions[unitWeightIndex - 1];
-                      updated[index] = {
-                        ...updated[index],
-                        unit: newUnit,
-                        // Reset count if switching from volume to non-volume unit
-                        count:
-                          newUnit
-                            ?.toLowerCase()
-                            .includes(Strings.units.tablespoon) ||
-                            newUnit
-                              ?.toLowerCase()
-                              .includes(Strings.units.teaspoon) ||
-                            newUnit?.toLowerCase().includes(Strings.units.cup)
-                            ? updated[index].count
-                            : "0",
-                      };
-                      setFieldValue(INGREDIENTS_KEY, updated);
-                    }
-                  }}
-                />
-              </View>
-
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>{Strings.createMeal_category}</Text>
-
-                <CustomDropdown
-                  value={item?.category}
-                  options={ingredientCategories}
-                  onSelect={(category) => {
-                    const updated = [...ingredients];
-                    const newUnitOptions = getUnitOptions(category); // USE getUnitOptions
-                    updated[index] = {
-                      ...updated[index],
-                      unit: newUnitOptions[0] ?? "", // Use first unit from getUnitOptions
-                      category,
-                      // Reset count when category changes
-                      count: "0",
-                    };
-                    setFieldValue(INGREDIENTS_KEY, updated);
-                  }}
-                  icon={IconDown}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => {
-                  const updated = ingredients.filter((_, i) => i !== index);
+            }}
+            error={
+              touched.ingredients?.[index]?.name &&
+              errors.ingredients?.[index]?.name
+            }
+          />
+          <View style={styles.row}>
+            <View style={styles.rowItem}>
+              <Text
+                style={[
+                  styles.label,
+                  !isVolumeUnit && { color: Colors.tertiary },
+                ]}
+              >
+                {Strings.createMeal_count}
+              </Text>
+              <CustomStepper
+                value={isVolumeUnit ? item?.count : "0"}
+                onIncrement={() => {
+                  if (!isVolumeUnit) return;
+                  const updated = [...ingredients];
+                  updated[index] = {
+                    ...updated[index],
+                    count: String(Number(item?.count || 0) + 1),
+                  };
                   setFieldValue(INGREDIENTS_KEY, updated);
                 }}
-              >
-                <Image
-                  source={deleteicon}
-                  style={{
-                    width: verticalScale(24),
-                    height: verticalScale(24),
-                  }}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
+                onDecrement={() => {
+                  if (!isVolumeUnit) return;
+                  const updated = [...ingredients];
+                  updated[index] = {
+                    ...updated[index],
+                    count: String(Math.max(1, Number(item?.count || 1) - 1)),
+                  };
+                  setFieldValue(INGREDIENTS_KEY, updated);
+                }}
+              />
             </View>
+ 
+            <View style={styles.rowItem}>
+              <Text style={styles.label}>{Strings.createMeal_unit}</Text>
+ 
+              <CustomStepper
+                value={item?.unit}
+                onIncrement={() => {
+                  const unitWeightIndex = unitOptions.indexOf(item?.unit);
+                  if (unitWeightIndex < unitOptions.length - 1) {
+                    const updated = [...ingredients];
+                    const newUnit = unitOptions[unitWeightIndex + 1];
+                    updated[index] = {
+                      ...updated[index],
+                      unit: newUnit,
+                      // Reset count if switching from volume to non-volume unit
+                      count:
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.tablespoon) ||
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.teaspoon) ||
+                        newUnit?.toLowerCase().includes(Strings.units.cup)
+                          ? updated[index].count
+                          : "0",
+                    };
+                    setFieldValue(INGREDIENTS_KEY, updated);
+                  }
+                }}
+                onDecrement={() => {
+                  const unitWeightIndex = unitOptions.indexOf(item?.unit);
+                  if (unitWeightIndex > 0) {
+                    const updated = [...ingredients];
+                    const newUnit = unitOptions[unitWeightIndex - 1];
+                    updated[index] = {
+                      ...updated[index],
+                      unit: newUnit,
+                      // Reset count if switching from volume to non-volume unit
+                      count:
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.tablespoon) ||
+                        newUnit
+                          ?.toLowerCase()
+                          .includes(Strings.units.teaspoon) ||
+                        newUnit?.toLowerCase().includes(Strings.units.cup)
+                          ? updated[index].count
+                          : "0",
+                    };
+                    setFieldValue(INGREDIENTS_KEY, updated);
+                  }
+                }}
+              />
+            </View>
+ 
+            <View style={styles.rowItem}>
+              <Text style={styles.label}>{Strings.createMeal_category}</Text>
+ 
+              <CustomDropdown
+                value={item?.category}
+                options={ingredientCategories}
+                onSelect={(category) => {
+                  const updated = [...ingredients];
+                  const newUnitOptions = getUnitsForCategory(category);
+                  updated[index] = {
+                    ...updated[index],
+                    unit: newUnitOptions[0] ?? "", // Use first unit from getUnitsForCategory
+                    category,
+                    // Reset count when category changes
+                    count: "0",
+                  };
+                  setFieldValue(INGREDIENTS_KEY, updated);
+                }}
+                icon={IconDown}
+              />
+            </View>
+ 
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => {
+                const updated = ingredients.filter((_, i) => i !== index);
+                setFieldValue(INGREDIENTS_KEY, updated);
+              }}
+            >
+              <Image
+                source={deleteicon}
+                style={{
+                  width: verticalScale(24),
+                  height: verticalScale(24),
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           </View>
-        );
-      };
+        </View>
+      );
+    };
+    
   const handleUpload = (setFieldValue) => {
     setShowImagePickerModal(true);
   };
@@ -357,6 +387,11 @@ const CreateMealBottomSheet = forwardRef<
       );
   const handleCreateMeal = async (values) => {
     try {
+      const name = values.name.trim();
+      const nameCharacters = [];
+      for (let i = 1; i <= name.length; i++) {
+        nameCharacters.push(name.substring(0, i).toLowerCase());
+      }
       const mappedIngredients = values.ingredients.map((ing) => {
         const isVolumeUnit =
           ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
@@ -376,7 +411,8 @@ const CreateMealBottomSheet = forwardRef<
       });
       const mappedSteps = values.steps.map((step) => step.text);
       const mealData = {
-        name: values.name,
+        name: name,
+        nameCharacters: nameCharacters,
         description: values.description,
         imageUrl: values.imageUrl,
         prepTime: values.prepTime,
@@ -384,8 +420,8 @@ const CreateMealBottomSheet = forwardRef<
         difficulty: values.difficulty,
         category: values.category,
         ingredients: mappedIngredients,
+        lastViewedAt: Timestamp.fromDate(new Date()),
         steps: mappedSteps,
-        createdAt: serverTimestamp(),
         uid: user?.id,
       };
       addMealData(
@@ -673,6 +709,7 @@ const CreateMealBottomSheet = forwardRef<
                       options={[
                         Strings.testMealPlan_easy,
                         Strings.testMealPlan_medium,
+                        Strings.filterModal_challenging,
                         Strings.testMealPlan_hard,
                       ]}
                       onSelect={(val) => setFieldValue(DIFFICULTY_KEY, val)}
@@ -727,7 +764,7 @@ const CreateMealBottomSheet = forwardRef<
                       ingredientCategories.length > 0
                         ? ingredientCategories[0]
                         : null;
-                    const unitOptions = getUnitOptions(firstCategory);
+                    const unitOptions = getUnitsForCategory(firstCategory);
 
                     setFieldValue(INGREDIENTS_KEY, [
                       ...values.ingredients,
@@ -961,7 +998,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     color: Colors.white,
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(16),
   },
   cancelButton: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,

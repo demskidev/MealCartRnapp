@@ -168,6 +168,8 @@ export const changePasswordAsync = createAsyncThunk<
 
 
 
+
+
 const initialState = {
   isAuthenticated: false,
   user: null as any,
@@ -188,7 +190,9 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.isAuthenticated = true;
+  
         state.user = action.payload;
+        console.log("User logged in:", action.payload);
         state.loading = false;
         state.error = null;
       })

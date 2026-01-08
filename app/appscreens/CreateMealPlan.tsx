@@ -12,6 +12,7 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import { useLoader } from "@/context/LoaderContext";
 import { CREATE_MEAL_PLAN, MealStatus } from "@/reduxStore/appKeys";
 import { useAppSelector } from "@/reduxStore/hooks";
+import { DayData, MealSlot } from "@/reduxStore/slices/planSlice";
 import { backNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
@@ -149,9 +150,11 @@ export default function CreateMealPlan({ }) {
 
   const days = generateWeekDays(startDate);
 
-  function renderDayCard({ item }) {
-    const formattedDate = `${item.date.getDate()}/${item.date.getMonth() + 1
-      }/${item.date.getFullYear()}`;
+
+  function renderDayCard({ item }: { item: any }) {
+    const formattedDate = `${item.date.getDate()}/${
+      item.date.getMonth() + 1
+    }/${item.date.getFullYear()}`;
 
     return (
       <View style={styles.daySection}>
@@ -180,7 +183,7 @@ export default function CreateMealPlan({ }) {
               </TouchableOpacity>
             </View>
           ))} */}
-          {item.meals.map((mealPlanName: string, idx) => {
+          {item.meals.map((mealPlanName: string, idx: number) => {
             const selectedMeal = getSelectedMeal(item.title, mealPlanName);
 
             return (
@@ -288,6 +291,19 @@ export default function CreateMealPlan({ }) {
     console.log("3. Selected Meal Slots:", selectedMealSlots);
     console.log("4. Meal Plans:", mealPlans);
 
+    // Validation: Ensure at least one meal is selected for the entire week
+    const anyMealSelected = Object.keys(selectedMealSlots).length > 0;
+
+    if (planName.trim() === "") {
+      alert(Strings.error_enter_plan_name);
+      return;
+    }
+
+    if (!anyMealSelected) {
+      alert(Strings.error_select_meal_for_any_day);
+      return;
+    }
+
     showLoader();
 
     const getMealPlanId = (mealPlanName: string) => {
@@ -296,41 +312,29 @@ export default function CreateMealPlan({ }) {
       return plan?.id;
     };
 
-    const daysData = days.map((day) => {
-      console.log(`\n--- Processing day: ${day.title} ---`);
-      console.log("  Day date:", day.date);
-      console.log("  Day meals:", day.meals);
+    const daysData = days
+      .map((day) => {
+        const mealSlots = day.meals
+          .map((mealPlanName: string) => {
+            const selectedMeal = getSelectedMeal(day.title, mealPlanName);
+            if (!selectedMeal) return null;
+            const mealPlanId = getMealPlanId(mealPlanName);
+            return {
+              mealPlanId: mealPlanId!,
+              mealId: selectedMeal.id,
+            };
+          })
+          .filter(Boolean) as Array<{ mealPlanId: string; mealId: string }>;
 
-      const mealSlots = day.meals
-        .map((mealPlanName) => {
-          const selectedMeal = getSelectedMeal(day.title, mealPlanName);
-          console.log(`  Meal slot "${mealPlanName}":`, selectedMeal);
+        if (mealSlots.length === 0) return null;
 
-          if (!selectedMeal) {
-            console.log(`  -> No meal selected for ${mealPlanName}, skipping`);
-            return null;
-          }
-
-          const mealPlanId = getMealPlanId(mealPlanName);
-          console.log(
-            `  -> MealPlanId: ${mealPlanId}, MealId: ${selectedMeal.id}`
-          );
-
-          return {
-            mealPlanId: mealPlanId!,
-            mealId: selectedMeal.id,
-          };
-        })
-        .filter(Boolean) as Array<{ mealPlanId: string; mealId: string }>;
-
-      console.log(`  Total meal slots for ${day.title}:`, mealSlots.length);
-      return {
-        dayTitle: day.title,
-        date: day.date,
-        mealSlots,
-      };
-    });
-
+        return {
+          dayTitle: day.title,
+          date: day.date,
+          mealSlots,
+        };
+      })
+      .filter((daySlot): daySlot is DayData => daySlot !== null);
     const lastDay = days[days.length - 1];
     console.log("\n5. Last Day:", lastDay);
     console.log("6. Days Data to save:", JSON.stringify(daysData, null, 2));

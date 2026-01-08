@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
     addPlanAsync,
     deletePlanAsync,
+    fetchActivePlanAsync,
     fetchPlansAsync,
     updatePlanAsync,
 } from "@/reduxStore/slices/planSlice";
@@ -41,108 +42,156 @@ export const usePlanViewModel = () => {
   const plans = useAppSelector((state) => state.plans.plans);
   const loading = useAppSelector((state) => state.plans.loading);
   const error = useAppSelector((state) => state.plans.error);
-  const user = useAppSelector((state) => state.auth.user);
-
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const { getMealById } = useMealsViewModel();
   const { getMealPlanById } = useProfileViewModel();
   const [enrichedPlans, setEnrichedPlans] = useState<EnrichedPlan[]>([]);
   const [enriching, setEnriching] = useState(false);
+  const activePlan = useAppSelector((state) => state.plans.activePlan);
+
+  const [enrichedActivePlan, setEnrichedActivePlan] =
+    useState<EnrichedPlan | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const enrich = async () => {
+      if (activePlan) {
+        const enriched = await enrichPlan(activePlan);
+        if (!cancelled) setEnrichedActivePlan(enriched);
+      } else {
+        setEnrichedActivePlan(null);
+      }
+    };
+    enrich();
+    return () => {
+      cancelled = true;
+    };
+  }, [activePlan]);
+
   // Helper to parse Firestore/JS date
   const parseDate = (d: any) => {
     if (!d) return null;
-    if (typeof d === 'string') return new Date(d);
+    if (typeof d === "string") return new Date(d);
     if (d.toDate) return d.toDate();
     if (d.seconds) return new Date(d.seconds * 1000);
     return new Date(d);
   };
   // Today's date (for filtering)
   const today = new Date();
-  // Only show plans whose startDate <= today and endDate >= today
-//   const filteredPlans = enrichedPlans.filter(plan => {
-//     const start = parseDate(plan.startDate);
-//     const end = parseDate(plan.endDate);
-//     if (!start || !end) return false;
-//     return start <= today && end >= today;
-//   });
+
+  //   // Only show plans whose startDate <= today and endDate >= today
+  //   const filteredPlans = enrichedPlans.filter(plan => {
+  //     const start = parseDate(plan.startDate);
+  //     const end = parseDate(plan.endDate);
+  //     if (!start || !end) return false;
+  //     return start <= today && end >= today;
+  //   });
 
   // Enrich plans with meal and mealPlan data whenever plans change
 
-    // --- Helper functions for enrichment ---
-    const collectMealAndPlanIds = (plan: EnrichedPlan) => {
-      const mealIds = new Set<string>();
-      const mealPlanIds = new Set<string>();
-      plan.days.forEach((day: EnrichedDay) => {
-        day.mealSlots.forEach((slot: EnrichedMealSlot) => {
-          mealIds.add(slot.mealId);
-          mealPlanIds.add(slot.mealPlanId);
-        });
+  // --- Helper functions for enrichment ---
+  const collectMealAndPlanIds = (plan: EnrichedPlan) => {
+    const mealIds = new Set<string>();
+    const mealPlanIds = new Set<string>();
+    plan.days.forEach((day: EnrichedDay) => {
+      day.mealSlots.forEach((slot: EnrichedMealSlot) => {
+        mealIds.add(slot.mealId);
+        mealPlanIds.add(slot.mealPlanId);
       });
-      return { mealIds: Array.from(mealIds), mealPlanIds: Array.from(mealPlanIds) };
+    });
+    return {
+      mealIds: Array.from(mealIds),
+      mealPlanIds: Array.from(mealPlanIds),
     };
+  };
 
-    const fetchMealsMap = async (mealIds: string[]): Promise<Record<string, any>> => {
-      const mealPromises = mealIds.map(
-        (id: string) =>
-          new Promise<[string, any]>((resolve) =>
-            getMealById(
-              id,
-              (meal) => resolve([id, meal]),
-              () => resolve([id, null])
-            )
+  const fetchMealsMap = async (
+    mealIds: string[]
+  ): Promise<Record<string, any>> => {
+    const mealPromises = mealIds.map(
+      (id: string) =>
+        new Promise<[string, any]>((resolve) =>
+          getMealById(
+            id,
+            (meal) => resolve([id, meal]),
+            () => resolve([id, null])
           )
-      );
-      const mealResults = await Promise.all(mealPromises);
-      return Object.fromEntries(mealResults);
-    };
+        )
+    );
+    const mealResults = await Promise.all(mealPromises);
+    return Object.fromEntries(mealResults);
+  };
 
-    const fetchMealPlansMap = async (mealPlanIds: string[]): Promise<Record<string, any>> => {
-      const mealPlanPromises = mealPlanIds.map(
-        (id: string) =>
-          new Promise<[string, any]>((resolve) =>
-            getMealPlanById(
-              id,
-              (mealPlan) => resolve([id, mealPlan]),
-              () => resolve([id, null])
-            )
+  const fetchMealPlansMap = async (
+    mealPlanIds: string[]
+  ): Promise<Record<string, any>> => {
+    const mealPlanPromises = mealPlanIds.map(
+      (id: string) =>
+        new Promise<[string, any]>((resolve) =>
+          getMealPlanById(
+            id,
+            (mealPlan) => resolve([id, mealPlan]),
+            () => resolve([id, null])
           )
-      );
-      const mealPlanResults = await Promise.all(mealPlanPromises);
-      return Object.fromEntries(mealPlanResults);
-    };
+        )
+    );
+    const mealPlanResults = await Promise.all(mealPlanPromises);
+    return Object.fromEntries(mealPlanResults);
+  };
 
-    const enrichPlan = async (plan: EnrichedPlan): Promise<EnrichedPlan> => {
-      const { mealIds, mealPlanIds } = collectMealAndPlanIds(plan);
-      const [mealMap, mealPlanMap] = await Promise.all([
-        fetchMealsMap(mealIds),
-        fetchMealPlansMap(mealPlanIds),
-      ]);
-      const enrichedDays = plan.days.map((day: EnrichedDay) => ({
-        ...day,
-        mealSlots: day.mealSlots.map((slot: EnrichedMealSlot) => ({
-          ...slot,
-          meal: mealMap[slot.mealId] || null,
-          mealPlan: mealPlanMap[slot.mealPlanId] || null,
-        })),
-      }));
-      return { ...plan, days: enrichedDays };
-    };
+  const enrichPlan = async (plan: EnrichedPlan): Promise<EnrichedPlan> => {
+    const { mealIds, mealPlanIds } = collectMealAndPlanIds(plan);
+    const [mealMap, mealPlanMap] = await Promise.all([
+      fetchMealsMap(mealIds),
+      fetchMealPlansMap(mealPlanIds),
+    ]);
+    const enrichedDays = plan.days.map((day: EnrichedDay) => ({
+      ...day,
+      mealSlots: day.mealSlots.map((slot: EnrichedMealSlot) => ({
+        ...slot,
+        meal: mealMap[slot.mealId] || null,
+        mealPlan: mealPlanMap[slot.mealPlanId] || null,
+      })),
+    }));
+    return { ...plan, days: enrichedDays };
+  };
 
-    useEffect(() => {
-      let cancelled = false;
-      const enrich = async () => {
-        setEnriching(true);
-        const all = await Promise.all(
-          plans.map((plan) => enrichPlan(plan))
-        );
-        if (!cancelled) setEnrichedPlans(all);
-        setEnriching(false);
-      };
-      if (plans && plans.length > 0) enrich();
-      else setEnrichedPlans([]);
-      return () => {
-        cancelled = true;
-      };
-    }, [plans]);
+  useEffect(() => {
+    let cancelled = false;
+    const enrich = async () => {
+      setEnriching(true);
+      const all = await Promise.all(plans.map((plan) => enrichPlan(plan)));
+      if (!cancelled) setEnrichedPlans(all);
+      setEnriching(false);
+    };
+    if (plans && plans.length > 0) enrich();
+    else setEnrichedPlans([]);
+    return () => {
+      cancelled = true;
+    };
+  }, [plans]);
+
+  const fetchActivePlan = async (
+    onSuccess?: (enrichedPlan: EnrichedPlan | null) => void,
+    onError?: (error: string) => void
+  ) => {
+    if (!userId) {
+      onError?.("User not found");
+      return;
+    }
+    const resultAction = await dispatch(fetchActivePlanAsync(userId));
+    if (fetchActivePlanAsync.fulfilled.match(resultAction)) {
+      const plan = resultAction.payload;
+      if (plan) {
+        const enriched = await enrichPlan(plan as EnrichedPlan);
+        onSuccess?.(enriched);
+      } else {
+        onSuccess?.(null);
+      }
+    } else {
+      onError?.(resultAction.payload as string);
+    }
+  };
 
   const addPlan = async (
     planData: {
@@ -162,13 +211,13 @@ export const usePlanViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void
   ) => {
-    if (!user?.id) {
+    if (!userId) {
       onError?.("User not found");
       return;
     }
     const resultAction = await dispatch(
       addPlanAsync({
-        uid: user.id,
+        uid: userId,
         ...planData,
       })
     );
@@ -183,11 +232,12 @@ export const usePlanViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void
   ) => {
-    if (!user?.id) {
+    console.log("Fetching plans for user:", userId);
+    if (!userId) {
       onError?.("User not found");
       return;
     }
-    const resultAction = await dispatch(fetchPlansAsync(user.id));
+    const resultAction = await dispatch(fetchPlansAsync(userId));
     if (fetchPlansAsync.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
     } else {
@@ -235,15 +285,19 @@ export const usePlanViewModel = () => {
     }
   };
 
+  // Returns the first active plan (status STARTED) from filteredPlans
+
   return {
     plans,
     enrichedPlans,
-
+    // filteredPlans,
+    enrichedActivePlan,
     loading: loading || enriching,
     error,
     addPlan,
     fetchPlans,
     updatePlan,
     deletePlan,
+    fetchActivePlan,
   };
 };

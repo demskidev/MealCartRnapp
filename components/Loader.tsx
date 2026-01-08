@@ -1,7 +1,12 @@
 import { Colors } from "@/constants/Theme";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
-const Loader = () => {
+interface LoaderProps {
+  visible?: boolean;
+}
+
+const Loader = ({ visible = true }: LoaderProps) => {
+  if (!visible) return null;
   return (
     <View style={styles.overlay}>
       <ActivityIndicator size="large" color={Colors.white} />
@@ -12,10 +17,10 @@ const Loader = () => {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.1)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 9999,
+    zIndex: 10,
   },
 });
 
