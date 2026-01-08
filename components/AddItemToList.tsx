@@ -1,5 +1,5 @@
-import { CheckBox, FilledCheckBox, SearchIcon } from "@/assets/svg";
 import { burger, closeIcon, mealfoodA } from "@/assets/images";
+import { CheckBox, FilledCheckBox, SearchIcon } from "@/assets/svg";
 import {
   horizontalScale,
   moderateScale,
@@ -8,8 +8,8 @@ import {
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
-import { getDocumentById } from "@/services/firestore";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
+import { getDocumentById } from "@/services/firestore";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -67,8 +67,12 @@ const AddItemToList = ({
   const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
   const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
 
-  const { meals, loading, fetchMeals, searchMealsCombined } =
-    useMealsViewModel();
+  const {
+    meals,
+    loading,
+    fetchMeals,
+    searchMealsCombined,
+  } = useMealsViewModel();
   const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
   const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
   const [dynamicIngredients, setDynamicIngredients] = useState<string[]>([]);
@@ -77,103 +81,8 @@ const AddItemToList = ({
 
   // Helper function: Fetch all ingredients data for a meal
   // Fetch from ingredient collection using ingredientId
-  const fetchMealIngredientsData = async (mealIngredients: any[], mealId: string) => {
-    try {
-      console.log(`\n🔍 ===== STARTING INGREDIENT FETCH =====`);
-      console.log(`🔍 Meal ID: ${mealId}`);
-      console.log(`🔍 Number of ingredients to fetch: ${mealIngredients.length}`);
-      console.log(`🔍 Ingredient objects:`, JSON.stringify(mealIngredients, null, 2));
-      
-      // Fetch each ingredient using ingredientId
-      const ingredientsWithData = await Promise.all(
-        mealIngredients.map(async (ing, index) => {
-          console.log(`\n📥 [${index + 1}/${mealIngredients.length}] Processing ingredient:`, ing);
-          
-          if (!ing.ingredientId) {
-            console.warn('⚠️ No ingredientId found for ingredient:', ing);
-            return { ...ing, ingredientData: null };
-          }
 
-          try {
-            // Fetch from mealIngredients collection using ingredientId
-            console.log(`📥 Fetching from "mealIngredients" collection with ID: "${ing.ingredientId}"`);
-            const ingredientData: any = await getDocumentById(
-              "mealIngredients",
-              ing.ingredientId
-            );
-            
-            console.log(`📥 Raw response for ingredientId ${ing.ingredientId}:`, ingredientData);
-            
-            if (ingredientData) {
-              console.log(`✅ SUCCESS - Found data:`, {
-                name: ingredientData.name,
-                unit: ingredientData.unit
-              });
-              return {
-                ...ing,
-                ingredientData: {
-                  id: ing.ingredientId,
-                  name: ingredientData.name,
-                  unit: ingredientData.unit,
-                  ...ingredientData
-                }
-              };
-            } else {
-              console.error(`❌ NULL RESPONSE - No document found for ingredientId: ${ing.ingredientId}`);
-              console.error(`❌ Tried collections: "ingredient" and "ingredients"`);
-              return { ...ing, ingredientData: null };
-            }
-          } catch (error) {
-            console.error(`❌ EXCEPTION while fetching ingredientId ${ing.ingredientId}:`, error);
-            return { ...ing, ingredientData: null };
-          }
-        })
-      );
-      
-      console.log(`\n✅ ===== FETCH COMPLETE =====`);
-      console.log('✅ Total ingredients processed:', ingredientsWithData.length);
-      console.log('✅ Ingredients with data:', ingredientsWithData.filter(i => i.ingredientData !== null).length);
-      console.log('✅ Ingredients with NULL data:', ingredientsWithData.filter(i => i.ingredientData === null).length);
-      console.log('✅ Final result:', JSON.stringify(ingredientsWithData, null, 2));
-      return ingredientsWithData;
-      
-    } catch (error) {
-      console.error('❌ CRITICAL ERROR in fetchMealIngredientsData:', error);
-      return mealIngredients.map(ing => ({
-        ...ing,
-        ingredientData: null
-      }));
-    }
-  };
-
-  console.log('✅ Meals fetched successfully:111', meals);
-  console.log("✅ Meals fetched successfully:232399", meals[0]?.ingredients);
-  console.log("✅ Meals fetched successfully:3333399", meals[2]?.ingredients);
-
-  // Example: Fetch ingredients for a specific meal ID
-  useEffect(() => {
-    const fetchSpecificMealIngredients = async () => {
-      const specificMealId = "06pHs3D9j3a0v0yEygGj"; // Your meal ID
-      const meal = meals.find(m => m.id === specificMealId);
-      
-      if (meal && meal.ingredients) {
-        const fullIngredientsData = await fetchMealIngredientsData(meal.ingredients, meal.id);
-        console.log(`🎯 Full ingredients for meal "${meal.name}":`, fullIngredientsData);
-        
-        // You can now access:
-        // - fullIngredientsData[0].ingredientId
-        // - fullIngredientsData[0].category
-        // - fullIngredientsData[0].ingredientData.name
-        // - fullIngredientsData[0].ingredientData.unit
-        // etc.
-      }
-    };
-
-    if (meals.length > 0) {
-      fetchSpecificMealIngredients();
-    }
-  }, [meals]);
-
+ 
 
   useEffect(() => {
     if (visible) {
@@ -228,40 +137,46 @@ const AddItemToList = ({
       return;
     }
 
-    const fetchAllIngredientsData = async () => {
-      const selectedMealObjects = meals.filter((meal) =>
-        selectedMeals.includes(meal.id)
-      );
+    // const fetchAllIngredientsData = async () => {
+    //   const selectedMealObjects = meals.filter((meal) =>
+    //     selectedMeals.includes(meal.id)
+    //   );
 
-      const allIngredientNames: string[] = [];
-      const allFullIngredients: any[] = [];
+    //   const allIngredientNames: string[] = [];
+    //   const allFullIngredients: any[] = [];
 
-      // Loop through each selected meal
-      for (const meal of selectedMealObjects) {
-        if (meal.ingredients && Array.isArray(meal.ingredients)) {
-          // Use helper function to fetch all ingredients data
-          const ingredientsWithData = await fetchMealIngredientsData(meal.ingredients, meal.id);
-          
-          // Extract ingredient names and store full data
-          ingredientsWithData.forEach((item) => {
-            const ingredientData = item.ingredientData;
-            
-            if (ingredientData?.name && !allIngredientNames.includes(ingredientData.name)) {
-              allIngredientNames.push(ingredientData.name);
-              allFullIngredients.push(item);
-            }
-          });
-        }
-      }
+    //   // Loop through each selected meal
+    //   for (const meal of selectedMealObjects) {
+    //     if (meal.ingredients && Array.isArray(meal.ingredients)) {
+    //       // Use helper function to fetch all ingredients data
+    //       const ingredientsWithData = await fetchMealIngredientsData(
+    //         meal.ingredients,
+    //         meal.id
+    //       );
 
-      setDynamicIngredients(allIngredientNames);
-      setFullIngredientsData(allFullIngredients);
-      
-      console.log('📝 Extracted ingredient names:', allIngredientNames);
-      console.log('📝 Full ingredients data:', allFullIngredients);
-    };
+    //       // Extract ingredient names and store full data
+    //       ingredientsWithData.forEach((item) => {
+    //         const ingredientData = item.ingredientData;
 
-    fetchAllIngredientsData();
+    //         if (
+    //           ingredientData?.name &&
+    //           !allIngredientNames.includes(ingredientData.name)
+    //         ) {
+    //           allIngredientNames.push(ingredientData.name);
+    //           allFullIngredients.push(item);
+    //         }
+    //       });
+    //     }
+    //   }
+
+    //   setDynamicIngredients(allIngredientNames);
+    //   setFullIngredientsData(allFullIngredients);
+
+    //   console.log("📝 Extracted ingredient names:", allIngredientNames);
+    //   console.log("📝 Full ingredients data:", allFullIngredients);
+    // };
+
+    // fetchAllIngredientsData();
   }, [selectedMeals, meals]);
 
   useEffect(() => {
@@ -374,8 +289,8 @@ const AddItemToList = ({
         resizeMode="cover"
       />
       <Text style={styles.mealName}>{item.name}</Text>
-      {from !== CREATE_MEAL_PLAN && (
-        selectedMeals.includes(item.id) ? (
+      {from !== CREATE_MEAL_PLAN &&
+        (selectedMeals.includes(item.id) ? (
           <FilledCheckBox
             width={verticalScale(22)}
             height={verticalScale(22)}
@@ -389,8 +304,7 @@ const AddItemToList = ({
             color={Colors.tertiary}
             style={styles.checkboxIcon}
           />
-        )
-      )}
+        ))}
     </TouchableOpacity>
   );
 

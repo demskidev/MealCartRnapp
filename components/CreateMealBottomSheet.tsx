@@ -60,7 +60,6 @@ const CreateMealBottomSheet = forwardRef<
   CreateMealBottomSheetProps
 >(({ isEdit = false, mealData }, ref) => {
   const user = useAppSelector((state) => state.auth.user);
-
   const { ingredientCategories, loading, error, addMealData, updateMealData } =
     useCreateMealViewModel();
 
@@ -96,19 +95,7 @@ const CreateMealBottomSheet = forwardRef<
         servings: String(mealData.servings || "1"),
         difficulty: mealData.difficulty || Strings.filterModal_easy,
         category: mealData.category || Strings.plans_breakfast,
-        ingredients: (mealData.ingredients || []).map((ing) => {
-          const category =
-            typeof ing.category === "string"
-              ? ingredientCategories.find((cat) => cat.id === ing.category)
-              : ing.category;
-
-          return {
-            name: ing.name || "",
-            count: ing.count || "1",
-            unit: ing.unit || "",
-            category: category || ingredientCategories[0] || null,
-          };
-        }),
+        ingredients: mealData.ingredients,
         steps: mealData.steps?.map((text) => ({ text })) || [{ text: "" }],
       };
     }
@@ -124,6 +111,7 @@ const CreateMealBottomSheet = forwardRef<
       ingredients: [],
       steps: [{ text: "" }],
     };
+
   }, [isEdit, mealData]);
 
   useEffect(() => {
@@ -132,18 +120,22 @@ const CreateMealBottomSheet = forwardRef<
   }, [loading]);
 
   // Helper to get units for a given category (object or id)
+  // Helper to get units for a given category (object or id)
   const getUnitsForCategory = (category) => {
     if (!category) return [];
+
     // If category is an object with id
     if (typeof category === "object" && category.id) {
       const found = ingredientCategories.find((cat) => cat.id === category.id);
       return found && Array.isArray(found.unit) ? found.unit : [];
     }
+
     // If category is a string (id)
     if (typeof category === "string") {
       const found = ingredientCategories.find((cat) => cat.id === category);
       return found && Array.isArray(found.unit) ? found.unit : [];
     }
+
     return [];
   };
 
@@ -155,37 +147,43 @@ const CreateMealBottomSheet = forwardRef<
         item?.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
         item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
         item?.unit?.toLowerCase().includes(Strings.units.cup);
- 
-      // Get units for the selected category
-      const unitOptions = getUnitsForCategory(item?.category);
- 
+
+      // Get units - use categoryUnits if available (edit mode), otherwise get from ingredientCategories
+      const unitOptions =
+        item?.categoryUnits && Array.isArray(item.categoryUnits)
+          ? item.categoryUnits
+          : getUnitsForCategory(item?.category || item?.categoryId);
+
+      console.log("Item:", item);
+      console.log("Unit Options:", unitOptions);
+
       return (
         <View>
           <Text style={styles.label}>{Strings.createMeal_ingredientName}</Text>
           <CustomTextInput
             placeholder={Strings.createMeal_ingredientName_placeholder}
-            value={item.name}
+            value={item.ingredientName}
             onChangeText={(text) => {
               const updated = [...ingredients];
-              updated[index] = { ...updated[index], name: text };
+              updated[index] = { ...updated[index], ingredientName: text };
               setFieldValue(INGREDIENTS_KEY, updated);
               if (
-                touched.ingredients?.[index]?.name &&
-                errors.ingredients?.[index]?.name
+                touched.ingredients?.[index]?.ingredientName &&
+                errors.ingredients?.[index]?.ingredientName
               ) {
                 const updatedTouched = { ...touched };
                 if (Array.isArray(updatedTouched.ingredients)) {
                   updatedTouched.ingredients[index] = {
                     ...updatedTouched.ingredients[index],
-                    name: false,
+                    ingredientName: false,
                   };
                   setTouched(updatedTouched);
                 }
               }
             }}
             error={
-              touched.ingredients?.[index]?.name &&
-              errors.ingredients?.[index]?.name
+              touched.ingredients?.[index]?.ingredientName &&
+              errors.ingredients?.[index]?.ingredientName
             }
           />
           <View style={styles.row}>
@@ -220,10 +218,10 @@ const CreateMealBottomSheet = forwardRef<
                 }}
               />
             </View>
- 
+
             <View style={styles.rowItem}>
               <Text style={styles.label}>{Strings.createMeal_unit}</Text>
- 
+
               <CustomStepper
                 value={item?.unit}
                 onIncrement={() => {
@@ -274,21 +272,22 @@ const CreateMealBottomSheet = forwardRef<
                 }}
               />
             </View>
- 
+
             <View style={styles.rowItem}>
               <Text style={styles.label}>{Strings.createMeal_category}</Text>
- 
+
               <CustomDropdown
-                value={item?.category}
+                value={item?.categoryName || item?.category} // Show categoryName (edit) or category object (create)
                 options={ingredientCategories}
                 onSelect={(category) => {
                   const updated = [...ingredients];
                   const newUnitOptions = getUnitsForCategory(category);
                   updated[index] = {
                     ...updated[index],
-                    unit: newUnitOptions[0] ?? "", // Use first unit from getUnitsForCategory
-                    category,
-                    // Reset count when category changes
+                    unit: newUnitOptions[0] ?? "",
+                    categoryId: category.id,
+                    categoryName: category.title,
+                    categoryUnits: category.unit, // Store categoryUnits
                     count: "0",
                   };
                   setFieldValue(INGREDIENTS_KEY, updated);
@@ -296,7 +295,7 @@ const CreateMealBottomSheet = forwardRef<
                 icon={IconDown}
               />
             </View>
- 
+
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => {
@@ -317,14 +316,14 @@ const CreateMealBottomSheet = forwardRef<
         </View>
       );
     };
-    
+
   const handleUpload = (setFieldValue) => {
     setShowImagePickerModal(true);
   };
 
   const renderInstructionItem =
     (steps, setFieldValue) =>
-      ({ item, index }) =>
+    ({ item, index }) =>
       (
         <View style={{ marginBottom: verticalScale(15) }}>
           <View style={[styles.row, { alignItems: "flex-start" }]}>
@@ -399,7 +398,7 @@ const CreateMealBottomSheet = forwardRef<
           ing.unit?.toLowerCase().includes(Strings.units.cup);
 
         return {
-          name: ing.name,
+          name: ing.ingredientName,
           unit: ing.unit,
           // Only include count if it's a volume unit
           ...(isVolumeUnit && { count: ing.count }),
@@ -441,55 +440,61 @@ const CreateMealBottomSheet = forwardRef<
     }
   };
 
-  const handleEditMeal = async (values) => {
-    try {
-      const mappedIngredients = values.ingredients.map((ing) => {
-        const isVolumeUnit =
-          ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
-          ing.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
-          ing.unit?.toLowerCase().includes(Strings.units.cup);
+ const handleEditMeal = async (values) => {
+  console.log("Editing meal with values:", values);
+  try {
+    const mappedIngredients = values.ingredients.map((ing) => {
+      const isVolumeUnit =
+        ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
+        ing.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
+        ing.unit?.toLowerCase().includes(Strings.units.cup);
 
-        return {
-          name: ing.name,
-          unit: ing.unit,
-          // Only include count if it's a volume unit
-          ...(isVolumeUnit && { count: ing.count }),
-          category:
-            typeof ing.category === "object" && ing.category.id
-              ? ing.category.id
-              : ing.category,
-        };
-      });
-      const mappedSteps = values.steps.map((step) => step.text);
-      const mealData = {
-        id: values.id,
-        name: values.name,
-        description: values.description,
-        imageUrl: values.imageUrl,
-        prepTime: values.prepTime,
-        servings: values.servings,
-        difficulty: values.difficulty,
-        category: values.category,
-        ingredients: mappedIngredients,
-        steps: mappedSteps,
-        uid: user?.id,
+      return {
+        ingredientId: ing.ingredientId, // ADD THIS - Required for updating subcollection
+        categoryId: ing.categoryId, // ADD THIS - For the main meal document
+        ingredientName: ing.ingredientName, // For updating subcollection
+        unit: ing.unit, // For updating subcollection
+        count: ing.count, // Always include count
+        // Legacy 'name' and 'category' for backward compatibility
+        name: ing.ingredientName,
+        category: ing.categoryId || (typeof ing.category === "object" && ing.category.id ? ing.category.id : ing.category),
       };
-      updateMealData(
-        mealData,
-        () => {
-          alert(Strings.mealUpdated);
-          if (ref && typeof ref !== "function" && ref.current?.close) {
-            ref.current.close();
-          }
-        },
-        (error) => {
-          alert(Strings.error_updating_meal + error);
+    });
+    
+    const mappedSteps = values.steps.map((step) => step.text);
+    
+    const mealData = {
+      id: values.id,
+      name: values.name,
+      description: values.description,
+      imageUrl: values.imageUrl,
+      prepTime: values.prepTime,
+      servings: values.servings,
+      difficulty: values.difficulty,
+      category: values.category,
+      ingredients: mappedIngredients,
+      steps: mappedSteps,
+      uid: user?.id,
+    };
+    
+    console.log("Updating meal with data:", mealData);
+    
+    updateMealData(
+      mealData,
+      () => {
+        alert(Strings.mealUpdated);
+        if (ref && typeof ref !== "function" && ref.current?.close) {
+          ref.current.close();
         }
-      );
-    } catch (error) {
-      alert(Strings.error_updating_meal + error);
-    }
-  };
+      },
+      (error) => {
+        alert(Strings.error_updating_meal + error);
+      }
+    );
+  } catch (error) {
+    alert(Strings.error_updating_meal + error);
+  }
+};
 
   return (
     <Formik
@@ -511,6 +516,7 @@ const CreateMealBottomSheet = forwardRef<
         validateForm,
         resetForm,
       }) => (
+        console.log("Formik Values:", values),
         <>
           <ImagePickerModal
             visible={showImagePickerModal}
@@ -769,10 +775,12 @@ const CreateMealBottomSheet = forwardRef<
                     setFieldValue(INGREDIENTS_KEY, [
                       ...values.ingredients,
                       {
-                        name: "",
+                        ingredientName: "", // Changed from name
                         count: "1",
                         unit: unitOptions[0] ?? "",
-                        category: firstCategory ?? "",
+                        categoryId: firstCategory?.id ?? "",
+                        categoryName: firstCategory?.title ?? "",
+                        // category: firstCategory ?? "",
                       },
                     ]);
                     if (touched.ingredients && errors.ingredients) {
@@ -827,7 +835,7 @@ const CreateMealBottomSheet = forwardRef<
                   }
                   gradientButton={false}
                   backgroundColor={Colors.white}
-                  textStyleText ={styles.discardText}
+                  textStyleText={styles.discardText}
                   width={isEdit ? width * 0.28 : width * 0.41}
                   textStyle={[
                     styles.cancelButton,
@@ -851,12 +859,12 @@ const CreateMealBottomSheet = forwardRef<
                   textColor={Colors.white}
                   rightChild={
                     isEdit ? (
-                     <Image
+                      <Image
                         source={iconMeal}
                         style={{
                           width: verticalScale(21),
                           height: verticalScale(21),
-                          tintColor:Colors.white
+                          tintColor: Colors.white,
                         }}
                         resizeMode="contain"
                       />
@@ -1030,10 +1038,10 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(-4),
     marginBottom: verticalScale(8),
   },
-  discardText:{
-        fontFamily: FontFamilies.ROBOTO_MEDIUM,
+  discardText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
     // color: Colors.primary,
 
     fontSize: moderateScale(14),
-  }
+  },
 });

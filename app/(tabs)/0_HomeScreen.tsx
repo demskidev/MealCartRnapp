@@ -78,8 +78,7 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       if (canStart) {
-          // start()
-
+        // start()
       }
     }, [canStart])
   );
@@ -193,7 +192,7 @@ const HomeScreen: React.FC = () => {
         console.log("Selected Meal:", item);
         router.push({
           pathname: "/appscreens/MealDetailScreen",
-          params: { meal: JSON.stringify(item) },
+          params: { mealId: item.id },
         });
       }}
     >

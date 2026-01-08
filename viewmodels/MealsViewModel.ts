@@ -68,6 +68,7 @@ export const useMealsViewModel = () => {
     }
   };
 
+  
 
   const deleteTheMeal = async (
     mealId: string,
@@ -98,8 +99,6 @@ export const useMealsViewModel = () => {
       onError?.(e.message);
     }
   };
-
-
 
   const fetchTheRecentMeals = async (
     onSuccess?: (payload: any) => void,

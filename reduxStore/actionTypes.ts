@@ -27,4 +27,7 @@ export const DELETE_PLAN = "plans/deletePlan";
 export const FETCH_PLANS = "plans/fetchPlans";
 export const CHANGE_PASSWORD = 'auth/changePassword';
 export const FETCH_ACTIVE_PLAN = "plans/fetchActivePlan";
+export const FETCH_MEAL_WITH_INGREDIENTS = "meals/fetchMealWithIngredients";
+export const FILTER_N_SEARCH_MEALS = "meals/searchMeals";
+export const FETCH_RECENT_MEALS = "meals/fetchRecentMeals";
 

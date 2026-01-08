@@ -238,7 +238,7 @@ const MealsScreen: React.FC = () => {
         console.log("Selected Meal:", item);
         router.push({
           pathname: "/appscreens/MealDetailScreen",
-          params: { meal: JSON.stringify(item) },
+          params: { mealId: item.id },
         });
       }}
     >

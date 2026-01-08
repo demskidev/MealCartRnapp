@@ -4,8 +4,11 @@ import {
   addDocument,
   compoundQueryDocuments,
   deleteDocument,
+  getDocumentById,
+  getSubcollectionDocuments,
   queryDocuments,
   updateDocument,
+  updateSubcollectionDocument,
   uploadImageToFirebase,
 } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -14,16 +17,26 @@ import {
   ADD_MEAL,
   DELETE_MEAL,
   FETCH_MEALS,
+  FETCH_RECENT_MEALS,
+  FILTER_N_SEARCH_MEALS,
   MEALS_SLICE,
   UPDATE_MEAL,
 } from "../actionTypes";
-import { MEAL_IMAGE_FOLDER, MEALS_COLLECTION } from "../appKeys";
+import {
+  INGREDIENTS_CATEGORY_COLLECTION,
+  MEAL_IMAGE_FOLDER,
+  MEAL_INGREDIENTS_COLLECTION,
+  MEALS_COLLECTION,
+} from "../appKeys";
 
 export interface MealIngredient {
-  name: string;
+  categoryName: string;
   unit: string;
-  category?: string;
+  categoryId?: string;
+  cagtegoryUnits?: string[];
   count?: string;
+  ingredientId: string;
+  ingredientName?: string;
 }
 
 export interface Meal {
@@ -66,14 +79,14 @@ const addMealToDb = async (mealData: any) => {
   }
 };
 
-const updateMealInDb = async (mealData: any) => {
-  try {
-    const meal = await updateDocument(MEALS_COLLECTION, mealData.id, mealData);
-    return meal;
-  } catch (error) {
-    throw error;
-  }
-};
+// const updateMealInDb = async (mealData: any) => {
+//   try {
+//     const meal = await updateDocument(MEALS_COLLECTION, mealData.id, mealData);
+//     return meal;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
 
 const deleteMealFromDb = async (mealId: string) => {
   try {
@@ -140,6 +153,71 @@ export const deleteMeal = createAsyncThunk(
   }
 );
 
+const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
+  return Promise.all(
+    meals.map(async (meal: any) => {
+      try {
+        const mealIngredientsDoc = await getDocumentById(
+          MEAL_INGREDIENTS_COLLECTION,
+          meal.id
+        );
+
+        if (!mealIngredientsDoc) {
+          return meal;
+        }
+
+        const ingredientsData = await getSubcollectionDocuments(
+          MEAL_INGREDIENTS_COLLECTION,
+          meal.id,
+          "ingredients"
+        );
+
+        return {
+          ...meal,
+          ingredients: await Promise.all(
+            meal.ingredients?.map(async (ing: any) => {
+              const ingredientDetails: any = ingredientsData.find(
+                (data: any) => data.id === ing.ingredientId
+              );
+
+              let categoryName = ing.categoryName;
+              let categoryUnits = ing.categoryName;
+              if (ing.categoryId) {
+                try {
+                  const categoryDoc: any = await getDocumentById(
+                    INGREDIENTS_CATEGORY_COLLECTION,
+                    ing.categoryId
+                  );
+                  categoryName = categoryDoc?.title || categoryName;
+                  categoryUnits = categoryDoc?.unit || categoryUnits;
+                } catch (error) {
+                  console.error(
+                    `Error fetching category ${ing.categoryId}:`,
+                    error
+                  );
+                }
+              }
+
+              return {
+                categoryId: ing.categoryId,
+                ingredientId: ing.ingredientId,
+                count: ing.count,
+                ingredientName: ingredientDetails?.name,
+                unit: ingredientDetails?.unit,
+                categoryName: categoryName,
+                categoryUnits: categoryUnits,
+              };
+            }) || []
+          ),
+        };
+      } catch (error) {
+        console.error(`Error fetching ingredients for meal ${meal.id}:`, error);
+        return meal;
+      }
+    })
+  );
+};
+
 export const fetchUserMeals = createAsyncThunk(
   FETCH_MEALS,
   async (
@@ -157,6 +235,7 @@ export const fetchUserMeals = createAsyncThunk(
         orderDirection: "desc",
       };
       if (startAfter) options.startAfter = startAfter;
+
       const meals = await queryDocuments(
         MEALS_COLLECTION,
         "uid",
@@ -164,8 +243,12 @@ export const fetchUserMeals = createAsyncThunk(
         userId,
         options
       );
+
       console.log("Fetched meals from DB:", meals);
-      return meals;
+
+      const enrichedMeals = await enrichMealsWithIngredients(meals);
+
+      return enrichedMeals;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -173,7 +256,7 @@ export const fetchUserMeals = createAsyncThunk(
 );
 
 export const fetchRecentMeals = createAsyncThunk(
-  "meals/fetchRecentMeals",
+  FETCH_RECENT_MEALS,
   async (
     {
       userId,
@@ -188,12 +271,11 @@ export const fetchRecentMeals = createAsyncThunk(
 
       const options: any = {
         limit,
-        orderBy: "lastViewedAt", // <-- order by lastViewedAt
+        orderBy: "lastViewedAt",
         orderDirection: "desc",
       };
       if (startAfter) options.startAfter = startAfter;
 
-      // Compound query: userId and lastViewedAt >= twoDaysAgo (optional)
       const meals = await compoundQueryDocuments(
         MEALS_COLLECTION,
         [
@@ -206,8 +288,12 @@ export const fetchRecentMeals = createAsyncThunk(
         ],
         options
       );
+
       console.log("Fetched recent meals from DB:", meals);
-      return meals;
+
+      const enrichedMeals = await enrichMealsWithIngredients(meals);
+
+      return enrichedMeals;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -215,7 +301,7 @@ export const fetchRecentMeals = createAsyncThunk(
 );
 
 export const searchMeals = createAsyncThunk(
-  "meals/searchMeals",
+  FILTER_N_SEARCH_MEALS,
   async (
     {
       userId,
@@ -244,10 +330,7 @@ export const searchMeals = createAsyncThunk(
       if (difficulty) {
         filters.push({ field: "difficulty", op: "==", value: difficulty });
       }
-      // Prep time filter (client-side, as Firestore can't do range on string)
-      // We'll filter after fetching
       if (searchText && searchText.trim()) {
-        // For prefix search, assuming you have a nameCharacters array in each meal
         filters.push({
           field: "nameCharacters",
           op: "array-contains",
@@ -260,12 +343,13 @@ export const searchMeals = createAsyncThunk(
         orderDirection: "desc",
       };
       if (startAfter) options.startAfter = startAfter;
+
       let meals = await compoundQueryDocuments(
         MEALS_COLLECTION,
         filters,
         options
       );
-      // Prep time filter (client-side)
+
       if (prepTime) {
         meals = meals.filter((meal: any) => {
           const prep = meal.prepTime || "";
@@ -278,12 +362,150 @@ export const searchMeals = createAsyncThunk(
           return true;
         });
       }
-      return meals;
+
+      const enrichedMeals = await enrichMealsWithIngredients(meals);
+
+      return enrichedMeals;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
   }
 );
+
+// Helper function to update meal ingredients in subcollection
+const updateMealIngredientsSubcollection = async (
+  mealId: string,
+  ingredients: any[]
+) => {
+  try {
+    // Get the mealIngredients document
+    const mealIngredientsDoc = await getDocumentById(
+      MEAL_INGREDIENTS_COLLECTION,
+      mealId
+    );
+
+    if (!mealIngredientsDoc) {
+      console.log("No mealIngredients document found for meal:", mealId);
+      return;
+    }
+
+    // Update each ingredient in the subcollection
+    for (const ing of ingredients) {
+      if (ing.ingredientId && ing.ingredientName && ing.unit) {
+        try {
+          // Update the ingredient document in the subcollection
+          await updateSubcollectionDocument(
+            MEAL_INGREDIENTS_COLLECTION,
+            mealId,
+            "ingredients",
+            ing.ingredientId,
+            {
+              name: ing.ingredientName,
+              unit: ing.unit,
+            }
+          );
+        } catch (error) {
+          console.error(
+            `Error updating ingredient ${ing.ingredientId}:`,
+            error
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error updating meal ingredients subcollection:", error);
+  }
+};
+
+const updateMealInDb = async (mealData: any) => {
+  try {
+    console.log("=== UPDATE MEAL START ===");
+    console.log("Raw mealData received:", JSON.stringify(mealData, null, 2));
+
+    // Clean ingredients for main meal document - only store IDs (no count)
+    const cleanedIngredients = mealData.ingredients?.map((ing: any) => {
+      console.log("Processing ingredient:", JSON.stringify(ing, null, 2));
+      return {
+        categoryId: ing.categoryId,
+        ingredientId: ing.ingredientId,
+      };
+    });
+
+    console.log(
+      "Cleaned ingredients:",
+      JSON.stringify(cleanedIngredients, null, 2)
+    );
+
+    // Build clean meal data object with only valid Firestore fields
+    const cleanedMealData: any = {
+      name: mealData.name,
+      description: mealData.description,
+      imageUrl: mealData.imageUrl,
+      prepTime: mealData.prepTime,
+      servings: mealData.servings,
+      difficulty: mealData.difficulty,
+      category: mealData.category,
+      ingredients: cleanedIngredients,
+      steps: mealData.steps,
+      uid: mealData.uid,
+    };
+
+    // Only add lastViewedAt if it exists
+    if (mealData.lastViewedAt) {
+      cleanedMealData.lastViewedAt = mealData.lastViewedAt;
+    }
+
+    console.log(
+      "Final cleanedMealData before update:",
+      JSON.stringify(cleanedMealData, null, 2)
+    );
+
+    // Check for undefined values
+    Object.keys(cleanedMealData).forEach((key) => {
+      if (cleanedMealData[key] === undefined) {
+        console.error(`WARNING: undefined value found in key: ${key}`);
+      }
+      if (Array.isArray(cleanedMealData[key])) {
+        cleanedMealData[key].forEach((item: any, idx: number) => {
+          Object.keys(item).forEach((itemKey) => {
+            if (item[itemKey] === undefined) {
+              console.error(
+                `WARNING: undefined value in ${key}[${idx}].${itemKey}`
+              );
+            }
+          });
+        });
+      }
+    });
+
+    // Update the main meal document
+    console.log("Updating meal document with ID:", mealData.id);
+    const meal = await updateDocument(
+      MEALS_COLLECTION,
+      mealData.id,
+      cleanedMealData
+    );
+    console.log("Meal document updated successfully");
+
+    // Update ingredient details in subcollection (name and unit)
+    if (mealData.ingredients && mealData.ingredients.length > 0) {
+      console.log("Starting subcollection update...");
+      await updateMealIngredientsSubcollection(
+        mealData.id,
+        mealData.ingredients
+      );
+      console.log("Subcollection update completed");
+    }
+
+    console.log("=== UPDATE MEAL END ===");
+    const enrichedMeals = await enrichMealsWithIngredients([meal]);
+    return enrichedMeals[0];
+  } catch (error) {
+    console.error("=== UPDATE MEAL ERROR ===");
+    console.error("Error details:", error);
+    throw error;
+  }
+};
 
 const mealsSlice = createSlice({
   name: MEALS_SLICE,

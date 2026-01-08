@@ -17,7 +17,7 @@ export const createMealValidationSchema = yup.object().shape({
     .array()
     .of(
       yup.object().shape({
-        name: yup.string().required('Ingredient name is required'),
+        ingredientName: yup.string().required('Ingredient name is required'),
       })
     )
     .min(1, 'At least one ingredient is required'),

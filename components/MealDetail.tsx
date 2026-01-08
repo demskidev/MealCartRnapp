@@ -185,7 +185,7 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
             <View style={styles.divider} />
             {meal.ingredients.map((ingredient: any, index: number) => (
               <View style={styles.ingredientRow} key={index}>
-                <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                <Text style={styles.ingredientName}>{ingredient.ingredientName}</Text>
                 <View style={styles.dividerRow} />
                 <Text style={styles.ingredientValue}>
                   {ingredient.count && `${ingredient.count} `}

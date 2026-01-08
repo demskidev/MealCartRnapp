@@ -201,3 +201,34 @@ export const uploadImageToFirebase = async (uri: string, path: string) => {
     throw new Error("Image upload failed: " + error?.message);
   }
 };
+
+export const getSubcollectionDocuments = async (
+  parentCollection: string,
+  parentDocId: string,
+  subcollectionName: string
+) => {
+  try {
+    const subcollectionRef = collection(db, parentCollection, parentDocId, subcollectionName);
+    const snapshot = await getDocs(subcollectionRef);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error("Error in getSubcollectionDocuments:", err);
+    return [];
+  }
+};
+
+export const updateSubcollectionDocument = async (
+  parentCollection: string,
+  parentDocId: string,
+  subcollectionName: string,
+  docId: string,
+  data: any
+) => {
+  const docRef = doc(db, parentCollection, parentDocId, subcollectionName, docId);
+  await updateDoc(docRef, data);
+  const updatedDoc = await getDoc(docRef);
+  if (updatedDoc.exists()) {
+    return { id: updatedDoc.id, ...updatedDoc.data() };
+  }
+  return { id: docId, ...data };
+};
