@@ -7,8 +7,9 @@ import {
   getDocumentById,
   getSubcollectionDocuments,
   queryDocuments,
+  setDocumentById,
+  setSubcollectionDocument,
   updateDocument,
-  updateSubcollectionDocument,
   uploadImageToFirebase,
 } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -24,6 +25,7 @@ import {
 } from "../actionTypes";
 import {
   INGREDIENTS_CATEGORY_COLLECTION,
+  INGREDIENTS_KEY,
   MEAL_IMAGE_FOLDER,
   MEAL_INGREDIENTS_COLLECTION,
   MEALS_COLLECTION,
@@ -70,27 +72,77 @@ const initialState: MealsState = {
   error: null,
 };
 
-const addMealToDb = async (mealData: any) => {
+const saveMealIngredientsToSubcollection = async (
+  mealId: string,
+  ingredients: any[]
+) => {
   try {
-    const meal = await addDocument(MEALS_COLLECTION, mealData);
-    return meal;
+    // First, create the parent document in MEAL_INGREDIENTS_COLLECTION
+    await setDocumentById(MEAL_INGREDIENTS_COLLECTION, mealId, {
+      mealId: mealId,
+      createdAt: new Date(),
+    });
+
+    // Then add each ingredient to the subcollection
+    for (const ing of ingredients) {
+      if (ing.ingredientId) {
+        const ingredientData = {
+          name: ing.name || ing.ingredientName,
+          unit: ing.unit,
+          count: ing.count || "0",
+        };
+
+        await setSubcollectionDocument(
+          MEAL_INGREDIENTS_COLLECTION,
+          mealId,
+          INGREDIENTS_KEY,
+          ing.ingredientId,
+          ingredientData
+        );
+      }
+    }
   } catch (error) {
+    console.error("Error saving meal ingredients to subcollection:", error);
     throw error;
   }
 };
 
-// const updateMealInDb = async (mealData: any) => {
-//   try {
-//     const meal = await updateDocument(MEALS_COLLECTION, mealData.id, mealData);
-//     return meal;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
+const addMealToDb = async (mealData: any) => {
+  try {
+    // Extract ingredients for subcollection
+    const ingredientsForSubcollection = mealData.ingredients || [];
+
+    // Clean the meal data - only store ingredientId and categoryId in main meal document
+    const cleanedIngredients = ingredientsForSubcollection.map((ing: any) => ({
+      ingredientId: ing.ingredientId,
+      categoryId: ing.category, // This is the categoryId
+    }));
+
+    const cleanedMealData = {
+      ...mealData,
+      ingredients: cleanedIngredients,
+    };
+
+    // Add the meal document
+    const meal = await addDocument(MEALS_COLLECTION, cleanedMealData);
+
+    // Save ingredients to subcollection
+    await saveMealIngredientsToSubcollection(
+      meal.id,
+      ingredientsForSubcollection
+    );
+
+    return meal;
+  } catch (error) {
+    console.error("Error in addMealToDb:", error);
+    throw error;
+  }
+};
 
 const deleteMealFromDb = async (mealId: string) => {
   try {
     await deleteDocument(MEALS_COLLECTION, mealId);
+    await deleteDocument(MEAL_INGREDIENTS_COLLECTION, mealId);
   } catch (error) {
     throw error;
   }
@@ -125,16 +177,16 @@ export const addMeal = createAsyncThunk(
 
 export const updateMeal = createAsyncThunk(
   UPDATE_MEAL,
-  async (mealData: any, { rejectWithValue }) => {
+  async (
+    {
+      mealData,
+      updateWithIngredients = true,
+    }: { mealData: any; updateWithIngredients?: boolean },
+    { rejectWithValue }
+  ) => {
     try {
-      //  if(mealData?.imageUrl && !mealData?.imageUrl?.toString().startsWith(HTTPPREFIX)){
-      //   const meal =  await addMealImage(mealData);
-      //   return meal;
-
-      //   } else {
-      const meal = await updateMealInDb(mealData);
+      const meal = await updateMealInDb(mealData, updateWithIngredients);
       return meal;
-      // }
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -385,31 +437,50 @@ const updateMealIngredientsSubcollection = async (
     );
 
     if (!mealIngredientsDoc) {
-      console.log("No mealIngredients document found for meal:", mealId);
-      return;
+      await setDocumentById(MEAL_INGREDIENTS_COLLECTION, mealId, {
+        mealId: mealId,
+        createdAt: new Date(),
+      });
     }
 
-    // Update each ingredient in the subcollection
+    // // Update each ingredient in the subcollection
+    // for (const ing of ingredients) {
+    //   if (ing.ingredientId && ing.ingredientName && ing.unit) {
+    //     try {
+    //       // Update the ingredient document in the subcollection
+    //       await updateSubcollectionDocument(
+    //         MEAL_INGREDIENTS_COLLECTION,
+    //         mealId,
+    //         "ingredients",
+    //         ing.ingredientId,
+    //         {
+    //           name: ing.ingredientName,
+    //           unit: ing.unit,
+    //         }
+    //       );
+    //     } catch (error) {
+    //       console.error(
+    //         `Error updating ingredient ${ing.ingredientId}:`,
+    //         error
+    //       );
+    //     }
+    //   }
+    // }
     for (const ing of ingredients) {
-      if (ing.ingredientId && ing.ingredientName && ing.unit) {
-        try {
-          // Update the ingredient document in the subcollection
-          await updateSubcollectionDocument(
-            MEAL_INGREDIENTS_COLLECTION,
-            mealId,
-            "ingredients",
-            ing.ingredientId,
-            {
-              name: ing.ingredientName,
-              unit: ing.unit,
-            }
-          );
-        } catch (error) {
-          console.error(
-            `Error updating ingredient ${ing.ingredientId}:`,
-            error
-          );
-        }
+      if (ing.ingredientId) {
+        const ingredientData = {
+          name: ing.ingredientName || ing.name,
+          unit: ing.unit,
+          count: ing.count || "0",
+        };
+
+        await setSubcollectionDocument(
+          MEAL_INGREDIENTS_COLLECTION,
+          mealId,
+          INGREDIENTS_KEY,
+          ing.ingredientId,
+          ingredientData
+        );
       }
     }
   } catch (error) {
@@ -417,19 +488,23 @@ const updateMealIngredientsSubcollection = async (
   }
 };
 
-const updateMealInDb = async (mealData: any) => {
+const updateMealInDb = async (
+  mealData: any,
+  updateWithIngredients: boolean = true
+) => {
   try {
     console.log("=== UPDATE MEAL START ===");
     console.log("Raw mealData received:", JSON.stringify(mealData, null, 2));
+    console.log("Update with ingredients:", updateWithIngredients);
 
-    // Clean ingredients for main meal document - only store IDs (no count)
-    const cleanedIngredients = mealData.ingredients?.map((ing: any) => {
-      console.log("Processing ingredient:", JSON.stringify(ing, null, 2));
-      return {
-        categoryId: ing.categoryId,
-        ingredientId: ing.ingredientId,
-      };
-    });
+    // Store ingredients for subcollection before cleaning
+    const ingredientsForSubcollection = mealData.ingredients || [];
+
+    // Clean ingredients for main meal document - only store IDs
+    const cleanedIngredients = ingredientsForSubcollection.map((ing: any) => ({
+      ingredientId: ing.ingredientId,
+      categoryId: ing.categoryId,
+    }));
 
     console.log(
       "Cleaned ingredients:",
@@ -463,15 +538,17 @@ const updateMealInDb = async (mealData: any) => {
     // Check for undefined values
     Object.keys(cleanedMealData).forEach((key) => {
       if (cleanedMealData[key] === undefined) {
-        console.error(`WARNING: undefined value found in key: ${key}`);
+        console.warn(`Warning: ${key} is undefined, removing from update`);
+        delete cleanedMealData[key];
       }
       if (Array.isArray(cleanedMealData[key])) {
-        cleanedMealData[key].forEach((item: any, idx: number) => {
+        cleanedMealData[key].forEach((item: any, index: number) => {
           Object.keys(item).forEach((itemKey) => {
             if (item[itemKey] === undefined) {
-              console.error(
-                `WARNING: undefined value in ${key}[${idx}].${itemKey}`
+              console.warn(
+                `Warning: ${key}[${index}].${itemKey} is undefined, removing`
               );
+              delete item[itemKey];
             }
           });
         });
@@ -487,14 +564,22 @@ const updateMealInDb = async (mealData: any) => {
     );
     console.log("Meal document updated successfully");
 
-    // Update ingredient details in subcollection (name and unit)
-    if (mealData.ingredients && mealData.ingredients.length > 0) {
+    // Update ingredient details in subcollection only if updateWithIngredients is true
+    if (
+      updateWithIngredients &&
+      ingredientsForSubcollection &&
+      ingredientsForSubcollection.length > 0
+    ) {
       console.log("Starting subcollection update...");
       await updateMealIngredientsSubcollection(
         mealData.id,
-        mealData.ingredients
+        ingredientsForSubcollection
       );
       console.log("Subcollection update completed");
+    } else {
+      console.log(
+        "Skipping subcollection update (updateWithIngredients: false)"
+      );
     }
 
     console.log("=== UPDATE MEAL END ===");

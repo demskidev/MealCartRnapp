@@ -1,5 +1,6 @@
 import {
   browseicon,
+  closeIcon,
   filtericon,
   foodimage,
   gradientclose,
@@ -27,6 +28,8 @@ import {
   Dimensions,
   FlatList,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
   Text,
@@ -34,6 +37,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
@@ -59,21 +63,25 @@ const MealsScreen: React.FC = () => {
     fetchTheRecentMeals,
     loading,
     error,
+    meals,
     recentMeals,
   } = useMealsViewModel();
 
   const [normalMeals, setNormalMeals] = useState<Meal[]>([]);
-  const [lastDoc, setLastDoc] = useState<any>(null); // Changed from lastVisible
-  const [isEndReached, setIsEndReached] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const PAGE_SIZE = 2;
+  const [normalLastDoc, setNormalLastDoc] = useState<any>(null);
+  const [normalIsEndReached, setNormalIsEndReached] = useState(false);
+  const [normalIsLoadingMore, setNormalIsLoadingMore] = useState(false);
+  const NORMAL_PAGE_SIZE = 2;
 
   const [filteredMeals, setFilteredMeals] = useState<Meal[]>([]);
-  const [isLoadingFiltered, setIsLoadingFiltered] = useState(false);
+  const [filteredLastDoc, setFilteredLastDoc] = useState<any>(null);
+  const [filteredIsEndReached, setFilteredIsEndReached] = useState(false);
+  const [filteredIsLoadingMore, setFilteredIsLoadingMore] = useState(false);
+  const FILTERED_PAGE_SIZE = 10;
+
   const hasActiveFilters =
     filters.category || filters.difficulty || filters.prepTime || search;
 
-  // Display meals: show filtered meals if filters active, otherwise normal meals
   const displayMeals = hasActiveFilters ? filteredMeals : normalMeals;
 
   useEffect(() => {
@@ -83,86 +91,76 @@ const MealsScreen: React.FC = () => {
 
   useEffect(() => {
     if (hasActiveFilters) {
-      loadFilteredMeals();
+      setFilteredMeals([]);
+      setFilteredLastDoc(null);
+      setFilteredIsEndReached(false);
+      loadFilteredMeals(true);
     }
   }, [filters, search]);
 
-  // useEffect(() => {
-  //   const result = paginatedMeals.filter((item: Meal) => {
-  //     if (search && !item.name?.toLowerCase().includes(search.toLowerCase())) {
-  //       return false;
-  //     }
-  //     if (filters.category && item.category !== filters.category) {
-  //       return false;
-  //     }
-  //     if (filters.difficulty && item.difficulty !== filters.difficulty) {
-  //       return false;
-  //     }
-  //     if (filters.prepTime) {
-  //       const time = getPrepTimeMinutes(item.prepTime);
-  //       if (filters.prepTime === "< 5 Mins" && time >= 5) return false;
-  //       if (filters.prepTime === "5 - 10 Mins" && (time < 5 || time > 10))
-  //         return false;
-  //       if (filters.prepTime === "10 - 15 Mins" && (time < 10 || time > 15))
-  //         return false;
-  //       if (filters.prepTime === "> 15 Mins" && time <= 15) return false;
-  //     }
-  //     return true;
-  //   });
-  //   setFilteredMeals(result);
-  // }, [paginatedMeals, search, filters]);
+  useEffect(() => {
+    if (!hasActiveFilters && meals.length > 0) {
+      // Sync normalMeals with all Redux meals (includes newly added meals)
+      setNormalMeals(meals);
+      if (meals.length > 0) {
+        setNormalLastDoc(meals[meals.length - 1]);
+      }
+      // Don't mark as end reached if we have Redux meals
+      setNormalIsEndReached(false);
+    }
+  }, [meals, hasActiveFilters]);
 
   const loadInitialMeals = async () => {
     console.log("Loading initial meals");
     setNormalMeals([]);
-    setLastDoc(null);
-    setIsEndReached(false);
+    setNormalLastDoc(null);
+    setNormalIsEndReached(false);
 
     fetchMeals(
       (data) => {
         console.log("Initial meals fetched:", data.length);
-        if (data.length < PAGE_SIZE) {
-          setIsEndReached(true);
+        if (data.length < NORMAL_PAGE_SIZE) {
+          setNormalIsEndReached(true);
         }
         setNormalMeals(data);
         if (data.length > 0) {
-          setLastDoc(data[data.length - 1]);
+          setNormalLastDoc(data[data.length - 1]);
         }
       },
       (error) => {
         console.error("Error fetching initial meals:", error);
       },
-      PAGE_SIZE,
+      NORMAL_PAGE_SIZE,
       null
     );
   };
 
-  const loadMoreMeals = async () => {
+  const loadMoreNormalMeals = async () => {
     if (
-      isEndReached ||
+      normalIsEndReached ||
       loading ||
-      isLoadingMore ||
-      !lastDoc ||
+      normalIsLoadingMore ||
+      !normalLastDoc ||
       hasActiveFilters
     ) {
       console.log("Skipping load more:", {
-        isEndReached,
+        normalIsEndReached,
         loading,
-        isLoadingMore,
-        hasLastDoc: !!lastDoc,
+        normalIsLoadingMore,
+        hasLastDoc: !!normalLastDoc,
         hasActiveFilters,
       });
       return;
     }
 
     console.log("Loading more meals");
-    setIsLoadingMore(true);
+    setNormalIsLoadingMore(true);
 
     fetchMeals(
       (data) => {
         console.log("More meals fetched:", data.length);
-        if (data.length < PAGE_SIZE) {
-          setIsEndReached(true);
+        if (data.length < NORMAL_PAGE_SIZE) {
+          setNormalIsEndReached(true);
         }
 
         setNormalMeals((prev) => {
@@ -175,22 +173,32 @@ const MealsScreen: React.FC = () => {
         });
 
         if (data.length > 0) {
-          setLastDoc(data[data.length - 1]);
+          setNormalLastDoc(data[data.length - 1]);
         }
-        setIsLoadingMore(false);
+        setNormalIsLoadingMore(false);
       },
       (error) => {
         console.error("Error loading more meals:", error);
-        setIsLoadingMore(false);
+        setNormalIsLoadingMore(false);
       },
-      PAGE_SIZE,
-      lastDoc
+      NORMAL_PAGE_SIZE,
+      normalLastDoc
     );
   };
 
-  const loadFilteredMeals = async () => {
-    console.log("Loading filtered meals with:", { filters, search });
-    setIsLoadingFiltered(true);
+  const loadFilteredMeals = async (isInitial: boolean = false) => {
+    console.log("loadFilteredMeals called with isInitial:", isInitial); // Add this
+
+    if (!isInitial && (filteredIsEndReached || filteredIsLoadingMore)) {
+      console.log("Skipping load more filtered meals:", {
+        filteredIsEndReached,
+        filteredIsLoadingMore,
+      });
+      return;
+    }
+
+    console.log("Loading filtered meals with:", { filters, search, isInitial }); // Updated log
+    setFilteredIsLoadingMore(true);
 
     searchMealsCombined(
       {
@@ -198,23 +206,72 @@ const MealsScreen: React.FC = () => {
         difficulty: filters.difficulty,
         prepTime: filters.prepTime,
         searchText: search,
+        limit: FILTERED_PAGE_SIZE,
+        startAfter: isInitial ? null : filteredLastDoc,
       },
       (data) => {
         console.log("Filtered meals fetched:", data.length);
-        setFilteredMeals(data);
-        setIsLoadingFiltered(false);
+        console.log("isInitial in callback:", isInitial); // Add this
+
+        if (data.length < FILTERED_PAGE_SIZE) {
+          setFilteredIsEndReached(true);
+        }
+
+        if (isInitial) {
+          console.log("Setting filtered meals directly (initial load)"); // Add this
+          setFilteredMeals(data);
+        } else {
+          console.log("Appending to existing filtered meals"); // Add this
+          setFilteredMeals((prev) => {
+            const existingIds = new Set(prev.map((meal: Meal) => meal.id));
+            const newMeals = data.filter(
+              (meal: Meal) => !existingIds.has(meal.id)
+            );
+            console.log("New filtered meals to add:", newMeals.length);
+            return [...prev, ...newMeals];
+          });
+        }
+        if (data.length > 0) {
+          setFilteredLastDoc(data[data.length - 1]);
+        }
+        setFilteredIsLoadingMore(false);
       },
       (error) => {
         console.error("Error fetching filtered meals:", error);
-        setIsLoadingFiltered(false);
+        setFilteredIsLoadingMore(false);
       }
     );
   };
 
-  const handleEndReached = () => {
-    console.log("End reached", { isEndReached, loading, isLoadingMore });
-    if (!isEndReached && !loading && !isLoadingMore) {
-      loadMoreMeals();
+  const handleScrollViewScroll = (
+    event: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+    const isCloseToBottom =
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom;
+
+    if (
+      isCloseToBottom &&
+      !normalIsEndReached &&
+      !loading &&
+      !normalIsLoadingMore
+    ) {
+      console.log("ScrollView reached bottom, loading more normal meals");
+      loadMoreNormalMeals();
+    }
+  };
+
+  const handleFilteredEndReached = () => {
+    console.log("Filtered FlatList end reached", {
+      filteredIsEndReached,
+      loading,
+      filteredIsLoadingMore,
+    });
+
+    if (!filteredIsEndReached && !loading && !filteredIsLoadingMore) {
+      loadFilteredMeals(false);
     }
   };
 
@@ -269,10 +326,16 @@ const MealsScreen: React.FC = () => {
       </View>
     </Pressable>
   );
+  console.log("Render state:", {
+    hasActiveFilters,
+    isMyMeals,
+    filteredMealsLength: filteredMeals.length,
+    displayMealsLength: displayMeals.length,
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <View>
+      <View style={{ flex: 1 }}>
         <View style={styles.topTextParent}>
           <View style={styles.parentMymeal}>
             <View>
@@ -329,7 +392,7 @@ const MealsScreen: React.FC = () => {
             />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search your meals..."
+              placeholder={Strings.meals_searchPlaceholder}
               placeholderTextColor={Colors.tertiary}
               value={search}
               onChangeText={setSearch}
@@ -345,11 +408,16 @@ const MealsScreen: React.FC = () => {
         </View>
 
         {!hasActiveFilters && isMyMeals ? (
-          <View style={{ marginTop: verticalScale(10) }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ marginTop: verticalScale(10) }}
+            onScroll={handleScrollViewScroll}
+            scrollEventThrottle={400}
+          >
             {!recentMeals && !normalMeals ? (
               <Text style={styles.emptyText}>{Strings.meals_noMealsFound}</Text>
             ) : (
-              <View>
+              <View style={{ flex: 1, marginTop: verticalScale(10) }}>
                 {recentMeals && recentMeals.length > 0 ? (
                   <View>
                     <Text style={styles.recentText}>
@@ -388,43 +456,78 @@ const MealsScreen: React.FC = () => {
                     <Text style={styles.upcomingText}>
                       {Strings.meals_yourMeals}
                     </Text>
-                    <View style={{ height: height * 0.3 }}>
-                      <FlatList
-                        data={normalMeals}
-                        renderItem={renderMealCard}
-                        keyExtractor={(item) => item.id}
-                        numColumns={2}
-                        columnWrapperStyle={{
-                          justifyContent: "space-between",
-                          marginBottom: verticalScale(8),
-                        }}
-                        contentContainerStyle={{
-                          paddingBottom: verticalScale(100),
-                        }}
-                        showsVerticalScrollIndicator={false}
-                        onEndReached={handleEndReached}
-                        onEndReachedThreshold={1}
-                        ListFooterComponent={
-                          !hasActiveFilters &&
-                          isLoadingMore &&
-                          normalMeals.length > 0 ? (
-                            <Loader visible={true} />
-                          ) : null
-                        }
-                      />
-                    </View>
+                    <FlatList
+                      data={normalMeals}
+                      renderItem={renderMealCard}
+                      keyExtractor={(item) => item.id}
+                      numColumns={2}
+                      columnWrapperStyle={{
+                        justifyContent: "space-between",
+                        marginBottom: verticalScale(8),
+                      }}
+                      scrollEnabled={false}
+                      contentContainerStyle={{
+                        paddingBottom: verticalScale(100),
+                      }}
+                      showsVerticalScrollIndicator={false}
+                    />
+                  </View>
+                )}
+
+                {normalIsLoadingMore && normalMeals.length > 0 && (
+                  <View style={{ paddingVertical: verticalScale(20) }}>
+                    <Loader visible={true} />
                   </View>
                 )}
               </View>
             )}
-          </View>
+          </ScrollView>
         ) : (
           <View style={{ flex: 1, marginTop: verticalScale(10) }}>
-            <Text
-              style={[styles.recentText, { marginVertical: verticalScale(10) }]}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginVertical: verticalScale(10),
+              }}
             >
-              {Strings.meals_allMeals}
-            </Text>
+              <Text style={styles.recentText}>{Strings.meals_allMeals}</Text>
+
+              <TouchableOpacity
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: horizontalScale(6),
+                }}
+                onPress={() => {
+                  setFilters({
+                    category: null,
+                    difficulty: null,
+                    prepTime: null,
+                  });
+                  setSearch("");
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: moderateScale(14),
+                    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+                    color: Colors.tertiary,
+                  }}
+                >
+                  {Strings.clearFilters}
+                </Text>
+                <Image
+                  source={closeIcon}
+                  resizeMode="contain"
+                  style={{
+                    width: moderateScale(16),
+                    height: moderateScale(16),
+                  }}
+                />
+              </TouchableOpacity>
+            </View>
 
             <FlatList
               data={displayMeals}
@@ -437,10 +540,19 @@ const MealsScreen: React.FC = () => {
               }}
               contentContainerStyle={{ paddingBottom: 160 }}
               showsVerticalScrollIndicator={false}
+              onEndReached={handleFilteredEndReached}
+              onEndReachedThreshold={0.5}
               ListEmptyComponent={
                 <Text style={styles.emptyText}>
                   {Strings.meals_recentMealsFound}
                 </Text>
+              }
+              ListFooterComponent={
+                hasActiveFilters &&
+                filteredIsLoadingMore &&
+                filteredMeals.length > 0 ? (
+                  <Loader visible={true} />
+                ) : null
               }
             />
           </View>

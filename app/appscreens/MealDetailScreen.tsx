@@ -1,20 +1,27 @@
-import MealDetail from "@/components/MealDetail";
 import Loader from "@/components/Loader";
+import MealDetail from "@/components/MealDetail";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { Alert } from "react-native";
 
 export default function MealDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { meals, updateMealData, fetchMeals } = useMealsViewModel();
-  
+
   const mealId = params.mealId as string;
+  const hasUpdatedViewTime = useRef(false);
+  const hasCheckedMealNotFound = useRef(false); // Prevent multiple alerts
+
+  // Get meal from Redux state
+  const meal = useMemo(() => {
+    return meals.find((m) => m.id === mealId);
+  }, [meals, mealId]);
 
   // Fetch meals if not already loaded
   useEffect(() => {
     if (meals.length === 0) {
-      console.log("MealDetailScreen - Fetching meals...");
       fetchMeals(
         () => console.log("MealDetailScreen - Meals fetched successfully"),
         (error) => console.error("MealDetailScreen - Error fetching meals:", error)
@@ -22,52 +29,62 @@ export default function MealDetailScreen() {
     }
   }, []);
 
-  // Get meal from Redux state
-  const meal = useMemo(() => {
-    const foundMeal = meals.find((m) => m.id === mealId);
-    console.log("MealDetailScreen - Looking for meal ID:", mealId);
-    console.log("MealDetailScreen - Found meal:", foundMeal?.name);
-    console.log("MealDetailScreen - Redux meals count:", meals.length);
-    return foundMeal;
-  }, [meals, mealId]);
-
   // Update lastViewedAt when meal is found
   useEffect(() => {
-    if (!meal) return;
+    if (!meal || hasUpdatedViewTime.current) return;
+
+    hasUpdatedViewTime.current = true;
 
     const cleanedIngredients = meal.ingredients?.map((ing) => ({
-      categoryId: ing.categoryId,
       ingredientId: ing.ingredientId,
+      categoryId: ing.categoryId,
     }));
 
     updateMealData(
       {
-        id: meal.id,
-        name: meal.name,
-        description: meal.description,
-        imageUrl: meal.imageUrl,
-        prepTime: meal.prepTime,
-        servings: meal.servings,
-        difficulty: meal.difficulty,
-        category: meal.category,
-        ingredients: cleanedIngredients,
-        steps: meal.steps,
-        lastViewedAt: new Date(),
-        uid: meal.uid,
+        mealData: {
+          id: meal.id,
+          name: meal.name,
+          description: meal.description,
+          imageUrl: meal.imageUrl,
+          prepTime: meal.prepTime,
+          servings: meal.servings,
+          difficulty: meal.difficulty,
+          category: meal.category,
+          ingredients: cleanedIngredients,
+          steps: meal.steps,
+          lastViewedAt: new Date(),
+          uid: meal.uid,
+        },
+        updateWithIngredients: false,
       },
-      () => console.log("MealDetailScreen - Updated lastViewedAt")
+      () => console.log("MealDetailScreen - Updated lastViewedAt"),
+      (error) =>
+        console.error("MealDetailScreen - Error updating lastViewedAt:", error)
     );
   }, [meal?.id]);
 
-  // Only show loader if meals are being fetched AND meal not found yet
-  if (!meal && meals.length === 0) {
-    return <></>;
-  }
+  // Handle meal not found
+  useEffect(() => {
+    if (!meal && meals.length > 0 && !hasCheckedMealNotFound.current) {
+      hasCheckedMealNotFound.current = true;
+      Alert.alert(
+        "Meal Not Found",
+        "This meal could not be found or has been deleted.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  }, [meal, meals.length, router]);
 
-  // If meals loaded but this specific meal not found, go back
-  if (!meal && meals.length > 0) {
-    alert("Meal not found");
-    return null;
+  // Show loader only while fetching initial meals or meal not found yet
+  if (!meal) {
+    return <Loader visible={true} />;
   }
 
   return <MealDetail meal={meal} onBack={() => router.back()} />;

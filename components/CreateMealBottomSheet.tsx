@@ -23,13 +23,13 @@ import {
 import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
 // import { getUnitOptions } from "@/utils/unitOptions";
+import { generateFirebaseId } from "@/services/firestore";
 import { createMealValidationSchema } from "@/utils/validators/MealValidators";
 import { useCreateMealViewModel } from "@/viewmodels/CreateMealViewModel";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { Timestamp } from "firebase/firestore";
 import { Formik } from "formik";
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import {
@@ -111,7 +111,6 @@ const CreateMealBottomSheet = forwardRef<
       ingredients: [],
       steps: [{ text: "" }],
     };
-
   }, [isEdit, mealData]);
 
   useEffect(() => {
@@ -384,45 +383,102 @@ const CreateMealBottomSheet = forwardRef<
           </View>
         </View>
       );
-  const handleCreateMeal = async (values) => {
-    try {
-      const name = values.name.trim();
+
+  // Add this helper function before handleCreateMeal
+  const prepareMealData = (values, isEdit = false) => {
+    // Map ingredients - include all data needed for subcollection
+    const mappedIngredients = values.ingredients.map((ing) => {
+      // Get the categoryId properly
+      const categoryId =
+        ing.categoryId ||
+        (typeof ing.category === "object" && ing.category?.id
+          ? ing.category.id
+          : ing.category);
+
+      // Parse count - it's always a string from the stepper
+      const countValue = parseInt(ing.count || "0", 10);
+
+      const ingredient = {
+        ingredientId: ing.ingredientId || generateFirebaseId(),
+        name: ing.ingredientName,
+        ingredientName: ing.ingredientName,
+        unit: ing.unit,
+        category: categoryId,
+        categoryId: categoryId,
+      };
+
+      // Only add count if it's greater than 0
+      if (countValue > 0) {
+        ingredient.count = countValue.toString();
+      }
+
+      return ingredient;
+    });
+
+    // Filter out any ingredients with undefined category before sending
+    const validIngredients = mappedIngredients.filter(
+      (ing) =>
+        ing.category !== undefined &&
+        ing.category !== null &&
+        ing.category !== ""
+    );
+
+    // Filter and map steps - only include non-empty steps
+    const mappedSteps = values.steps
+      .map((step) => step.text?.trim())
+      .filter((text) => text && text.length > 0);
+
+    // Build meal data
+    const mealData = {
+      name: values.name.trim(),
+      description: values.description,
+      imageUrl: values.imageUrl,
+      prepTime: values.prepTime,
+      servings: values.servings,
+      difficulty: values.difficulty,
+      category: values.category,
+      ingredients: validIngredients,
+      uid: user?.id,
+    };
+
+    // Add id for edit mode
+    if (isEdit) {
+      mealData.id = values.id;
+    } else {
+      // Add nameCharacters for create mode
       const nameCharacters = [];
+      const name = values.name.trim();
       for (let i = 1; i <= name.length; i++) {
         nameCharacters.push(name.substring(0, i).toLowerCase());
       }
-      const mappedIngredients = values.ingredients.map((ing) => {
-        const isVolumeUnit =
-          ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
-          ing.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
-          ing.unit?.toLowerCase().includes(Strings.units.cup);
+      mealData.nameCharacters = nameCharacters;
+    }
 
-        return {
-          name: ing.ingredientName,
-          unit: ing.unit,
-          // Only include count if it's a volume unit
-          ...(isVolumeUnit && { count: ing.count }),
-          category:
-            typeof ing.category === "object" && ing.category.id
-              ? ing.category.id
-              : ing.category,
-        };
-      });
-      const mappedSteps = values.steps.map((step) => step.text);
-      const mealData = {
-        name: name,
-        nameCharacters: nameCharacters,
-        description: values.description,
-        imageUrl: values.imageUrl,
-        prepTime: values.prepTime,
-        servings: values.servings,
-        difficulty: values.difficulty,
-        category: values.category,
-        ingredients: mappedIngredients,
-        lastViewedAt: Timestamp.fromDate(new Date()),
-        steps: mappedSteps,
-        uid: user?.id,
-      };
+    // Only add steps if there are valid steps
+    if (mappedSteps.length > 0) {
+      mealData.steps = mappedSteps;
+    }
+
+    return { mealData, validIngredients, mappedIngredients };
+  };
+
+  const handleCreateMeal = async (values) => {
+    try {
+      const { mealData, validIngredients, mappedIngredients } = prepareMealData(
+        values,
+        false
+      );
+
+      if (validIngredients.length !== mappedIngredients.length) {
+        alert("Please select a category for all ingredients");
+        return;
+      }
+
+      console.log(
+        "Creating meal with data:",
+        JSON.stringify(mealData, null, 2)
+      );
+
       addMealData(
         mealData,
         () => {
@@ -440,61 +496,40 @@ const CreateMealBottomSheet = forwardRef<
     }
   };
 
- const handleEditMeal = async (values) => {
-  console.log("Editing meal with values:", values);
-  try {
-    const mappedIngredients = values.ingredients.map((ing) => {
-      const isVolumeUnit =
-        ing.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
-        ing.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
-        ing.unit?.toLowerCase().includes(Strings.units.cup);
+  const handleEditMeal = async (values) => {
+    console.log("Editing meal with values:", values);
+    try {
+      const { mealData, validIngredients, mappedIngredients } = prepareMealData(
+        values,
+        true
+      );
 
-      return {
-        ingredientId: ing.ingredientId, // ADD THIS - Required for updating subcollection
-        categoryId: ing.categoryId, // ADD THIS - For the main meal document
-        ingredientName: ing.ingredientName, // For updating subcollection
-        unit: ing.unit, // For updating subcollection
-        count: ing.count, // Always include count
-        // Legacy 'name' and 'category' for backward compatibility
-        name: ing.ingredientName,
-        category: ing.categoryId || (typeof ing.category === "object" && ing.category.id ? ing.category.id : ing.category),
-      };
-    });
-    
-    const mappedSteps = values.steps.map((step) => step.text);
-    
-    const mealData = {
-      id: values.id,
-      name: values.name,
-      description: values.description,
-      imageUrl: values.imageUrl,
-      prepTime: values.prepTime,
-      servings: values.servings,
-      difficulty: values.difficulty,
-      category: values.category,
-      ingredients: mappedIngredients,
-      steps: mappedSteps,
-      uid: user?.id,
-    };
-    
-    console.log("Updating meal with data:", mealData);
-    
-    updateMealData(
-      mealData,
-      () => {
-        alert(Strings.mealUpdated);
-        if (ref && typeof ref !== "function" && ref.current?.close) {
-          ref.current.close();
-        }
-      },
-      (error) => {
-        alert(Strings.error_updating_meal + error);
+      if (validIngredients.length !== mappedIngredients.length) {
+        alert("Please select a category for all ingredients");
+        return;
       }
-    );
-  } catch (error) {
-    alert(Strings.error_updating_meal + error);
-  }
-};
+
+      console.log("Updating meal with data:", mealData);
+
+      updateMealData(
+        {
+          mealData: mealData,
+          updateWithIngredients: true,
+        },
+        () => {
+          alert(Strings.mealUpdated);
+          if (ref && typeof ref !== "function" && ref.current?.close) {
+            ref.current.close();
+          }
+        },
+        (error) => {
+          alert(Strings.error_updating_meal + error);
+        }
+      );
+    } catch (error) {
+      alert(Strings.error_updating_meal + error);
+    }
+  };
 
   return (
     <Formik
@@ -517,400 +552,412 @@ const CreateMealBottomSheet = forwardRef<
         resetForm,
       }) => (
         console.log("Formik Values:", values),
-        <>
-          <ImagePickerModal
-            visible={showImagePickerModal}
-            onClose={() => setShowImagePickerModal(false)}
-            onImagePicked={(url) => setFieldValue("imageUrl", url)}
-          />
+        (
+          <>
+            <ImagePickerModal
+              visible={showImagePickerModal}
+              onClose={() => setShowImagePickerModal(false)}
+              onImagePicked={(url) => setFieldValue("imageUrl", url)}
+            />
 
-          <BottomSheet
-            ref={ref}
-            index={-1}
-            snapPoints={snapPoints}
-            enablePanDownToClose
-            keyboardBehavior="extend"
-            keyboardBlurBehavior="restore"
-            topInset={0}
-            handleComponent={() => null}
-            onClose={() => {
-              resetForm();
-            }}
-            backdropComponent={(props) => (
-              <BottomSheetBackdrop
-                {...props}
-                disappearsOnIndex={-1}
-                appearsOnIndex={0}
-              />
-            )}
-          >
-            <View style={styles.emptyView}></View>
-            <View style={styles.parentCreateMealText}>
-              <Text style={styles.header}>
-                {isEdit
-                  ? Strings.createMeal_editMeal
-                  : Strings.createMeal_createMeal}
-              </Text>
-              <TouchableOpacity
-                onPress={() =>
-                  ref && typeof ref !== "function" && ref.current?.close()
-                }
-              >
-                <Image
-                  source={closeIcon}
-                  style={{
-                    width: verticalScale(24),
-                    height: verticalScale(24),
-                  }}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </View>
-
-            <BottomSheetScrollView
-              contentContainerStyle={{
-                paddingHorizontal: moderateScale(20),
-                paddingBottom: verticalScale(30),
+            <BottomSheet
+              ref={ref}
+              index={-1}
+              snapPoints={snapPoints}
+              enablePanDownToClose
+              keyboardBehavior="extend"
+              keyboardBlurBehavior="restore"
+              topInset={0}
+              handleComponent={() => null}
+              onClose={() => {
+                resetForm();
               }}
-              keyboardShouldPersistTaps="handled"
+              backdropComponent={(props) => (
+                <BottomSheetBackdrop
+                  {...props}
+                  disappearsOnIndex={-1}
+                  appearsOnIndex={0}
+                />
+              )}
             >
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>
-                  {Strings.createMeal_basicInfo}
+              <View style={styles.emptyView}></View>
+              <View style={styles.parentCreateMealText}>
+                <Text style={styles.header}>
+                  {isEdit
+                    ? Strings.createMeal_editMeal
+                    : Strings.createMeal_createMeal}
                 </Text>
-                <Text style={styles.label}>{Strings.createMeal_mealName}</Text>
-                <CustomTextInput
-                  placeholder={Strings.createMeal_mealName_placeholder}
-                  value={values.name}
-                  onChangeText={(text) => {
-                    setFieldValue(NAME_KEY, text);
-                    if (touched.name && errors.name) {
-                      setTouched({ ...touched, name: false });
-                    }
-                  }}
-                  error={touched.name && errors.name}
-                />
-
-                <Text style={styles.label}>
-                  {Strings.createMeal_mealDescription}
-                </Text>
-                <CustomTextInput
-                  style={{
-                    height: verticalScale(80),
-                    borderRadius: moderateScale(4),
-                    backgroundColor: Colors.greysoft,
-                    paddingHorizontal: horizontalScale(10),
-                    marginBottom: moderateScale(8),
-                  }}
-                  placeholder={Strings.createMeal_mealDescription_placeholder}
-                  multiline={true}
-                  value={values.description}
-                  numberOfLines={4}
-                  onChangeText={(text) => {
-                    setFieldValue(DESCRIPTION_KEY, text);
-                    if (touched.description && errors.description) {
-                      setTouched({ ...touched, description: false });
-                    }
-                  }}
-                  error={touched.description && errors.description}
-                />
-
-                <Text style={styles.label}>{Strings.createMeal_imageUrl}</Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                    gap: moderateScale(8),
-                  }}
+                <TouchableOpacity
+                  onPress={() =>
+                    ref && typeof ref !== "function" && ref.current?.close()
+                  }
                 >
+                  <Image
+                    source={closeIcon}
+                    style={{
+                      width: verticalScale(24),
+                      height: verticalScale(24),
+                    }}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <BottomSheetScrollView
+                contentContainerStyle={{
+                  paddingHorizontal: moderateScale(20),
+                  paddingBottom: verticalScale(30),
+                }}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.card}>
+                  <Text style={styles.sectionTitle}>
+                    {Strings.createMeal_basicInfo}
+                  </Text>
+                  <Text style={styles.label}>
+                    {Strings.createMeal_mealName}
+                  </Text>
+                  <CustomTextInput
+                    placeholder={Strings.createMeal_mealName_placeholder}
+                    value={values.name}
+                    onChangeText={(text) => {
+                      setFieldValue(NAME_KEY, text);
+                      if (touched.name && errors.name) {
+                        setTouched({ ...touched, name: false });
+                      }
+                    }}
+                    error={touched.name && errors.name}
+                  />
+
+                  <Text style={styles.label}>
+                    {Strings.createMeal_mealDescription}
+                  </Text>
+                  <CustomTextInput
+                    style={{
+                      height: verticalScale(80),
+                      borderRadius: moderateScale(4),
+                      backgroundColor: Colors.greysoft,
+                      paddingHorizontal: horizontalScale(10),
+                      marginBottom: moderateScale(8),
+                    }}
+                    placeholder={Strings.createMeal_mealDescription_placeholder}
+                    multiline={true}
+                    value={values.description}
+                    numberOfLines={4}
+                    onChangeText={(text) => {
+                      setFieldValue(DESCRIPTION_KEY, text);
+                      if (touched.description && errors.description) {
+                        setTouched({ ...touched, description: false });
+                      }
+                    }}
+                    error={touched.description && errors.description}
+                  />
+
+                  <Text style={styles.label}>
+                    {Strings.createMeal_imageUrl}
+                  </Text>
                   <View
                     style={{
                       flexDirection: "row",
-                      alignItems: "center",
+                      alignItems: "flex-start",
                       gap: moderateScale(8),
                     }}
                   >
-                    <View style={{ flex: 1 }}>
-                      <CustomTextInput
-                        style={{ marginBottom: 0 }}
-                        placeholder={Strings.createMeal_imageUrl_placeholder}
-                        value={values.imageUrl}
-                        onChangeText={(text) =>
-                          setFieldValue(IMAGEURL_KEY, text)
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: moderateScale(8),
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <CustomTextInput
+                          style={{ marginBottom: 0 }}
+                          placeholder={Strings.createMeal_imageUrl_placeholder}
+                          value={values.imageUrl}
+                          onChangeText={(text) =>
+                            setFieldValue(IMAGEURL_KEY, text)
+                          }
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={styles.uploadButton}
+                        onPress={() => handleUpload(setFieldValue)}
+                      >
+                        <Text style={styles.uploadButtonText}>
+                          {isEdit
+                            ? Strings.createMeal_remove
+                            : Strings.createMeal_upload}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.row}>
+                    <View style={styles.rowItem}>
+                      <Text style={styles.label}>
+                        {Strings.createMeal_prepTime}
+                      </Text>
+
+                      <CustomStepper
+                        value={values.prepTime}
+                        onIncrement={() => {
+                          const index = prepTimeOptions.indexOf(
+                            values.prepTime
+                          );
+                          if (index < prepTimeOptions.length - 1) {
+                            setFieldValue(
+                              PREPTIME_KEY,
+                              prepTimeOptions[index + 1]
+                            );
+                          }
+                        }}
+                        onDecrement={() => {
+                          const index = prepTimeOptions.indexOf(
+                            values.prepTime
+                          );
+                          if (index > 0) {
+                            setFieldValue(
+                              PREPTIME_KEY,
+                              prepTimeOptions[index - 1]
+                            );
+                          }
+                        }}
+                        showUp={true}
+                        showDown={true}
+                      />
+                    </View>
+                    <View style={styles.rowItem}>
+                      <Text style={styles.label}>
+                        {Strings.createMeal_servings}
+                      </Text>
+                      <CustomStepper
+                        value={values.servings}
+                        onIncrement={() =>
+                          setFieldValue(
+                            SERVINGS_KEY,
+                            String(Number(values.servings) + 1)
+                          )
+                        }
+                        onDecrement={() =>
+                          setFieldValue(
+                            SERVINGS_KEY,
+                            String(Math.max(1, Number(values.servings) - 1))
+                          )
                         }
                       />
                     </View>
-                    <TouchableOpacity
-                      style={styles.uploadButton}
-                      onPress={() => handleUpload(setFieldValue)}
-                    >
-                      <Text style={styles.uploadButtonText}>
-                        {isEdit
-                          ? Strings.createMeal_remove
-                          : Strings.createMeal_upload}
+                  </View>
+
+                  <View style={styles.row}>
+                    <View style={styles.rowItem}>
+                      <Text style={styles.label}>
+                        {Strings.createMeal_difficulty}
                       </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <View style={styles.row}>
-                  <View style={styles.rowItem}>
-                    <Text style={styles.label}>
-                      {Strings.createMeal_prepTime}
-                    </Text>
-
-                    <CustomStepper
-                      value={values.prepTime}
-                      onIncrement={() => {
-                        const index = prepTimeOptions.indexOf(values.prepTime);
-                        if (index < prepTimeOptions.length - 1) {
-                          setFieldValue(
-                            PREPTIME_KEY,
-                            prepTimeOptions[index + 1]
-                          );
-                        }
-                      }}
-                      onDecrement={() => {
-                        const index = prepTimeOptions.indexOf(values.prepTime);
-                        if (index > 0) {
-                          setFieldValue(
-                            PREPTIME_KEY,
-                            prepTimeOptions[index - 1]
-                          );
-                        }
-                      }}
-                      showUp={true}
-                      showDown={true}
-                    />
-                  </View>
-                  <View style={styles.rowItem}>
-                    <Text style={styles.label}>
-                      {Strings.createMeal_servings}
-                    </Text>
-                    <CustomStepper
-                      value={values.servings}
-                      onIncrement={() =>
-                        setFieldValue(
-                          SERVINGS_KEY,
-                          String(Number(values.servings) + 1)
-                        )
-                      }
-                      onDecrement={() =>
-                        setFieldValue(
-                          SERVINGS_KEY,
-                          String(Math.max(1, Number(values.servings) - 1))
-                        )
-                      }
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.row}>
-                  <View style={styles.rowItem}>
-                    <Text style={styles.label}>
-                      {Strings.createMeal_difficulty}
-                    </Text>
-                    <CustomDropdown
-                      value={values.difficulty}
-                      options={[
-                        Strings.testMealPlan_easy,
-                        Strings.testMealPlan_medium,
-                        Strings.filterModal_challenging,
-                        Strings.testMealPlan_hard,
-                      ]}
-                      onSelect={(val) => setFieldValue(DIFFICULTY_KEY, val)}
-                      icon={IconDown}
-                    />
-                  </View>
-                  <View style={styles.rowItem}>
-                    <Text style={styles.label}>
-                      {Strings.createMeal_category}
-                    </Text>
-                    <CustomDropdown
-                      value={values.category}
-                      options={[
-                        Strings.plans_breakfast,
-                        Strings.plans_lunch,
-                        Strings.plans_dinner,
-                      ]}
-                      onSelect={(val) => setFieldValue(CATEGORY_KEY, val)}
-                      icon={IconDown}
-                    />
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>
-                  {Strings.createMeal_ingredients}
-                </Text>
-
-                <FlatList
-                  data={values.ingredients}
-                  keyExtractor={(_, index) => index.toString()}
-                  scrollEnabled={false}
-                  renderItem={renderIngredientItem(
-                    values.ingredients,
-                    setFieldValue,
-                    errors,
-                    touched,
-                    setTouched
-                  )}
-                />
-                {touched.ingredients &&
-                  errors.ingredients &&
-                  typeof errors.ingredients === "string" && (
-                    <Text style={styles.errorText}>{errors.ingredients}</Text>
-                  )}
-
-                <TouchableOpacity
-                  style={styles.addIngredient}
-                  onPress={() => {
-                    const firstCategory =
-                      ingredientCategories.length > 0
-                        ? ingredientCategories[0]
-                        : null;
-                    const unitOptions = getUnitsForCategory(firstCategory);
-
-                    setFieldValue(INGREDIENTS_KEY, [
-                      ...values.ingredients,
-                      {
-                        ingredientName: "", // Changed from name
-                        count: "1",
-                        unit: unitOptions[0] ?? "",
-                        categoryId: firstCategory?.id ?? "",
-                        categoryName: firstCategory?.title ?? "",
-                        // category: firstCategory ?? "",
-                      },
-                    ]);
-                    if (touched.ingredients && errors.ingredients) {
-                      setTouched({ ...touched, ingredients: false });
-                    }
-                  }}
-                >
-                  <IconPlus
-                    width={verticalScale(21)}
-                    height={verticalScale(21)}
-                    color={Colors.primary}
-                  />
-                  <Text style={styles.plusicon}>+</Text>
-                  <Text style={styles.addIngredientText}>
-                    {Strings.createMeal_addIngredient}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>
-                  {Strings.createMeal_instruction}
-                </Text>
-
-                <FlatList
-                  data={values.steps}
-                  keyExtractor={(_, index) => index.toString()}
-                  scrollEnabled={false}
-                  renderItem={renderInstructionItem(
-                    values.steps,
-                    setFieldValue
-                  )}
-                />
-                <TouchableOpacity
-                  style={styles.addIngredient}
-                  onPress={() =>
-                    setFieldValue(STEPS_KEY, [...values.steps, { text: "" }])
-                  }
-                >
-                  <Text style={styles.plusicon}>+</Text>
-                  <Text style={styles.addIngredientText}>
-                    {Strings.createMeal_addStep}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.parentOfConfirmButton}>
-                <BaseButton
-                  title={
-                    isEdit
-                      ? Strings.createMeal_discard
-                      : Strings.createMeal_cancel
-                  }
-                  gradientButton={false}
-                  backgroundColor={Colors.white}
-                  textStyleText={styles.discardText}
-                  width={isEdit ? width * 0.28 : width * 0.41}
-                  textStyle={[
-                    styles.cancelButton,
-                    { color: isEdit ? Colors.error : Colors.primary },
-                  ]}
-                  textColor={isEdit ? Colors.error : Colors.primary}
-                  onPress={() => ref?.current?.close()}
-                />
-                <BaseButton
-                  title={
-                    isEdit
-                      ? Strings.createMeal_updateMeal
-                      : Strings.createMeal_confirm
-                  }
-                  gradientButton={true}
-                  width={isEdit ? width * 0.65 : width * 0.41}
-                  gradientStartColor={Colors._667D4C}
-                  gradientEndColor={Colors._9DAF89}
-                  gradientStart={{ x: 0, y: 0 }}
-                  gradientEnd={{ x: 1, y: 0 }}
-                  textColor={Colors.white}
-                  rightChild={
-                    isEdit ? (
-                      <Image
-                        source={iconMeal}
-                        style={{
-                          width: verticalScale(21),
-                          height: verticalScale(21),
-                          tintColor: Colors.white,
-                        }}
-                        resizeMode="contain"
+                      <CustomDropdown
+                        value={values.difficulty}
+                        options={[
+                          Strings.testMealPlan_easy,
+                          Strings.testMealPlan_medium,
+                          Strings.filterModal_challenging,
+                          Strings.testMealPlan_hard,
+                        ]}
+                        onSelect={(val) => setFieldValue(DIFFICULTY_KEY, val)}
+                        icon={IconDown}
                       />
-                    ) : null
-                  }
-                  textStyle={[styles.confirmButton]}
-                  onPress={async () => {
-                    const formErrors = await validateForm();
-                    console.log("Validation errors:", formErrors);
+                    </View>
+                    <View style={styles.rowItem}>
+                      <Text style={styles.label}>
+                        {Strings.createMeal_category}
+                      </Text>
+                      <CustomDropdown
+                        value={values.category}
+                        options={[
+                          Strings.plans_breakfast,
+                          Strings.plans_lunch,
+                          Strings.plans_dinner,
+                        ]}
+                        onSelect={(val) => setFieldValue(CATEGORY_KEY, val)}
+                        icon={IconDown}
+                      />
+                    </View>
+                  </View>
+                </View>
 
-                    if (Object.keys(formErrors).length > 0) {
-                      // Mark all fields as touched to show validation errors
-                      const ingredientsTouched = values.ingredients.map(() => ({
-                        name: true,
-                        count: true,
-                        unit: true,
-                        category: true,
-                      }));
+                <View style={styles.card}>
+                  <Text style={styles.sectionTitle}>
+                    {Strings.createMeal_ingredients}
+                  </Text>
 
-                      const stepsTouched = values.steps.map(() => true);
+                  <FlatList
+                    data={values.ingredients}
+                    keyExtractor={(_, index) => index.toString()}
+                    scrollEnabled={false}
+                    renderItem={renderIngredientItem(
+                      values.ingredients,
+                      setFieldValue,
+                      errors,
+                      touched,
+                      setTouched
+                    )}
+                  />
+                  {touched.ingredients &&
+                    errors.ingredients &&
+                    typeof errors.ingredients === "string" && (
+                      <Text style={styles.errorText}>{errors.ingredients}</Text>
+                    )}
 
-                      setTouched(
+                  <TouchableOpacity
+                    style={styles.addIngredient}
+                    onPress={() => {
+                      const firstCategory =
+                        ingredientCategories.length > 0
+                          ? ingredientCategories[0]
+                          : null;
+                      const unitOptions = getUnitsForCategory(firstCategory);
+
+                      setFieldValue(INGREDIENTS_KEY, [
+                        ...values.ingredients,
                         {
-                          name: true,
-                          description: true,
-                          imageUrl: true,
-                          prepTime: true,
-                          servings: true,
-                          difficulty: true,
-                          category: true,
-                          ingredients: ingredientsTouched,
-                          steps: stepsTouched,
+                          ingredientName: "",
+                          count: "0",
+                          unit: unitOptions[0] ?? "",
+                          categoryId: firstCategory?.id ?? "",
+                          categoryName: firstCategory?.title ?? "",
+                          // category: firstCategory ?? "",
                         },
-                        false
-                      ); // false means don't validate, just set touched
+                      ]);
+                      if (touched.ingredients && errors.ingredients) {
+                        setTouched({ ...touched, ingredients: false });
+                      }
+                    }}
+                  >
+                    <IconPlus
+                      width={verticalScale(21)}
+                      height={verticalScale(21)}
+                      color={Colors.primary}
+                    />
+                    <Text style={styles.plusicon}>+</Text>
+                    <Text style={styles.addIngredientText}>
+                      {Strings.createMeal_addIngredient}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-                      return;
+                <View style={styles.card}>
+                  <Text style={styles.sectionTitle}>
+                    {Strings.createMeal_instruction}
+                  </Text>
+
+                  <FlatList
+                    data={values.steps}
+                    keyExtractor={(_, index) => index.toString()}
+                    scrollEnabled={false}
+                    renderItem={renderInstructionItem(
+                      values.steps,
+                      setFieldValue
+                    )}
+                  />
+                  <TouchableOpacity
+                    style={styles.addIngredient}
+                    onPress={() =>
+                      setFieldValue(STEPS_KEY, [...values.steps, { text: "" }])
                     }
-                    handleSubmit();
-                  }}
-                />
-              </View>
-              <View style={styles.emptybottom}></View>
-            </BottomSheetScrollView>
-          </BottomSheet>
-        </>
+                  >
+                    <Text style={styles.plusicon}>+</Text>
+                    <Text style={styles.addIngredientText}>
+                      {Strings.createMeal_addStep}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.parentOfConfirmButton}>
+                  <BaseButton
+                    title={
+                      isEdit
+                        ? Strings.createMeal_discard
+                        : Strings.createMeal_cancel
+                    }
+                    gradientButton={false}
+                    backgroundColor={Colors.white}
+                    textStyleText={styles.discardText}
+                    width={isEdit ? width * 0.28 : width * 0.41}
+                    textStyle={[
+                      styles.cancelButton,
+                      { color: isEdit ? Colors.error : Colors.primary },
+                    ]}
+                    textColor={isEdit ? Colors.error : Colors.primary}
+                    onPress={() => ref?.current?.close()}
+                  />
+                  <BaseButton
+                    title={
+                      isEdit
+                        ? Strings.createMeal_updateMeal
+                        : Strings.createMeal_confirm
+                    }
+                    gradientButton={true}
+                    width={isEdit ? width * 0.65 : width * 0.41}
+                    gradientStartColor={Colors._667D4C}
+                    gradientEndColor={Colors._9DAF89}
+                    gradientStart={{ x: 0, y: 0 }}
+                    gradientEnd={{ x: 1, y: 0 }}
+                    textColor={Colors.white}
+                    rightChild={
+                      isEdit ? (
+                        <Image
+                          source={iconMeal}
+                          style={{
+                            width: verticalScale(21),
+                            height: verticalScale(21),
+                            tintColor: Colors.white,
+                          }}
+                          resizeMode="contain"
+                        />
+                      ) : null
+                    }
+                    textStyle={[styles.confirmButton]}
+                    onPress={async () => {
+                      const formErrors = await validateForm();
+                      console.log("Validation errors:", formErrors);
+
+                      if (Object.keys(formErrors).length > 0) {
+                        // Mark all fields as touched to show validation errors
+                        const ingredientsTouched = values.ingredients.map(
+                          () => ({
+                            name: true,
+                            count: true,
+                            unit: true,
+                            category: true,
+                          })
+                        );
+
+                        const stepsTouched = values.steps.map(() => true);
+
+                        setTouched(
+                          {
+                            name: true,
+                            description: true,
+                            imageUrl: true,
+                            prepTime: true,
+                            servings: true,
+                            difficulty: true,
+                            category: true,
+                            ingredients: ingredientsTouched,
+                            steps: stepsTouched,
+                          },
+                          false
+                        ); // false means don't validate, just set touched
+
+                        return;
+                      }
+                      handleSubmit();
+                    }}
+                  />
+                </View>
+                <View style={styles.emptybottom}></View>
+              </BottomSheetScrollView>
+            </BottomSheet>
+          </>
+        )
       )}
     </Formik>
   );
