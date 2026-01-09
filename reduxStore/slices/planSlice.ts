@@ -2,6 +2,7 @@
 import { Strings } from "@/constants/Strings";
 import {
   addDocument,
+  compoundQueryDocuments,
   deleteDocument,
   queryDocuments,
   updateDocument,
@@ -40,14 +41,12 @@ export interface Plan {
   days: DayData[];
 }
 
-
 export interface PlansState {
   plans: Plan[];
   activePlan: Plan | null;
   loading: boolean;
   error: string | null;
 }
-
 
 const initialState: PlansState = {
   plans: [],
@@ -71,8 +70,6 @@ export const fetchActivePlanAsync = createAsyncThunk(
     }
   }
 );
-
-
 
 // Add Plan
 export const addPlanAsync = createAsyncThunk(
@@ -124,7 +121,10 @@ export const fetchPlansAsync = createAsyncThunk(
   FETCH_PLANS,
   async (uid: string, { rejectWithValue }) => {
     try {
-      const plans = await queryDocuments(PLANS_COLLECTION, "uid", "==", uid);
+      const plans = await compoundQueryDocuments(PLANS_COLLECTION, [
+        { field: "uid", op: "==", value: uid },
+        { field: "status", op: "!=", value: MealStatus.COMPLETED },
+      ]);
       return plans;
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_fetching_plans);
@@ -197,7 +197,6 @@ export const deletePlanAsync = createAsyncThunk(
   }
 );
 
-
 const plansSlice = createSlice({
   name: "plans",
   initialState,
@@ -230,7 +229,9 @@ const plansSlice = createSlice({
         state.loading = false;
         state.plans = action.payload as Plan[];
         // Update activePlan as well
-        const active = (action.payload as Plan[]).find((plan) => plan.status === MealStatus.STARTED);
+        const active = (action.payload as Plan[]).find(
+          (plan) => plan.status === MealStatus.STARTED
+        );
         state.activePlan = active || null;
       })
       .addCase(fetchPlansAsync.rejected, (state, action) => {
@@ -264,7 +265,10 @@ const plansSlice = createSlice({
         // Update activePlan if status changed
         if (action.payload.status === MealStatus.STARTED) {
           state.activePlan = action.payload;
-        } else if (state.activePlan && state.activePlan.id === action.payload.id) {
+        } else if (
+          state.activePlan &&
+          state.activePlan.id === action.payload.id
+        ) {
           // If the updated plan was the active one but is no longer started, clear activePlan
           state.activePlan = null;
         }

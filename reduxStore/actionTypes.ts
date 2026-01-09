@@ -15,6 +15,8 @@ export const ADD_MEAL = 'meals/addMeal';
 export const UPDATE_MEAL = 'meals/updateMeal';
 export const DELETE_MEAL = 'meals/deleteMeal';
 export const FETCH_MEALS = 'meals/fetchMeals';
+export const FETCH_ALL_MEALS = 'meals/fetchAllMeals';
+
 export const UPDATE_USER = 'auth/updateUser';
 export const FETCH_DIETARY_PREFERENCES = 'dietaryPreferences/fetchAll';
 export const ADD_MEAL_PLAN = 'profile/addMealPlan';

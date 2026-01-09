@@ -1,5 +1,6 @@
 import BaseButton from "@/components/BaseButton";
 import {
+  getCurrentMealCategory,
   horizontalScale,
   moderateScale,
   verticalScale,
@@ -112,17 +113,27 @@ const HomeScreen: React.FC = () => {
 
   const getTodayMeals = () => {
     if (!activePlan || !activePlan.days) return [];
-    // Get current day name, e.g., "Monday"
     const todayName = new Date().toLocaleDateString("en-US", {
       weekday: "long",
     });
-    // Find the day object with matching dayTitle
     const todayObj = activePlan.days.find(
       (day) => day.dayTitle.toLowerCase() === todayName.toLowerCase()
     );
     if (!todayObj) return [];
-    // Map mealSlots to meal objects (with mealPlan/meal info)
-    return todayObj.mealSlots.map((slot) => slot.meal).filter(Boolean); // filter out nulls
+
+    const currentMealCategory = getCurrentMealCategory();
+    console.log("Current Meal Category:", todayObj);
+    const filteredMeals = todayObj.mealSlots
+      .filter((slot) => {
+        const mealPlanName = slot.mealPlan?.name || "";
+        console.log("Comparing:", mealPlanName, "with", currentMealCategory);
+        return mealPlanName.toLowerCase() === currentMealCategory.toLowerCase();
+      })
+      .map((slot) => slot.meal)
+      .filter(Boolean);
+
+      console.log("Filtered Meals for Today:", filteredMeals);
+    return filteredMeals;
   };
 
   const todayMeals = getTodayMeals();
@@ -153,7 +164,7 @@ const HomeScreen: React.FC = () => {
           backgroundColor={Colors.white}
           textStyle={[styles.mealCardButton]}
           textStyleText={styles.mealCardButtonText}
-          onPress={() => setSelectedMeal(item)}
+          onPress={() => navigateToMealDetail(item)}
         />
       </View>
     </View>
@@ -172,6 +183,14 @@ const HomeScreen: React.FC = () => {
       </View>
     </View>
   );
+
+  const navigateToMealDetail = (meal: Meal) => {
+    router.push({
+      pathname: "/appscreens/MealDetailScreen",
+      params: { mealId: meal.id },
+    });
+  };
+
   const renderMealCard = ({ item, index }: { item: Meal; index: number }) => (
     <Pressable
       style={{
@@ -190,10 +209,7 @@ const HomeScreen: React.FC = () => {
       }}
       onPress={() => {
         console.log("Selected Meal:", item);
-        router.push({
-          pathname: "/appscreens/MealDetailScreen",
-          params: { mealId: item.id },
-        });
+        navigateToMealDetail(item);
       }}
     >
       <Image
@@ -282,7 +298,7 @@ const HomeScreen: React.FC = () => {
                     </View>
                   </TourGuideZone>
                 </View>
-                {activePlan && (
+                {todayMeals && todayMeals.length > 0 && (
                   <View style={styles.upcomingSection}>
                     <View style={styles.upcomingHeader}>
                       <TourGuideZone zone={3} shape="circle" borderRadius={16}>

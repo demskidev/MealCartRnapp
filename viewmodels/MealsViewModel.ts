@@ -2,6 +2,7 @@ import { MEALS_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
   deleteMeal,
+  fetchAllMeals,
   fetchRecentMeals,
   fetchUserMeals,
   searchMeals,
@@ -12,6 +13,7 @@ import { getDocumentById } from "@/services/firestore";
 export const useMealsViewModel = () => {
   const dispatch = useAppDispatch();
   const meals = useAppSelector((state) => state.meal.meals);
+  const allMeals = useAppSelector((state) => state.meal.allMeals);
   const recentMeals = useAppSelector((state) => state.meal.recentMeals);
 
   const loading = useAppSelector((state) => state.meal.loading);
@@ -67,8 +69,6 @@ export const useMealsViewModel = () => {
       onError?.(resultAction.payload as string);
     }
   };
-
-  
 
   const deleteTheMeal = async (
     mealId: string,
@@ -138,8 +138,23 @@ export const useMealsViewModel = () => {
     }
   };
 
+  const fetchAllMealsData = async (
+    onSuccess?: (payload: any) => void,
+    onError?: (error: string) => void,
+    limit: number = 10,
+    startAfter: any = null
+  ) => {
+    const resultAction = await dispatch(fetchAllMeals({ limit, startAfter }));
+    if (fetchAllMeals.fulfilled.match(resultAction)) {
+      onSuccess?.(resultAction.payload);
+    } else {
+      onError?.(resultAction.payload as string);
+    }
+  };
+
   return {
     meals,
+    allMeals,
     recentMeals,
     loading,
     error,
@@ -149,5 +164,6 @@ export const useMealsViewModel = () => {
     getMealById,
     fetchTheRecentMeals,
     updateMealData,
+    fetchAllMeals,
   };
 };
