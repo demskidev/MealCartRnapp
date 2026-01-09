@@ -15,6 +15,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Keyboard,
   Modal,
   StyleSheet,
   Text,
@@ -55,6 +56,7 @@ const AddItemToList = ({
 
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [pendingItems, setPendingItems] = useState<
     { id: string; value: string }[]
   >([]);
@@ -77,6 +79,7 @@ const AddItemToList = ({
   const [dynamicIngredients, setDynamicIngredients] = useState<string[]>([]);
   const [fullIngredientsData, setFullIngredientsData] = useState<any[]>([]);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
   // Helper function: Fetch all ingredients data for a meal
   // Fetch from ingredient collection using ingredientId
@@ -138,66 +141,61 @@ const AddItemToList = ({
       return;
     }
 
-    // const fetchAllIngredientsData = async () => {
-    //   const selectedMealObjects = meals.filter((meal) =>
-    //     selectedMeals.includes(meal.id)
-    //   );
+    const selectedMealObjects = meals.filter((meal) =>
+      selectedMeals.includes(meal.id)
+    );
 
-    //   const allIngredientNames: string[] = [];
-    //   const allFullIngredients: any[] = [];
+    const allIngredientNames: string[] = [];
+    const allFullIngredients: any[] = [];
 
-    //   // Loop through each selected meal
-    //   for (const meal of selectedMealObjects) {
-    //     if (meal.ingredients && Array.isArray(meal.ingredients)) {
-    //       // Use helper function to fetch all ingredients data
-    //       const ingredientsWithData = await fetchMealIngredientsData(
-    //         meal.ingredients,
-    //         meal.id
-    //       );
+    // Loop through each selected meal
+    for (const meal of selectedMealObjects) {
+      if (meal.ingredients && Array.isArray(meal.ingredients)) {
+        // Extract ingredient names from the meal's ingredients array
+        meal.ingredients.forEach((ingredient: any) => {
+          const ingredientName = ingredient.ingredientName;
 
-    //       // Extract ingredient names and store full data
-    //       ingredientsWithData.forEach((item) => {
-    //         const ingredientData = item.ingredientData;
+          if (ingredientName && !allIngredientNames.includes(ingredientName)) {
+            allIngredientNames.push(ingredientName);
+            // Add meal information to each ingredient
+            allFullIngredients.push({
+              ...ingredient,
+              mealId: meal.id,
+              mealName: meal.name,
+            });
+          }
+        });
+      }
+    }
 
-    //         if (
-    //           ingredientData?.name &&
-    //           !allIngredientNames.includes(ingredientData.name)
-    //         ) {
-    //           allIngredientNames.push(ingredientData.name);
-    //           allFullIngredients.push(item);
-    //         }
-    //       });
-    //     }
-    //   }
+    setDynamicIngredients(allIngredientNames);
+    setFullIngredientsData(allFullIngredients);
 
-    //   setDynamicIngredients(allIngredientNames);
-    //   setFullIngredientsData(allFullIngredients);
-
-    //   console.log("📝 Extracted ingredient names:", allIngredientNames);
-    //   console.log("📝 Full ingredients data:", allFullIngredients);
-    // };
-
-    // fetchAllIngredientsData();
+    console.log("📝 Extracted ingredient names:", allIngredientNames);
+    console.log("📝 Full ingredients data:", allFullIngredients);
   }, [selectedMeals, meals]);
 
+  // Removed initialization of itemWeights - let them be undefined by default
+  // so that ingredient's default unit can be used
+
+  // Update suggestions when dynamic ingredients change (when meals are selected/deselected)
   useEffect(() => {
-    const initialWeights: Record<string, number> = {};
-    suggestions.forEach((item) => {
-      initialWeights[item] = 0;
-    });
-    setItemWeights(initialWeights);
-  }, [suggestions]);
+    // If search bar is empty, input is focused, and we have ingredients, update suggestions
+    if (!searchText.trim() && isInputFocused && dynamicIngredients.length > 0) {
+      setSuggestions(dynamicIngredients);
+    }
+  }, [dynamicIngredients, isInputFocused]);
 
   const handleSearch = (text: string) => {
     setSearchText(text);
 
     if (!text.trim()) {
       // Show all ingredients when input is empty but focused
-      setSuggestions(INGREDIENTS);
+      setSuggestions(dynamicIngredients);
       return;
     }
 
-    const filtered = INGREDIENTS.filter((item) =>
+    const filtered = dynamicIngredients.filter((item) =>
       item.toLowerCase().includes(text.toLowerCase())
     );
 
@@ -205,25 +203,34 @@ const AddItemToList = ({
   };
 
   const handleInputFocus = () => {
-    // Show all ingredients when user focuses on the input
-    if (INGREDIENTS.length > 0) {
-      setSuggestions(INGREDIENTS);
+    setIsInputFocused(true);
+    // Show all ingredients from selected meals when user focuses on the input
+    if (dynamicIngredients.length > 0) {
+      setSuggestions(dynamicIngredients);
+    } else {
+      // If no meals selected, show empty suggestions
+      setSuggestions([]);
     }
+  };
+
+  const handleInputBlur = () => {
+    // Clear focus state and hide suggestions
+    setIsInputFocused(false);
   };
   const handleSelectSuggestion = (value: string) => {
     if (
       pendingItems.some((i) => i.value === value) ||
       manualList.some((i) => i.value === value)
     ) {
-      setSuggestions([]);
       setSearchText("");
+      Keyboard.dismiss();
       return;
     }
 
     setPendingItems((prev) => [...prev, { id: Date.now().toString(), value }]);
 
     setSearchText("");
-    setSuggestions([]);
+    Keyboard.dismiss();
   };
 
   const manualItems = [{ id: "1", value: "1 egg" }];
@@ -257,6 +264,10 @@ const AddItemToList = ({
   };
 
   const handleMealPress = (meal: any) => {
+    // Dismiss keyboard and blur input when selecting meals
+    Keyboard.dismiss();
+    inputRef.current?.blur();
+    
     if (from === CREATE_MEAL_PLAN) {
       // For meal plan: single selection, call callback immediately
       onMealSelect?.(meal);
@@ -274,8 +285,30 @@ const AddItemToList = ({
   };
 
   const handleGenerateList = () => {
-    const selected = meals.filter((meal) => selectedMeals.includes(meal.id));
-    onMealSelect?.(selected);
+    // Collect all ingredients with their selected units
+    const ingredientsWithUnits = fullIngredientsData.map((ingredient) => {
+      const ingredientName = ingredient.ingredientName;
+      const categoryUnits = ingredient.categoryUnits || ["100grm", "200grm", "1kg"];
+      const defaultUnit = ingredient.unit || "100grm";
+      
+      // Normalize the unit strings by removing spaces for comparison
+      const normalizedDefaultUnit = defaultUnit.replace(/\s+/g, '').toLowerCase();
+      const defaultUnitIndex = categoryUnits.findIndex(
+        (unit) => unit.replace(/\s+/g, '').toLowerCase() === normalizedDefaultUnit
+      );
+      
+      // Get the selected weight index or use default
+      const weightIndex = itemWeights[ingredientName] !== undefined 
+        ? itemWeights[ingredientName] 
+        : (defaultUnitIndex >= 0 ? defaultUnitIndex : 0);
+      
+      return {
+        ...ingredient,
+        selectedUnit: categoryUnits[weightIndex] || defaultUnit,
+      };
+    });
+
+    onMealSelect?.(ingredientsWithUnits);
     onClose();
   };
 
@@ -290,6 +323,8 @@ const AddItemToList = ({
         resizeMode="cover"
       />
       <Text style={styles.mealName}>{item.name}</Text>
+      
+
       {from !== CREATE_MEAL_PLAN &&
         (selectedMeals.includes(item.id) ? (
           <FilledCheckBox
@@ -322,16 +357,20 @@ const AddItemToList = ({
         </TouchableWithoutFeedback>
 
         <View style={styles.container}>
-          <Text style={styles.title}>
-            {from === CREATE_MEAL_PLAN
-              ? Strings.createPlan_selectAMeal
-              : Strings.addItemToList_title}
-          </Text>
-          {from !== CREATE_MEAL_PLAN && (
-            <Text style={styles.subtitle}>
-              {Strings.addItemToList_subtitle}
-            </Text>
-          )}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View>
+              <Text style={styles.title}>
+                {from === CREATE_MEAL_PLAN
+                  ? Strings.createPlan_selectAMeal
+                  : Strings.addItemToList_title}
+              </Text>
+              {from !== CREATE_MEAL_PLAN && (
+                <Text style={styles.subtitle}>
+                  {Strings.addItemToList_subtitle}
+                </Text>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
 
           <View style={styles.searchBox}>
             <SearchIcon
@@ -348,16 +387,29 @@ const AddItemToList = ({
             />
           </View>
           <View style={styles.dividerRow} />
-              {console.log('dsgfdsfgjhds',meals)}
-          <FlatList
-            data={search.trim() ? filteredMeals : meals}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMealItem}
-            contentContainerStyle={styles.mealsListContent}
-            ItemSeparatorComponent={() => <View style={styles.mealSeparator} />}
-            style={styles.mealsListStyle}
-          />
+              {meals.length > 0 && console.log('First meal:', JSON.stringify(meals[0], null, 2))}
+              {meals.length > 0 && console.log('First meal:rrrrr', meals[0], null, 2)}
+
+              {meals.length > 0 && console.log('First meal:1111', JSON.stringify(meals, null, 2))}
+
+              {meals.length > 0 && meals[0]?.ingredients?.[0] && console.log('First ingredient:', JSON.stringify(meals[0].ingredients[0], null, 2))}
+
+          <TouchableWithoutFeedback onPress={() => {
+            Keyboard.dismiss();
+            inputRef.current?.blur();
+          }}>
+            <View>
+              <FlatList
+                data={search.trim() ? filteredMeals : meals}
+                showsVerticalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                renderItem={renderMealItem}
+                contentContainerStyle={styles.mealsListContent}
+                ItemSeparatorComponent={() => <View style={styles.mealSeparator} />}
+                style={styles.mealsListStyle}
+              />
+            </View>
+          </TouchableWithoutFeedback>
 
           {from !== CREATE_MEAL_PLAN && (
             <View>
@@ -368,62 +420,86 @@ const AddItemToList = ({
               </Text>
 
               <CustomTextInput
+                ref={inputRef}
                 placeholder={Strings.addItemToList_searchIngredient}
                 style={styles.manualInput}
                 placeholderTextColor={Colors.tertiary}
                 onChangeText={handleSearch}
                 value={searchText}
                 onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
 
-              {suggestions.length > 0 && (
+              {suggestions.length > 0 && isInputFocused && (
                 <FlatList
                   data={suggestions}
                   keyExtractor={(item) => item}
                   style={styles.suggestionsListStyle}
-                  renderItem={({ item }) => (
-                    <View>
-                      <View style={styles.suggestionItemContainer}>
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => handleSelectSuggestion(item)}
-                          style={styles.suggestionTouchable}
-                        >
-                          <Text style={styles.suggestionText}>{item}</Text>
-                        </TouchableOpacity>
+                  renderItem={({ item }) => {
+                    // Find the ingredient data for this item
+                    const ingredientData = fullIngredientsData.find(
+                      (ing) => ing.ingredientName === item
+                    );
+                    const categoryUnits = ingredientData?.categoryUnits || ["100grm", "200grm", "1kg"];
+                    const defaultUnit = ingredientData?.unit || "100grm";
+                    
+                    // Normalize the unit strings by removing spaces for comparison
+                    const normalizedDefaultUnit = defaultUnit.replace(/\s+/g, '').toLowerCase();
+                    const defaultUnitIndex = categoryUnits.findIndex(
+                      (unit) => unit.replace(/\s+/g, '').toLowerCase() === normalizedDefaultUnit
+                    );
+                    
+                    // Get current index or find index of default unit
+                    // Check if itemWeights[item] is undefined to use default unit index
+                    const currentIndex = itemWeights[item] !== undefined 
+                      ? itemWeights[item] 
+                      : (defaultUnitIndex >= 0 ? defaultUnitIndex : 0);
+                    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+                    
+                    return (
+                      <View>
+                        <View style={styles.suggestionItemContainer}>
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() => handleSelectSuggestion(item)}
+                            style={styles.suggestionTouchable}
+                          >
+                            <Text style={styles.suggestionText}>{item}</Text>
+                          </TouchableOpacity>
 
-                        <View style={styles.rowItem}>
-                          <CustomStepper
-                            value={unitWeightOptions[itemWeights[item] ?? 0]} // <-- Correct value per item
-                            onIncrement={() => {
-                              setItemWeights((prev) => {
-                                const current = prev[item] ?? 0;
-                                return {
-                                  ...prev,
-                                  [item]: Math.min(
-                                    current + 1,
-                                    unitWeightOptions.length - 1
-                                  ),
-                                };
-                              });
-                            }}
-                            onDecrement={() => {
-                              setItemWeights((prev) => {
-                                const current = prev[item] ?? 0;
-                                return {
-                                  ...prev,
-                                  [item]: Math.max(current - 1, 0),
-                                };
-                              });
-                            }}
-                            containerStyle={styles.stepperContainer}
-                          />
+                          <View style={styles.rowItem}>
+                            <CustomStepper
+                              value={categoryUnits[safeIndex]}
+                              onIncrement={() => {
+                                setItemWeights((prev) => {
+                                  const current = prev[item] ?? safeIndex;
+                                  return {
+                                    ...prev,
+                                    [item]: Math.min(
+                                      current + 1,
+                                      categoryUnits.length - 1
+                                    ),
+                                  };
+                                });
+                              }}
+                              onDecrement={() => {
+                                setItemWeights((prev) => {
+                                  const current = prev[item] ?? safeIndex;
+                                  return {
+                                    ...prev,
+                                    [item]: Math.max(current - 1, 0),
+                                  };
+                                });
+                              }}
+                              containerStyle={styles.stepperContainer}
+                            />
+                          </View>
                         </View>
-                      </View>
 
-                      <View style={styles.dividerRowList} />
-                    </View>
-                  )}
+                        <View style={styles.dividerRowList} />
+                      </View>
+                    );
+                  }}
                 />
               )}
 
@@ -500,7 +576,7 @@ const AddItemToList = ({
                 width={width * 0.42}
                 textStyle={styles.confirmButton}
                 textStyleText={styles.confirmButtonText}
-                // onPress={handleGenerateList}
+                onPress={handleGenerateList}
               />
             )}
           </View>

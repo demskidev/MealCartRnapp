@@ -11,6 +11,7 @@ import ingredientCategoryReducer from "./slices/ingredientCategorySlice";
 import MealReducer from "./slices/mealsSlice";
 import plansReducer from "./slices/planSlice";
 import profileReducer from "./slices/profileSlice";
+import shoppingReducer from "./slices/shoppingSlice";
 const persistConfig = {
   key: ROOT,
   storage: AsyncStorage,
@@ -24,6 +25,7 @@ const appReducer = combineReducers({
   meal: MealReducer,
   profile: profileReducer,
   plans: plansReducer,
+  shopping: shoppingReducer,
 });
 
 // Root reducer that resets all state on LOGOUT

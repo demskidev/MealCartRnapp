@@ -3,12 +3,12 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import {
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface CustomDateTimePickerProps {
@@ -121,6 +121,8 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}
                 style={styles.picker}
+                themeVariant="light"
+                textColor={Colors.primary}
               />
             </View>
           </View>

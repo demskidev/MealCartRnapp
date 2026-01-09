@@ -31,3 +31,9 @@ export const FETCH_MEAL_WITH_INGREDIENTS = "meals/fetchMealWithIngredients";
 export const FILTER_N_SEARCH_MEALS = "meals/searchMeals";
 export const FETCH_RECENT_MEALS = "meals/fetchRecentMeals";
 
+// Shopping List Actions
+export const SHOPPING_SLICE = 'shopping';
+export const ADD_SHOPPING_LIST = 'shopping/addShoppingList';
+export const UPDATE_SHOPPING_LIST = 'shopping/updateShoppingList';
+export const DELETE_SHOPPING_LIST = 'shopping/deleteShoppingList';
+

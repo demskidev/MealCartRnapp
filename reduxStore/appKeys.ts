@@ -10,6 +10,7 @@ export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';
 export const DIETARY_PREFERENCES_COLLECTION = 'dietryPreferences';
 export const MEAL_PLAN_COLLECTION = 'mealPlan';
+export const SHOPPING_LIST_COLLECTION = 'shoppingList';
 
 // Add more collection keys as needed
 
