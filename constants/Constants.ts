@@ -1,4 +1,5 @@
 import { Dimensions, Platform, StatusBar } from "react-native";
+import { Strings } from "./Strings";
 
 export const screenFullHeight = Dimensions.get("window").height;
 export const screenWidth = Dimensions.get("window").width;
@@ -60,3 +61,22 @@ export function getPrepTimeMinutes(prepTime?: string): number {
   const match = prepTime.match(/\d+/);
   return match ? parseInt(match[0]) : 0;
 }
+
+export const setEndOfDay = (date: Date): Date => {
+  const endDate = new Date(date);
+  endDate.setHours(23, 59, 59, 999);
+  return endDate;
+};
+
+export const getCurrentMealCategory = (): string => {
+  const now = new Date();
+  const hours = now.getHours();
+
+  if (hours < 9) {
+    return Strings.plans_breakfast ; // Breakfast
+  } else if (hours >= 9 && hours < 14) {
+    return Strings.plans_lunch; // Lunch
+  } else {
+    return Strings.plans_dinner; // Dinner
+  }
+};

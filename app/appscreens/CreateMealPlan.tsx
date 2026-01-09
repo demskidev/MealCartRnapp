@@ -1,10 +1,17 @@
-import { calendaricon, closeIcon, iconback, iconCalendar, plusmeal } from "@/assets/images";
+import {
+  calendaricon,
+  closeIcon,
+  iconback,
+  iconCalendar,
+  plusmeal,
+} from "@/assets/images";
 import AddItemToList from "@/components/AddItemToList";
 import BaseButton from "@/components/BaseButton";
 import CustomDateTimePicker from "@/components/DateTimePicker";
 import {
   horizontalScale,
   moderateScale,
+  setEndOfDay,
   verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
@@ -12,7 +19,7 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import { useLoader } from "@/context/LoaderContext";
 import { CREATE_MEAL_PLAN, MealStatus } from "@/reduxStore/appKeys";
 import { useAppSelector } from "@/reduxStore/hooks";
-import { DayData, MealSlot } from "@/reduxStore/slices/planSlice";
+import { DayData } from "@/reduxStore/slices/planSlice";
 import { backNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
@@ -43,7 +50,7 @@ interface SelectedMealSlot {
   meal: any;
 }
 
-export default function CreateMealPlan({ }) {
+export default function CreateMealPlan({}) {
   const router = useRouter();
   const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
   const { addPlan, loading: planLoading } = usePlanViewModel();
@@ -150,7 +157,6 @@ export default function CreateMealPlan({ }) {
 
   const days = generateWeekDays(startDate);
 
-
   function renderDayCard({ item }: { item: any }) {
     const formattedDate = `${item.date.getDate()}/${
       item.date.getMonth() + 1
@@ -239,51 +245,6 @@ export default function CreateMealPlan({ }) {
     );
   }
 
-  // const saveMealPlan = () => {
-  //   const getMealPlanId = (mealPlanName: string) => {
-  //     const plan = mealPlans.find((p) => p.name === mealPlanName);
-  //     return plan?.id;
-  //   };
-
-  //   const daysData = days.map((day) => {
-  //     const mealSlots = day.meals
-  //       .map((mealPlanName) => {
-  //         const selectedMeal = getSelectedMeal(day.title, mealPlanName);
-  //         if (!selectedMeal) return null;
-
-  //         return {
-  //           mealPlanId: getMealPlanId(mealPlanName)!,
-  //           mealId: selectedMeal.id,
-  //         };
-  //       })
-  //       .filter(Boolean) as Array<{ mealPlanId: string; mealId: string }>;
-
-  //     return {
-  //       dayTitle: day.title,
-  //       date: day.date,
-  //       mealSlots,
-  //     };
-  //   });
-
-  //   const lastDay = days[days.length - 1];
-
-  //   addPlan(
-  //     {
-  //       planName: Strings.createMealPlan_mySpecialMealPlan,
-  //       startDate: startDate,
-  //       endDate: lastDay.date,
-  //       days: daysData,
-  //     },
-  //     () => {
-  //       showSuccessToast(Strings.plan_saved_successfully);
-  //       pushNavigation(APP_ROUTES.LISTS);
-  //     },
-  //     (error) => {
-  //       showErrorToast(error || Strings.error_adding_plan);
-  //     }
-  //   );
-  // };
-
   const saveMealPlan = () => {
     console.log("=== SAVE MEAL PLAN STARTED ===");
     console.log("1. Start Date:", startDate);
@@ -335,14 +296,20 @@ export default function CreateMealPlan({ }) {
         };
       })
       .filter((daySlot): daySlot is DayData => daySlot !== null);
-    const lastDay = days[days.length - 1];
-    console.log("\n5. Last Day:", lastDay);
-    console.log("6. Days Data to save:", JSON.stringify(daysData, null, 2));
+
+    const lastDayWithMeals =
+      daysData.length > 0 ? daysData[daysData.length - 1] : null;
+    const endDate = lastDayWithMeals
+      ? setEndOfDay(lastDayWithMeals.date)
+      : setEndOfDay(startDate);
+    console.log("\n5. Last Day with Meals:", lastDayWithMeals);
+    console.log("6. End Date:", endDate);
+    console.log("7. Days Data to save:", JSON.stringify(daysData, null, 2));
 
     const planPayload = {
       planName: planName || Strings.unknown_plan,
       startDate: startDate,
-      endDate: lastDay.date,
+      endDate: endDate,
       status: MealStatus.CREATED,
       days: daysData,
     };
@@ -443,8 +410,11 @@ export default function CreateMealPlan({ }) {
           rightChild={
             <Image
               source={iconCalendar}
-              style={{ width: verticalScale(21), height: verticalScale(21), tintColor: Colors.white }}
-
+              style={{
+                width: verticalScale(21),
+                height: verticalScale(21),
+                tintColor: Colors.white,
+              }}
               resizeMode="contain"
             />
           }

@@ -4,6 +4,7 @@ import {
   addDocument,
   compoundQueryDocuments,
   deleteDocument,
+  getAllDocumentsWithPagination,
   getDocumentById,
   getSubcollectionDocuments,
   queryDocuments,
@@ -17,6 +18,7 @@ import { Timestamp } from "firebase/firestore";
 import {
   ADD_MEAL,
   DELETE_MEAL,
+  FETCH_ALL_MEALS,
   FETCH_MEALS,
   FETCH_RECENT_MEALS,
   FILTER_N_SEARCH_MEALS,
@@ -60,6 +62,7 @@ export interface Meal {
 
 export interface MealsState {
   meals: Meal[];
+  allMeals: Meal[];
   recentMeals: Meal[];
   loading: boolean;
   error: any;
@@ -67,6 +70,7 @@ export interface MealsState {
 
 const initialState: MealsState = {
   meals: [],
+  allMeals: [],
   recentMeals: [],
   loading: false,
   error: null,
@@ -280,6 +284,7 @@ export const fetchUserMeals = createAsyncThunk(
     }: { userId: string; limit?: number; startAfter?: any },
     { rejectWithValue }
   ) => {
+    ``;
     try {
       const options: any = {
         limit,
@@ -293,6 +298,36 @@ export const fetchUserMeals = createAsyncThunk(
         "uid",
         "==",
         userId,
+        options
+      );
+
+      console.log("Fetched meals from DB:", meals);
+
+      const enrichedMeals = await enrichMealsWithIngredients(meals);
+
+      return enrichedMeals;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+export const fetchAllMeals = createAsyncThunk(
+  FETCH_ALL_MEALS,
+  async (
+    { limit = 10, startAfter = null }: { limit?: number; startAfter?: any },
+    { rejectWithValue }
+  ) => {
+    try {
+      const options: any = {
+        limit,
+        orderBy: "createdAt",
+        orderDirection: "desc",
+      };
+      if (startAfter) options.startAfter = startAfter;
+
+      const meals = await getAllDocumentsWithPagination(
+        MEALS_COLLECTION,
         options
       );
 
@@ -443,29 +478,6 @@ const updateMealIngredientsSubcollection = async (
       });
     }
 
-    // // Update each ingredient in the subcollection
-    // for (const ing of ingredients) {
-    //   if (ing.ingredientId && ing.ingredientName && ing.unit) {
-    //     try {
-    //       // Update the ingredient document in the subcollection
-    //       await updateSubcollectionDocument(
-    //         MEAL_INGREDIENTS_COLLECTION,
-    //         mealId,
-    //         "ingredients",
-    //         ing.ingredientId,
-    //         {
-    //           name: ing.ingredientName,
-    //           unit: ing.unit,
-    //         }
-    //       );
-    //     } catch (error) {
-    //       console.error(
-    //         `Error updating ingredient ${ing.ingredientId}:`,
-    //         error
-    //       );
-    //     }
-    //   }
-    // }
     for (const ing of ingredients) {
       if (ing.ingredientId) {
         const ingredientData = {
@@ -617,6 +629,7 @@ const mealsSlice = createSlice({
         state.loading = false;
         const newMeal = action.payload;
         state.meals.push(newMeal);
+        state.allMeals.push(newMeal);
       })
       .addCase(addMeal.rejected, (state, action) => {
         state.loading = false;
@@ -643,6 +656,26 @@ const mealsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchAllMeals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllMeals.fulfilled, (state, action) => {
+        state.loading = false;
+        const fetchedMeals = action.payload;
+
+        const existingIds = new Set(state.allMeals.map((meal) => meal.id));
+        const newMeals = fetchedMeals.filter(
+          (meal) => !existingIds.has(meal.id)
+        );
+
+        state.allMeals = [...state.allMeals, ...newMeals] as Meal[];
+        console.log("All Meals fetched:", state.allMeals);
+      })
+      .addCase(fetchAllMeals.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(updateMeal.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -651,11 +684,21 @@ const mealsSlice = createSlice({
         state.loading = false;
         state.error = null;
         const updatedMeal = action.payload;
+
+        // Update in meals array
         const index = state.meals.findIndex(
           (meal) => meal.id === updatedMeal.id
         );
         if (index !== -1) {
           state.meals[index] = updatedMeal;
+        }
+
+        // Update in allMeals array
+        const allMealsIndex = state.allMeals.findIndex(
+          (meal) => meal.id === updatedMeal.id
+        );
+        if (allMealsIndex !== -1) {
+          state.allMeals[allMealsIndex] = updatedMeal;
         }
       })
       .addCase(updateMeal.rejected, (state, action) => {
@@ -670,6 +713,9 @@ const mealsSlice = createSlice({
         state.loading = false;
         const deletedMealId = action.payload;
         state.meals = state.meals.filter((meal) => meal.id !== deletedMealId);
+        state.allMeals = state.allMeals.filter(
+          (meal) => meal.id !== deletedMealId
+        );
         state.recentMeals = state.recentMeals.filter(
           (meal) => meal.id !== deletedMealId
         );

@@ -31,20 +31,16 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
   maximumDate,
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(value || new Date());
-  // Android-only: Separate time picker needed for datetime mode
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const handleChange = (event: any, date?: Date) => {
     if (Platform.OS === "android") {
-      // Android doesn't support datetime mode natively
-      // Show time picker after date selection for datetime mode
       if (mode === "datetime" && event.type === "set" && date) {
         setSelectedDate(date);
         setShowTimePicker(true);
         return;
       }
       
-      // Apply change immediately on Android
       if (event.type === "set" && date) {
         setSelectedDate(date);
         onChange(date);
@@ -53,7 +49,6 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
         onClose?.();
       }
     } else {
-      // iOS: Update selected date in real-time as user scrolls
       if (date) {
         setSelectedDate(date);
       }
@@ -74,7 +69,6 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
     setShowTimePicker(false);
     
     if (event.type === "set" && time) {
-      // Combine date and time for datetime mode on Android
       const combined = new Date(selectedDate);
       combined.setHours(time.getHours());
       combined.setMinutes(time.getMinutes());
@@ -86,14 +80,12 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
     }
   };
 
-  // Don't render anything if not visible
   if (!visible) {
     return null;
   }
 
   return (
     <>
-      {/* iOS: Modal with spinner */}
       {Platform.OS === "ios" && (
         <Modal
           visible={visible}
@@ -129,7 +121,6 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
         </Modal>
       )}
 
-      {/* Android: Native calendar/clock picker */}
       {Platform.OS === "android" && (
         <DateTimePicker
           value={selectedDate}
@@ -141,7 +132,6 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
         />
       )}
 
-      {/* Android: Time picker for datetime mode */}
       {Platform.OS === "android" && showTimePicker && (
         <DateTimePicker
           value={selectedDate}

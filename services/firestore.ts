@@ -208,7 +208,12 @@ export const getSubcollectionDocuments = async (
   subcollectionName: string
 ) => {
   try {
-    const subcollectionRef = collection(db, parentCollection, parentDocId, subcollectionName);
+    const subcollectionRef = collection(
+      db,
+      parentCollection,
+      parentDocId,
+      subcollectionName
+    );
     const snapshot = await getDocs(subcollectionRef);
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
@@ -224,7 +229,13 @@ export const updateSubcollectionDocument = async (
   docId: string,
   data: any
 ) => {
-  const docRef = doc(db, parentCollection, parentDocId, subcollectionName, docId);
+  const docRef = doc(
+    db,
+    parentCollection,
+    parentDocId,
+    subcollectionName,
+    docId
+  );
   await updateDoc(docRef, data);
   const updatedDoc = await getDoc(docRef);
   if (updatedDoc.exists()) {
@@ -242,13 +253,67 @@ export const setSubcollectionDocument = async (
   docId: string,
   data: any
 ) => {
-  const docRef = doc(db, parentCollection, parentDocId, subcollectionName, docId);
+  const docRef = doc(
+    db,
+    parentCollection,
+    parentDocId,
+    subcollectionName,
+    docId
+  );
   await setDoc(docRef, data);
   return { id: docId, ...data };
+};
+
+export const getAllDocumentsWithPagination = async (
+  collectionName: string,
+  options?: {
+    limit?: number;
+    startAfter?: any;
+    orderBy?: string;
+    orderDirection?: "asc" | "desc";
+  }
+) => {
+  const colRef = collection(db, collectionName);
+
+  let queryConstraints: any[] = [];
+
+  if (options?.orderBy) {
+    queryConstraints.push(
+      orderBy(options.orderBy, options.orderDirection || "asc")
+    );
+  }
+
+  if (options?.startAfter) {
+    let cursorValue;
+    if (options.startAfter.createdAt) {
+      if (options.startAfter.createdAt instanceof Timestamp) {
+        cursorValue = options.startAfter.createdAt;
+      } else if (options.startAfter.createdAt instanceof Date) {
+        cursorValue = Timestamp.fromDate(options.startAfter.createdAt);
+      } else if (options.startAfter.createdAt.seconds) {
+        cursorValue = new Timestamp(
+          options.startAfter.createdAt.seconds,
+          options.startAfter.createdAt.nanoseconds || 0
+        );
+      } else {
+        cursorValue = Timestamp.fromDate(
+          new Date(options.startAfter.createdAt)
+        );
+      }
+      queryConstraints.push(qStartAfter(cursorValue));
+    }
+  }
+
+  if (options?.limit) {
+    queryConstraints.push(qLimit(options.limit));
+  }
+
+  const q = query(colRef, ...queryConstraints);
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
 export const generateFirebaseId = () => {
   // This creates a Firebase-style auto ID
   return doc(collection(db, "_temp")).id;
 };
-
