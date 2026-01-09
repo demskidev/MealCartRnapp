@@ -3,7 +3,6 @@ import MealDetail from "@/components/MealDetail";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
-import { Alert } from "react-native";
 
 export default function MealDetailScreen() {
   const router = useRouter();
@@ -68,17 +67,17 @@ export default function MealDetailScreen() {
   useEffect(() => {
     if (!meal && meals.length > 0 && !hasCheckedMealNotFound.current) {
       hasCheckedMealNotFound.current = true;
-      Alert.alert(
-        "Meal Not Found",
-        "This meal could not be found or has been deleted.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ],
-        { cancelable: false }
-      );
+      // Alert.alert(
+      //   "Meal Not Found",
+      //   "This meal could not be found or has been deleted.",
+      //   [
+      //     {
+      //       text: "OK",
+      //       onPress: () => router.back(),
+      //     },
+      //   ],
+      //   { cancelable: false }
+      // );
     }
   }, [meal, meals.length, router]);
 

@@ -49,7 +49,7 @@ export default function ProfileScreen() {
         {
             id: '4',
             title: Strings.profile_defaultServings,
-            subtitle: user?.servings ? `${user.servings} ${Strings.profile_servings}` : `1 ${Strings.profile_servings}`,
+            subtitle: user?.servings ? `${user?.servings} ${Strings.profile_servings}` : `1 ${Strings.profile_servings}`,
         },
     ];
     console.log('user666666', user)
@@ -108,8 +108,8 @@ export default function ProfileScreen() {
                         resizeMode="contain"
                     />
                 </TouchableOpacity>
-                <Text style={styles.name}>{user.name}</Text>
-                <Text style={styles.email}>{user.email}</Text>
+                <Text style={styles.name}>{user?.name}</Text>
+                <Text style={styles.email}>{user?.email}</Text>
             </View>
             <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
 
