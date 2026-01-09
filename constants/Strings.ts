@@ -413,5 +413,7 @@ export const Strings = {
   error_select_meal_for_any_day: "Please select at least one meal for any day.",
   meals: "meals",
   unknown_plan: "Unknown Plan",
-  profile_servings:'People'
+  profile_servings:'People',
+  clearFilters: "Clear Filters",
+  meal_not_found: "Meal not found",
 };

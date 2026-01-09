@@ -232,3 +232,23 @@ export const updateSubcollectionDocument = async (
   }
   return { id: docId, ...data };
 };
+
+// Add this function to /Users/apple/ReactNativeProjects/MealCartRnapp/services/firestore.ts
+
+export const setSubcollectionDocument = async (
+  parentCollection: string,
+  parentDocId: string,
+  subcollectionName: string,
+  docId: string,
+  data: any
+) => {
+  const docRef = doc(db, parentCollection, parentDocId, subcollectionName, docId);
+  await setDoc(docRef, data);
+  return { id: docId, ...data };
+};
+
+export const generateFirebaseId = () => {
+  // This creates a Firebase-style auto ID
+  return doc(collection(db, "_temp")).id;
+};
+
