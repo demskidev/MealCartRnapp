@@ -1,4 +1,4 @@
-import { closeIcon } from "@/assets/images";
+import { calendaricon, closeIcon } from "@/assets/images";
 import { CheckBox, FilledCheckBox, IconCartWhite } from "@/assets/svg";
 import {
   horizontalScale,
@@ -33,6 +33,7 @@ import {
 import AddItemToList from "./AddItemToList";
 import BaseButton from "./BaseButton";
 import CustomTextInput from "./CustomTextInput";
+import CustomDateTimePicker from "./DateTimePicker";
 
 export interface CreateNewListBottomSheetRef {
   expand: () => void;
@@ -76,7 +77,8 @@ const CreateNewListBottomSheet = forwardRef<
   const [isAddItemVisible, setIsAddItemVisible] = useState(false);
   const [receivedIngredients, setReceivedIngredients] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
+  const [startDate, setStartDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   // Group ingredients by category
   const groupedIngredients = receivedIngredients.reduce(
     (acc: any, ingredient: any) => {
@@ -189,43 +191,49 @@ const CreateNewListBottomSheet = forwardRef<
         return;
       }
 
-      // Map ingredients data with all required fields
-      const mappedItems = receivedIngredients.map((ingredient) => ({
+      // Filter only selected ingredients and map to required fields
+      const selectedIngredients = receivedIngredients.filter((ingredient) => 
+        selectedItems.includes(ingredient.ingredientId || ingredient.ingredientName)
+      );
+
+      if (selectedIngredients.length === 0) {
+        alert("Please select at least one item to save");
+        return;
+      }
+
+      const mappedIngredients = selectedIngredients.map((ingredient) => ({
         ingredientId: ingredient.ingredientId,
-        ingredientName: ingredient.ingredientName,
-        unit: ingredient.selectedUnit || ingredient.unit,
-        categoryName: ingredient.categoryName,
         categoryId: ingredient.categoryId,
-        mealName: ingredient.mealName || "",
         mealId: ingredient.mealId || "",
-        isChecked: false,
+        unit: ingredient.selectedUnit || ingredient.unit,
+        count: ingredient.count || 1,
       }));
-      console.log('mappedItems898989',mappedItems)
+      console.log('mappedIngredients',mappedIngredients)
 
       const shoppingListData = {
         listName: listName.trim(),
-        shoppingDay: shoppingDay.trim(),
-        items: mappedItems,
+        ingredients: mappedIngredients,
         createdAt: Timestamp.fromDate(new Date()),
+        shoppingDate: Timestamp.fromDate(startDate),
         uid: user?.id,
       };
-      console.log('mappedItems89898911111',shoppingListData)
+      console.log('shoppingListData',shoppingListData)
 
-      // addShoppingListData(
-      //   shoppingListData,
-      //   () => {
-      //     alert("Shopping list created successfully!");
-      //     // Reset form
-      //     setListName("");
-      //     setShoppingDay("");
-      //     setReceivedIngredients([]);
-      //     setSelectedItems([]);
-      //     bottomSheetRef.current?.close();
-      //   },
-      //   (error) => {
-      //     alert("Error creating shopping list: " + error);
-      //   }
-      // );
+      addShoppingListData(
+        shoppingListData,
+        () => {
+          alert("Shopping list created successfully!");
+          // Reset form
+          setListName("");
+          setShoppingDay("");
+          setReceivedIngredients([]);
+          setSelectedItems([]);
+          bottomSheetRef.current?.close();
+        },
+        (error) => {
+          alert("Error creating shopping list: " + error);
+        }
+      );
     } catch (error) {
       alert("Error creating shopping list: " + error);
     }
@@ -277,10 +285,35 @@ const CreateNewListBottomSheet = forwardRef<
           />
 
           <Text style={styles.label}>{Strings.createList_shoppingDay}</Text>
-          <CustomTextInput
-            placeholder={Strings.createList_shoppingDay_placeholder}
-            value={shoppingDay}
-            onChangeText={setShoppingDay}
+          <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
+            <View style={styles.inputWithIcon}>
+              <CustomTextInput
+                placeholder={Strings.createList_shoppingDay_placeholder}
+                value={shoppingDay}
+                editable={false}
+                pointerEvents="none"
+              />
+              <Image
+                source={calendaricon}
+                style={styles.calendarIcon}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
+          <CustomDateTimePicker
+            mode="date"
+            value={startDate}
+            visible={showDatePicker}
+            onChange={(date) => {
+              setStartDate(date);
+              const formattedDate = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              setShoppingDay(formattedDate);
+            }}
+            onClose={() => setShowDatePicker(false)}
           />
         </View>
 
@@ -532,5 +565,17 @@ const styles = StyleSheet.create({
   },
   checkboxIcon: {
     marginRight: horizontalScale(10),
+  },
+  inputWithIcon: {
+    position: 'relative',
+  },
+  calendarIcon: {
+    position: 'absolute',
+    right: horizontalScale(15),
+    top: '43%',
+    transform: [{ translateY: -moderateScale(10) }],
+    width: moderateScale(20),
+    height: moderateScale(20),
+    tintColor: Colors.tertiary,
   },
 });

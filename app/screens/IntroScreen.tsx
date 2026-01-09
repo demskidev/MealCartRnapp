@@ -34,7 +34,8 @@ const IntroScreen = () => {
       toValue: currentPage > 0 ? 1 : 0,
       duration: 300,
       useNativeDriver: true,
-    }).start();
+    })
+    // .start();
   }, [currentPage]);
 
   return (

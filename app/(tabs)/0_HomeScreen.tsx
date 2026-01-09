@@ -102,7 +102,7 @@ const HomeScreen: React.FC = () => {
   const handleIntroNext = () => {
     setShowIntroPopup(false);
     setTimeout(() => {
-      start();
+      // start();
     }, 200);
   };
 

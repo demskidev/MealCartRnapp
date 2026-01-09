@@ -1,9 +1,10 @@
 // viewmodels/ShoppingListViewModel.ts
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
-    addShoppingList,
-    deleteShoppingList,
-    updateShoppingList,
+  addShoppingList,
+  deleteShoppingList,
+  fetchUserShoppingLists,
+  updateShoppingList,
 } from "@/reduxStore/slices/shoppingSlice";
 
 export const useShoppingListViewModel = () => {
@@ -51,6 +52,23 @@ export const useShoppingListViewModel = () => {
     }
   };
 
+  const fetchShoppingLists = async (
+    userId: string,
+    onSuccess?: (payload: any) => void,
+    onError?: (error: string) => void,
+    limit: number = 10,
+    startAfter: any = null
+  ) => {
+    const resultAction = await dispatch(
+      fetchUserShoppingLists({ userId, limit, startAfter })
+    );
+    if (fetchUserShoppingLists.fulfilled.match(resultAction)) {
+      onSuccess?.(resultAction.payload);
+    } else {
+      onError?.(resultAction.payload as string);
+    }
+  };
+
   return {
     shoppingLists,
     loading,
@@ -58,5 +76,6 @@ export const useShoppingListViewModel = () => {
     addShoppingListData,
     updateShoppingListData,
     deleteShoppingListData,
+    fetchShoppingLists,
   };
 };

@@ -83,7 +83,7 @@ const PlansScreen: React.FC = () => {
       if (!zoneReady) return;
 
       const timeout = setTimeout(() => {
-        start(5); // 🔥 order 1, zone 1
+        // start(5); // 🔥 order 1, zone 1
       }, 100);
 
       return () => clearTimeout(timeout);
@@ -96,7 +96,7 @@ const PlansScreen: React.FC = () => {
       let isActive = true;
       const timeout = setTimeout(() => {
         if (isActive) {
-          start();
+          // start();
         }
       }, 200);
       return () => {

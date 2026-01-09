@@ -1,13 +1,14 @@
 // reduxStore/slices/shoppingSlice.ts
-import { addDocument, deleteDocument, updateDocument } from "@/services/firestore";
+import { addDocument, deleteDocument, getDocumentById, queryDocuments, updateDocument } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
     ADD_SHOPPING_LIST,
     DELETE_SHOPPING_LIST,
+    FETCH_SHOPPING_LISTS,
     SHOPPING_SLICE,
     UPDATE_SHOPPING_LIST,
 } from "../actionTypes";
-import { SHOPPING_LIST_COLLECTION } from "../appKeys";
+import { INGREDIENTS_CATEGORY_COLLECTION, INGREDIENTS_COLLECTION, SHOPPING_LIST_COLLECTION } from "../appKeys";
 
 export interface ShoppingListItem {
   ingredientId: string;
@@ -71,6 +72,65 @@ const deleteShoppingListFromDb = async (listId: string) => {
   }
 };
 
+const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
+  return Promise.all(
+    lists.map(async (list: any) => {
+      try {
+        return {
+          ...list,
+          ingredients: await Promise.all(
+            list.ingredients?.map(async (ing: any) => {
+              let ingredientName = ing.ingredientName;
+              let categoryName = ing.categoryName;
+
+              // Fetch ingredient details if ingredientId exists
+              if (ing.ingredientId) {
+                try {
+                  const ingredientDoc: any = await getDocumentById(
+                    INGREDIENTS_COLLECTION,
+                    ing.ingredientId
+                  );
+                  ingredientName = ingredientDoc?.name || ingredientName;
+                } catch (error) {
+                  console.error(
+                    `Error fetching ingredient ${ing.ingredientId}:`,
+                    error
+                  );
+                }
+              }
+
+              // Fetch category details if categoryId exists
+              if (ing.categoryId) {
+                try {
+                  const categoryDoc: any = await getDocumentById(
+                    INGREDIENTS_CATEGORY_COLLECTION,
+                    ing.categoryId
+                  );
+                  categoryName = categoryDoc?.title || categoryName;
+                } catch (error) {
+                  console.error(
+                    `Error fetching category ${ing.categoryId}:`,
+                    error
+                  );
+                }
+              }
+
+              return {
+                ...ing,
+                ingredientName,
+                categoryName,
+              };
+            }) || []
+          ),
+        };
+      } catch (error) {
+        console.error(`Error enriching shopping list ${list.id}:`, error);
+        return list;
+      }
+    })
+  );
+};
+
 export const addShoppingList = createAsyncThunk(
   ADD_SHOPPING_LIST,
   async (listData: any, { rejectWithValue }) => {
@@ -101,6 +161,45 @@ export const deleteShoppingList = createAsyncThunk(
     try {
       await deleteShoppingListFromDb(listId);
       return listId;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+export const fetchUserShoppingLists = createAsyncThunk(
+  FETCH_SHOPPING_LISTS,
+  async (
+    {
+      userId,
+      limit = 10,
+      startAfter = null,
+    }: { userId: string; limit?: number; startAfter?: any },
+    { rejectWithValue }
+  ) => {
+    try {
+      const options: any = {
+        limit,
+        // Removed orderBy to avoid composite index requirement
+        // To enable ordering, create the index at: Firebase Console > Firestore > Indexes
+        // orderBy: "createdAt",
+        // orderDirection: "desc",
+      };
+      if (startAfter) options.startAfter = startAfter;
+
+      const lists = await queryDocuments(
+        SHOPPING_LIST_COLLECTION,
+        "uid",
+        "==",
+        userId,
+        options
+      );
+
+      console.log("Fetched shopping lists from DB:", lists);
+
+      const enrichedLists = await enrichShoppingListsWithDetails(lists);
+
+      return enrichedLists;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -158,6 +257,19 @@ const shoppingListSlice = createSlice({
         state.lists = state.lists.filter((list) => list.id !== action.payload);
       })
       .addCase(deleteShoppingList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Fetch Shopping Lists
+      .addCase(fetchUserShoppingLists.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserShoppingLists.fulfilled, (state, action) => {
+        state.loading = false;
+        state.lists = action.payload as ShoppingList[];
+      })
+      .addCase(fetchUserShoppingLists.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

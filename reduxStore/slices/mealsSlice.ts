@@ -253,7 +253,7 @@ const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
               return {
                 categoryId: ing.categoryId,
                 ingredientId: ing.ingredientId,
-                count: ing.count,
+                count: ing.count ?? "0",
                 ingredientName: ingredientDetails?.name,
                 unit: ingredientDetails?.unit,
                 categoryName: categoryName,
