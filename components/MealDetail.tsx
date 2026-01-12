@@ -32,10 +32,10 @@ import {
 } from "react-native";
 import ConfirmationModal from "./ConfirmationModal";
 import CreateMealBottomSheet from "./CreateMealBottomSheet";
+import { hideLoader, showLoader } from "./Loader";
 import SendToShoppingList from "./SendShoppingList";
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
-
 
 type MealDetailProps = {
   meal: Meal;
@@ -62,16 +62,18 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
 
   const handleDeleteMeal = async () => {
     setShowDeleteModal(false);
-
+    showLoader()
     try {
       await deleteTheMeal(
         meal.id,
         (payload) => {
           console.log("✅ Meal deleted successfully:", payload);
+          hideLoader()
           showSuccessToast(Strings.meal_deleted);
           onBack();
         },
         (error) => {
+          hideLoader()
           console.error(
             "❌ Error deleting meal from deleteTheMeal callback:",
             error
@@ -185,10 +187,14 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
             <View style={styles.divider} />
             {meal.ingredients.map((ingredient: any, index: number) => (
               <View style={styles.ingredientRow} key={index}>
-                <Text style={styles.ingredientName}>{ingredient.ingredientName}</Text>
+                <Text style={styles.ingredientName}>
+                  {ingredient.ingredientName}
+                </Text>
                 <View style={styles.dividerRow} />
                 <Text style={styles.ingredientValue}>
-                  {ingredient.count && `${ingredient.count} `}
+                  {ingredient.count &&
+                    ingredient.count > 0 &&
+                    `${ingredient.count} `}
                   {ingredient.unit}
                 </Text>
               </View>

@@ -1,11 +1,14 @@
-import { closeIcon, googleicon, updateprofile } from '@/assets/images';
-import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
-import { Strings } from '@/constants/Strings';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import { useLoader } from '@/context/LoaderContext';
-import { showErrorToast, showSuccessToast } from '@/utils/Toast';
-import { useProfileViewModel } from '@/viewmodels/ProfileViewModel';
-import { useEffect, useState } from 'react';
+import { closeIcon, googleicon, updateprofile } from "@/assets/images";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { showErrorToast, showSuccessToast } from "@/utils/Toast";
+import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -16,21 +19,22 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-} from 'react-native';
-import BaseButton from './BaseButton';
-import ImagePickerModal from './ImagePickerModal';
+} from "react-native";
+import BaseButton from "./BaseButton";
+import ImagePickerModal from "./ImagePickerModal";
+import { hideLoader, showLoader } from "./Loader";
+import { hide } from "expo-router/build/utils/splash";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
 };
-const { height } = Dimensions.get('window');
-const { width } = Dimensions.get('window');
+const { height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export default function UpdateProfileModal({ visible, onClose }: Props) {
-  const { showLoader, hideLoader } = useLoader();
   const { updateUserData, user } = useProfileViewModel();
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
@@ -43,7 +47,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
 
   const handleUpdate = async () => {
     if (!name.trim()) {
-      showErrorToast('Please enter a name');
+      showErrorToast("Please enter a name");
       return;
     }
 
@@ -53,26 +57,26 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
       { name: name.trim() },
       () => {
         hideLoader();
-        showSuccessToast('Profile updated successfully!');
+        showSuccessToast("Profile updated successfully!");
         onClose();
       },
       (error) => {
         hideLoader();
-        showErrorToast(error || 'Failed to update profile');
+        showErrorToast(error || "Failed to update profile");
       }
     );
   };
-   const handleUpload = () => {
+  const handleUpload = () => {
     setShowImagePickerModal(true);
   };
 
   const handleImagePicked = (url: string) => {
-    console.log('Selected Image URI:', url);
-    console.log('Image Details:', {
+    console.log("Selected Image URI:", url);
+    console.log("Image Details:", {
       uri: url,
-      type: url.includes('data:') ? 'base64' : 'file',
-      extension: url.split('.').pop(),
-      timestamp: new Date().toISOString()
+      type: url.includes("data:") ? "base64" : "file",
+      extension: url.split(".").pop(),
+      timestamp: new Date().toISOString(),
     });
     setImageUri(url);
   };
@@ -89,13 +93,15 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
           <View style={StyleSheet.absoluteFillObject} />
         </TouchableWithoutFeedback>
         <View style={styles.container}>
-           <ImagePickerModal
+          <ImagePickerModal
             visible={showImagePickerModal}
             onClose={() => setShowImagePickerModal(false)}
             onImagePicked={handleImagePicked}
           />
 
-          <Text style={styles.headerTitle}>{Strings.updateProfileModal_title}</Text>
+          <Text style={styles.headerTitle}>
+            {Strings.updateProfileModal_title}
+          </Text>
           <Text style={styles.headerSubtitle}>
             {Strings.updateProfileModal_subtitle}
           </Text>
@@ -109,7 +115,6 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
               />
             </TouchableOpacity>
             <View style={styles.avatarBtnCol}>
-
               <BaseButton
                 title={Strings.updateProfileModal_update}
                 gradientButton={false}
@@ -125,12 +130,12 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
                 gradientEndColor={Colors._FD4B4B}
                 textStyle={styles.gradientbtnText}
               />
-
-
             </View>
           </View>
 
-          <Text style={styles.label}>{Strings.updateProfileModal_updateName}</Text>
+          <Text style={styles.label}>
+            {Strings.updateProfileModal_updateName}
+          </Text>
           <TextInput
             style={styles.input}
             placeholder={Strings.updateProfileModal_namePlaceholder}
@@ -139,7 +144,9 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
             onChangeText={setName}
           />
 
-          <Text style={styles.label}>{Strings.updateProfileModal_updateEmail}</Text>
+          <Text style={styles.label}>
+            {Strings.updateProfileModal_updateEmail}
+          </Text>
           <TextInput
             style={styles.input}
             placeholder={Strings.updateProfileModal_emailPlaceholder}
@@ -148,7 +155,9 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
             editable={false}
           />
 
-          <Text style={styles.socialLabel}>{Strings.updateProfileModal_social}</Text>
+          <Text style={styles.socialLabel}>
+            {Strings.updateProfileModal_social}
+          </Text>
           <View style={styles.socialBox}>
             <View>
               <Image
@@ -157,9 +166,11 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.socialText}>{Strings.updateProfileModal_connectedWithGoogle}</Text>
+            <Text style={styles.socialText}>
+              {Strings.updateProfileModal_connectedWithGoogle}
+            </Text>
             <TouchableOpacity>
-              <TouchableOpacity  >
+              <TouchableOpacity>
                 <Image
                   source={closeIcon}
                   style={styles.closeIconImage}
@@ -170,8 +181,6 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
           </View>
 
           <View style={styles.footer}>
-
-
             <BaseButton
               title={Strings.updateProfileModal_cancel}
               gradientButton={false}
@@ -190,7 +199,6 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
               textStyleText={styles.confirmButtonText}
               onPress={handleUpdate}
             />
-
           </View>
         </View>
       </View>
@@ -198,9 +206,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
   );
 }
 
-
 const styles = StyleSheet.create({
-
   headerTitle: {
     fontSize: moderateScale(21),
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
@@ -226,8 +232,8 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(18),
   },
   avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: verticalScale(18),
   },
   avatar: {
@@ -239,17 +245,16 @@ const styles = StyleSheet.create({
   },
   avatarBtnCol: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   updateBtn: {
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(12),
     marginBottom: verticalScale(10),
-    alignItems: 'center',
+    alignItems: "center",
     borderColor: Colors.borderColor,
-    borderWidth: moderateScale(1)
-
+    borderWidth: moderateScale(1),
   },
   updateBtnText: {
     fontSize: moderateScale(14),
@@ -259,7 +264,7 @@ const styles = StyleSheet.create({
   gradientbtnText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.white,
-    fontSize: moderateScale(16)
+    fontSize: moderateScale(16),
   },
 
   removeBtnText: {
@@ -290,18 +295,18 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(13),
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.tertiary,
-    textAlign: 'center',
+    textAlign: "center",
     marginVertical: verticalScale(8),
   },
   socialBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.buttonBackground,
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(14),
     paddingHorizontal: horizontalScale(12),
     marginBottom: verticalScale(18),
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     elevation: 4,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 0 },
@@ -325,8 +330,8 @@ const styles = StyleSheet.create({
     marginLeft: horizontalScale(8),
   },
   actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: verticalScale(10),
   },
   cancelBtn: {
@@ -335,7 +340,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     borderWidth: 1,
     borderColor: Colors.divider,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: verticalScale(14),
     marginRight: horizontalScale(8),
     elevation: 2,
@@ -353,7 +358,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.olive,
     borderRadius: moderateScale(10),
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: verticalScale(14),
     marginLeft: horizontalScale(8),
     elevation: 2,
@@ -369,7 +374,7 @@ const styles = StyleSheet.create({
   },
 
   closeBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: verticalScale(12),
     right: horizontalScale(12),
     zIndex: 10,
@@ -380,13 +385,13 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.18)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: horizontalScale(20),
   },
   container: {
-    width: '100%',
+    width: "100%",
     maxWidth: 420,
     backgroundColor: Colors.white,
     borderRadius: moderateScale(18),
@@ -401,8 +406,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: verticalScale(18),
   },
   cancelButton: {
@@ -412,7 +417,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(12),
     marginRight: horizontalScale(8),
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -420,14 +425,12 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
   },
   confirmButton: {
-
     borderRadius: moderateScale(8),
-    alignItems: 'center',
+    alignItems: "center",
   },
   confirmButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.white,
     fontSize: moderateScale(14),
   },
-
 });

@@ -4,13 +4,13 @@
  * @returns Unsubscribe function
  */
 
-
 // import { persistor, store } from "@/store/persistor";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { LOGOUT } from "@/reduxStore/actionTypes";
-import { persistor, store } from '@/reduxStore/store';
+import { persistor, store } from "@/reduxStore/store";
 import { auth } from "@/services/firebase";
 import { router } from "expo-router";
+import { replaceNavigation } from "./Navigation";
 
 // Redux action to clear all state
 const logoutAction = () => ({ type: LOGOUT });
@@ -27,20 +27,19 @@ export const performLogout = async () => {
     // const { persistor, store } = await import("@/reduxStore/store");
     await auth.signOut();
     store.dispatch(logoutAction());
-
-    // Clear persisted storage
     await persistor.purge();
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     // Navigate to signin screen
     router.dismissAll();
-    router.replace(APP_ROUTES.SIGNIN as any);
-
+    replaceNavigation(APP_ROUTES.SIGNIN);
 
     //  }
   } catch (error) {
     console.error("Logout error:", error);
     // Still try to navigate to signin even if purge fails
-    router.replace(APP_ROUTES.SIGNIN as any);
+    replaceNavigation(APP_ROUTES.SIGNIN);
   }
 };
 

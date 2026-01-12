@@ -10,14 +10,10 @@ import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-
-
-const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 
 
-export default function PasswordReset({ navigation }) {
-    const [removePlan, setRemovePlan] = useState(false);
+export default function PasswordReset({  }) {
     const router = useRouter();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');

@@ -36,7 +36,7 @@ const GradientText = React.memo(
     };
 
     const coords = getGradientCoords();
-    const svgWidth = text.length * (fontSize * 0.52);
+    const svgWidth = text.length * (fontSize * 0.6) + 10;
     const svgHeight = fontSize + 4;
 
     return (

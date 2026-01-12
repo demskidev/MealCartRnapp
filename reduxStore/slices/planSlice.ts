@@ -4,6 +4,7 @@ import {
   addDocument,
   compoundQueryDocuments,
   deleteDocument,
+  getDocumentById,
   queryDocuments,
   updateDocument,
 } from "@/services/firestore";
@@ -13,6 +14,7 @@ import {
   ADD_PLAN,
   DELETE_PLAN,
   FETCH_ACTIVE_PLAN,
+  FETCH_PLAN_BY_ID,
   FETCH_PLANS,
   UPDATE_PLAN,
 } from "../actionTypes";
@@ -126,6 +128,19 @@ export const fetchPlansAsync = createAsyncThunk(
         { field: "status", op: "!=", value: MealStatus.COMPLETED },
       ]);
       return plans;
+    } catch (error: any) {
+      return rejectWithValue(error.message || Strings.error_fetching_plans);
+    }
+  }
+);
+
+// Fetch Plan By ID
+export const fetchPlanByIdAsync = createAsyncThunk(
+  FETCH_PLAN_BY_ID,
+  async (planId: string, { rejectWithValue }) => {
+    try {
+      const plan = await getDocumentById(PLANS_COLLECTION, planId);
+      return plan;
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_fetching_plans);
     }

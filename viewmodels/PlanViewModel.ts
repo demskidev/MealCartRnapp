@@ -1,11 +1,12 @@
 // viewmodels/PlanViewModel.ts
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
-    addPlanAsync,
-    deletePlanAsync,
-    fetchActivePlanAsync,
-    fetchPlansAsync,
-    updatePlanAsync,
+  addPlanAsync,
+  deletePlanAsync,
+  fetchActivePlanAsync,
+  fetchPlanByIdAsync,
+  fetchPlansAsync,
+  updatePlanAsync,
 } from "@/reduxStore/slices/planSlice";
 
 
@@ -14,18 +15,18 @@ import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useEffect, useState } from "react";
 
 // Define types for enriched meal slot, day, and plan
-type EnrichedMealSlot = {
+export type EnrichedMealSlot = {
   mealPlanId: string;
   mealId: string;
   meal?: any;
   mealPlan?: any;
 };
-type EnrichedDay = {
+export type EnrichedDay = {
   dayTitle: string;
   date: any;
   mealSlots: EnrichedMealSlot[];
 };
-type EnrichedPlan = {
+export type EnrichedPlan = {
   id: string;
   uid: string;
   planName: string;
@@ -279,7 +280,30 @@ export const usePlanViewModel = () => {
   ) => {
     const resultAction = await dispatch(deletePlanAsync(planId));
     if (deletePlanAsync.fulfilled.match(resultAction)) {
+      // If the deleted plan was the active plan, clear it
+      if (activePlan && activePlan.id === planId) {
+        setEnrichedActivePlan(null);
+      }
       onSuccess?.();
+    } else {
+      onError?.(resultAction.payload as string);
+    }
+  };
+
+  const fetchPlanById = async (
+    planId: string,
+    onSuccess?: (enrichedPlan: EnrichedPlan | null) => void,
+    onError?: (error: string) => void
+  ) => {
+    const resultAction = await dispatch(fetchPlanByIdAsync(planId));
+    if (fetchPlanByIdAsync.fulfilled.match(resultAction)) {
+      const plan = resultAction.payload;
+      if (plan) {
+        const enriched = await enrichPlan(plan as EnrichedPlan);
+        onSuccess?.(enriched);
+      } else {
+        onSuccess?.(null);
+      }
     } else {
       onError?.(resultAction.payload as string);
     }
@@ -299,5 +323,6 @@ export const usePlanViewModel = () => {
     updatePlan,
     deletePlan,
     fetchActivePlan,
+    fetchPlanById,
   };
 };

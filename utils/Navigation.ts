@@ -8,7 +8,7 @@ import { router } from "expo-router";
  * @param fallbackRoute - Screen to navigate to if no back history exists
  */
 export const backNavigation = (
-  fallbackRoute: typeof APP_ROUTES[keyof typeof APP_ROUTES] = APP_ROUTES.FIRST_SCREEN
+  fallbackRoute: (typeof APP_ROUTES)[keyof typeof APP_ROUTES] = APP_ROUTES.FIRST_SCREEN
 ) => {
   if (router.canGoBack && router.canGoBack()) {
     router.back();
@@ -22,23 +22,30 @@ export const backNavigation = (
  * - Uses router.push() to maintain navigation stack
  * - Allows back button to properly navigate to previous screen
  * @param screen - Screen to navigate to
+ * @param params - Optional parameters to pass to the screen
  */
 export const pushNavigation = (
-  screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]
+  screen: (typeof APP_ROUTES)[keyof typeof APP_ROUTES],
+  params?: Record<string, any>
 ) => {
-  router.push(screen as any);
+  if (params) {
+    router.push({ pathname: screen as any, params });
+  } else {
+    router.push(screen as any);
+  }
 };
 
 export const replaceNavigation = (
-  screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]
+  screen: (typeof APP_ROUTES)[keyof typeof APP_ROUTES]
 ) => {
   router.replace(screen as any);
 };
 
-
 export const resetAndNavigate = (
-  screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]
+  screen: (typeof APP_ROUTES)[keyof typeof APP_ROUTES]
 ) => {
-  router.dismissAll();
+  if (router.canGoBack()) {
+    router.dismissAll();
+  }
   router.replace(screen as any);
 };

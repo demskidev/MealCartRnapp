@@ -12,6 +12,7 @@ import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -68,42 +69,38 @@ const AddItemToList = ({
   const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
   const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
 
-  const {
-    meals,
-    loading,
-    fetchMeals,
-    searchMealsCombined,
-  } = useMealsViewModel();
+  const { meals, loading, fetchMeals, searchMealsCombined } =
+    useMealsViewModel();
   const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
   const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
   const [dynamicIngredients, setDynamicIngredients] = useState<string[]>([]);
   const [fullIngredientsData, setFullIngredientsData] = useState<any[]>([]);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Helper function: Fetch all ingredients data for a meal
   // Fetch from ingredient collection using ingredientId
 
- useEffect(() => {
-  // Only fetch if meals array is empty
-  if (visible && meals.length === 0) {
-    console.log("Loading initial meals");
-    fetchMeals(
-      (data) => {
-        console.log("addmealtolist meals fetched:", data.length);
-      },
-      (error) => {
-        console.error("Error fetching initial meals:", error);
-      },
-      3,
-      null
-    );
-  }
-}, [visible]);
-
-
-
-
+  useEffect(() => {
+    // Only fetch if meals array is empty
+    if (visible && meals.length === 0) {
+      console.log("Loading initial meals");
+      setIsLoading(true);
+      fetchMeals(
+        (data) => {
+          setIsLoading(false);
+          console.log("addmealtolist meals fetched:", data.length);
+        },
+        (error) => {
+          setIsLoading(false);
+          console.error("Error fetching initial meals:", error);
+        },
+        3,
+        null
+      );
+    }
+  }, [visible]);
 
   // Filter meals based on search
   useEffect(() => {
@@ -114,12 +111,16 @@ const AddItemToList = ({
       clearTimeout(debounceTimeout.current);
     }
     debounceTimeout.current = setTimeout(() => {
+      setIsLoading(true);
+
       searchMealsCombined(
         { searchText: search.trim().toLowerCase() },
         (data) => {
           setFilteredMeals(data);
+          setIsLoading(false);
         },
         (error) => {
+          setIsLoading(false);
           setFilteredMeals([]);
           console.error("❌ Error searching meals:", error);
         }
@@ -239,18 +240,6 @@ const AddItemToList = ({
     setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
   };
 
-  // Static ingredients list (commented out - now using dynamic ingredients from selected meals)
-  // const INGREDIENTS = [
-  //   "Tomato",
-  //   "Onion",
-  //   "Potato",
-  //   "Garlic",
-  //   "Carrot",
-  //   "Capsicum",
-  //   "Cucumber",
-  //   "Olive Oil",
-  // ];
-
   // Use dynamic ingredients from selected meals
   const INGREDIENTS = dynamicIngredients;
 
@@ -267,7 +256,7 @@ const AddItemToList = ({
     // Dismiss keyboard and blur input when selecting meals
     Keyboard.dismiss();
     inputRef.current?.blur();
-    
+
     if (from === CREATE_MEAL_PLAN) {
       // For meal plan: single selection, call callback immediately
       onMealSelect?.(meal);
@@ -288,20 +277,30 @@ const AddItemToList = ({
     // Collect all ingredients with their selected units
     const ingredientsWithUnits = fullIngredientsData.map((ingredient) => {
       const ingredientName = ingredient.ingredientName;
-      const categoryUnits = ingredient.categoryUnits || ["100grm", "200grm", "1kg"];
+      const categoryUnits = ingredient.categoryUnits || [
+        "100grm",
+        "200grm",
+        "1kg",
+      ];
       const defaultUnit = ingredient.unit || "100grm";
-      
+
       // Normalize the unit strings by removing spaces for comparison
-      const normalizedDefaultUnit = defaultUnit.replace(/\s+/g, '').toLowerCase();
+      const normalizedDefaultUnit = defaultUnit
+        .replace(/\s+/g, "")
+        .toLowerCase();
       const defaultUnitIndex = categoryUnits.findIndex(
-        (unit) => unit.replace(/\s+/g, '').toLowerCase() === normalizedDefaultUnit
+        (unit) =>
+          unit.replace(/\s+/g, "").toLowerCase() === normalizedDefaultUnit
       );
-      
+
       // Get the selected weight index or use default
-      const weightIndex = itemWeights[ingredientName] !== undefined 
-        ? itemWeights[ingredientName] 
-        : (defaultUnitIndex >= 0 ? defaultUnitIndex : 0);
-      
+      const weightIndex =
+        itemWeights[ingredientName] !== undefined
+          ? itemWeights[ingredientName]
+          : defaultUnitIndex >= 0
+          ? defaultUnitIndex
+          : 0;
+
       return {
         ...ingredient,
         selectedUnit: categoryUnits[weightIndex] || defaultUnit,
@@ -323,7 +322,6 @@ const AddItemToList = ({
         resizeMode="cover"
       />
       <Text style={styles.mealName}>{item.name}</Text>
-      
 
       {from !== CREATE_MEAL_PLAN &&
         (selectedMeals.includes(item.id) ? (
@@ -386,18 +384,31 @@ const AddItemToList = ({
               onChangeText={setSearch}
             />
           </View>
-          <View style={styles.dividerRow} />
-              {meals.length > 0 && console.log('First meal:', JSON.stringify(meals[0], null, 2))}
-              {meals.length > 0 && console.log('First meal:rrrrr', meals[0], null, 2)}
+          {meals.length > 0 && <View style={styles.dividerRow} />}
 
-              {meals.length > 0 && console.log('First meal:1111', JSON.stringify(meals, null, 2))}
+          {isLoading && <ActivityIndicator size="large" style={styles.loader} />}
 
-              {meals.length > 0 && meals[0]?.ingredients?.[0] && console.log('First ingredient:', JSON.stringify(meals[0].ingredients[0], null, 2))}
+          {meals.length > 0 &&
+            console.log("First meal:", JSON.stringify(meals[0], null, 2))}
+          {meals.length > 0 &&
+            console.log("First meal:rrrrr", meals[0], null, 2)}
 
-          <TouchableWithoutFeedback onPress={() => {
-            Keyboard.dismiss();
-            inputRef.current?.blur();
-          }}>
+          {meals.length > 0 &&
+            console.log("First meal:1111", JSON.stringify(meals, null, 2))}
+
+          {meals.length > 0 &&
+            meals[0]?.ingredients?.[0] &&
+            console.log(
+              "First ingredient:",
+              JSON.stringify(meals[0].ingredients[0], null, 2)
+            )}
+
+          <TouchableWithoutFeedback
+            onPress={() => {
+              Keyboard.dismiss();
+              inputRef.current?.blur();
+            }}
+          >
             <View>
               <FlatList
                 data={search.trim() ? filteredMeals : meals}
@@ -405,7 +416,9 @@ const AddItemToList = ({
                 keyExtractor={(item) => item.id}
                 renderItem={renderMealItem}
                 contentContainerStyle={styles.mealsListContent}
-                ItemSeparatorComponent={() => <View style={styles.mealSeparator} />}
+                ItemSeparatorComponent={() => (
+                  <View style={styles.mealSeparator} />
+                )}
                 style={styles.mealsListStyle}
               />
             </View>
@@ -440,22 +453,33 @@ const AddItemToList = ({
                     const ingredientData = fullIngredientsData.find(
                       (ing) => ing.ingredientName === item
                     );
-                    const categoryUnits = ingredientData?.categoryUnits || ["100grm", "200grm", "1kg"];
+                    const categoryUnits = ingredientData?.categoryUnits || [
+                      "100grm",
+                      "200grm",
+                      "1kg",
+                    ];
                     const defaultUnit = ingredientData?.unit || "100grm";
-                    
+
                     // Normalize the unit strings by removing spaces for comparison
-                    const normalizedDefaultUnit = defaultUnit.replace(/\s+/g, '').toLowerCase();
+                    const normalizedDefaultUnit = defaultUnit
+                      .replace(/\s+/g, "")
+                      .toLowerCase();
                     const defaultUnitIndex = categoryUnits.findIndex(
-                      (unit) => unit.replace(/\s+/g, '').toLowerCase() === normalizedDefaultUnit
+                      (unit) =>
+                        unit.replace(/\s+/g, "").toLowerCase() ===
+                        normalizedDefaultUnit
                     );
-                    
+
                     // Get current index or find index of default unit
                     // Check if itemWeights[item] is undefined to use default unit index
-                    const currentIndex = itemWeights[item] !== undefined 
-                      ? itemWeights[item] 
-                      : (defaultUnitIndex >= 0 ? defaultUnitIndex : 0);
+                    const currentIndex =
+                      itemWeights[item] !== undefined
+                        ? itemWeights[item]
+                        : defaultUnitIndex >= 0
+                        ? defaultUnitIndex
+                        : 0;
                     const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-                    
+
                     return (
                       <View>
                         <View style={styles.suggestionItemContainer}>
@@ -909,6 +933,9 @@ const styles = StyleSheet.create({
   closeIconImage: {
     width: 22,
     height: 22,
+  },
+  loader: {
+    marginVertical: verticalScale(20),
   },
 });
 

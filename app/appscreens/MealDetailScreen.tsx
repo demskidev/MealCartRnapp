@@ -1,9 +1,8 @@
-import Loader from "@/components/Loader";
+import { hideLoader, showLoader } from "@/components/Loader";
 import MealDetail from "@/components/MealDetail";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
-import { Alert } from "react-native";
 
 export default function MealDetailScreen() {
   const router = useRouter();
@@ -22,9 +21,11 @@ export default function MealDetailScreen() {
   // Fetch meals if not already loaded
   useEffect(() => {
     if (meals.length === 0) {
+      showLoader();
       fetchMeals(
         () => console.log("MealDetailScreen - Meals fetched successfully"),
-        (error) => console.error("MealDetailScreen - Error fetching meals:", error)
+        (error) =>
+          console.error("MealDetailScreen - Error fetching meals:", error)
       );
     }
   }, []);
@@ -68,24 +69,26 @@ export default function MealDetailScreen() {
   useEffect(() => {
     if (!meal && meals.length > 0 && !hasCheckedMealNotFound.current) {
       hasCheckedMealNotFound.current = true;
-      Alert.alert(
-        "Meal Not Found",
-        "This meal could not be found or has been deleted.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ],
-        { cancelable: false }
-      );
+      // Alert.alert(
+      //   "Meal Not Found",
+      //   "This meal could not be found or has been deleted.",
+      //   [
+      //     {
+      //       text: "OK",
+      //       onPress: () => router.back(),
+      //     },
+      //   ],
+      //   { cancelable: false }
+      // );
+    } else if (meal) {
+      hideLoader();
     }
   }, [meal, meals.length, router]);
 
   // Show loader only while fetching initial meals or meal not found yet
   if (!meal) {
-    return <Loader visible={true} />;
+    return null;
   }
 
-  return <MealDetail meal={meal} onBack={() => router.back()} />;
+  return <MealDetail meal={meal!} onBack={() => router.back()} />;
 }

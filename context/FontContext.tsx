@@ -1,7 +1,7 @@
-import { Colors } from '@/constants/Theme';
-import { loadCustomFonts } from '@/utils/Fonts';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { Colors } from "@/constants/Theme";
+import { loadCustomFonts } from "@/utils/Fonts";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 interface FontContextType {
   fontsLoaded: boolean;
@@ -16,7 +16,7 @@ const FontContext = createContext<FontContextType>({
 export const useFonts = () => {
   const context = useContext(FontContext);
   if (!context) {
-    throw new Error('useFonts must be used within FontProvider');
+    throw new Error("useFonts must be used within FontProvider");
   }
   return context;
 };
@@ -39,10 +39,10 @@ export const FontProvider: React.FC<FontProviderProps> = ({ children }) => {
         await loadCustomFonts();
         setFontsLoaded(true);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown font loading error';
-        console.error('Font initialization failed:', errorMessage);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown font loading error";
+        console.error("Font initialization failed:", errorMessage);
         setFontError(errorMessage);
-        // Still allow app to load even if fonts fail
         setFontsLoaded(true);
       }
     };
@@ -50,14 +50,13 @@ export const FontProvider: React.FC<FontProviderProps> = ({ children }) => {
     initializeFonts();
   }, []);
 
-  // Show loading screen while fonts are loading
   if (!fontsLoaded) {
     return (
       <View
         style={{
           flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
+          justifyContent: "center",
+          alignItems: "center",
           backgroundColor: Colors.background,
         }}
       >
@@ -66,8 +65,13 @@ export const FontProvider: React.FC<FontProviderProps> = ({ children }) => {
     );
   }
 
+  const contextValue: FontContextType = {
+    fontsLoaded,
+    fontError,
+  };
+
   return (
-    <FontContext.Provider value={{ fontsLoaded, fontError }}>
+    <FontContext.Provider value={contextValue}>
       {children}
     </FontContext.Provider>
   );

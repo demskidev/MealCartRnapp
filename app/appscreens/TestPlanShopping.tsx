@@ -10,6 +10,7 @@ import {
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useAppSelector } from "@/reduxStore/hooks";
+import { pushNavigation } from "@/utils/Navigation";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -151,7 +152,7 @@ export default function TestPlanShopping() {
         <View style={styles.editdelete}>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => router.push(APP_ROUTES.CreateMealPlan)}
+            onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
           >
             <Image
               source={iconedit}

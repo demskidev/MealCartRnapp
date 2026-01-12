@@ -190,7 +190,7 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.isAuthenticated = true;
-  
+
         state.user = action.payload;
         console.log("User logged in:", action.payload);
         state.loading = false;

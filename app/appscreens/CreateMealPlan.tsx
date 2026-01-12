@@ -8,6 +8,7 @@ import {
 import AddItemToList from "@/components/AddItemToList";
 import BaseButton from "@/components/BaseButton";
 import CustomDateTimePicker from "@/components/DateTimePicker";
+import { hideLoader, showLoader } from "@/components/Loader";
 import {
   horizontalScale,
   moderateScale,
@@ -16,15 +17,14 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { useLoader } from "@/context/LoaderContext";
 import { CREATE_MEAL_PLAN, MealStatus } from "@/reduxStore/appKeys";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { DayData } from "@/reduxStore/slices/planSlice";
 import { backNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
-import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
+import { EnrichedPlan, usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -52,9 +52,14 @@ interface SelectedMealSlot {
 
 export default function CreateMealPlan({}) {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const planParam = params?.plan as string;
+  const existingPlan: EnrichedPlan | null = planParam
+    ? (JSON.parse(planParam) as EnrichedPlan)
+    : null;
+  console.log("CreateMealPlan - planParam:", planParam);
   const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
-  const { addPlan, loading: planLoading } = usePlanViewModel();
-  const { showLoader, hideLoader } = useLoader();
+  const { addPlan, updatePlan, loading: planLoading } = usePlanViewModel();
 
   const user = useAppSelector((state) => state.auth.user);
 
@@ -73,6 +78,52 @@ export default function CreateMealPlan({}) {
   useEffect(() => {
     fetchMealPlans();
   }, []);
+
+  useEffect(() => {
+    if (existingPlan && mealPlans.length > 0) {
+      setPlanName(existingPlan.planName);
+
+      const planStartDate = existingPlan.startDate?.seconds
+        ? new Date(existingPlan.startDate.seconds * 1000)
+        : new Date(existingPlan.startDate);
+      setStartDate(planStartDate);
+
+      // Populate selected meal slots from existing plan
+      const slots: Record<string, any> = {};
+      existingPlan.days.forEach((day: any) => {
+        day.mealSlots.forEach((slot: any) => {
+          const slotKey = `${day.dayTitle}-${slot.mealPlan?.name}`;
+          slots[slotKey] = slot.meal;
+        });
+      });
+      setSelectedMealSlots(slots);
+    }
+  }, [existingPlan, mealPlans]);
+  // useEffect(() => {
+  //   if (planParam && mealPlans.length > 0) {
+  //     try {
+  //       const parsedPlan: EnrichedPlan = JSON.parse(planParam);
+  //       setExistingPlan(parsedPlan);
+  //       setPlanName(parsedPlan.planName);
+
+  //       const planStartDate = parsedPlan.startDate?.toDate
+  //         ? parsedPlan.startDate.toDate()
+  //         : new Date(parsedPlan.startDate);
+  //       setStartDate(planStartDate);
+
+  //       // Populate selected meal slots from existing plan
+  //       // const slots: Record<string, any> = {};
+  //       // parsedPlan.days.forEach((day: any) => {
+  //       //   day.mealSlots.forEach((slot: any) => {
+  //       //     const slotKey = `${day.dayTitle}-${slot.mealPlan?.name}`;
+  //       //     slots[slotKey] = slot.meal;
+  //       //   });
+  //       // });
+  //     } catch (error) {
+  //       console.error("Error parsing plan:", error);
+  //     }
+  //   }
+  // }, [planParam, mealPlans]);
 
   const formatDisplayDate = (date: Date) => {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -174,21 +225,6 @@ export default function CreateMealPlan({}) {
           showsHorizontalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* {item.meals.map((meal, idx) => (
-            <View key={meal + idx} style={styles.mealCol}>
-              <Text style={styles.mealLabel}>{meal}</Text>
-              <TouchableOpacity
-                style={styles.mealBox}
-                onPress={() => setAddToListVisible(true)}
-              >
-                <Image
-                  source={plusmeal}
-                  resizeMode="contain"
-                  style={styles.plusMealIcon}
-                />
-              </TouchableOpacity>
-            </View>
-          ))} */}
           {item.meals.map((mealPlanName: string, idx: number) => {
             const selectedMeal = getSelectedMeal(item.title, mealPlanName);
 
@@ -245,34 +281,29 @@ export default function CreateMealPlan({}) {
     );
   }
 
-  const saveMealPlan = () => {
-    console.log("=== SAVE MEAL PLAN STARTED ===");
-    console.log("1. Start Date:", startDate);
-    console.log("2. Days array:", days);
-    console.log("3. Selected Meal Slots:", selectedMealSlots);
-    console.log("4. Meal Plans:", mealPlans);
-
-    // Validation: Ensure at least one meal is selected for the entire week
+  const validateMealPlan = (): boolean => {
     const anyMealSelected = Object.keys(selectedMealSlots).length > 0;
 
     if (planName.trim() === "") {
       alert(Strings.error_enter_plan_name);
-      return;
+      return false;
     }
 
     if (!anyMealSelected) {
       alert(Strings.error_select_meal_for_any_day);
-      return;
+      return false;
     }
 
-    showLoader();
+    return true;
+  };
 
-    const getMealPlanId = (mealPlanName: string) => {
-      const plan = mealPlans.find((p) => p.name === mealPlanName);
-      console.log(`  Finding plan for "${mealPlanName}":`, plan?.id);
-      return plan?.id;
-    };
+  const getMealPlanId = (mealPlanName: string) => {
+    const plan = mealPlans.find((p) => p.name === mealPlanName);
+    console.log(`  Finding plan for "${mealPlanName}":`, plan?.id);
+    return plan?.id;
+  };
 
+  const buildDaysData = () => {
     const daysData = days
       .map((day) => {
         const mealSlots = day.meals
@@ -297,14 +328,29 @@ export default function CreateMealPlan({}) {
       })
       .filter((daySlot): daySlot is DayData => daySlot !== null);
 
+    return daysData;
+  };
+
+  const calculateEndDate = (daysData: DayData[]) => {
     const lastDayWithMeals =
       daysData.length > 0 ? daysData[daysData.length - 1] : null;
     const endDate = lastDayWithMeals
       ? setEndOfDay(lastDayWithMeals.date)
       : setEndOfDay(startDate);
-    console.log("\n5. Last Day with Meals:", lastDayWithMeals);
-    console.log("6. End Date:", endDate);
-    console.log("7. Days Data to save:", JSON.stringify(daysData, null, 2));
+
+    console.log("Last Day with Meals:", lastDayWithMeals);
+    console.log("End Date:", endDate);
+
+    return endDate;
+  };
+
+  const saveMealPlan = () => {
+    if (!validateMealPlan()) return;
+
+    showLoader();
+
+    const daysData = buildDaysData();
+    const endDate = calculateEndDate(daysData);
 
     const planPayload = {
       planName: planName || Strings.unknown_plan,
@@ -313,9 +359,7 @@ export default function CreateMealPlan({}) {
       status: MealStatus.CREATED,
       days: daysData,
     };
-    console.log("\n7. Final Payload:", JSON.stringify(planPayload, null, 2));
 
-    console.log("\n8. Calling addPlan...");
     addPlan(
       planPayload,
       (response) => {
@@ -328,6 +372,53 @@ export default function CreateMealPlan({}) {
         hideLoader();
         console.error("❌ ERROR - Failed to save plan:", error);
         showErrorToast(error || Strings.error_adding_plan);
+      }
+    );
+  };
+
+  const updateMealPlan = () => {
+    if (!existingPlan) {
+      alert(Strings.error_updating_plan || "Cannot update plan");
+      return;
+    }
+
+    if (!validateMealPlan()) return;
+
+    showLoader();
+
+    const daysData = buildDaysData();
+    const endDate = calculateEndDate(daysData);
+
+    console.log("Days Data to update:", JSON.stringify(daysData, null, 2));
+
+    const planPayload = {
+      id: existingPlan.id,
+      planName: planName || Strings.unknown_plan,
+      startDate: startDate,
+      endDate: endDate,
+      status: existingPlan.status,
+      days: daysData,
+    };
+
+    console.log("Final Update Payload:", JSON.stringify(planPayload, null, 2));
+    console.log("Calling updatePlan...");
+
+    updatePlan(
+      planPayload,
+      (response) => {
+        hideLoader();
+        console.log("SUCCESS - Plan updated:", response);
+        showSuccessToast(
+          Strings.plan_updated_successfully || "Plan updated successfully"
+        );
+        backNavigation();
+      },
+      (error) => {
+        hideLoader();
+        console.error("ERROR - Failed to update plan:", error);
+        showErrorToast(
+          error || Strings.error_updating_plan || "Failed to update plan"
+        );
       }
     );
   };
@@ -399,7 +490,11 @@ export default function CreateMealPlan({}) {
           onPress={() => backNavigation()}
         />
         <BaseButton
-          title={Strings.createMealPlan_save}
+          title={
+            planParam
+              ? Strings.createMealPlan_update
+              : Strings.createMealPlan_save
+          }
           gradientButton={true}
           width={width * 0.65}
           gradientStartColor={Colors._667D4C}
@@ -420,7 +515,7 @@ export default function CreateMealPlan({}) {
           }
           textStyle={[styles.confirmButton]}
           textStyleText={styles.saveShopping}
-          onPress={saveMealPlan}
+          onPress={planParam ? updateMealPlan : saveMealPlan}
         />
       </View>
 

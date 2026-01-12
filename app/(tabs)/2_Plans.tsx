@@ -1,6 +1,7 @@
 import { activeImage, createlist, gradientclose } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
@@ -9,20 +10,17 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { useLoader } from "@/context/LoaderContext";
-import { useTourStep } from "@/context/TourStepContext";
 import { MealStatus } from "@/reduxStore/appKeys";
 import { pushNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
-import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
-import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -47,16 +45,11 @@ const PlansScreen: React.FC = () => {
   const [pausePlan, setPausePlan] = useState(false);
   const [layoutReady, setLayoutReady] = useState(false);
   const [zoneReady, setZoneReady] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const { start, stop } = useTourGuideController();
-
-  const { setCurrentStepIndex } = useTourStep();
-  const { enrichedPlans, loading, fetchPlans, updatePlan } = usePlanViewModel();
-  const { getMealById } = useMealsViewModel();
-  const { getMealPlanById } = useProfileViewModel();
-  const { showLoader, hideLoader } = useLoader();
-  // Use filteredPlans from viewmodel (date filtering logic is now in the viewmodel)
-  const filteredPlans = usePlanViewModel().enrichedPlans;
+  const { enrichedPlans, fetchPlans, updatePlan } = usePlanViewModel();
+  const filteredPlans = enrichedPlans;
 
   useEffect(() => {
     showLoader();
@@ -64,10 +57,21 @@ const PlansScreen: React.FC = () => {
       () => hideLoader(),
       (error) => {
         hideLoader();
-        console.error("❌ Error fetching plans:", error);
+        console.error("Error fetching plans:", error);
       }
     );
   }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchPlans(
+      () => setRefreshing(false),
+      (error) => {
+        setRefreshing(false);
+        console.error("Error fetching plans:", error);
+      }
+    );
+  };
 
   const activePlan = filteredPlans.find(
     (plan) => plan.status === MealStatus.STARTED
@@ -152,21 +156,26 @@ const PlansScreen: React.FC = () => {
         return;
       }
     }
-    showLoader();
+    showLoader()
     updatePlan(
       {
         id: plan.id,
         status: status,
       },
       () => {
-        hideLoader();
+        hideLoader()
         showSuccessToast(Strings.plan_updated_successfully);
         // loadPlans()
       },
       (error) => {
+        hideLoader()
         showErrorToast(error || Strings.error_updating_plan);
       }
     );
+  };
+
+  const viewPlan = (planId: string) => {
+    pushNavigation(APP_ROUTES.TestMealPlan, { planId });
   };
 
   const renderShoppingList = ({ item }: { item: any }) => {
@@ -200,7 +209,7 @@ const PlansScreen: React.FC = () => {
             width={width * 0.43}
             textStyle={styles.addButton}
             textStyleText={styles.addButtonText}
-            onPress={() => pushNavigation(APP_ROUTES.TestMealPlan)}
+            onPress={() => viewPlan(item.id)}
           />
           <BaseButton
             title={
@@ -235,7 +244,17 @@ const PlansScreen: React.FC = () => {
         onLayout={() => setLayoutReady(true)}
       ></View>
 
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
+          />
+        }
+      >
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{Strings.plans_mealPlans}</Text>
 
@@ -353,7 +372,7 @@ const PlansScreen: React.FC = () => {
                 width={width * 0.3}
                 textStyle={styles.confirmButton}
                 textStyleText={styles.confirmButtonText}
-                onPress={() => pushNavigation(APP_ROUTES.TestMealPlan)}
+                onPress={() => viewPlan(activePlan.id)}
               />
             </View>
             <TouchableOpacity
@@ -394,6 +413,7 @@ const PlansScreen: React.FC = () => {
           }
         }}
       />
+      {/* <Loader visible={isLoading} /> */}
     </SafeAreaView>
   );
 };

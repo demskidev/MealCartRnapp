@@ -8,7 +8,6 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
-import { useLoader } from "@/context/LoaderContext";
 import { pushNavigation } from "@/utils/Navigation";
 import React, { useRef, useState } from "react";
 import { Dimensions, FlatList, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -41,7 +40,6 @@ const slides = [
 const WelcomeMealCart: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef<FlatList>(null);
-    const { showLoader, hideLoader } = useLoader();
 
     const goNext = () => {
         if (currentIndex < slides.length - 1) {
@@ -49,7 +47,6 @@ const WelcomeMealCart: React.FC = () => {
             setCurrentIndex(nextIndex);
             flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
         } else {
-            showLoader();
             pushNavigation(APP_ROUTES.HOME);
         }
     };

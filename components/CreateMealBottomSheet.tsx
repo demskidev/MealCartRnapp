@@ -8,7 +8,6 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { useLoader } from "@/context/LoaderContext";
 import {
   CATEGORY_KEY,
   DESCRIPTION_KEY,
@@ -31,7 +30,7 @@ import BottomSheet, {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { Formik } from "formik";
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import { forwardRef, useMemo, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -46,6 +45,7 @@ import CustomDropdown from "./CustomDropdown";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
 import ImagePickerModal from "./ImagePickerModal";
+import { hideLoader, showLoader } from "./Loader";
 
 export interface CreateMealBottomSheetRef {
   expand: () => void;
@@ -81,7 +81,6 @@ const CreateMealBottomSheet = forwardRef<
     Strings._60_mins,
   ];
 
-  const { showLoader, hideLoader } = useLoader();
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
   const initialValues = useMemo(() => {
@@ -113,10 +112,9 @@ const CreateMealBottomSheet = forwardRef<
     };
   }, [isEdit, mealData]);
 
-  useEffect(() => {
-    if (loading) showLoader();
-    else hideLoader();
-  }, [loading]);
+  // useEffect(() => {
+
+  // }, [loading]);
 
   // Helper to get units for a given category (object or id)
   // Helper to get units for a given category (object or id)
@@ -478,16 +476,18 @@ const CreateMealBottomSheet = forwardRef<
         "Creating meal with data:",
         JSON.stringify(mealData, null, 2)
       );
-
+      showLoader();
       addMealData(
         mealData,
         () => {
+          hideLoader();
           alert(Strings.mealAdded);
           if (ref && typeof ref !== "function" && ref.current?.close) {
             ref.current.close();
           }
         },
         (error) => {
+          hideLoader();
           alert(Strings.error_creating_meal + error);
         }
       );
@@ -510,19 +510,21 @@ const CreateMealBottomSheet = forwardRef<
       }
 
       console.log("Updating meal with data:", mealData);
-
+      showLoader();
       updateMealData(
         {
           mealData: mealData,
           updateWithIngredients: true,
         },
         () => {
+          hideLoader();
           alert(Strings.mealUpdated);
           if (ref && typeof ref !== "function" && ref.current?.close) {
             ref.current.close();
           }
         },
         (error) => {
+          hideLoader();
           alert(Strings.error_updating_meal + error);
         }
       );

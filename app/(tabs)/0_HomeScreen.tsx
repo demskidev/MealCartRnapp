@@ -15,9 +15,10 @@ import CreateMealBottomSheet from "@/components/CreateMealBottomSheet";
 import MealDetail from "@/components/MealDetail";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { Strings } from "@/constants/Strings";
-import { useLoader } from "@/context/LoaderContext";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily } from "@/utils/Fonts";
+
+import { hideLoader, showLoader } from "@/components/Loader";
 import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
@@ -30,6 +31,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -52,27 +54,49 @@ const HomeScreen: React.FC = () => {
   const { recentMeals, fetchTheRecentMeals } = useMealsViewModel();
   const [activePlan, setActivePlan] = useState(enrichedActivePlan);
   const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMealsAndPlan = async () => {
+    await Promise.all([
+      new Promise<void>((resolve) => {
+        fetchActivePlan(
+          () => resolve(),
+          () => resolve()
+        );
+      }),
+      new Promise<void>((resolve) => {
+        fetchTheRecentMeals(
+          () => resolve(),
+          () => resolve()
+        );
+      }),
+    ]);
+  };
 
   useEffect(() => {
-    fetchActivePlan();
-    fetchTheRecentMeals();
+    const loadData = async () => {
+      showLoader();
+      await fetchMealsAndPlan();
+      hideLoader();
+    };
+    loadData();
   }, []);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    showLoader();
+    await fetchMealsAndPlan();
+    hideLoader();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
-    if (enrichedActivePlan) {
-      setActivePlan(enrichedActivePlan);
-      console.log("Active Plan in HomeScreen:", enrichedActivePlan);
-    }
+    setActivePlan(enrichedActivePlan);
   }, [enrichedActivePlan]);
 
   const mealData = recentMeals;
 
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
-  const { hideLoader } = useLoader();
-
-  useEffect(() => {
-    hideLoader();
-  }, []);
 
   const { canStart, start, eventEmitter } = useTourGuideController();
 
@@ -132,7 +156,7 @@ const HomeScreen: React.FC = () => {
       .map((slot) => slot.meal)
       .filter(Boolean);
 
-      console.log("Filtered Meals for Today:", filteredMeals);
+    console.log("Filtered Meals for Today:", filteredMeals);
     return filteredMeals;
   };
 
@@ -255,6 +279,14 @@ const HomeScreen: React.FC = () => {
             extraScrollHeight={20}
             enableOnAndroid={true}
             keyboardShouldPersistTaps="handled"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[Colors.primary]}
+                tintColor={Colors.primary}
+              />
+            }
           >
             <LinearGradient
               colors={[Colors._667D4C, Colors._9DAF89]}
@@ -310,7 +342,9 @@ const HomeScreen: React.FC = () => {
                       <TourGuideZone zone={1} shape="circle" borderRadius={100}>
                         <TouchableOpacity
                           onPress={() =>
-                            pushNavigation(APP_ROUTES.TestMealPlan)
+                            pushNavigation(APP_ROUTES.TestMealPlan, {
+                              planId: activePlan?.id,
+                            })
                           }
                         >
                           <Text style={styles.viewAllText}>

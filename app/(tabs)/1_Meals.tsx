@@ -9,7 +9,7 @@ import {
 import { SearchIcon } from "@/assets/svg";
 import CreateMealBottomSheet from "@/components/CreateMealBottomSheet";
 import FilterModal from "@/components/FilterModal";
-import Loader from "@/components/Loader";
+import { hideLoader, showLoader } from "@/components/Loader";
 import {
   horizontalScale,
   moderateScale,
@@ -31,6 +31,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -49,6 +50,7 @@ const MealsScreen: React.FC = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [isMyMeals, setIsMyMeals] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [searchText, setSearchText] = useState("");
   const [filters, setFilters] = useState<Filters>({
@@ -85,8 +87,40 @@ const MealsScreen: React.FC = () => {
   const displayMeals = hasActiveFilters ? filteredMeals : normalMeals;
 
   useEffect(() => {
-    loadInitialMeals();
-    fetchTheRecentMeals();
+    const loadData = async () => {
+      showLoader();
+      await Promise.all([
+        new Promise<void>((resolve) => {
+          fetchMeals(
+            (data) => {
+              if (data.length < NORMAL_PAGE_SIZE) {
+                setNormalIsEndReached(true);
+              }
+              setNormalMeals(data);
+              if (data.length > 0) {
+                setNormalLastDoc(data[data.length - 1]);
+              }
+              resolve();
+            },
+            (error) => {
+              console.error("Error fetching initial meals:", error);
+              resolve();
+            },
+            NORMAL_PAGE_SIZE,
+            null
+          );
+        }),
+        new Promise<void>((resolve) => {
+          fetchTheRecentMeals(
+            () => resolve(),
+            () => resolve()
+          );
+        }),
+      ]);
+      hideLoader();
+    };
+
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -200,6 +234,7 @@ const MealsScreen: React.FC = () => {
     console.log("Loading filtered meals with:", { filters, search, isInitial }); // Updated log
     setFilteredIsLoadingMore(true);
 
+    showLoader()
     searchMealsCombined(
       {
         category: filters.category,
@@ -235,8 +270,10 @@ const MealsScreen: React.FC = () => {
           setFilteredLastDoc(data[data.length - 1]);
         }
         setFilteredIsLoadingMore(false);
+        hideLoader()
       },
       (error) => {
+        hideLoader()
         console.error("Error fetching filtered meals:", error);
         setFilteredIsLoadingMore(false);
       }
@@ -272,6 +309,69 @@ const MealsScreen: React.FC = () => {
 
     if (!filteredIsEndReached && !loading && !filteredIsLoadingMore) {
       loadFilteredMeals(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+
+    if (hasActiveFilters) {
+      // Refresh filtered meals
+      setFilteredMeals([]);
+      setFilteredLastDoc(null);
+      setFilteredIsEndReached(false);
+
+      searchMealsCombined(
+        {
+          category: filters.category,
+          difficulty: filters.difficulty,
+          prepTime: filters.prepTime,
+          searchText: search,
+          limit: FILTERED_PAGE_SIZE,
+          startAfter: null,
+        },
+        (data) => {
+          console.log("Refreshed filtered meals fetched:", data.length);
+          if (data.length < FILTERED_PAGE_SIZE) {
+            setFilteredIsEndReached(true);
+          }
+          setFilteredMeals(data);
+          if (data.length > 0) {
+            setFilteredLastDoc(data[data.length - 1]);
+          }
+          setRefreshing(false);
+        },
+        (error) => {
+          console.error("Error refreshing filtered meals:", error);
+          setRefreshing(false);
+        }
+      );
+    } else {
+      // Refresh normal meals and recent meals
+      setNormalMeals([]);
+      setNormalLastDoc(null);
+      setNormalIsEndReached(false);
+
+      fetchMeals(
+        (data) => {
+          console.log("Refreshed meals fetched:", data.length);
+          if (data.length < NORMAL_PAGE_SIZE) {
+            setNormalIsEndReached(true);
+          }
+          setNormalMeals(data);
+          if (data.length > 0) {
+            setNormalLastDoc(data[data.length - 1]);
+          }
+          fetchTheRecentMeals();
+          setRefreshing(false);
+        },
+        (error) => {
+          console.error("Error refreshing meals:", error);
+          setRefreshing(false);
+        },
+        NORMAL_PAGE_SIZE,
+        null
+      );
     }
   };
 
@@ -413,6 +513,14 @@ const MealsScreen: React.FC = () => {
             style={{ marginTop: verticalScale(10) }}
             onScroll={handleScrollViewScroll}
             scrollEventThrottle={400}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[Colors.primary]}
+                tintColor={Colors.primary}
+              />
+            }
           >
             {!recentMeals && !normalMeals ? (
               <Text style={styles.emptyText}>{Strings.meals_noMealsFound}</Text>
@@ -476,7 +584,7 @@ const MealsScreen: React.FC = () => {
 
                 {normalIsLoadingMore && normalMeals.length > 0 && (
                   <View style={{ paddingVertical: verticalScale(20) }}>
-                    <Loader visible={true} />
+                    {/* <Loader visible={true} /> */}
                   </View>
                 )}
               </View>
@@ -542,6 +650,14 @@ const MealsScreen: React.FC = () => {
               showsVerticalScrollIndicator={false}
               onEndReached={handleFilteredEndReached}
               onEndReachedThreshold={0.5}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={[Colors.primary]}
+                  tintColor={Colors.primary}
+                />
+              }
               ListEmptyComponent={
                 <Text style={styles.emptyText}>
                   {Strings.meals_recentMealsFound}
@@ -551,8 +667,9 @@ const MealsScreen: React.FC = () => {
                 hasActiveFilters &&
                 filteredIsLoadingMore &&
                 filteredMeals.length > 0 ? (
-                  <Loader visible={true} />
-                ) : null
+                  <></>
+                ) : // <Loader visible={true} />
+                null
               }
             />
           </View>

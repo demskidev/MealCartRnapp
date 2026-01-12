@@ -111,6 +111,7 @@ export const Strings = {
   createMealPlan_startingDate: "Starting Date",
   createMealPlan_discard: "Discard",
   createMealPlan_save: "Save ",
+  createMealPlan_update: "Update ",
   allergies_title: "Allergies & Intolerances",
   allergies_placeholder: "Press Enter to add a tag",
   allergies_save: "Save Allergies",

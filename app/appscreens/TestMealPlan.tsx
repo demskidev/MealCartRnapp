@@ -1,280 +1,310 @@
-import { burger, deleteicon, foodimage, iconback, iconedit } from '@/assets/images';
-import ConfirmationModal from '@/components/ConfirmationModal';
-import GradientText from '@/components/GradientText';
-import { APP_ROUTES } from '@/constants/AppRoutes';
-import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
-import { Strings } from '@/constants/Strings';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Image, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { deleteicon, foodimage, iconback, iconedit } from "@/assets/images";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import GradientText from "@/components/GradientText";
+import { hideLoader, showLoader } from "@/components/Loader";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import {
+    horizontalScale,
+    moderateScale,
+    verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { pushNavigation } from "@/utils/Navigation";
+import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import {
+    Image,
+    SectionList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+export default function TestMealPlan({}) {
+  const [removePlan, setRemovePlan] = useState(false);
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const planId = params.planId as string;
 
-const sections = [
-    {
-        title: 'Monday',
-        data: [
-            {
-                type: 'Breakfast',
-                title: 'My special Morning Toast',
-                time: '10 min',
-                difficulty: 'Easy',
-                image: burger,
-            },
-            {
-                type: 'Launch',
-                title: 'My Special Burger',
-                time: '15 min',
-                difficulty: 'Medium',
-                image: foodimage,
-            },
-        ],
-    },
-    {
-        title: 'Tuesday',
-        data: [
-            {
-                type: 'Breakfast',
-                title: 'My special Morning Toast',
-                time: '10 min',
-                difficulty: 'Easy',
-                image: foodimage,
-            },
-            {
-                type: 'Launch',
-                title: 'My Special Burger',
-                time: '15 min',
-                difficulty: 'Medium',
-                image: burger,
-            },
-        ],
-    },
-    {
-        title: 'Wednesday',
-        data: [
-            {
-                type: 'Breakfast',
-                title: 'My special Morning Toast',
-                time: '10 min',
-                difficulty: 'Easy',
-                image: foodimage,
-            },
-            {
-                type: 'Launch',
-                title: 'My Special Burger',
-                time: '15 min',
-                difficulty: 'Medium',
-                image: burger,
-            },
-        ],
-    },
-];
+  const { enrichedPlans, fetchPlanById, deletePlan, loading } =
+    usePlanViewModel();
+  //   const [planData, setPlanData] = useState<EnrichedPlan | null>(null);
+  const planData = useMemo(() => {
+    return enrichedPlans.find((p) => p.id === planId) || null;
+  }, [enrichedPlans, planId]);
+  
 
-export default function TestMealPlan({ navigation }) {
-    const [removePlan, setRemovePlan] = useState(false);
-    const router = useRouter();
-    return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+  useFocusEffect(
+    useCallback(() => {
+      // Show loader when screen focuses
+      if (!planData || loading) {
+        showLoader();
+      } else {
+        hideLoader();
+      }
 
+      return () => {
+        hideLoader(); // Clean up when screen unfocuses
+      };
+    }, [planData, loading])
+  );
 
+  const handleDeletePlan = () => {
+    if (planId) {
+      deletePlan(
+        planId,
+        () => {
+          setRemovePlan(false);
+          router.back();
+        },
+        (error) => {
+          console.error("Error deleting plan:", error);
+          setRemovePlan(false);
+        }
+      );
+    }
+  };
 
-            <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Image
-                        source={iconback}
-                        resizeMode="contain"
-                        style={styles.backIcon}
-                    />
-                </TouchableOpacity>
-                <Text style={styles.backText}>{Strings.testMealPlan_backToPlans}</Text>
-            </View>
+  const formatDate = (date: any) => {
+    if (!date) return "";
+    const d = date.toDate ? date.toDate() : new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  if (loading || !planData) {
+    return null;
+  }
 
-            <View style={styles.titleRow}>
-                <View>
-                    <Text style={styles.planTitle}>{Strings.testMealPlan_title}</Text>
-                    <Text style={styles.planSubTitle}>{Strings.testMealPlan_startedOn}</Text>
-                </View>
-                <View style={styles.editdelete}>
-                    <TouchableOpacity style={styles.editButton} onPress={() => router.push(APP_ROUTES.CreateMealPlan)}   >
-                        <Image source={iconedit} resizeMode="contain" style={styles.editIcon} />
+  return (
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image
+            source={iconback}
+            resizeMode="contain"
+            style={styles.backIcon}
+          />
+        </TouchableOpacity>
+        <Text style={styles.backText}>{Strings.testMealPlan_backToPlans}</Text>
+      </View>
 
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setRemovePlan(true)}>
-                        <Image source={deleteicon} resizeMode="contain" style={styles.deleteIcon} />
-
-
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            <SectionList
-                sections={sections}
-                keyExtractor={(_, index) => index.toString()}
-                renderSectionHeader={({ section: { title } }) => (
-                    <View>
-                        <Text style={styles.dayTitle}>{title}</Text>
-                        <View style={styles.dividerRow} />
-                    </View>
-
-                )}
-                renderItem={({ item }) => (
-                    <View style={styles.mealCard}>
-                        <Image source={item.image} style={styles.mealImage} resizeMode='cover' />
-                        <View style={styles.mealInfo}>
-                            <GradientText
-                                text={item.type}
-                                startColor={Colors._667D4C}
-                                endColor={Colors._9DAF89}
-                                fontSize={moderateScale(12)}
-                            />
-                            <Text style={styles.mealName}>{item.title}</Text>
-                            <Text style={styles.mealMeta}>
-                                {item.time} · {item.difficulty}
-                            </Text>
-                        </View>
-                    </View>
-                )}
-                contentContainerStyle={styles.sectionListContent}
-                showsVerticalScrollIndicator={false}
-                style={styles.sectionListStyle}
+      <View style={styles.titleRow}>
+        <View>
+          <Text style={styles.planTitle}>
+            {planData?.planName || Strings.testMealPlan_title}
+          </Text>
+          <Text style={styles.planSubTitle}>
+            {planData?.startDate
+              ? `Started on ${formatDate(planData.startDate)}`
+              : Strings.testMealPlan_startedOn}
+          </Text>
+        </View>
+        <View style={styles.editdelete}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => {
+              pushNavigation(APP_ROUTES.CreateMealPlan, {
+                plan: JSON.stringify(planData),
+              });
+            }}
+          >
+            <Image
+              source={iconedit}
+              resizeMode="contain"
+              style={styles.editIcon}
             />
-            <ConfirmationModal
-                visible={removePlan}
-                title={Strings.testMealPlan_removeTitle}
-                description={Strings.testMealPlan_removeDescription}
-                cancelText={Strings.testMealPlan_cancel}
-                confirmText={Strings.testMealPlan_remove}
-                onCancel={() => setRemovePlan(false)}
-                onConfirm={() => {
-                    setRemovePlan(false);
-
-                }}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setRemovePlan(true)}>
+            <Image
+              source={deleteicon}
+              resizeMode="contain"
+              style={styles.deleteIcon}
             />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-        </SafeAreaView>
-
-    );
+      <SectionList
+        sections={planData.days.map((day: any) => ({
+          title: day.dayTitle,
+          data: day.mealSlots,
+        }))}
+        keyExtractor={(_, index) => index.toString()}
+        renderSectionHeader={({ section: { title } }) => (
+          <View>
+            <Text style={styles.dayTitle}>{title}</Text>
+            <View style={styles.dividerRow} />
+          </View>
+        )}
+        renderItem={({ item }) => (
+          <View style={styles.mealCard}>
+            <Image
+              source={
+                item.meal?.imageUrl ? { uri: item.meal.imageUrl } : foodimage
+              }
+              style={styles.mealImage}
+              resizeMode="cover"
+            />
+            <View style={styles.mealInfo}>
+              <GradientText
+                text={item.mealPlan?.name || "Meal"}
+                startColor={Colors._667D4C}
+                endColor={Colors._9DAF89}
+                fontSize={moderateScale(12)}
+              />
+              <Text style={styles.mealName}>
+                {item.meal?.name || "Meal Title"}
+              </Text>
+              <Text style={styles.mealMeta}>
+                {item.meal?.prepTime ? `${item.meal.prepTime}` : "N/A"} ·{" "}
+                {item.meal?.difficulty || "N/A"}
+              </Text>
+            </View>
+          </View>
+        )}
+        contentContainerStyle={styles.sectionListContent}
+        showsVerticalScrollIndicator={false}
+        style={styles.sectionListStyle}
+      />
+      <ConfirmationModal
+        visible={removePlan}
+        title={Strings.testMealPlan_removeTitle}
+        description={Strings.testMealPlan_removeDescription}
+        cancelText={Strings.testMealPlan_cancel}
+        confirmText={Strings.testMealPlan_remove}
+        onCancel={() => setRemovePlan(false)}
+        onConfirm={() => {
+          handleDeletePlan();
+        }}
+      />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.white,
-        paddingHorizontal: horizontalScale(20),
-    },
-    headerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    backText: {
-        fontSize: moderateScale(14),
-        color: Colors.tertiary,
-        fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
-        marginLeft: horizontalScale(30),
-    },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: verticalScale(10)
+  container: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    paddingHorizontal: horizontalScale(10),
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: verticalScale(8),
+    marginHorizontal: horizontalScale(10),
+  },
+  backText: {
+    fontSize: moderateScale(14),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    marginLeft: horizontalScale(30),
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: verticalScale(10),
+    marginHorizontal: horizontalScale(10),
+  },
+  planTitle: {
+    fontSize: moderateScale(21),
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    color: Colors.primary,
+  },
+  planSubTitle: {
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    marginTop: verticalScale(10),
+  },
+  dayTitle: {
+    fontSize: moderateScale(14),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.primary,
+    marginTop: moderateScale(16),
+    marginBottom: moderateScale(8),
+  },
+  mealCard: {
+    flexDirection: "row",
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(10),
+    marginBottom: moderateScale(8),
+    alignItems: "center",
+    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+  },
+  mealImage: {
+    width: moderateScale(85),
+    height: moderateScale(67),
+    borderTopLeftRadius: moderateScale(10),
+    borderBottomLeftRadius: horizontalScale(12),
+    backgroundColor: Colors._ccc,
+  },
+  mealInfo: {
+    flex: 1,
+    paddingVertical: verticalScale(12),
+    marginHorizontal: horizontalScale(8),
+  },
+  mealType: {
+    fontSize: moderateScale(12),
+    color: Colors._667D4C,
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+  },
+  mealName: {
+    fontSize: moderateScale(14),
+    color: Colors.primary,
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    marginBottom: verticalScale(3),
+  },
+  mealMeta: {
+    fontSize: moderateScale(10),
+    color: Colors.tertiary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+  },
+  editdelete: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dividerRow: {
+    height: moderateScale(1),
+    backgroundColor: Colors.divider,
 
-    },
-    planTitle: {
-        fontSize: moderateScale(21),
-        fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
-        color: Colors.primary,
-    },
-    planSubTitle: {
-        fontSize: moderateScale(12),
-        color: Colors.tertiary,
-        fontFamily: FontFamilies.ROBOTO_REGULAR,
-        marginTop: verticalScale(10)
-    },
-    dayTitle: {
-        fontSize: moderateScale(14),
-        fontFamily: FontFamilies.ROBOTO_MEDIUM,
-        color: Colors.primary,
-        marginTop: moderateScale(16),
-        marginBottom: moderateScale(8),
-    },
-    mealCard: {
-        flexDirection: 'row',
-        backgroundColor: Colors.white,
-        borderRadius: moderateScale(8),
-        marginBottom: moderateScale(8),
-        alignItems: 'center',
-        elevation: 4,
-
-        shadowColor: Colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-    },
-    mealImage: {
-        width: moderateScale(60),
-        height: moderateScale(60),
-        borderRadius: moderateScale(10),
-        marginRight: horizontalScale(12),
-        backgroundColor: Colors._ccc,
-    },
-    mealInfo: {
-        flex: 1,
-        paddingVertical: verticalScale(12)
-    },
-    mealType: {
-        fontSize: moderateScale(12),
-        color: Colors._667D4C,
-        fontFamily: FontFamilies.ROBOTO_MEDIUM,
-
-    },
-    mealName: {
-        fontSize: moderateScale(14),
-        color: Colors.primary,
-        fontFamily: FontFamilies.ROBOTO_MEDIUM,
-        marginBottom: verticalScale(3),
-    },
-    mealMeta: {
-        fontSize: moderateScale(10),
-        color: Colors.tertiary,
-        fontFamily: FontFamilies.ROBOTO_REGULAR,
-    },
-    editdelete: {
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    dividerRow: {
-        height: moderateScale(1),
-        backgroundColor: Colors.divider,
-
-        marginTop: verticalScale(2),
-        marginBottom: verticalScale(15)
-
-    },
-    backIcon: {
-        width: moderateScale(24),
-        height: moderateScale(24),
-        alignSelf: 'flex-end',
-        marginRight: horizontalScale(-11),
-    },
-    editButton: {
-        marginRight: horizontalScale(20),
-    },
-    editIcon: {
-        width: moderateScale(24),
-        height: moderateScale(24),
-        alignSelf: 'flex-end',
-    },
-    deleteIcon: {
-        width: moderateScale(24),
-        height: moderateScale(24),
-        alignSelf: 'flex-end',
-    },
-    sectionListContent: {
-        paddingBottom: verticalScale(32),
-    },
-    sectionListStyle: {
-        marginTop: verticalScale(8),
-    },
+    marginTop: verticalScale(2),
+    marginBottom: verticalScale(15),
+  },
+  backIcon: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+    alignSelf: "flex-end",
+    marginRight: horizontalScale(-11),
+  },
+  editButton: {
+    marginRight: horizontalScale(20),
+  },
+  editIcon: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+    alignSelf: "flex-end",
+  },
+  deleteIcon: {
+    width: moderateScale(24),
+    height: moderateScale(24),
+    alignSelf: "flex-end",
+  },
+  sectionListContent: {
+    paddingBottom: verticalScale(32),
+    marginHorizontal: horizontalScale(10),
+  },
+  sectionListStyle: {
+    marginTop: verticalScale(8),
+  },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

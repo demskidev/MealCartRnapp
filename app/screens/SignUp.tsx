@@ -18,8 +18,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
+import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
-import { useLoader } from "@/context/LoaderContext";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
 import { pushNavigation, replaceNavigation } from "@/utils/Navigation";
@@ -29,35 +29,24 @@ import {
   SignupViewModel,
 } from "@/viewmodels/SignupViewModel";
 import { Formik } from "formik";
-import { useEffect } from "react";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
-  const isLoading = useAppSelector(state => state.auth.loading);
-  const { showLoader, hideLoader } = useLoader();
-
-  useEffect(() => {
-    if (isLoading) {
-      showLoader();
-    } else {
-      hideLoader();
-    }
-  }, [isLoading]);
 
   const handleSignup = async (values: SignupFormValues) => {
-
-
+    showLoader();
     await signupViewModel.handleSignup(
       values,
       (payload) => {
         showSuccessToast(Strings.signupSuccessfully);
+        hideLoader();
         pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
-
       },
       (error) => {
+        hideLoader();
         showErrorToast(error);
-
-      });
+      }
+    );
   };
 
   return (
@@ -178,13 +167,10 @@ const SignupScreen = () => {
                         }
                         handleSignup(values);
                       }}
-                      disabled={isLoading}
                     />
                   </View>
 
-                  <Text
-                    style={styles.secureMeals}
-                  >
+                  <Text style={styles.secureMeals}>
                     {Strings.mealsAreSecure}
                   </Text>
 
@@ -243,7 +229,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     gap: verticalScale(10),
-    marginTop: verticalScale(20)
+    marginTop: verticalScale(20),
   },
   buttonSpace: {
     marginTop: verticalScale(10),
