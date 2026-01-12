@@ -239,6 +239,7 @@ const AddItemToList = ({
     setManualList((prev) => [...prev, item]);
     setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
   };
+  console.log('mealsllllllll999',meals)
 
   // Use dynamic ingredients from selected meals
   const INGREDIENTS = dynamicIngredients;

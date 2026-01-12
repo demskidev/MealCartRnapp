@@ -46,6 +46,20 @@ export default function ProfileScreen() {
     updateUserData,
     fetchDietaryPreferences,
   } = useProfileViewModel();
+  
+  // Format allergies for display
+  const getAllergiesDisplay = () => {
+    if (!user?.allergies || user.allergies.length === 0) {
+      return Strings.profile_peanuts; // Default text
+    }
+    
+    if (user.allergies.length === 1) {
+      return user.allergies[0];
+    }
+    
+    return `${user.allergies[0]}...`;
+  };
+  
   const preferencesData = [
     {
       id: "1",
@@ -55,7 +69,7 @@ export default function ProfileScreen() {
     {
       id: "2",
       title: Strings.profile_allergies,
-      subtitle: Strings.profile_peanuts,
+      subtitle: getAllergiesDisplay(),
     },
     {
       id: "3",
@@ -238,7 +252,6 @@ export default function ProfileScreen() {
         onCancel={() => setDeleteAccount(false)}
         onConfirm={async () => {
           //   setDeleteAccount(false);
-
           showLoader();
           try {
             await dispatch(deleteAccountAsync()).unwrap(); // ✅ async + unwrap
