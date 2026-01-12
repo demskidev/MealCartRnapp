@@ -3,23 +3,23 @@ import { CheckBox, FilledCheckBox } from "@/assets/svg";
 import ProgressBar from "@/components/ProgressBar";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
-    horizontalScale,
-    moderateScale,
-    verticalScale,
+  horizontalScale,
+  moderateScale,
+  verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 const data = [
@@ -51,6 +51,7 @@ const data = [
 export default function TestPlanShopping() {
   const [checked, setChecked] = useState<string[]>([]);
   const router = useRouter();
+  const { listId } = useLocalSearchParams();
   const user = useAppSelector((state) => state.auth.user);
   
   const {
@@ -59,29 +60,32 @@ export default function TestPlanShopping() {
     fetchShoppingLists,
   } = useShoppingListViewModel();
 
-  // Fetch shopping lists on component mount
-//   useEffect(() => {
-//     if (user?.id) {
-//       console.log("Fetching shopping lists for user:", user.id);
-//       fetchShoppingLists(
-//         user.id,
-//         (data) => {
-//           console.log("Shopping lists fetched:", data.length);
-//         },
-//         (error) => {
-//           console.error("Error fetching shopping lists:", error);
-//         },
-//         10,
-//         null
-//       );
-//     }
-//   }, [user?.id]);
+  useEffect(() => {
+    if (user?.id) {
+      console.log("Fetching shopping lists for user:", user.id);
+      fetchShoppingLists(
+        user.id,
+        (data) => {
+          console.log("Shopping lists fetched:", data.length);
+        },
+        (error) => {
+          console.error("Error fetching shopping lists:", error);
+        },
+        10,
+        null
+      );
+    }
+  }, [user?.id]);
 
-//   console.log('shoppp9999', shoppingLists)
+  console.log('shoppp9999', shoppingLists)
+  console.log('Selected listId:', listId);
   
-  // Log all ingredients from all shopping lists
-//   const allIngredients = shoppingLists.flatMap((list) => list.ingredients || []);
-//   console.log('All ingredients from shopping lists:', allIngredients);
+  // Find the specific shopping list by ID
+  const selectedList = shoppingLists.find((list) => list.id === listId);
+  
+  // Get ingredients only from the selected list
+  const allIngredients = selectedList?.ingredients || [];
+  console.log('Ingredients for selected list:', allIngredients);
   
   const toggleCheck = (id: string) => {
     setChecked((prev) =>
@@ -91,18 +95,29 @@ export default function TestPlanShopping() {
 
   const renderIngredientItem = ({
     item,
+    index,
   }: {
-    item: { id: string; category: string; name: string; amount: string };
+    item: any;
+    index: number;
   }) => {
-    const isChecked = checked.includes(item.id);
+    const itemId = `${item.ingredientId}-${item.mealId}-${index}`;
+    const isChecked = checked.includes(itemId);
+    
+    // Check if this is the first item in its category
+    const showCategoryHeader = index === 0 || 
+      allIngredients[index - 1]?.categoryName !== item.categoryName;
     
     return (
       <View>
-        <Text style={styles.sectionTitle}>{item.category}</Text>
-        <View style={styles.dividerRow} />
+        {showCategoryHeader && (
+          <>
+            <Text style={styles.sectionTitle}>{item.categoryName || 'Other'}</Text>
+            <View style={styles.dividerRow} />
+          </>
+        )}
         <TouchableOpacity 
           style={styles.cardCategory}
-          onPress={() => toggleCheck(item.id)}
+          onPress={() => toggleCheck(itemId)}
           activeOpacity={0.7}
         >
           <View style={styles.checkboxRow}>
@@ -122,8 +137,8 @@ export default function TestPlanShopping() {
               />
             )}
             <View>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.amount}>{item.amount}</Text>
+              <Text style={styles.name}>{item.ingredientName || 'Unknown Ingredient'}</Text>
+              <Text style={styles.amount}>{item.unit || 'No unit'}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -146,7 +161,7 @@ export default function TestPlanShopping() {
       </View>
 
       <View style={styles.titleRow}>
-        <Text style={styles.planTitle}>{Strings.testPlanShopping_title}</Text>
+        <Text style={styles.planTitle}>{selectedList?.listName || Strings.testPlanShopping_title}</Text>
 
         <View style={styles.editdelete}>
           <TouchableOpacity
@@ -168,20 +183,23 @@ export default function TestPlanShopping() {
           </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles.planSubTitle}>{Strings.testPlanShopping_1meal}</Text>
+      <Text style={styles.planSubTitle}>
+        {allIngredients.length} {allIngredients.length === 1 ? 'meal' : 'meals'}
+      </Text>
 
       <ProgressBar
-        progress={0.6}
+        progress={checked.length / (allIngredients.length || 1)}
         label={Strings.testPlanShopping_progress}
         progressText={Strings.testPlanShopping_progressText}
         containerStyle={styles.progressbar}
       />
 
       <FlatList
-        data={data}
-        keyExtractor={(item) => item.id}
+        data={allIngredients}
+        keyExtractor={(item, index) => `${item.ingredientId}-${item.mealId}-${index}`}
         renderItem={renderIngredientItem}
-        scrollEnabled={false}
+        scrollEnabled={true}
+        contentContainerStyle={{ paddingBottom: verticalScale(20) }}
       />
     </SafeAreaView>
   );

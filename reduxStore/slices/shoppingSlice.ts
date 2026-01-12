@@ -2,13 +2,13 @@
 import { addDocument, deleteDocument, getDocumentById, queryDocuments, updateDocument } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
-    ADD_SHOPPING_LIST,
-    DELETE_SHOPPING_LIST,
-    FETCH_SHOPPING_LISTS,
-    SHOPPING_SLICE,
-    UPDATE_SHOPPING_LIST,
+  ADD_SHOPPING_LIST,
+  DELETE_SHOPPING_LIST,
+  FETCH_SHOPPING_LISTS,
+  SHOPPING_SLICE,
+  UPDATE_SHOPPING_LIST,
 } from "../actionTypes";
-import { INGREDIENTS_CATEGORY_COLLECTION, INGREDIENTS_COLLECTION, SHOPPING_LIST_COLLECTION } from "../appKeys";
+import { INGREDIENTS_CATEGORY_COLLECTION, MEAL_INGREDIENTS_COLLECTION, SHOPPING_LIST_COLLECTION } from "../appKeys";
 
 export interface ShoppingListItem {
   ingredientId: string;
@@ -82,18 +82,36 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
             list.ingredients?.map(async (ing: any) => {
               let ingredientName = ing.ingredientName;
               let categoryName = ing.categoryName;
+              let ingredientUnit = ing.unit; // Use the saved unit from shopping list
+              let categoryUnits: string[] = [];
 
-              // Fetch ingredient details if ingredientId exists
-              if (ing.ingredientId) {
+              // Fetch ingredient details from meal's subcollection if mealId and ingredientId exist
+              if (ing.mealId && ing.ingredientId) {
                 try {
-                  const ingredientDoc: any = await getDocumentById(
-                    INGREDIENTS_COLLECTION,
-                    ing.ingredientId
+                  const { getSubcollectionDocuments } = await import("@/services/firestore");
+                  
+                  const ingredientsData = await getSubcollectionDocuments(
+                    MEAL_INGREDIENTS_COLLECTION,
+                    ing.mealId,
+                    "ingredients"
                   );
-                  ingredientName = ingredientDoc?.name || ingredientName;
+                  
+                  const ingredientDetails: any = ingredientsData.find(
+                    (data: any) => data.id === ing.ingredientId
+                  );
+                  
+                  console.log(`📦 Ingredient from meal subcollection:`, ingredientDetails);
+                  
+                  if (ingredientDetails) {
+                    // Only fetch the name, preserve the saved unit
+                    ingredientName = ingredientDetails.name || ingredientName;
+                    // Do NOT override the unit - keep the one saved in shopping list
+                    // ingredientUnit is already set from ing.unit above
+                  }
+                  
                 } catch (error) {
                   console.error(
-                    `Error fetching ingredient ${ing.ingredientId}:`,
+                    `❌ Error fetching ingredient ${ing.ingredientId} from meal ${ing.mealId}:`,
                     error
                   );
                 }
@@ -106,20 +124,35 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                     INGREDIENTS_CATEGORY_COLLECTION,
                     ing.categoryId
                   );
-                  categoryName = categoryDoc?.title || categoryName;
+                  
+                  console.log(`📦 Category doc for ${ing.categoryId}:`, categoryDoc);
+                  
+                  categoryName = categoryDoc?.title || categoryDoc?.name || categoryName;
+                  
+                  // Get category units array
+                  if (categoryDoc?.unit && Array.isArray(categoryDoc.unit)) {
+                    categoryUnits = categoryDoc.unit;
+                  }
+                  
                 } catch (error) {
                   console.error(
-                    `Error fetching category ${ing.categoryId}:`,
+                    `❌ Error fetching category ${ing.categoryId}:`,
                     error
                   );
                 }
               }
 
-              return {
+              const enrichedIngredient = {
                 ...ing,
                 ingredientName,
                 categoryName,
+                unit: ingredientUnit,
+                categoryUnits,
               };
+              
+              console.log(`✅ Enriched ingredient:`, enrichedIngredient);
+              
+              return enrichedIngredient;
             }) || []
           ),
         };

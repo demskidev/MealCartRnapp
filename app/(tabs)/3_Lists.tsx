@@ -1,97 +1,186 @@
-import { gradientclose } from '@/assets/images';
-import BaseButton from '@/components/BaseButton';
-import CreateNewListBottomSheet, { CreateNewListBottomSheetRef } from '@/components/CreateNewListBottomSheet';
-import { APP_ROUTES } from '@/constants/AppRoutes';
-import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
-import { Strings } from '@/constants/Strings';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import { useRouter } from 'expo-router';
-import React, { useRef } from 'react';
-import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { gradientclose, whitecorrect } from "@/assets/images";
+import BaseButton from "@/components/BaseButton";
+import CreateNewListBottomSheet, {
+  CreateNewListBottomSheetRef,
+} from "@/components/CreateNewListBottomSheet";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { useAppSelector } from "@/reduxStore/hooks";
+import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const shoppingLists = [
-  { id: '1', name: 'Test Plan', created: 'October 2, 2025', meals: '8 meals' },
-  { id: '2', name: 'Test Plan 2', created: 'October 1, 2025', meals: '24 meals' },
-];
-const { height } = Dimensions.get('window');
-const { width } = Dimensions.get('window')
+const { height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const ListsScreen: React.FC = () => {
   const router = useRouter();
-
-
+  const user = useAppSelector((state) => state.auth.user);
   const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
+  const [markedItems, setMarkedItems] = useState<Set<string>>(new Set());
 
+  const { shoppingLists, loading, fetchShoppingLists, deleteShoppingListData } =
+    useShoppingListViewModel();
 
-  const renderShoppingList = ({ item }) => (
-    <View style={styles.listCard}>
-      <Text style={styles.listTitle}>{item.name}</Text>
+  useEffect(() => {
+    if (user?.id) {
+      console.log("Fetching shopping lists for user:", user.id);
+      fetchShoppingLists(
+        user.id,
+        (data) => {
+          console.log("Shopping lists fetched:", data.length);
+        },
+        (error) => {
+          console.error("Error fetching shopping lists:", error);
+        },
+        10,
+        null
+      );
+    }
+  }, [user?.id]);
 
-      <View style={styles.listItem}>
-        <View>
-          <Text style={styles.listDate}>{Strings.lists_created} {item.created}</Text>
+  const formatDate = (date: any) => {
+    if (!date) return "N/A";
 
+    // Handle Firestore Timestamp
+    if (date.toDate) {
+      return date.toDate().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+    // Handle Date object
+    if (date instanceof Date) {
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+    return "N/A";
+  };
+
+  const handleDeleteList = (listId: string) => {
+    // Mark the item as pressed to change its appearance
+    setMarkedItems(prev => new Set(prev).add(listId));
+    
+    // Delete after a short delay to show the visual change
+    setTimeout(() => {
+      deleteShoppingListData(
+        listId,
+        () => {
+          console.log("Shopping list deleted successfully");
+          setMarkedItems(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(listId);
+            return newSet;
+          });
+        },
+        (error) => {
+          console.error("Error deleting shopping list:", error);
+          alert("Error deleting shopping list: " + error);
+          setMarkedItems(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(listId);
+            return newSet;
+          });
+        }
+      );
+    }, 300);
+  };
+
+  const renderShoppingList = ({ item }: { item: any }) => {
+    const ingredientCount = item.ingredients?.length || 0;
+    const isMarked = markedItems.has(item.id);
+
+    return (
+      <View style={styles.listCard}>
+        <Text style={styles.listTitle}>{item.listName || "Untitled List"}</Text>
+
+        <View style={styles.listItem}>
+          <View>
+            <Text style={styles.listDate}>
+              {Strings.lists_created} {formatDate(item.createdAt)}
+            </Text>
+          </View>
+
+          <Text style={styles.listDate}>
+            {ingredientCount} {ingredientCount === 1 ? "meal" : "meals"}
+          </Text>
         </View>
-
-        <Text style={styles.listDate}> {item.meals}</Text>
-
-
-
+        <View style={styles.dividerRow} />
+        <View style={styles.parentOfMarkDone}>
+          <BaseButton
+            title={Strings.lists_markDone}
+            gradientButton={isMarked}
+            textColor={isMarked ? Colors.white : Colors.primary}
+            width={width * 0.43}
+            textStyle={isMarked ? undefined : styles.addButton}
+            textStyleText={styles.addButtonText}
+            onPress={() => handleDeleteList(item.id)}
+            rightChild={isMarked ? <Image source={whitecorrect} style={{ width: moderateScale(20), height: moderateScale(20) }} /> : null}
+          />
+          <BaseButton
+            title={Strings.lists_viewList}
+            gradientButton={false}
+            textColor="#fff"
+            width={width * 0.43}
+            textStyle={styles.addButton}
+            textStyleText={styles.addButtonText}
+            onPress={() =>
+              router.push({
+                pathname: APP_ROUTES.TestPlanShopping,
+                params: { listId: item.id },
+              })
+            }
+          />
+        </View>
       </View>
-      <View style={styles.dividerRow} />
-      <View style={styles.parentOfMarkDone}>
-        <BaseButton
-          title={Strings.lists_markDone}
-          gradientButton={false}
-          textColor={Colors.background}
-          width={width * 0.43}
-          textStyle={styles.addButton}
-          textStyleText={styles.addButtonText}
-
-        />
-        <BaseButton
-          title={Strings.lists_viewList}
-          gradientButton={false}
-          textColor="#fff"
-          width={width * 0.43}
-          textStyle={styles.addButton}
-          textStyleText={styles.addButtonText}
-          onPress={() => router.push(APP_ROUTES.TestPlanShopping)}
-
-        />
-
-
-
-      </View>
-
-    </View>
-  )
-
-
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.parentMymeal}>
         <Text style={styles.title}>{Strings.lists_shoppingLists}</Text>
-        <TouchableOpacity style={styles.addNewListButton} onPress={() => createNewListRef.current?.expand()}  >
-          <Image source={gradientclose} resizeMode="contain" style={styles.gradientCloseImage} />
-
+        <TouchableOpacity
+          style={styles.addNewListButton}
+          onPress={() => createNewListRef.current?.expand()}
+        >
+          <Image
+            source={gradientclose}
+            resizeMode="contain"
+            style={styles.gradientCloseImage}
+          />
         </TouchableOpacity>
-
       </View>
 
       <FlatList
         data={shoppingLists}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={renderShoppingList}
-
-
-
+        contentContainerStyle={{ paddingBottom: verticalScale(100) }}
       />
       <CreateNewListBottomSheet ref={createNewListRef} />
-
-
     </SafeAreaView>
   );
 };
@@ -100,18 +189,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: horizontalScale(20)
+    paddingHorizontal: horizontalScale(20),
   },
   text: {
     fontSize: moderateScale(18),
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.primary,
   },
   parentMymeal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: verticalScale(20)
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: verticalScale(20),
   },
   title: {
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
@@ -119,11 +208,10 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: verticalScale(3)
-
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: verticalScale(3),
   },
   listTitle: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -137,26 +225,23 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(4),
   },
   addButton: {
-    backgroundColor: Colors.white,
+     backgroundColor: Colors.white,
     borderColor: Colors.borderColor,
     borderWidth: moderateScale(1),
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(3),
     paddingHorizontal: horizontalScale(4),
-
   },
   addButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.primary,
     fontSize: moderateScale(14),
-
   },
   dividerRow: {
     height: moderateScale(1),
     backgroundColor: Colors.divider,
     flex: 1,
-    marginVertical: verticalScale(18)
-
+    marginVertical: verticalScale(18),
   },
   listCard: {
     backgroundColor: Colors.white,
@@ -174,9 +259,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   parentOfMarkDone: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   addNewListButton: {
     marginLeft: horizontalScale(6),
@@ -184,7 +269,7 @@ const styles = StyleSheet.create({
   gradientCloseImage: {
     width: moderateScale(56),
     height: moderateScale(56),
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginRight: horizontalScale(-17),
   },
 });
