@@ -1,0 +1,50 @@
+import { FontFamily } from "@/utils/Fonts";
+
+export const Colors = {
+  primary: "#08120F",
+  tertiary: "#696F77",
+  secondaryText: "#696F77",
+  text: "#08120F",
+  background: "#fff",
+  buttonBackground: "#F8FAFC",
+  borderColor: "#DBE0D7",
+  secondaryButtonBackground: "#9DAF89",
+  white: "#FFFFFF",
+  _FFFFFF97: "#FFFFFF97",
+  black: "#000000",
+  divider: "#E6F0DF",
+  olive: "#667D4C",
+  buttonShadow: "#073B2A33",
+  error: "#ED1717",
+  primary2: "#9DAF89",
+  lightGray: "#F5F5F5",
+  _586E3F: "#586E3F",
+  _5F6C51: "#5F6C51",
+  greysoft: '#F4F4F4',
+  boxbackground: '#EBEBEB',
+  _667D4C: '#667D4C',
+  _9DAF89: '#9DAF89',
+  textBlack: '#0F0F0F',
+  _F5F9FB: '#F5F9FB',
+  _e6f7d9: '#e6f7d9',
+  _ccc: '#ccc',
+  _3A4D25: '#3A4D25',
+  _7B8756: '#7B8756',
+  _F0F0F0: '#F0F0F0',
+  _E53935: '#E53935',
+  _A62A2A: '#A62A2A',
+  _FD4B4B: '#FD4B4B',
+  _F6F6F6: '#F6F6F6',
+  _B0B0B0: '#B0B0B0',
+  _EAF1E2: '#EAF1E2',
+  _eee: '#eee',
+  _333: "#333"
+
+
+};
+
+/**
+ * Font family enum - use these instead of string literals
+ */
+export const FontFamilies = FontFamily;
+
