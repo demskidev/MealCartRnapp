@@ -3,6 +3,7 @@ import BaseButton from "@/components/BaseButton";
 import CreateNewListBottomSheet, {
   CreateNewListBottomSheetRef,
 } from "@/components/CreateNewListBottomSheet";
+import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
@@ -41,12 +42,15 @@ const ListsScreen: React.FC = () => {
   useEffect(() => {
     if (user?.id) {
       console.log("Fetching shopping lists for user:", user.id);
+      showLoader();
       fetchShoppingLists(
         user.id,
         (data) => {
+          hideLoader();
           console.log("Shopping lists fetched:", data.length);
         },
         (error) => {
+          hideLoader();
           console.error("Error fetching shopping lists:", error);
         },
         10,
@@ -81,15 +85,15 @@ const ListsScreen: React.FC = () => {
 
   const handleDeleteList = (listId: string) => {
     // Mark the item as pressed to change its appearance
-    setMarkedItems(prev => new Set(prev).add(listId));
-    
+    setMarkedItems((prev) => new Set(prev).add(listId));
+
     // Delete after a short delay to show the visual change
     setTimeout(() => {
       deleteShoppingListData(
         listId,
         () => {
           console.log("Shopping list deleted successfully");
-          setMarkedItems(prev => {
+          setMarkedItems((prev) => {
             const newSet = new Set(prev);
             newSet.delete(listId);
             return newSet;
@@ -98,7 +102,7 @@ const ListsScreen: React.FC = () => {
         (error) => {
           console.error("Error deleting shopping list:", error);
           alert("Error deleting shopping list: " + error);
-          setMarkedItems(prev => {
+          setMarkedItems((prev) => {
             const newSet = new Set(prev);
             newSet.delete(listId);
             return newSet;
@@ -137,7 +141,17 @@ const ListsScreen: React.FC = () => {
             textStyle={isMarked ? undefined : styles.addButton}
             textStyleText={styles.addButtonText}
             onPress={() => handleDeleteList(item.id)}
-            rightChild={isMarked ? <Image source={whitecorrect} style={{ width: moderateScale(20), height: moderateScale(20) }} /> : null}
+            rightChild={
+              isMarked ? (
+                <Image
+                  source={whitecorrect}
+                  style={{
+                    width: moderateScale(20),
+                    height: moderateScale(20),
+                  }}
+                />
+              ) : null
+            }
           />
           <BaseButton
             title={Strings.lists_viewList}
@@ -225,7 +239,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(4),
   },
   addButton: {
-     backgroundColor: Colors.white,
+    backgroundColor: Colors.white,
     borderColor: Colors.borderColor,
     borderWidth: moderateScale(1),
     borderRadius: moderateScale(8),

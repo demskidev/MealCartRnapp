@@ -34,6 +34,7 @@ import AddItemToList from "./AddItemToList";
 import BaseButton from "./BaseButton";
 import CustomTextInput from "./CustomTextInput";
 import CustomDateTimePicker from "./DateTimePicker";
+import { hideLoader, showLoader } from "./Loader";
 
 export interface CreateNewListBottomSheetRef {
   expand: () => void;
@@ -129,9 +130,9 @@ const CreateNewListBottomSheet = forwardRef<
     item: { id: string; category: string; name: string; amount: string };
   }) => {
     const isSelected = selectedItems.includes(item.id);
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.cardCategory}
         onPress={() => toggleItemSelection(item.id)}
         activeOpacity={0.7}
@@ -192,8 +193,10 @@ const CreateNewListBottomSheet = forwardRef<
       }
 
       // Filter only selected ingredients and map to required fields
-      const selectedIngredients = receivedIngredients.filter((ingredient) => 
-        selectedItems.includes(ingredient.ingredientId || ingredient.ingredientName)
+      const selectedIngredients = receivedIngredients.filter((ingredient) =>
+        selectedItems.includes(
+          ingredient.ingredientId || ingredient.ingredientName
+        )
       );
 
       if (selectedIngredients.length === 0) {
@@ -208,7 +211,7 @@ const CreateNewListBottomSheet = forwardRef<
         unit: ingredient.selectedUnit || ingredient.unit,
         count: ingredient.count || 1,
       }));
-      console.log('mappedIngredients',mappedIngredients)
+      console.log("mappedIngredients", mappedIngredients);
 
       const shoppingListData = {
         listName: listName.trim(),
@@ -217,11 +220,12 @@ const CreateNewListBottomSheet = forwardRef<
         shoppingDate: Timestamp.fromDate(startDate),
         uid: user?.id,
       };
-      console.log('shoppingListData',shoppingListData)
-
+      console.log("shoppingListData", shoppingListData);
+      showLoader();
       addShoppingListData(
         shoppingListData,
         () => {
+          hideLoader();
           alert("Shopping list created successfully!");
           // Reset form
           setListName("");
@@ -231,6 +235,7 @@ const CreateNewListBottomSheet = forwardRef<
           bottomSheetRef.current?.close();
         },
         (error) => {
+          hideLoader();
           alert("Error creating shopping list: " + error);
         }
       );
@@ -285,7 +290,10 @@ const CreateNewListBottomSheet = forwardRef<
           />
 
           <Text style={styles.label}>{Strings.createList_shoppingDay}</Text>
-          <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.8}
+          >
             <View style={styles.inputWithIcon}>
               <CustomTextInput
                 placeholder={Strings.createList_shoppingDay_placeholder}
@@ -306,10 +314,10 @@ const CreateNewListBottomSheet = forwardRef<
             visible={showDatePicker}
             onChange={(date) => {
               setStartDate(date);
-              const formattedDate = date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+              const formattedDate = date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               });
               setShoppingDay(formattedDate);
             }}
@@ -567,12 +575,12 @@ const styles = StyleSheet.create({
     marginRight: horizontalScale(10),
   },
   inputWithIcon: {
-    position: 'relative',
+    position: "relative",
   },
   calendarIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: horizontalScale(15),
-    top: '43%',
+    top: "43%",
     transform: [{ translateY: -moderateScale(10) }],
     width: moderateScale(20),
     height: moderateScale(20),
