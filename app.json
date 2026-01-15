@@ -2,7 +2,6 @@
   "expo": {
     "name": "Meal Cart",
     "slug": "meal-cart",
-   
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,12 +11,13 @@
     "newArchEnabled": true,
     "ios": {
       "googleServicesFile": "./GoogleService-Info.plist",
-       "usesAppleSignIn": true,
+      "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.jbehl23.mealcart",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "34QW5F2D72"
     },
     "android": {
       "googleServicesFile": "./google-services.json",
@@ -36,6 +36,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/withGoogleSignInIOS",
       "expo-router",
       [
         "expo-splash-screen",
@@ -50,7 +51,12 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.107165390600-sni5oc9le9cnucc89mqv7e51eq0undge"
+        }
+      ],
       "expo-apple-authentication"
     ],
     "experiments": {

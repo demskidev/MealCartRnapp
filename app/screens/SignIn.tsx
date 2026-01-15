@@ -29,7 +29,7 @@ import { Colors } from "@/constants/Theme";
 import { hideLoader, showLoader } from "@/components/Loader";
 
 import { signInWithApple } from "@/services/appleSignin";
-import { signInWithGoogle } from "@/services/googleSignIn";
+import { GoogleSignin, signInWithGoogle } from "@/services/googleSignIn";
 import {
   SigninFormValues,
   SigninViewModel,

@@ -3,7 +3,14 @@
 
 
 import { USERS_COLLECTION } from '@/reduxStore/appKeys';
-import { GoogleSignin, statusCodes, User } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isNoSavedCredentialFoundResponse,
+  isSuccessResponse,
+  statusCodes,
+  User
+} from '@react-native-google-signin/google-signin';
 import {
   signOut as firebaseSignOut,
   GoogleAuthProvider,
@@ -14,17 +21,14 @@ import { auth } from './firebase';
 import { getDocumentById, setDocumentById } from './firestore';
 
 const WEB_CLIENT_ID = '107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com';
-
-
-
-
 const IOS_CLIENT_ID = '107165390600-sni5oc9le9cnucc89mqv7e51eq0undge.apps.googleusercontent.com';
 
 GoogleSignin.configure({
   webClientId: WEB_CLIENT_ID,
   iosClientId: IOS_CLIENT_ID, 
-  offlineAccess: true, 
-  forceCodeForRefreshToken: true, 
+  offlineAccess: false, 
+  forceCodeForRefreshToken: true,
+  profileImageSize: 120,
 });
 
 export interface GoogleSignInResult {
@@ -49,15 +53,15 @@ export interface GoogleSignOutResult {
  */
 export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   try {
-   
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
     const response = await GoogleSignin.signIn();
     console.log('📦 [Google Sign-In] Full response:', JSON.stringify(response, null, 2));
     console.log('📝 [Google Sign-In] Response type:', response.type);
     
-    if (response.type !== 'success') {
-            console.log('❌ [Google Sign-In] Sign-in not successful, type:', response.type);
+    // Use type guard from documentation
+    if (!isSuccessResponse(response)) {
+      console.log('❌ [Google Sign-In] Sign-in not successful, type:', response.type);
       return {
         success: false,
         error: 'Sign-in was cancelled by user',
@@ -65,9 +69,8 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
     }
 
     const { data } = response;
-     console.log('👤 [Google Sign-In] User data:', JSON.stringify(data, null, 2));
+    console.log('👤 [Google Sign-In] User data:', JSON.stringify(data, null, 2));
 
-   
     console.log('   - User ID:', data?.user?.id);
     console.log('   - User Email:', data?.user?.email);
     console.log('   - User Name:', data?.user?.name);
@@ -82,19 +85,14 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
       };
     }
 
-
     const credential = GoogleAuthProvider.credential(idToken);
-
-  
     const userCredential = await signInWithCredential(auth, credential);
     const firebaseUser = userCredential.user;
 
-
     const existingUser = await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
 
-    console.log('existingUser99',existingUser)
+    console.log('existingUser99', existingUser)
     const isNewUser = !existingUser;
-
 
     if (isNewUser) {
       const newUserData = {
@@ -107,14 +105,11 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
       };
       console.log('💾 [New User] Saving to Firestore:', JSON.stringify(newUserData, null, 2));
       await setDocumentById(USERS_COLLECTION, firebaseUser.uid, newUserData);
-      
 
       const savedData = await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
       console.log('✅ [New User] Saved successfully. Verification:', JSON.stringify(savedData, null, 2));
     } else {
-     
-      console.log('user already exists');
-    
+      console.log('✅ [Existing User] User already exists');
     }
 
     return {
@@ -128,16 +123,25 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
       },
     };
   } catch (error: any) {
-    console.error('Google sign-in error:', error);
+    console.error('🔥 [Google Sign-In] Error:', error);
 
     let errorMessage = 'Failed to sign in with Google';
 
-    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-      errorMessage = 'Sign-in was cancelled';
-    } else if (error.code === statusCodes.IN_PROGRESS) {
-      errorMessage = 'Sign-in is already in progress';
-    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      errorMessage = 'Play Services not available or outdated';
+    // Use type guard from documentation
+    if (isErrorWithCode(error)) {
+      switch (error.code) {
+        case statusCodes.SIGN_IN_CANCELLED:
+          errorMessage = 'Sign-in was cancelled';
+          break;
+        case statusCodes.IN_PROGRESS:
+          errorMessage = 'Sign-in is already in progress';
+          break;
+        case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+          errorMessage = 'Play Services not available or outdated';
+          break;
+        default:
+          errorMessage = error.message || 'Failed to sign in with Google';
+      }
     } else if (error.code === 'auth/account-exists-with-different-credential') {
       errorMessage = 'An account already exists with the same email address';
     } else if (error.code === 'auth/invalid-credential') {
@@ -154,6 +158,54 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
 /**
  * Sign in silently (if user previously signed in)
  */
+export const signInSilently = async (): Promise<GoogleSignInResult> => {
+  try {
+    const response = await GoogleSignin.signInSilently();
+    
+    if (isSuccessResponse(response)) {
+      const { data } = response;
+      const { idToken } = data;
+
+      if (!idToken) {
+        return {
+          success: false,
+          error: 'No ID token received from Google',
+        };
+      }
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const firebaseUser = userCredential.user;
+
+      return {
+        success: true,
+        user: {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName,
+          imageUrl: firebaseUser.photoURL,
+          isNewUser: false,
+        },
+      };
+    } else if (isNoSavedCredentialFoundResponse(response)) {
+      return {
+        success: false,
+        error: 'No saved credentials found',
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Silent sign-in failed',
+    };
+  } catch (error: any) {
+    console.error('Silent sign-in error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to sign in silently',
+    };
+  }
+};
 
 /**
  * Check if user has previously signed in
