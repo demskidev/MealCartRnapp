@@ -18,6 +18,8 @@ export const FETCH_MEALS = 'meals/fetchMeals';
 export const FETCH_ALL_MEALS = 'meals/fetchAllMeals';
 
 export const UPDATE_USER = 'auth/updateUser';
+export const CHANGE_PASSWORD = 'auth/changePassword';
+export const LOAD_USER_BY_UID = 'auth/loadUserByUid';
 export const FETCH_DIETARY_PREFERENCES = 'dietaryPreferences/fetchAll';
 export const ADD_MEAL_PLAN = 'profile/addMealPlan';
 export const DELETE_MEAL_PLAN = 'profile/deleteMealPlan';
@@ -28,7 +30,6 @@ export const UPDATE_PLAN = "plans/updatePlan";
 export const DELETE_PLAN = "plans/deletePlan";
 export const FETCH_PLANS = "plans/fetchPlans";
 export const FETCH_PLAN_BY_ID = "plans/fetchPlanById";
-export const CHANGE_PASSWORD = 'auth/changePassword';
 export const FETCH_ACTIVE_PLAN = "plans/fetchActivePlan";
 export const FETCH_MEAL_WITH_INGREDIENTS = "meals/fetchMealWithIngredients";
 export const FILTER_N_SEARCH_MEALS = "meals/searchMeals";

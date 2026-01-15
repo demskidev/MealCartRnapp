@@ -52,8 +52,15 @@ export const setDocumentById = async (
   id: string,
   data: any
 ) => {
+  console.log('📝 [setDocumentById] Called with:');
+  console.log('  Collection:', collectionName);
+  console.log('  Document ID:', id);
+  console.log('  Data:', JSON.stringify(data, null, 2));
+  
   const docRef = doc(db, collectionName, id);
   await setDoc(docRef, data);
+  
+  console.log('✅ [setDocumentById] Document written successfully');
 };
 
 export const updateDocument = async (

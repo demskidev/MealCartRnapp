@@ -29,7 +29,7 @@ export const performLogout = async () => {
     store.dispatch(logoutAction());
     await persistor.purge();
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    // await new Promise((resolve) => setTimeout(resolve, 200));
 
     // Navigate to signin screen
     router.dismissAll();

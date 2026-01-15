@@ -27,15 +27,66 @@ import { APP_ROUTES } from "@/constants/AppRoutes";
 import { Colors } from "@/constants/Theme";
 
 import { hideLoader, showLoader } from "@/components/Loader";
+
+import { signInWithApple } from "@/services/appleSignin";
+import { signInWithGoogle } from "@/services/googleSignIn";
 import {
   SigninFormValues,
   SigninViewModel,
 } from "@/viewmodels/SigninViewModel";
 import { Formik } from "formik";
-
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
 
+  const handleGoogleSignIn = async () => {
+     showLoader();
+
+    const result = await signInWithGoogle();
+
+    if (result.success && result.user) {
+      // Load user data into Redux
+      const loadResult = await signinViewModel.loadUserData(result.user.id);
+       hideLoader();
+
+      if (loadResult.success) {
+        showSuccessToast("Signed in successfully with Google!");
+        resetAndNavigate(APP_ROUTES.HOME);
+      } else {
+       hideLoader();
+
+        showErrorToast(loadResult.error || "Failed to load user data");
+      }
+    } else {
+       hideLoader();
+      showErrorToast(result.error || "Failed to sign in with Google");
+    }
+  };
+
+ 
+
+
+
+const handleAppleSignIn = async () => {
+  showLoader();
+  const result = await signInWithApple();
+
+  if (result.success && result.user) {
+   
+    const loadResult = await signinViewModel.loadUserData(result.user.id);
+
+    if (loadResult.success) {
+      showSuccessToast("Signed in successfully with Apple!");
+       hideLoader();
+      resetAndNavigate(APP_ROUTES.HOME);
+    } else {
+       hideLoader();
+      showErrorToast(loadResult.error || "Failed to load user data");
+    }
+  } else {
+     hideLoader();
+    showErrorToast(result.error || "Failed to sign in with Apple");
+  }
+};
   const handleSignin = async (values: SigninFormValues) => {
     showLoader();
     await signinViewModel.handleSignin(
@@ -142,6 +193,7 @@ const SignInScreen = () => {
                       title={Strings.logIn}
                       gradientButton={true}
                       textColor={Colors.white}
+                      buttonGradient={styles.loginButton}
                       onPress={async () => {
                         // router.push(APP_ROUTES.HOME)
                         const formErrors = await validateForm();
@@ -163,13 +215,18 @@ const SignInScreen = () => {
                     <BaseButton
                       title={Strings.continueWithGoogle}
                       rightChild={<GoogleIcon />}
+                      onPress={handleGoogleSignIn}
+                      textStyle={styles.loginButton}
                     />
-                    <BaseButton
-                      title={Strings.continueWithApple}
-                      backgroundColor={Colors.black}
-                      textColor={Colors.white}
-                      rightChild={<AppleIcon />}
-                    />
+                    {Platform.OS === 'ios' && (
+                      <BaseButton
+                        title={Strings.continueWithApple}
+                        backgroundColor={Colors.black}
+                        textColor={Colors.white}
+                        rightChild={<AppleIcon />}
+                        onPress={handleAppleSignIn}
+                      />
+                    )}
                   </View>
                 </View>
               )}
@@ -236,6 +293,9 @@ const styles = StyleSheet.create({
   dividerStyle: {
     marginVertical: verticalScale(50),
   },
+   loginButton:{
+    paddingVertical:moderateScale(0),
+  }
 });
 
 export default SignInScreen;

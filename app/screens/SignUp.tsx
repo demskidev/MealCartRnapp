@@ -20,10 +20,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
-import { useAppSelector } from "@/reduxStore/hooks";
+import { signInWithApple } from "@/services/appleSignin";
+import { signInWithGoogle } from "@/services/googleSignIn";
 import { fontSize } from "@/utils/Fonts";
-import { pushNavigation, replaceNavigation } from "@/utils/Navigation";
+import { pushNavigation, replaceNavigation, resetAndNavigate } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
+import { SigninViewModel } from "@/viewmodels/SigninViewModel";
 import {
   SignupFormValues,
   SignupViewModel,
@@ -32,6 +34,7 @@ import { Formik } from "formik";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
+  const signinViewModel = new SigninViewModel();
 
   const handleSignup = async (values: SignupFormValues) => {
     showLoader();
@@ -48,6 +51,52 @@ const SignupScreen = () => {
       }
     );
   };
+
+  const handleAppleSignIn = async () => {
+    showLoader();
+    const result = await signInWithApple();
+  
+    if (result.success && result.user) {
+     
+      const loadResult = await signinViewModel.loadUserData(result.user.id);
+  
+      if (loadResult.success) {
+        showSuccessToast("Signed in successfully with Apple!");
+         hideLoader();
+        resetAndNavigate(APP_ROUTES.HOME);
+      } else {
+         hideLoader();
+        showErrorToast(loadResult.error || "Failed to load user data");
+      }
+    } else {
+       hideLoader();
+      showErrorToast(result.error || "Failed to sign in with Apple");
+    }
+  };
+
+    const handleGoogleSignIn = async () => {
+       showLoader();
+  
+      const result = await signInWithGoogle();
+  
+      if (result.success && result.user) {
+        // Load user data into Redux
+        const loadResult = await signinViewModel.loadUserData(result.user.id);
+         hideLoader();
+  
+        if (loadResult.success) {
+          showSuccessToast("Signed in successfully with Google!");
+          resetAndNavigate(APP_ROUTES.HOME);
+        } else {
+         hideLoader();
+
+          showErrorToast(loadResult.error || "Failed to load user data");
+        }
+      } else {
+         hideLoader();
+        showErrorToast(result.error || "Failed to sign in with Google");
+      }
+    };
 
   return (
     <SafeAreaView
@@ -153,6 +202,7 @@ const SignupScreen = () => {
                     <BaseButton
                       title={Strings.signUp}
                       gradientButton={true}
+                      buttonGradient={styles.loginButton}
                       textColor={Colors.white}
                       onPress={async () => {
                         const formErrors = await validateForm();
@@ -180,13 +230,19 @@ const SignupScreen = () => {
                     <BaseButton
                       title={Strings.continueWithGoogle}
                       rightChild={<GoogleIcon />}
+                      textStyle={styles.loginButton}
+                      onPress={handleGoogleSignIn}
                     />
+                        {Platform.OS === 'ios' && (
                     <BaseButton
                       title={Strings.continueWithApple}
                       backgroundColor={Colors.black}
                       textColor={Colors.white}
                       rightChild={<AppleIcon />}
+                      textStyle={styles.loginButton}
+                      onPress={handleAppleSignIn}
                     />
+                        )}
                   </View>
                 </View>
               )}
@@ -247,6 +303,9 @@ const styles = StyleSheet.create({
   },
   dividerStyle: {
     marginTop: verticalScale(15),
+  },
+  loginButton: {
+    paddingVertical: moderateScale(0),
   },
 });
 

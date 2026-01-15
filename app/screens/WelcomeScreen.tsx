@@ -39,6 +39,7 @@ const WelcomeScreen = () => {
           rightChild={<ForwardIcon />}
           backgroundColor={Colors.buttonBackground}
           onPress={() => navigate(APP_ROUTES.SIGNIN)}
+          textStyle={styles.loginButton}
         />
       </View>
     </SafeAreaView>
@@ -77,6 +78,9 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: moderateScale(10),
   },
+  loginButton:{
+    paddingVertical:moderateScale(0)
+  }
 });
 
 export default WelcomeScreen;

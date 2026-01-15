@@ -46,6 +46,7 @@ interface BaseButtonProps {
   textStyle?: any;
   showPressedShadow?: boolean;
   textStyleText?: any;
+  buttonGradient?:any
 }
 
 const BaseButton = React.memo(
@@ -67,6 +68,7 @@ const BaseButton = React.memo(
     disabled = false,
     showPressedShadow,
     textStyleText,
+    buttonGradient
   }: BaseButtonProps) => {
     const [pressed, setPressed] = useState(false);
     return (
@@ -98,7 +100,7 @@ const BaseButton = React.memo(
                 onPress={onPress}
                 onPressIn={() => setPressed(true)}
                 onPressOut={() => setPressed(false)}
-                style={[styles.button, { backgroundColor: "transparent" }]}
+                style={[styles.button, { backgroundColor: "transparent" },buttonGradient]}
                 disabled={disabled}
               >
                 {leftChild && leftChild}

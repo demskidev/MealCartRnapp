@@ -1,77 +1,207 @@
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { 
-  GoogleAuthProvider, 
-  signInWithCredential,
-  signOut as firebaseSignOut 
+
+
+
+
+import { USERS_COLLECTION } from '@/reduxStore/appKeys';
+import { GoogleSignin, statusCodes, User } from '@react-native-google-signin/google-signin';
+import {
+  signOut as firebaseSignOut,
+  GoogleAuthProvider,
+  signInWithCredential
 } from 'firebase/auth';
+import { serverTimestamp } from 'firebase/firestore';
 import { auth } from './firebase';
-import { makeRedirectUri } from 'expo-auth-session';
+import { getDocumentById, setDocumentById } from './firestore';
 
-// This is needed for web browser to close properly after auth
-WebBrowser.maybeCompleteAuthSession();
+const WEB_CLIENT_ID = '107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com';
 
-// Get your Web Client ID from Firebase Console (Step 1.2)
-// It's in the firebaseConfig, but you also need it separately
-const EXPO_CLIENT_ID = '107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com.apps.googleusercontent.com';
+
+
+
+const IOS_CLIENT_ID = '107165390600-sni5oc9le9cnucc89mqv7e51eq0undge.apps.googleusercontent.com';
+
+GoogleSignin.configure({
+  webClientId: WEB_CLIENT_ID,
+  iosClientId: IOS_CLIENT_ID, 
+  offlineAccess: true, 
+  forceCodeForRefreshToken: true, 
+});
+
+export interface GoogleSignInResult {
+  success: boolean;
+  user?: {
+    id: string;
+    email: string | null;
+    name: string | null;
+    imageUrl: string | null;
+    isNewUser: boolean;
+  };
+  error?: string;
+}
+
+export interface GoogleSignOutResult {
+  success: boolean;
+  error?: string;
+}
 
 /**
- * Hook to setup Google authentication
- * Use this in your SignIn component
+ * Sign in with Google and authenticate with Firebase
  */
-export const useGoogleSignIn = () => {
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: EXPO_CLIENT_ID,
-    iosClientId: EXPO_CLIENT_ID, // Same as web for this method
-    androidClientId: EXPO_CLIENT_ID, // Same as web for this method
-    webClientId: "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
-    // Redirect URI for Expo
-    redirectUri: makeRedirectUri({
-      scheme: 'mealcart', // Your app slug from app.json
-      path: 'redirect'
-    }),
-  });
-
-  return { request, response, promptAsync };
-};
-
-/**
- * Sign in to Firebase with Google credential
- */
-export const signInWithGoogleCredential = async (idToken: string) => {
+export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   try {
-    // Create Firebase credential from Google token
+   
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    const response = await GoogleSignin.signIn();
+    console.log('📦 [Google Sign-In] Full response:', JSON.stringify(response, null, 2));
+    console.log('📝 [Google Sign-In] Response type:', response.type);
+    
+    if (response.type !== 'success') {
+            console.log('❌ [Google Sign-In] Sign-in not successful, type:', response.type);
+      return {
+        success: false,
+        error: 'Sign-in was cancelled by user',
+      };
+    }
+
+    const { data } = response;
+     console.log('👤 [Google Sign-In] User data:', JSON.stringify(data, null, 2));
+
+   
+    console.log('   - User ID:', data?.user?.id);
+    console.log('   - User Email:', data?.user?.email);
+    console.log('   - User Name:', data?.user?.name);
+    console.log('   - User Photo:', data?.user?.photo);
+
+    const { idToken } = data;
+
+    if (!idToken) {
+      return {
+        success: false,
+        error: 'No ID token received from Google',
+      };
+    }
+
+
     const credential = GoogleAuthProvider.credential(idToken);
-    
-    // Sign in to Firebase
+
+  
     const userCredential = await signInWithCredential(auth, credential);
+    const firebaseUser = userCredential.user;
+
+
+    const existingUser = await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
+
+    console.log('existingUser99',existingUser)
+    const isNewUser = !existingUser;
+
+
+    if (isNewUser) {
+      const newUserData = {
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || "",
+        imageUrl: firebaseUser.photoURL || "",
+        provider: 'google',
+        createdAt: serverTimestamp(),
+        uid: firebaseUser.uid,
+      };
+      console.log('💾 [New User] Saving to Firestore:', JSON.stringify(newUserData, null, 2));
+      await setDocumentById(USERS_COLLECTION, firebaseUser.uid, newUserData);
+      
+
+      const savedData = await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
+      console.log('✅ [New User] Saved successfully. Verification:', JSON.stringify(savedData, null, 2));
+    } else {
+     
+      console.log('user already exists');
     
+    }
+
     return {
       success: true,
       user: {
-        id: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
+        id: firebaseUser.uid,
+        email: firebaseUser.email,
+        name: firebaseUser.displayName,
+        imageUrl: firebaseUser.photoURL,
+        isNewUser,
       },
     };
   } catch (error: any) {
-    console.error('Firebase sign-in error:', error);
+    console.error('Google sign-in error:', error);
+
+    let errorMessage = 'Failed to sign in with Google';
+
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+      errorMessage = 'Sign-in was cancelled';
+    } else if (error.code === statusCodes.IN_PROGRESS) {
+      errorMessage = 'Sign-in is already in progress';
+    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      errorMessage = 'Play Services not available or outdated';
+    } else if (error.code === 'auth/account-exists-with-different-credential') {
+      errorMessage = 'An account already exists with the same email address';
+    } else if (error.code === 'auth/invalid-credential') {
+      errorMessage = 'Invalid Google credentials';
+    }
+
     return {
       success: false,
-      error: error.message || 'Failed to sign in with Google',
+      error: errorMessage,
     };
   }
 };
 
 /**
- * Sign out from Firebase
+ * Sign in silently (if user previously signed in)
  */
-export const signOut = async () => {
+
+/**
+ * Check if user has previously signed in
+ */
+export const hasPreviousSignIn = (): boolean => {
+  return GoogleSignin.hasPreviousSignIn();
+};
+
+/**
+ * Get current signed-in user
+ */
+export const getCurrentUser = (): User | null => {
+  return GoogleSignin.getCurrentUser();
+};
+
+/**
+ * Sign out from Google and Firebase
+ */
+export const signOut = async (): Promise<GoogleSignOutResult> => {
   try {
+    await GoogleSignin.signOut();
     await firebaseSignOut(auth);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error('Sign out error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to sign out',
+    };
   }
 };
+
+/**
+ * Revoke Google access and sign out
+ */
+export const revokeAccess = async (): Promise<GoogleSignOutResult> => {
+  try {
+    await GoogleSignin.revokeAccess();
+    await firebaseSignOut(auth);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error revoking access:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to revoke access',
+    };
+  }
+};
+
+
+export { GoogleSignin };

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "107165390600",
+    "project_id": "mealcart-5d62b",
+    "storage_bucket": "mealcart-5d62b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:107165390600:android:359e7590045873b305febd",
+        "android_client_info": {
+          "package_name": "com.jbehl23.mealcart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6Qw45l4waAeliD3ijELDX8KPMkIjcELU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

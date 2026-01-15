@@ -1,5 +1,5 @@
 import { useAppDispatch } from '@/reduxStore/hooks';
-import { loginAsync } from '@/reduxStore/slices/authSlice';
+import { loadUserByUidAsync, loginAsync } from '@/reduxStore/slices/authSlice';
 import { signinValidationSchema } from '@/utils/validators/AuthValidators';
 import * as yup from 'yup';
 export interface SigninFormValues {
@@ -40,6 +40,27 @@ export class SigninViewModel {
       }
     } catch (error: any) {
       onError?.(error.message || 'Validation error');
+    }
+  }
+
+  async loadUserData(
+    uid: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const resultAction = await this.dispatch(loadUserByUidAsync(uid));
+      if (loadUserByUidAsync.fulfilled.match(resultAction)) {
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          error: resultAction.payload as string 
+        };
+      }
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.message || 'Failed to load user data' 
+      };
     }
   }
 

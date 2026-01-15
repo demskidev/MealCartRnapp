@@ -19,6 +19,7 @@ import { serverTimestamp } from "firebase/firestore";
 import {
   AUTH_SLICE,
   CHANGE_PASSWORD,
+  LOAD_USER_BY_UID,
   LOGIN,
   REGISTER,
   UPDATE_USER,
@@ -105,6 +106,27 @@ export const registerAsync = createAsyncThunk(
     }
   }
 );
+
+// Async thunk for loading user by UID (for Google sign-in)
+export const loadUserByUidAsync = createAsyncThunk(
+  LOAD_USER_BY_UID,
+  async (uid: string, { rejectWithValue }) => {
+    try {
+      const userData = await getDocumentById(USERS_COLLECTION, uid);
+      
+      if (!userData) {
+        return rejectWithValue("User data not found in Firestore");
+      }
+      
+      console.log('✅ [loadUserByUidAsync] User data loaded:', userData);
+      return userData;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Failed to load user data");
+    }
+  }
+);
+
+
 
 // Async thunk for updating user data
 export const updateUserAsync = createAsyncThunk(
@@ -212,6 +234,21 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Load user by UID (for Google sign-in)
+      .addCase(loadUserByUidAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loadUserByUidAsync.fulfilled, (state, action) => {
+        state.isAuthenticated = true;
+        state.user = action.payload;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(loadUserByUidAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
