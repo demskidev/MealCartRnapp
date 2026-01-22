@@ -1,7 +1,3 @@
-
-
-
-
 import { USERS_COLLECTION } from '@/reduxStore/appKeys';
 import {
   GoogleSignin,
@@ -155,9 +151,6 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   }
 };
 
-/**
- * Sign in silently (if user previously signed in)
- */
 export const signInSilently = async (): Promise<GoogleSignInResult> => {
   try {
     const response = await GoogleSignin.signInSilently();
