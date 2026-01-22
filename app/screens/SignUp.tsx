@@ -23,7 +23,11 @@ import { APP_ROUTES } from "@/constants/AppRoutes";
 import { signInWithApple } from "@/services/appleSignin";
 import { signInWithGoogle } from "@/services/googleSignIn";
 import { fontSize } from "@/utils/Fonts";
-import { pushNavigation, replaceNavigation, resetAndNavigate } from "@/utils/Navigation";
+import {
+  pushNavigation,
+  replaceNavigation,
+  resetAndNavigate,
+} from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { SigninViewModel } from "@/viewmodels/SigninViewModel";
 import {
@@ -31,72 +35,136 @@ import {
   SignupViewModel,
 } from "@/viewmodels/SignupViewModel";
 import { Formik } from "formik";
+import { useRef, useState } from "react";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
   const signinViewModel = new SigninViewModel();
 
+  // Prevent multiple simultaneous OAuth attempts
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [isAppleSigningIn, setIsAppleSigningIn] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Track last click time to prevent rapid clicking
+  const lastGoogleClickRef = useRef<number>(0);
+  const lastAppleClickRef = useRef<number>(0);
+
   const handleSignup = async (values: SignupFormValues) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     showLoader();
+
     await signupViewModel.handleSignup(
       values,
       (payload) => {
         showSuccessToast(Strings.signupSuccessfully);
         hideLoader();
+        setIsSubmitting(false);
         pushNavigation(APP_ROUTES.WELCOME_MEAL_CART);
       },
       (error) => {
         hideLoader();
+        setIsSubmitting(false);
         showErrorToast(error);
-      }
+      },
     );
   };
 
   const handleAppleSignIn = async () => {
-    showLoader();
-    const result = await signInWithApple();
-  
-    if (result.success && result.user) {
-     
-      const loadResult = await signinViewModel.loadUserData(result.user.id);
-  
-      if (loadResult.success) {
-        showSuccessToast("Signed in successfully with Apple!");
-         hideLoader();
-        resetAndNavigate(APP_ROUTES.HOME);
-      } else {
-         hideLoader();
-        showErrorToast(loadResult.error || "Failed to load user data");
-      }
-    } else {
-       hideLoader();
-      showErrorToast(result.error || "Failed to sign in with Apple");
+    // Prevent rapid clicks (debounce)
+    const now = Date.now();
+    if (now - lastAppleClickRef.current < 2000) {
+      console.log("⚠️ [Apple Sign-In] Too many requests, please wait");
+      return;
     }
-  };
+    lastAppleClickRef.current = now;
 
-    const handleGoogleSignIn = async () => {
-       showLoader();
-  
-      const result = await signInWithGoogle();
-  
+    if (isAppleSigningIn) {
+      console.log("⚠️ [Apple Sign-In] Already signing in");
+      return;
+    }
+
+    setIsAppleSigningIn(true);
+    showLoader();
+
+    try {
+      const result = await signInWithApple();
+
       if (result.success && result.user) {
-        // Load user data into Redux
         const loadResult = await signinViewModel.loadUserData(result.user.id);
-         hideLoader();
-  
+
         if (loadResult.success) {
-          showSuccessToast("Signed in successfully with Google!");
+          showSuccessToast("Signed in successfully with Apple!");
+          hideLoader();
           resetAndNavigate(APP_ROUTES.HOME);
         } else {
-         hideLoader();
-
+          hideLoader();
           showErrorToast(loadResult.error || "Failed to load user data");
         }
       } else {
-         hideLoader();
-        showErrorToast(result.error || "Failed to sign in with Google");
+        hideLoader();
+        // Only show error if it's not a cancellation
+        if (result.error && !result.error.includes("cancel")) {
+          showErrorToast(result.error);
+        }
       }
-    };
+    } catch (error) {
+      hideLoader();
+      showErrorToast("An unexpected error occurred");
+      console.error("[Apple Sign-In] Unexpected error:", error);
+    } finally {
+      setIsAppleSigningIn(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    // Prevent rapid clicks (debounce)
+    const now = Date.now();
+    if (now - lastGoogleClickRef.current < 2000) {
+      console.log("⚠️ [Google Sign-In] Too many requests, please wait");
+      return;
+    }
+    lastGoogleClickRef.current = now;
+
+    if (isGoogleSigningIn) {
+      console.log("⚠️ [Google Sign-In] Already signing in");
+      return;
+    }
+
+    setIsGoogleSigningIn(true);
+    showLoader();
+
+    try {
+      const result = await signInWithGoogle();
+
+      if (result.success && result.user) {
+        const loadResult = await signinViewModel.loadUserData(result.user.id);
+
+        if (loadResult.success) {
+          showSuccessToast("Signed in successfully with Google!");
+          hideLoader();
+          resetAndNavigate(APP_ROUTES.HOME);
+        } else {
+          hideLoader();
+          showErrorToast(loadResult.error || "Failed to load user data");
+        }
+      } else {
+        hideLoader();
+        // Only show error if it's not a cancellation
+        if (result.error && !result.error.includes("cancel")) {
+          showErrorToast(result.error);
+        }
+      }
+    } catch (error) {
+      hideLoader();
+      showErrorToast("An unexpected error occurred");
+      console.error("[Google Sign-In] Unexpected error:", error);
+    } finally {
+      setIsGoogleSigningIn(false);
+    }
+  };
 
   return (
     <SafeAreaView
@@ -204,7 +272,10 @@ const SignupScreen = () => {
                       gradientButton={true}
                       buttonGradient={styles.loginButton}
                       textColor={Colors.white}
+                      disabled={isSubmitting}
                       onPress={async () => {
+                        if (isSubmitting) return;
+
                         const formErrors = await validateForm();
                         if (Object.keys(formErrors).length > 0) {
                           setTouched({
@@ -231,18 +302,20 @@ const SignupScreen = () => {
                       title={Strings.continueWithGoogle}
                       rightChild={<GoogleIcon />}
                       textStyle={styles.loginButton}
+                      disabled={isGoogleSigningIn || isAppleSigningIn}
                       onPress={handleGoogleSignIn}
                     />
-                        {Platform.OS === 'ios' && (
-                    <BaseButton
-                      title={Strings.continueWithApple}
-                      backgroundColor={Colors.black}
-                      textColor={Colors.white}
-                      rightChild={<AppleIcon />}
-                      textStyle={styles.loginButton}
-                      onPress={handleAppleSignIn}
-                    />
-                        )}
+                    {Platform.OS === "ios" && (
+                      <BaseButton
+                        title={Strings.continueWithApple}
+                        backgroundColor={Colors.black}
+                        textColor={Colors.white}
+                        rightChild={<AppleIcon />}
+                        textStyle={styles.loginButton}
+                        disabled={isAppleSigningIn || isGoogleSigningIn}
+                        onPress={handleAppleSignIn}
+                      />
+                    )}
                   </View>
                 </View>
               )}

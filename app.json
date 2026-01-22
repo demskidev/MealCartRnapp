@@ -52,10 +52,10 @@
       ],
       "@react-native-community/datetimepicker",
       [
-        "@react-native-google-signin/google-signin"
-        // {
-        //   "iosUrlScheme": "com.googleusercontent.apps.107165390600-sni5oc9le9cnucc89mqv7e51eq0undge"
-        // }
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.107165390600-sni5oc9le9cnucc89mqv7e51eq0undge"
+        }
       ],
       "expo-apple-authentication"
     ],

@@ -9,6 +9,7 @@ import { APP_ROUTES } from "@/constants/AppRoutes";
 import { LOGOUT } from "@/reduxStore/actionTypes";
 import { persistor, store } from "@/reduxStore/store";
 import { auth } from "@/services/firebase";
+import { revokeAccess as googleSignOut } from "@/services/googleSignIn";
 import { router } from "expo-router";
 import { replaceNavigation } from "./Navigation";
 
@@ -25,7 +26,17 @@ export const performLogout = async () => {
   try {
     // Clear Redux state
     // const { persistor, store } = await import("@/reduxStore/store");
-    await auth.signOut();
+    try {
+      await googleSignOut();
+      console.log("✅ Google sign-out successful");
+    } catch (googleError) {
+      console.log(
+        "⚠️ Google sign-out error (user might not be signed in with Google):",
+        googleError,
+      );
+      // If not signed in with Google, sign out from Firebase directly
+      await auth.signOut();
+    }
     store.dispatch(logoutAction());
     await persistor.purge();
 

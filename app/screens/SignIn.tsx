@@ -29,77 +29,139 @@ import { Colors } from "@/constants/Theme";
 import { hideLoader, showLoader } from "@/components/Loader";
 
 import { signInWithApple } from "@/services/appleSignin";
-import { GoogleSignin, signInWithGoogle } from "@/services/googleSignIn";
+import { signInWithGoogle } from "@/services/googleSignIn";
 import {
   SigninFormValues,
   SigninViewModel,
 } from "@/viewmodels/SigninViewModel";
 import { Formik } from "formik";
+import { useRef, useState } from "react";
+
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
 
+  // Prevent multiple simultaneous OAuth attempts
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [isAppleSigningIn, setIsAppleSigningIn] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Track last click time to prevent rapid clicking
+  const lastGoogleClickRef = useRef<number>(0);
+  const lastAppleClickRef = useRef<number>(0);
+
   const handleGoogleSignIn = async () => {
-     showLoader();
+    // Prevent rapid clicks (debounce)
+    const now = Date.now();
+    if (now - lastGoogleClickRef.current < 2000) {
+      console.log("⚠️ [Google Sign-In] Too many requests, please wait");
+      return;
+    }
+    lastGoogleClickRef.current = now;
 
-    const result = await signInWithGoogle();
+    if (isGoogleSigningIn) {
+      console.log("⚠️ [Google Sign-In] Already signing in");
+      return;
+    }
 
-    if (result.success && result.user) {
-      // Load user data into Redux
-      const loadResult = await signinViewModel.loadUserData(result.user.id);
-       hideLoader();
+    setIsGoogleSigningIn(true);
+    showLoader();
 
-      if (loadResult.success) {
-        showSuccessToast("Signed in successfully with Google!");
-        resetAndNavigate(APP_ROUTES.HOME);
+    try {
+      const result = await signInWithGoogle();
+
+      if (result.success && result.user) {
+        const loadResult = await signinViewModel.loadUserData(result.user.id);
+
+        if (loadResult.success) {
+          showSuccessToast("Signed in successfully with Google!");
+          hideLoader();
+          resetAndNavigate(APP_ROUTES.HOME);
+        } else {
+          hideLoader();
+          showErrorToast(loadResult.error || "Failed to load user data");
+        }
       } else {
-       hideLoader();
-
-        showErrorToast(loadResult.error || "Failed to load user data");
+        hideLoader();
+        // Only show error if it's not a cancellation
+        if (result.error && !result.error.toLowerCase().includes("cancel")) {
+          showErrorToast(result.error);
+        }
       }
-    } else {
-       hideLoader();
-      showErrorToast(result.error || "Failed to sign in with Google");
+    } catch (error) {
+      hideLoader();
+      showErrorToast("An unexpected error occurred");
+      console.error("[Google Sign-In] Unexpected error:", error);
+    } finally {
+      setIsGoogleSigningIn(false);
     }
   };
 
- 
-
-
-
-const handleAppleSignIn = async () => {
-  showLoader();
-  const result = await signInWithApple();
-
-  if (result.success && result.user) {
-   
-    const loadResult = await signinViewModel.loadUserData(result.user.id);
-
-    if (loadResult.success) {
-      showSuccessToast("Signed in successfully with Apple!");
-       hideLoader();
-      resetAndNavigate(APP_ROUTES.HOME);
-    } else {
-       hideLoader();
-      showErrorToast(loadResult.error || "Failed to load user data");
+  const handleAppleSignIn = async () => {
+    // Prevent rapid clicks (debounce)
+    const now = Date.now();
+    if (now - lastAppleClickRef.current < 2000) {
+      console.log("⚠️ [Apple Sign-In] Too many requests, please wait");
+      return;
     }
-  } else {
-     hideLoader();
-    showErrorToast(result.error || "Failed to sign in with Apple");
-  }
-};
-  const handleSignin = async (values: SigninFormValues) => {
+    lastAppleClickRef.current = now;
+
+    if (isAppleSigningIn) {
+      console.log("⚠️ [Apple Sign-In] Already signing in");
+      return;
+    }
+
+    setIsAppleSigningIn(true);
     showLoader();
+
+    try {
+      const result = await signInWithApple();
+
+      if (result.success && result.user) {
+        const loadResult = await signinViewModel.loadUserData(result.user.id);
+
+        if (loadResult.success) {
+          showSuccessToast("Signed in successfully with Apple!");
+          hideLoader();
+          resetAndNavigate(APP_ROUTES.HOME);
+        } else {
+          hideLoader();
+          showErrorToast(loadResult.error || "Failed to load user data");
+        }
+      } else {
+        hideLoader();
+        // Only show error if it's not a cancellation
+        if (result.error && !result.error.toLowerCase().includes("cancel")) {
+          showErrorToast(result.error);
+        }
+      }
+    } catch (error) {
+      hideLoader();
+      showErrorToast("An unexpected error occurred");
+      console.error("[Apple Sign-In] Unexpected error:", error);
+    } finally {
+      setIsAppleSigningIn(false);
+    }
+  };
+
+  const handleSignin = async (values: SigninFormValues) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    showLoader();
+
     await signinViewModel.handleSignin(
       values,
       () => {
         showSuccessToast(Strings.signinSuccessful);
         hideLoader();
+        setIsSubmitting(false);
         resetAndNavigate(APP_ROUTES.HOME);
       },
       (error) => {
         hideLoader();
+        setIsSubmitting(false);
         showErrorToast(error);
-      }
+      },
     );
   };
 
@@ -194,8 +256,10 @@ const handleAppleSignIn = async () => {
                       gradientButton={true}
                       textColor={Colors.white}
                       buttonGradient={styles.loginButton}
+                      disabled={isSubmitting}
                       onPress={async () => {
-                        // router.push(APP_ROUTES.HOME)
+                        if (isSubmitting) return;
+
                         const formErrors = await validateForm();
                         if (Object.keys(formErrors).length > 0) {
                           setTouched({
@@ -217,14 +281,16 @@ const handleAppleSignIn = async () => {
                       rightChild={<GoogleIcon />}
                       onPress={handleGoogleSignIn}
                       textStyle={styles.loginButton}
+                      disabled={isGoogleSigningIn || isAppleSigningIn}
                     />
-                    {Platform.OS === 'ios' && (
+                    {Platform.OS === "ios" && (
                       <BaseButton
                         title={Strings.continueWithApple}
                         backgroundColor={Colors.black}
                         textColor={Colors.white}
                         rightChild={<AppleIcon />}
                         onPress={handleAppleSignIn}
+                        disabled={isAppleSigningIn || isGoogleSigningIn}
                       />
                     )}
                   </View>
@@ -293,9 +359,9 @@ const styles = StyleSheet.create({
   dividerStyle: {
     marginVertical: verticalScale(50),
   },
-   loginButton:{
-    paddingVertical:moderateScale(0),
-  }
+  loginButton: {
+    paddingVertical: moderateScale(0),
+  },
 });
 
 export default SignInScreen;
