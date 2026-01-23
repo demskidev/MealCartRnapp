@@ -19,11 +19,11 @@ import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily } from "@/utils/Fonts";
 
 import { hideLoader, showLoader } from "@/components/Loader";
+import { useTourStep } from "@/context/TourStepContext";
 import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { useNavigation } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
@@ -46,28 +46,31 @@ const { width } = Dimensions.get("window");
 
 const HomeScreen: React.FC = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [showIntroPopup, setShowIntroPopup] = useState(true);
   const [showAll, setShowAll] = useState(false);
-  const navigation = useNavigation();
   const router = useRouter();
   const { enrichedActivePlan, fetchActivePlan } = usePlanViewModel();
   const { recentMeals, fetchTheRecentMeals } = useMealsViewModel();
   const [activePlan, setActivePlan] = useState(enrichedActivePlan);
   const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+
+  // Tour guide hooks
+  const { shouldStartTour, isLoading: tourLoading } = useTourStep();
+  const { canStart, start, eventEmitter } = useTourGuideController();
 
   const fetchMealsAndPlan = async () => {
     await Promise.all([
       new Promise<void>((resolve) => {
         fetchActivePlan(
           () => resolve(),
-          () => resolve()
+          () => resolve(),
         );
       }),
       new Promise<void>((resolve) => {
         fetchTheRecentMeals(
           () => resolve(),
-          () => resolve()
+          () => resolve(),
         );
       }),
     ]);
@@ -94,46 +97,56 @@ const HomeScreen: React.FC = () => {
     setActivePlan(enrichedActivePlan);
   }, [enrichedActivePlan]);
 
-  const mealData = recentMeals;
-
-  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
-
-  const { canStart, start, eventEmitter } = useTourGuideController();
-
+  // Start tour guide on first time
   useFocusEffect(
     React.useCallback(() => {
-      if (canStart) {
-        // start()
+      console.log(
+        "🔍 Tour Check - tourLoading:",
+        tourLoading,
+        "shouldStartTour:",
+        shouldStartTour,
+        "canStart:",
+        canStart,
+      );
+
+      if (tourLoading) return;
+
+      if (shouldStartTour && canStart) {
+        const timer = setTimeout(() => {
+          console.log("🚀 Starting tour guide...");
+          // start();
+        }, 800);
+
+        return () => clearTimeout(timer);
+      } else {
+        console.log(
+          "❌ Tour NOT starting - shouldStartTour:",
+          shouldStartTour,
+          "canStart:",
+          canStart,
+        );
       }
-    }, [canStart])
+    }, [shouldStartTour, canStart, tourLoading]),
   );
 
-  // React.useEffect(() => {
-  //   const onStop = () => {
-  //     console.log('Tour closed by user')
-  //   }
+  // Handle tour events
+  React.useEffect(() => {
+    const onStop = () => {
+      console.log("Tour closed by user");
+    };
 
-  //   eventEmitter?.on('stop', onStop)
+    const onStart = () => {
+      console.log("Tour started");
+    };
 
-  //   return () => {
-  //     eventEmitter?.off('stop', onStop)
-  //   }
-  // }, [eventEmitter])
+    eventEmitter?.on("stop", onStop);
+    eventEmitter?.on("start", onStart);
 
-  useEffect(() => {
-    setShowIntroPopup(true);
-  }, []);
-
-  const handleIntroNext = () => {
-    setShowIntroPopup(false);
-    setTimeout(() => {
-      // start();
-    }, 200);
-  };
-
-  const handleIntroSkip = () => {
-    setShowIntroPopup(false);
-  };
+    return () => {
+      eventEmitter?.off("stop", onStop);
+      eventEmitter?.off("start", onStart);
+    };
+  }, [eventEmitter]);
 
   const getTodayMeals = () => {
     if (!activePlan || !activePlan.days) return [];
@@ -141,32 +154,33 @@ const HomeScreen: React.FC = () => {
       weekday: "long",
     });
     const todayObj = activePlan.days.find(
-      (day) => day.dayTitle.toLowerCase() === todayName.toLowerCase()
+      (day) => day.dayTitle.toLowerCase() === todayName.toLowerCase(),
     );
     if (!todayObj) return [];
 
     const currentMealCategory = getCurrentMealCategory();
-    console.log("Current Meal Category:", todayObj);
     const filteredMeals = todayObj.mealSlots
       .filter((slot) => {
         const mealPlanName = slot.mealPlan?.name || "";
-        console.log("Comparing:", mealPlanName, "with", currentMealCategory);
         return mealPlanName.toLowerCase() === currentMealCategory.toLowerCase();
       })
       .map((slot) => slot.meal)
       .filter(Boolean);
 
-    console.log("Filtered Meals for Today:", filteredMeals);
     return filteredMeals;
   };
 
   const todayMeals = getTodayMeals();
-  console.log("Today's Meals:", todayMeals);
+  const mealData = recentMeals;
 
   const renderMealItem = ({ item }: { item: Meal }) => (
     <View style={styles.mealCard}>
       <Image
-        source={item.imageUrl === "string" ? { uri: item.imageUrl } : mealfoodH}
+        source={
+          item.imageUrl && item.imageUrl !== "string"
+            ? { uri: item.imageUrl }
+            : mealfoodH
+        }
         resizeMode="cover"
         style={styles.mealCardImage}
       />
@@ -180,7 +194,9 @@ const HomeScreen: React.FC = () => {
             {item.prepTime} • {item.difficulty}
           </Text>
         </View>
-        <Text style={styles.mealCardDescription}>{item.description}</Text>
+        <Text style={styles.mealCardDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
 
         <BaseButton
           title={Strings.home_view}
@@ -198,16 +214,6 @@ const HomeScreen: React.FC = () => {
     bottomSheetRef.current?.snapToIndex(0);
   };
 
-  const renderEmptyList = () => (
-    <View>
-      <View
-        style={[styles.emptyContainer, { width: width - horizontalScale(40) }]}
-      >
-        <Text style={styles.emptyText}>{Strings.home_noUpcomingMeals}</Text>
-      </View>
-    </View>
-  );
-
   const navigateToMealDetail = (meal: Meal) => {
     router.push({
       pathname: "/appscreens/MealDetailScreen",
@@ -217,43 +223,26 @@ const HomeScreen: React.FC = () => {
 
   const renderMealCard = ({ item, index }: { item: Meal; index: number }) => (
     <Pressable
-      style={{
-        backgroundColor: Colors.white,
-        borderRadius: moderateScale(8),
-        marginTop: moderateScale(8),
-        width: itemWidth,
-        elevation: 3,
-        shadowColor: "#000",
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        overflow: "visible",
-        marginBottom: verticalScale(8),
-        marginRight: index % 2 === 0 ? horizontalScale(14) : 0,
-      }}
-      onPress={() => {
-        console.log("Selected Meal:", item);
-        navigateToMealDetail(item);
-      }}
+      style={[
+        styles.mealCardContainer,
+        {
+          width: itemWidth,
+          marginRight: index % 2 === 0 ? horizontalScale(14) : 0,
+        },
+      ]}
+      onPress={() => navigateToMealDetail(item)}
     >
       <Image
         source={item.imageUrl ? { uri: item.imageUrl } : foodimage}
         resizeMode="cover"
-        style={{
-          width: "99%",
-          height: verticalScale(105),
-          backgroundColor: Colors.white,
-          alignSelf: "center",
-          borderTopLeftRadius: moderateScale(8),
-          borderTopRightRadius: moderateScale(8),
-        }}
+        style={styles.mealCardMiniImage}
       />
 
       <View style={styles.tagContainer}>
         <Text style={styles.tagText}>{item.category}</Text>
       </View>
 
-      <View style={{ padding: moderateScale(12) }}>
+      <View style={styles.mealCardMiniContent}>
         <Text style={styles.mealNametext} numberOfLines={1}>
           {item.name}
         </Text>
@@ -267,12 +256,7 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       {selectedMeal ? (
-        <MealDetail
-          meal={selectedMeal}
-          onBack={() => {
-            setSelectedMeal(null);
-          }}
-        />
+        <MealDetail meal={selectedMeal} onBack={() => setSelectedMeal(null)} />
       ) : (
         <View style={{ flex: 1 }}>
           <KeyboardAwareScrollView
@@ -294,17 +278,25 @@ const HomeScreen: React.FC = () => {
               end={{ x: 1, y: 0 }}
             >
               <View style={styles.mainMealCartContainer}>
-                <View style={styles.emptyView}></View>
+                <View style={styles.emptyView} />
 
-                <View style={styles.mealcartLogoParent}>
-                  <Image
-                    source={mealcartLogo}
-                    style={styles.mealcartLogoImage}
-                    resizeMode="contain"
-                  />
+                {/* Zone 1: Welcome - Logo */}
+                <TourGuideZone
+                  zone={1}
+                  shape="rectangle"
+                  borderRadius={16}
+                  maskOffset={4}
+                >
+                  <View style={styles.mealcartLogoParent}>
+                    <Image
+                      source={mealcartLogo}
+                      style={styles.mealcartLogoImage}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.text}>{Strings.home_mealCart}</Text>
+                  </View>
+                </TourGuideZone>
 
-                  <Text style={styles.text}>{Strings.home_mealCart}</Text>
-                </View>
                 <View style={styles.parentGreetingAvatar}>
                   <View>
                     <Text style={styles.greetingText}>
@@ -314,6 +306,8 @@ const HomeScreen: React.FC = () => {
                       {Strings.home_subgreeting}
                     </Text>
                   </View>
+
+                  {/* Zone 5: Profile */}
                   <TourGuideZone zone={4} shape="circle" borderRadius={30}>
                     <View style={styles.avatarContainer}>
                       <TouchableOpacity
@@ -330,28 +324,27 @@ const HomeScreen: React.FC = () => {
                     </View>
                   </TourGuideZone>
                 </View>
+
                 {todayMeals && todayMeals.length > 0 && (
                   <View style={styles.upcomingSection}>
                     <View style={styles.upcomingHeader}>
-                      <TourGuideZone zone={3} shape="circle" borderRadius={16}>
-                        <Text style={styles.upcomingText}>
-                          {Strings.home_nextMeal}
-                        </Text>
-                      </TourGuideZone>
+                      {/* Zone 4: Today's Meals */}
+                      <Text style={styles.upcomingText}>
+                        {Strings.home_nextMeal}
+                      </Text>
 
-                      <TourGuideZone zone={1} shape="circle" borderRadius={100}>
-                        <TouchableOpacity
-                          onPress={() =>
-                            pushNavigation(APP_ROUTES.TestMealPlan, {
-                              planId: activePlan?.id,
-                            })
-                          }
-                        >
-                          <Text style={styles.viewAllText}>
-                            {Strings.home_viewAll}
-                          </Text>
-                        </TouchableOpacity>
-                      </TourGuideZone>
+                      {/* Zone 2: View All */}
+                      <TouchableOpacity
+                        onPress={() =>
+                          pushNavigation(APP_ROUTES.TestMealPlan, {
+                            planId: activePlan?.id,
+                          })
+                        }
+                      >
+                        <Text style={styles.viewAllText}>
+                          {Strings.home_viewAll}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                     <FlatList
                       horizontal
@@ -367,6 +360,7 @@ const HomeScreen: React.FC = () => {
             </LinearGradient>
 
             <View style={styles.parentCreateMeal}>
+              {/* Zone 3: Add New Meal */}
               <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
                 <BaseButton
                   title={Strings.home_addNewMeal}
@@ -387,6 +381,7 @@ const HomeScreen: React.FC = () => {
                   onPress={goNext}
                 />
               </TourGuideZone>
+
               <TouchableOpacity
                 style={styles.myMeals}
                 activeOpacity={0.7}
@@ -469,23 +464,9 @@ const styles = StyleSheet.create({
   mealCardImage: {
     width: "100%",
     height: verticalScale(120),
-    borderTopLeftRadius: moderateScale(8),
-    borderTopRightRadius: moderateScale(8),
+    borderTopLeftRadius: moderateScale(16),
+    borderTopRightRadius: moderateScale(16),
     backgroundColor: Colors.white,
-  },
-  mealCardTagContainer: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: Colors.lightGray,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  mealCardTag: {
-    fontSize: moderateScale(13),
-    fontFamily: FontFamily.ROBOTO_MEDIUM,
-    color: Colors.primary,
   },
   mealCardContent: {
     padding: moderateScale(12),
@@ -494,18 +475,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  mealCardTitle: {
-    fontSize: moderateScale(16),
-    fontFamily: FontFamily.ROBOTO_BLACK,
-    color: "#222",
-    flex: 1,
-  },
-  mealCardInfo: {
-    fontSize: moderateScale(12),
-    fontFamily: FontFamily.ROBOTO_MEDIUM,
-    color: Colors.tertiary,
-    marginLeft: 8,
   },
   mealCardDescription: {
     fontSize: moderateScale(10),
@@ -538,11 +507,6 @@ const styles = StyleSheet.create({
     marginLeft: horizontalScale(5),
     fontFamily: FontFamily.ROBOTO_BLACK,
   },
-  gradient: {
-    borderBottomLeftRadius: horizontalScale(35),
-    borderBottomRightRadius: horizontalScale(35),
-    overflow: "hidden",
-  },
   mainMealCartContainer: {
     paddingHorizontal: horizontalScale(20),
     paddingTop: verticalScale(25),
@@ -551,7 +515,7 @@ const styles = StyleSheet.create({
   greetingText: {
     color: Colors.white,
     fontSize: moderateScale(28),
-    fontWeight: 600,
+    fontWeight: "600",
     fontFamily: FontFamily.ROBOTO_SEMI_BOLD,
   },
   subgreetingText: {
@@ -574,7 +538,6 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
     marginBottom: verticalScale(24),
   },
-
   upcomingSection: {
     marginTop: verticalScale(6),
   },
@@ -601,7 +564,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontFamily: FontFamily.ROBOTO_MEDIUM,
   },
-
   emptyContainer: {
     justifyContent: "center",
     alignItems: "center",
@@ -677,18 +639,18 @@ const styles = StyleSheet.create({
   mealCardContainer: {
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
-    margin: moderateScale(8),
-    flex: 1,
+    marginTop: moderateScale(8),
     elevation: 3,
-    shadowColor: Colors.black,
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     overflow: "visible",
+    marginBottom: verticalScale(8),
   },
   mealCardMiniImage: {
     width: "99%",
-    height: verticalScale(160),
+    height: verticalScale(105),
     backgroundColor: Colors.white,
     alignSelf: "center",
     borderTopLeftRadius: moderateScale(8),
@@ -712,10 +674,6 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(9),
     paddingLeft: moderateScale(8),
     paddingRight: moderateScale(8),
-  },
-  recentMealsColumnWrapper: {
-    justifyContent: "space-between",
-    marginHorizontal: 8,
   },
   recentMealsContent: {
     paddingBottom: 16,

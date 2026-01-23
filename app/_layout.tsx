@@ -26,6 +26,8 @@ const RootLayout = () => {
           androidStatusBarVisible={true}
           backdropColor="rgba(0,0,0,0.7)"
           borderRadius={16}
+          preventOutsideInteraction={true}
+          animationDuration={400}
         >
           <FontProvider>
             {/* <AuthContextProvider> */}

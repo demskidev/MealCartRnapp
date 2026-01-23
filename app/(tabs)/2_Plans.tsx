@@ -28,7 +28,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TourGuideZone, useTourGuideController } from "rn-tourguide";
+import { useTourGuideController } from "rn-tourguide";
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
@@ -58,7 +58,7 @@ const PlansScreen: React.FC = () => {
       (error) => {
         hideLoader();
         console.error("Error fetching plans:", error);
-      }
+      },
     );
   }, []);
 
@@ -69,15 +69,15 @@ const PlansScreen: React.FC = () => {
       (error) => {
         setRefreshing(false);
         console.error("Error fetching plans:", error);
-      }
+      },
     );
   };
 
   const activePlan = filteredPlans.find(
-    (plan) => plan.status === MealStatus.STARTED
+    (plan) => plan.status === MealStatus.STARTED,
   );
   const otherPlans = filteredPlans.filter(
-    (plan) => plan.status !== MealStatus.STARTED
+    (plan) => plan.status !== MealStatus.STARTED,
   );
 
   console.log("🏆 Active Plan:", activePlan);
@@ -91,7 +91,7 @@ const PlansScreen: React.FC = () => {
       }, 100);
 
       return () => clearTimeout(timeout);
-    }, [zoneReady])
+    }, [zoneReady]),
   );
 
   useFocusEffect(
@@ -107,7 +107,7 @@ const PlansScreen: React.FC = () => {
         isActive = false;
         clearTimeout(timeout);
       };
-    }, [])
+    }, []),
   );
 
   // Utility to normalize Firestore/JS timestamps to JS Date
@@ -156,21 +156,21 @@ const PlansScreen: React.FC = () => {
         return;
       }
     }
-    showLoader()
+    showLoader();
     updatePlan(
       {
         id: plan.id,
         status: status,
       },
       () => {
-        hideLoader()
+        hideLoader();
         showSuccessToast(Strings.plan_updated_successfully);
         // loadPlans()
       },
       (error) => {
-        hideLoader()
+        hideLoader();
         showErrorToast(error || Strings.error_updating_plan);
-      }
+      },
     );
   };
 
@@ -258,22 +258,19 @@ const PlansScreen: React.FC = () => {
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{Strings.plans_mealPlans}</Text>
 
-          <TourGuideZone zone={5} shape="circle" maskOffset={10}>
-            <View
-              collapsable={false}
-              style={styles.tourTarget}
-              onLayout={() => setZoneReady(true)}
+          {/* <TourGuideZone zone={5} shape="circle" maskOffset={10}> */}
+          <View
+            collapsable={false}
+            style={styles.tourTarget}
+            onLayout={() => setZoneReady(true)}
+          >
+            <TouchableOpacity
+              onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
             >
-              <TouchableOpacity
-                onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
-              >
-                <Image
-                  source={gradientclose}
-                  style={styles.gradientCloseImage}
-                />
-              </TouchableOpacity>
-            </View>
-          </TourGuideZone>
+              <Image source={gradientclose} style={styles.gradientCloseImage} />
+            </TouchableOpacity>
+          </View>
+          {/* </TourGuideZone> */}
         </View>
         {!activePlan ? (
           <>
