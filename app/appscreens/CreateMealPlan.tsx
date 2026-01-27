@@ -61,9 +61,6 @@ export default function CreateMealPlan({}) {
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams();
   const planParam = params?.plan as string;
-  const existingPlan: EnrichedPlan | null = planParam
-    ? (JSON.parse(planParam) as EnrichedPlan)
-    : null;
   console.log("CreateMealPlan - planParam:", planParam);
   const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
   const { addPlan, updatePlan, loading: planLoading } = usePlanViewModel();
@@ -93,25 +90,30 @@ export default function CreateMealPlan({}) {
   }, []);
 
   useEffect(() => {
-    if (existingPlan && mealPlans.length > 0) {
-      setPlanName(existingPlan.planName);
+    if (planParam && mealPlans.length > 0) {
+      try {
+        const existingPlan: EnrichedPlan = JSON.parse(planParam);
+        setPlanName(existingPlan.planName);
 
-      const planStartDate = existingPlan.startDate?.seconds
-        ? new Date(existingPlan.startDate.seconds * 1000)
-        : new Date(existingPlan.startDate);
-      setStartDate(planStartDate);
+        const planStartDate = existingPlan.startDate?.seconds
+          ? new Date(existingPlan.startDate.seconds * 1000)
+          : new Date(existingPlan.startDate);
+        setStartDate(planStartDate);
 
-      // Populate selected meal slots from existing plan
-      const slots: Record<string, any> = {};
-      existingPlan.days.forEach((day: any) => {
-        day.mealSlots.forEach((slot: any) => {
-          const slotKey = `${day.dayTitle}-${slot.mealPlan?.name}`;
-          slots[slotKey] = slot.meal;
+        // Populate selected meal slots from existing plan
+        const slots: Record<string, any> = {};
+        existingPlan.days.forEach((day: any) => {
+          day.mealSlots.forEach((slot: any) => {
+            const slotKey = `${day.dayTitle}-${slot.mealPlan?.name}`;
+            slots[slotKey] = slot.meal;
+          });
         });
-      });
-      setSelectedMealSlots(slots);
+        setSelectedMealSlots(slots);
+      } catch (error) {
+        console.error("Error parsing plan:", error);
+      }
     }
-  }, [existingPlan, mealPlans]);
+  }, [planParam, mealPlans]);
   // useEffect(() => {
   //   if (planParam && mealPlans.length > 0) {
   //     try {
@@ -551,7 +553,7 @@ export default function CreateMealPlan({}) {
   };
 
   const updateMealPlan = () => {
-    if (!existingPlan) {
+    if (!planParam) {
       alert(Strings.error_updating_plan || "Cannot update plan");
       return;
     }
@@ -565,6 +567,7 @@ export default function CreateMealPlan({}) {
 
     console.log("Days Data to update:", JSON.stringify(daysData, null, 2));
 
+    const existingPlan: EnrichedPlan = JSON.parse(planParam);
     const planPayload = {
       id: existingPlan.id,
       planName: planName || Strings.unknown_plan,

@@ -179,7 +179,6 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
                     source={closeIcon}
                     style={styles.closeIconImage}
                     resizeMode="contain"
-                    
                   />
                 </TouchableOpacity>
               </View>
