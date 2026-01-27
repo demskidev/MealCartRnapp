@@ -28,11 +28,16 @@ import { hideLoader, showLoader } from "./Loader";
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onUnlinkSocialAccount?: () => void;
 };
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
-export default function UpdateProfileModal({ visible, onClose }: Props) {
+export default function UpdateProfileModal({
+  visible,
+  onClose,
+  onUnlinkSocialAccount,
+}: Props) {
   const { updateUserData, user } = useProfileViewModel();
   const [name, setName] = useState("");
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
@@ -174,7 +179,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
                 <Text style={styles.socialText}>
                   {Strings.updateProfileModal_connectedWithGoogle}
                 </Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={onUnlinkSocialAccount}>
                   <Image
                     source={closeIcon}
                     style={styles.closeIconImage}

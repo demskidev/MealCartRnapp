@@ -1,6 +1,5 @@
 import BaseButton from "@/components/BaseButton";
 import {
-  getCurrentMealCategory,
   horizontalScale,
   moderateScale,
   verticalScale,
@@ -109,15 +108,6 @@ const HomeScreen: React.FC = () => {
   // Start tour guide on first time
   useFocusEffect(
     React.useCallback(() => {
-      console.log(
-        "🔍 Tour Check - tourLoading:",
-        tourLoading,
-        "shouldStartTour:",
-        shouldStartTour,
-        "canStart:",
-        canStart,
-      );
-
       if (tourLoading) return;
 
       if (shouldStartTour && canStart && isLayoutReady) {
@@ -140,10 +130,8 @@ const HomeScreen: React.FC = () => {
     }, [shouldStartTour, canStart, tourLoading, isLayoutReady]),
   );
 
-  // Handle tour events
   React.useEffect(() => {
     const onStop = () => {
-      // Don't mark tour as complete if we're just navigating to another screen
       if (!isNavigating) {
         console.log("Tour closed by user");
       } else {
@@ -166,24 +154,22 @@ const HomeScreen: React.FC = () => {
 
   const getTodayMeals = () => {
     if (!activePlan || !activePlan.days) return [];
-    const todayName = new Date().toLocaleDateString("en-US", {
-      weekday: "long",
+    console.log("wearegettingupcomingmeals", activePlan);
+
+    // Collect all meals from all days in plan order
+    const allUpcomingMeals: Meal[] = [];
+
+    activePlan.days.forEach((day) => {
+      if (day.mealSlots) {
+        day.mealSlots.forEach((slot) => {
+          if (slot.meal) {
+            allUpcomingMeals.push(slot.meal);
+          }
+        });
+      }
     });
-    const todayObj = activePlan.days.find(
-      (day) => day.dayTitle.toLowerCase() === todayName.toLowerCase(),
-    );
-    if (!todayObj) return [];
 
-    const currentMealCategory = getCurrentMealCategory();
-    const filteredMeals = todayObj.mealSlots
-      .filter((slot) => {
-        const mealPlanName = slot.mealPlan?.name || "";
-        return mealPlanName.toLowerCase() === currentMealCategory.toLowerCase();
-      })
-      .map((slot) => slot.meal)
-      .filter(Boolean);
-
-    return filteredMeals;
+    return allUpcomingMeals;
   };
 
   const todayMeals = getTodayMeals();
@@ -292,6 +278,7 @@ const HomeScreen: React.FC = () => {
               colors={[Colors._667D4C, Colors._9DAF89]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
+              style={styles.gradientContainer}
             >
               <View style={styles.mainMealCartContainer}>
                 <View style={styles.emptyView} />
@@ -370,7 +357,7 @@ const HomeScreen: React.FC = () => {
                       showsHorizontalScrollIndicator={false}
                       data={todayMeals}
                       renderItem={renderMealItem}
-                      keyExtractor={(item) => item.id}
+                      keyExtractor={(item, index) => `${item.id}-${index}`}
                       contentContainerStyle={styles.upcomingListContent}
                     />
                   </View>
@@ -530,6 +517,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(20),
     paddingTop: verticalScale(25),
     paddingBottom: verticalScale(20),
+  },
+  gradientContainer: {
+    borderBottomLeftRadius: moderateScale(35),
+    borderBottomRightRadius: moderateScale(35),
   },
   greetingText: {
     color: Colors.white,

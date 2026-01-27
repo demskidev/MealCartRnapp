@@ -274,6 +274,12 @@ export default function ProfileScreen() {
       <UpdateProfileModal
         visible={showModal}
         onClose={() => setShowModal(false)}
+        onUnlinkSocialAccount={async () => {
+          showLoader();
+          await performLogout();
+          hideLoader();
+          setShowModal(false);
+        }}
       />
       <ConfirmationModal
         visible={deleteAccount}
