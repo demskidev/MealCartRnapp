@@ -1,0 +1,86 @@
+import { CreateAccount, ForwardIcon, SplashIcon } from "@/assets/svg";
+import BaseButton from "@/components/BaseButton";
+import { APP_ROUTES } from "@/constants/AppRoutes";
+import { moderateScale } from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { fontSize } from "@/utils/Fonts";
+import { router } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const WelcomeScreen = () => {
+  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
+    router.push(screen as any);
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SplashIcon width={moderateScale(145)} height={moderateScale(196)} />
+
+      <View style={styles.middleContainer}>
+        <Text style={[styles.title, styles.text]}>{Strings.mealCart}</Text>
+        <Text style={[styles.description, styles.text]}>
+          {Strings.description}
+        </Text>
+      </View>
+
+      <View style={styles.bottomContainer}>
+        <BaseButton
+          title={Strings.createAccount}
+          gradientButton={true}
+          rightChild={<CreateAccount />}
+          textColor={Colors.white}
+          onPress={() => navigate(APP_ROUTES.SIGNUP)}
+        />
+
+        <BaseButton
+          title={Strings.logIn}
+          rightChild={<ForwardIcon />}
+          backgroundColor={Colors.buttonBackground}
+          onPress={() => navigate(APP_ROUTES.SIGNIN)}
+          textStyle={styles.loginButton}
+        />
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: moderateScale(35),
+    padding: moderateScale(20),
+  },
+
+  title: {
+    color: Colors.primary,
+    fontFamily: FontFamilies.ROBOTO_BLACK,
+    fontSize: fontSize(35),
+  },
+  description: {
+    color: Colors.tertiary,
+    lineHeight: moderateScale(20),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: fontSize(14),
+  },
+
+  middleContainer: {
+    gap: moderateScale(12),
+  },
+  text: {
+    textAlign: "center",
+  },
+
+  bottomContainer: {
+    width: "100%",
+    gap: moderateScale(10),
+  },
+  loginButton:{
+    paddingVertical:moderateScale(0)
+  }
+});
+
+export default WelcomeScreen;

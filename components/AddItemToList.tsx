@@ -1,0 +1,968 @@
+import { burger, closeIcon, mealfoodA } from "@/assets/images";
+import { CheckBox, FilledCheckBox, SearchIcon } from "@/assets/svg";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
+import { Meal } from "@/reduxStore/slices/mealsSlice";
+import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Keyboard,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import BaseButton from "./BaseButton";
+import CustomStepper from "./CustomStepper";
+import CustomTextInput from "./CustomTextInput";
+
+const mealsData = [
+  { id: "1", name: "Classic Spaghetti Bolognese", image: burger },
+  { id: "2", name: "Classic Spaghetti Bolognese", image: burger },
+  { id: "3", name: "Classic Spaghetti Bolognese", image: burger },
+];
+const { height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
+
+interface AddItemToListProps {
+  visible: boolean;
+  onClose: () => void;
+  from?: typeof CREATE_MEAL_PLAN | typeof SHOPPING_LIST;
+  onMealSelect?: (meal: any) => void;
+}
+
+const AddItemToList = ({
+  visible,
+  onClose,
+  from = "shoppingList",
+  onMealSelect,
+}: AddItemToListProps) => {
+  const [search, setSearch] = useState("");
+
+  const [manualInput, setManualInput] = useState("");
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+
+  const [searchText, setSearchText] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [pendingItems, setPendingItems] = useState<
+    { id: string; value: string }[]
+  >([]);
+  const [manualList, setManualList] = useState<{ id: string; value: string }[]>(
+    [],
+  );
+  const [unitWeight, setUnitweight] = useState("100 grms");
+  const unitWeightOptions = ["100grm", "200grm", "1kg"];
+  const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
+  const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
+
+  const { meals, loading, fetchMeals, searchMealsCombined } =
+    useMealsViewModel();
+  const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
+  const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
+  const [dynamicIngredients, setDynamicIngredients] = useState<string[]>([]);
+  const [fullIngredientsData, setFullIngredientsData] = useState<any[]>([]);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<TextInput>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Helper function: Fetch all ingredients data for a meal
+  // Fetch from ingredient collection using ingredientId
+
+  useEffect(() => {
+    // Only fetch if meals array is empty
+    if (visible && meals.length === 0) {
+      console.log("Loading initial meals");
+      setIsLoading(true);
+      fetchMeals(
+        (data) => {
+          setIsLoading(false);
+          console.log("addmealtolist meals fetched:", data.length);
+        },
+        (error) => {
+          setIsLoading(false);
+          console.error("Error fetching initial meals:", error);
+        },
+        3,
+        null,
+      );
+    }
+  }, [visible]);
+
+  // Filter meals based on search
+  useEffect(() => {
+    if (!visible) return;
+    if (!search.trim()) return; // Don't search if empty
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    debounceTimeout.current = setTimeout(() => {
+      setIsLoading(true);
+
+      searchMealsCombined(
+        { searchText: search.trim().toLowerCase() },
+        (data) => {
+          setFilteredMeals(data);
+          setIsLoading(false);
+        },
+        (error) => {
+          setIsLoading(false);
+          setFilteredMeals([]);
+          console.error("❌ Error searching meals:", error);
+        },
+      );
+    }, 400); // 400ms debounce
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [search, visible]);
+
+  // Extract ingredients from selected meals with full data
+  useEffect(() => {
+    if (selectedMeals.length === 0) {
+      setDynamicIngredients([]);
+      setFullIngredientsData([]);
+      return;
+    }
+
+    const selectedMealObjects = meals.filter((meal) =>
+      selectedMeals.includes(meal.id),
+    );
+
+    const allIngredientNames: string[] = [];
+    const allFullIngredients: any[] = [];
+
+    // Loop through each selected meal
+    for (const meal of selectedMealObjects) {
+      if (meal.ingredients && Array.isArray(meal.ingredients)) {
+        // Extract ingredient names from the meal's ingredients array
+        meal.ingredients.forEach((ingredient: any) => {
+          const ingredientName = ingredient.ingredientName;
+
+          if (ingredientName && !allIngredientNames.includes(ingredientName)) {
+            allIngredientNames.push(ingredientName);
+            // Add meal information to each ingredient
+            allFullIngredients.push({
+              ...ingredient,
+              mealId: meal.id,
+              mealName: meal.name,
+            });
+          }
+        });
+      }
+    }
+
+    setDynamicIngredients(allIngredientNames);
+    setFullIngredientsData(allFullIngredients);
+
+    console.log("📝 Extracted ingredient names:", allIngredientNames);
+    console.log("📝 Full ingredients data:", allFullIngredients);
+  }, [selectedMeals, meals]);
+
+  // Removed initialization of itemWeights - let them be undefined by default
+  // so that ingredient's default unit can be used
+
+  // Update suggestions when dynamic ingredients change (when meals are selected/deselected)
+  useEffect(() => {
+    // If search bar is empty, input is focused, and we have ingredients, update suggestions
+    if (!searchText.trim() && isInputFocused && dynamicIngredients.length > 0) {
+      setSuggestions(dynamicIngredients);
+    }
+  }, [dynamicIngredients, isInputFocused]);
+
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+
+    if (!text.trim()) {
+      // Show all ingredients when input is empty but focused
+      setSuggestions(dynamicIngredients);
+      return;
+    }
+
+    const filtered = dynamicIngredients.filter((item) =>
+      item.toLowerCase().includes(text.toLowerCase()),
+    );
+
+    setSuggestions(filtered);
+  };
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    // Show all ingredients from selected meals when user focuses on the input
+    if (dynamicIngredients.length > 0) {
+      setSuggestions(dynamicIngredients);
+    } else {
+      // If no meals selected, show empty suggestions
+      setSuggestions([]);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Clear focus state and hide suggestions
+    setIsInputFocused(false);
+  };
+  const handleSelectSuggestion = (value: string) => {
+    if (
+      pendingItems.some((i) => i.value === value) ||
+      manualList.some((i) => i.value === value)
+    ) {
+      setSearchText("");
+      Keyboard.dismiss();
+      return;
+    }
+
+    setPendingItems((prev) => [...prev, { id: Date.now().toString(), value }]);
+
+    setSearchText("");
+    Keyboard.dismiss();
+  };
+
+  const manualItems = [{ id: "1", value: "1 egg" }];
+  const handleAddPendingItem = (item: { id: string; value: string }) => {
+    setManualList((prev) => [...prev, item]);
+    setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
+  };
+  console.log("mealsllllllll999", meals);
+
+  // Use dynamic ingredients from selected meals
+  const INGREDIENTS = dynamicIngredients;
+
+  const handleAddItem = (value: string) => {
+    if (!value.trim()) return;
+
+    setManualList((prev) => [...prev, { id: Date.now().toString(), value }]);
+
+    setManualInput("");
+    setFilteredSuggestions([]);
+  };
+
+  const handleMealPress = (meal: any) => {
+    // Dismiss keyboard and blur input when selecting meals
+    Keyboard.dismiss();
+    inputRef.current?.blur();
+
+    if (from === CREATE_MEAL_PLAN) {
+      // For meal plan: single selection, call callback immediately
+      onMealSelect?.(meal);
+      resetModal();
+      onClose();
+    } else {
+      // For shopping list: multi-selection with checkboxes
+      setSelectedMeals((prev) => {
+        if (prev.includes(meal.id)) {
+          return prev.filter((id) => id !== meal.id);
+        } else {
+          return [...prev, meal.id];
+        }
+      });
+    }
+  };
+
+  const resetModal = () => {
+    setSearch("");
+    setSearchText("");
+    setSelectedMeals([]);
+    setFilteredMeals([]);
+    setManualList([]);
+    setPendingItems([]);
+    setSuggestions([]);
+    setItemWeights({});
+    setDynamicIngredients([]);
+    setFullIngredientsData([]);
+    setIsInputFocused(false);
+    setManualInput("");
+    setFilteredSuggestions([]);
+  };
+
+  const handleClose = () => {
+    resetModal();
+    onClose();
+  };
+
+  const handleGenerateList = () => {
+    // Collect all ingredients with their selected units
+    const ingredientsWithUnits = fullIngredientsData.map((ingredient) => {
+      const ingredientName = ingredient.ingredientName;
+      const categoryUnits = ingredient.categoryUnits || [
+        "100grm",
+        "200grm",
+        "1kg",
+      ];
+      const defaultUnit = ingredient.unit || "100grm";
+
+      // Normalize the unit strings by removing spaces for comparison
+      const normalizedDefaultUnit = defaultUnit
+        .replace(/\s+/g, "")
+        .toLowerCase();
+      const defaultUnitIndex = categoryUnits.findIndex(
+        (unit) =>
+          unit.replace(/\s+/g, "").toLowerCase() === normalizedDefaultUnit,
+      );
+
+      // Get the selected weight index or use default
+      const weightIndex =
+        itemWeights[ingredientName] !== undefined
+          ? itemWeights[ingredientName]
+          : defaultUnitIndex >= 0
+            ? defaultUnitIndex
+            : 0;
+
+      return {
+        ...ingredient,
+        selectedUnit: categoryUnits[weightIndex] || defaultUnit,
+      };
+    });
+
+    onMealSelect?.(ingredientsWithUnits);
+    resetModal();
+    onClose();
+  };
+
+  const renderMealItem = ({ item }: { item: Meal }) => (
+    <TouchableOpacity
+      style={styles.mealCard}
+      onPress={() => handleMealPress(item)}
+    >
+      <Image
+        source={item.imageUrl ? { uri: item.imageUrl } : mealfoodA}
+        style={styles.mealImage}
+        resizeMode="cover"
+      />
+      <Text style={styles.mealName}>{item.name}</Text>
+
+      {from !== CREATE_MEAL_PLAN &&
+        (selectedMeals.includes(item.id) ? (
+          <FilledCheckBox
+            width={verticalScale(22)}
+            height={verticalScale(22)}
+            color={Colors.tertiary}
+            style={styles.checkboxIcon}
+          />
+        ) : (
+          <CheckBox
+            width={verticalScale(22)}
+            height={verticalScale(22)}
+            color={Colors.tertiary}
+            style={styles.checkboxIcon}
+          />
+        ))}
+    </TouchableOpacity>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={handleClose}
+    >
+      <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={StyleSheet.absoluteFillObject} />
+        </TouchableWithoutFeedback>
+
+        <View style={styles.container}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View>
+              <Text style={styles.title}>
+                {from === CREATE_MEAL_PLAN
+                  ? Strings.createPlan_selectAMeal
+                  : Strings.addItemToList_title}
+              </Text>
+              {from !== CREATE_MEAL_PLAN && (
+                <Text style={styles.subtitle}>
+                  {Strings.addItemToList_subtitle}
+                </Text>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+
+          <View style={styles.searchBox}>
+            <SearchIcon
+              width={verticalScale(22)}
+              height={verticalScale(22)}
+              color={Colors.tertiary}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={Strings.addItemToList_searchPlaceholder}
+              placeholderTextColor={Colors.tertiary}
+              value={search}
+              onChangeText={setSearch}
+            />
+          </View>
+          {meals.length > 0 && <View style={styles.dividerRow} />}
+
+          {isLoading && (
+            <ActivityIndicator size="large" style={styles.loader} />
+          )}
+
+          {meals.length > 0 &&
+            console.log("First meal:", JSON.stringify(meals[0], null, 2))}
+          {meals.length > 0 &&
+            console.log("First meal:rrrrr", meals[0], null, 2)}
+
+          {meals.length > 0 &&
+            console.log("First meal:1111", JSON.stringify(meals, null, 2))}
+
+          {meals.length > 0 &&
+            meals[0]?.ingredients?.[0] &&
+            console.log(
+              "First ingredient:",
+              JSON.stringify(meals[0].ingredients[0], null, 2),
+            )}
+
+          <TouchableWithoutFeedback
+            onPress={() => {
+              Keyboard.dismiss();
+              inputRef.current?.blur();
+            }}
+          >
+            <View>
+              <FlatList
+                data={search.trim() ? filteredMeals : meals}
+                showsVerticalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                renderItem={renderMealItem}
+                contentContainerStyle={styles.mealsListContent}
+                ItemSeparatorComponent={() => (
+                  <View style={styles.mealSeparator} />
+                )}
+                style={styles.mealsListStyle}
+              />
+            </View>
+          </TouchableWithoutFeedback>
+
+          {from !== CREATE_MEAL_PLAN && (
+            <View>
+              <View style={styles.divider} />
+
+              <Text style={styles.addManualLabel}>
+                {Strings.addItemToList_addManualLabel}
+              </Text>
+
+              <CustomTextInput
+                ref={inputRef}
+                placeholder={Strings.addItemToList_searchIngredient}
+                style={styles.manualInput}
+                placeholderTextColor={Colors.tertiary}
+                onChangeText={handleSearch}
+                value={searchText}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+              />
+
+              {suggestions.length > 0 && isInputFocused && (
+                <FlatList
+                  data={suggestions}
+                  keyExtractor={(item) => item}
+                  style={styles.suggestionsListStyle}
+                  renderItem={({ item }) => {
+                    // Find the ingredient data for this item
+                    const ingredientData = fullIngredientsData.find(
+                      (ing) => ing.ingredientName === item,
+                    );
+                    const categoryUnits = ingredientData?.categoryUnits || [
+                      "100grm",
+                      "200grm",
+                      "1kg",
+                    ];
+                    const defaultUnit = ingredientData?.unit || "100grm";
+
+                    // Normalize the unit strings by removing spaces for comparison
+                    const normalizedDefaultUnit = defaultUnit
+                      .replace(/\s+/g, "")
+                      .toLowerCase();
+                    const defaultUnitIndex = categoryUnits.findIndex(
+                      (unit) =>
+                        unit.replace(/\s+/g, "").toLowerCase() ===
+                        normalizedDefaultUnit,
+                    );
+
+                    // Get current index or find index of default unit
+                    // Check if itemWeights[item] is undefined to use default unit index
+                    const currentIndex =
+                      itemWeights[item] !== undefined
+                        ? itemWeights[item]
+                        : defaultUnitIndex >= 0
+                          ? defaultUnitIndex
+                          : 0;
+                    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+
+                    return (
+                      <View>
+                        <View style={styles.suggestionItemContainer}>
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() => handleSelectSuggestion(item)}
+                            style={styles.suggestionTouchable}
+                          >
+                            <Text style={styles.suggestionText}>{item}</Text>
+                          </TouchableOpacity>
+
+                          <View style={styles.rowItem}>
+                            <CustomStepper
+                              value={categoryUnits[safeIndex]}
+                              onIncrement={() => {
+                                setItemWeights((prev) => {
+                                  const current = prev[item] ?? safeIndex;
+                                  return {
+                                    ...prev,
+                                    [item]: Math.min(
+                                      current + 1,
+                                      categoryUnits.length - 1,
+                                    ),
+                                  };
+                                });
+                              }}
+                              onDecrement={() => {
+                                setItemWeights((prev) => {
+                                  const current = prev[item] ?? safeIndex;
+                                  return {
+                                    ...prev,
+                                    [item]: Math.max(current - 1, 0),
+                                  };
+                                });
+                              }}
+                              containerStyle={styles.stepperContainer}
+                            />
+                          </View>
+                        </View>
+
+                        <View style={styles.dividerRowList} />
+                      </View>
+                    );
+                  }}
+                />
+              )}
+
+              <FlatList
+                data={[...pendingItems, ...manualList]}
+                keyExtractor={(item) => item.id}
+                style={styles.manualListStyle}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => {
+                  const isPending = pendingItems.some((i) => i.id === item.id);
+
+                  return (
+                    <View style={styles.manualAddRow}>
+                      {isPending ? (
+                        <>
+                          <TextInput
+                            style={styles.manualAddInput}
+                            value={item.value}
+                            editable={isPending}
+                          />
+                          <TouchableOpacity
+                            style={styles.addButton}
+                            onPress={() => handleAddPendingItem(item)}
+                          >
+                            <Text style={styles.addButtonText}>
+                              {Strings.addItemToList_add}
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        <View style={styles.manualItemContainer}>
+                          <TextInput
+                            style={styles.manualItemInput}
+                            value={item.value}
+                            editable={false}
+                          />
+                          <TouchableOpacity
+                            onPress={() =>
+                              setManualList((prev) =>
+                                prev.filter((i) => i.id !== item.id),
+                              )
+                            }
+                            style={styles.closeIconButton}
+                          >
+                            <Image
+                              source={closeIcon}
+                              style={styles.closeIconImage}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  );
+                }}
+              />
+            </View>
+          )}
+
+          <View style={styles.footer}>
+            <BaseButton
+              title={Strings.addItemToList_cancel}
+              gradientButton={false}
+              textColor={Colors.background}
+              width={from === CREATE_MEAL_PLAN ? 0 : width * 0.42}
+              textStyle={styles.cancelButton}
+              textStyleText={styles.cancelButtonText}
+              onPress={handleClose}
+            />
+            {from !== CREATE_MEAL_PLAN && (
+              <BaseButton
+                title={Strings.addItemToList_generateList}
+                gradientButton={true}
+                textColor={Colors.background}
+                width={width * 0.42}
+                textStyle={styles.confirmButton}
+                textStyleText={styles.confirmButtonText}
+                onPress={handleGenerateList}
+              />
+            )}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(18),
+    paddingHorizontal: horizontalScale(18),
+    paddingTop: verticalScale(5),
+    paddingBottom: verticalScale(15),
+    width: "92%",
+    alignSelf: "center",
+  },
+  title: {
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    fontSize: moderateScale(18),
+    color: Colors.primary,
+    marginTop: verticalScale(10),
+    marginBottom: verticalScale(2),
+  },
+  subtitle: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    marginBottom: verticalScale(16),
+    marginTop: verticalScale(8),
+  },
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(30),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    paddingHorizontal: horizontalScale(12),
+    height: verticalScale(44),
+    marginTop: verticalScale(5),
+    marginBottom: verticalScale(8),
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(15),
+    color: Colors.primary,
+    marginLeft: horizontalScale(8),
+  },
+  mealCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(12),
+    marginRight: horizontalScale(2),
+    marginLeft: horizontalScale(1),
+    elevation: 4,
+
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    marginTop: verticalScale(3),
+  },
+  mealImage: {
+    borderTopLeftRadius: moderateScale(8),
+    borderBottomLeftRadius: moderateScale(8),
+    marginRight: horizontalScale(12),
+    width: horizontalScale(65),
+    height: verticalScale(55),
+  },
+  mealName: {
+    flex: 1,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(14),
+    color: Colors.primary,
+  },
+  checkbox: {
+    width: verticalScale(24),
+    height: verticalScale(24),
+    borderWidth: moderateScale(2),
+    borderColor: Colors.borderColor,
+    borderRadius: moderateScale(6),
+    backgroundColor: Colors.white,
+  },
+  divider: {
+    marginTop: verticalScale(9),
+    marginBottom: verticalScale(18),
+    height: moderateScale(1),
+    backgroundColor: Colors.divider,
+  },
+  addManualLabel: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(14),
+    color: Colors.primary,
+    marginBottom: verticalScale(6),
+  },
+  manualInput: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.primary,
+    paddingHorizontal: horizontalScale(10),
+    height: verticalScale(40),
+    marginBottom: verticalScale(6),
+  },
+  manualItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    paddingHorizontal: horizontalScale(10),
+    height: verticalScale(40),
+    marginBottom: verticalScale(6),
+  },
+  manualItemText: {
+    flex: 1,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(15),
+    color: Colors.primary,
+  },
+  manualAddRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: verticalScale(16),
+  },
+  manualAddInput: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    paddingHorizontal: horizontalScale(10),
+    height: verticalScale(40),
+    marginRight: horizontalScale(8),
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  addButton: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+
+    paddingHorizontal: horizontalScale(18),
+    height: verticalScale(40),
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  addButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(14),
+    color: Colors.primary,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: verticalScale(10),
+  },
+  cancelButton: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    marginRight: horizontalScale(8),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(14),
+    color: Colors.primary,
+  },
+  generateButton: {
+    backgroundColor: Colors._7B8756,
+    borderRadius: moderateScale(8),
+    flex: 1,
+    marginLeft: horizontalScale(8),
+    height: verticalScale(44),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  generateButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(16),
+    color: Colors.white,
+  },
+  checkboxIcon: {
+    marginRight: horizontalScale(10),
+  },
+  dividerRow: {
+    height: moderateScale(1),
+    backgroundColor: Colors.divider,
+
+    marginVertical: verticalScale(15),
+  },
+  confirmButton: {
+    borderRadius: moderateScale(8),
+    alignItems: "center",
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.white,
+    fontSize: moderateScale(14),
+  },
+  confirmButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.white,
+    fontSize: moderateScale(14),
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: verticalScale(18),
+  },
+  rowItem: {
+    minWidth: 100,
+    alignSelf: "center",
+    marginBottom: verticalScale(-8),
+  },
+  label: {
+    fontSize: moderateScale(12),
+    marginTop: moderateScale(8),
+    marginBottom: moderateScale(4),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    color: Colors.primary,
+  },
+  suggestionButton: {
+    backgroundColor: "red",
+  },
+  dividerRowList: {
+    height: moderateScale(1),
+    backgroundColor: Colors.divider,
+    flex: 1,
+
+    marginVertical: verticalScale(8),
+  },
+  mealsListContent: {
+    paddingBottom: verticalScale(12),
+  },
+  mealSeparator: {
+    height: verticalScale(10),
+  },
+  mealsListStyle: {
+    marginTop: verticalScale(10),
+    maxHeight: verticalScale(200),
+  },
+  suggestionsListStyle: {
+    maxHeight: 200,
+  },
+  suggestionItemContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.white,
+    paddingHorizontal: horizontalScale(12),
+    justifyContent: "space-between",
+  },
+  suggestionTouchable: {
+    width: width * 0.5,
+    height: verticalScale(40),
+    justifyContent: "center",
+  },
+  suggestionText: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+  },
+  stepperContainer: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  manualListStyle: {
+    maxHeight: verticalScale(250),
+  },
+  manualItemContainer: {
+    flex: 1,
+    position: "relative",
+    justifyContent: "center",
+  },
+  manualItemInput: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
+    paddingHorizontal: horizontalScale(10),
+    height: verticalScale(40),
+    marginRight: 0,
+    paddingRight: 36,
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  closeIconButton: {
+    position: "absolute",
+    right: 10,
+    top: 0,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeIconImage: {
+    width: 22,
+    height: 22,
+  },
+  loader: {
+    marginVertical: verticalScale(20),
+  },
+});
+
+export default AddItemToList;

@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "Meal Cart",
+    "slug": "meal-cart",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "mealcartrnmain",
+    "owner": "the-demski-group",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "usesAppleSignIn": true,
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jbehl23.mealcart",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "appleTeamId": "34QW5F2D72"
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.jbehl23.mealcart"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "./plugins/withGoogleSignInIOS",
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.107165390600-sni5oc9le9cnucc89mqv7e51eq0undge"
+        }
+      ],
+      "expo-apple-authentication"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3c7a96f9-4a7e-48b1-9452-4e3e47c534f2"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3c7a96f9-4a7e-48b1-9452-4e3e47c534f2"
+    }
+  }
+}

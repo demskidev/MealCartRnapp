@@ -1,0 +1,716 @@
+import { calendaricon, closeIcon } from "@/assets/images";
+import { CheckBox, FilledCheckBox, IconCartWhite } from "@/assets/svg";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Strings } from "@/constants/Strings";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
+import { useAppSelector } from "@/reduxStore/hooks";
+import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import { Timestamp } from "firebase/firestore";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { TourGuideZone } from "rn-tourguide";
+import AddItemToList from "./AddItemToList";
+import BaseButton from "./BaseButton";
+import CustomTextInput from "./CustomTextInput";
+import CustomDateTimePicker from "./DateTimePicker";
+import { hideLoader, showLoader } from "./Loader";
+
+export interface CreateNewListBottomSheetRef {
+  expand: () => void;
+  close: () => void;
+}
+interface CreateNewListBottomSheetProps {
+  ingredientsData?: any[];
+}
+// const CreateNewListBottomSheet = forwardRef<BottomSheet, CreateNewListBottomSheetProps>(
+//   ({ isEdit = false, mealData }, ref) => {
+const CreateNewListBottomSheet = forwardRef<
+  CreateNewListBottomSheetRef,
+  CreateNewListBottomSheetProps
+>(({ ingredientsData = [] }, ref: React.Ref<CreateNewListBottomSheetRef>) => {
+  const snapPoints = useMemo(() => ["100%"], []);
+  const user = useAppSelector((state) => state.auth.user);
+  const { addShoppingListData, loading } = useShoppingListViewModel();
+  const {
+    shouldStartTour,
+    setTriggerOpenAddItemToList,
+    setTriggerAddDummyIngredients,
+    setTriggerCloseCreateList,
+    isCreateListBottomSheetOpen,
+    setIsCreateListBottomSheetOpen,
+  } = useTourStep();
+  const [listName, setListName] = useState("");
+  const [shoppingDay, setShoppingDay] = useState("");
+  const [mealName, setMealName] = useState("");
+  const [mealDescription, setMealDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [prepTime, setPrepTime] = useState("5 Mins");
+  const [servings, setServings] = useState("1");
+  const [difficulty, setDifficulty] = useState("Easy");
+  const [category, setCategory] = useState("Dinner");
+  const [ingredientName, setIngredientName] = useState("");
+  const [ingredientCount, setIngredientCount] = useState("1");
+  const [ingredientUnit, setIngredientUnit] = useState("100grm");
+  const [ingredientCategory, setIngredientCategory] = useState("Fruit");
+  const { height } = Dimensions.get("window");
+  const { width } = Dimensions.get("window");
+  const prepTimeOptions = ["5 Mins", "10 Mins", "15 Mins"];
+  const prepTimeIndex = prepTimeOptions.indexOf(prepTime);
+  const [unitWeight, setUnitweight] = useState("100 grms");
+  const unitWeightOptions = ["100grm", "200grm", "1kg"];
+  const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
+  const [ingredients, setIngredients] = useState([
+    { name: "", count: "1", unit: "100grm", category: "Fruit" },
+  ]);
+  const [isAddItemVisible, setIsAddItemVisible] = useState(false);
+  const [receivedIngredients, setReceivedIngredients] = useState<any[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  // Group ingredients by category
+  const groupedIngredients = receivedIngredients.reduce(
+    (acc: any, ingredient: any) => {
+      const category = ingredient.categoryName || "Other";
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push({
+        id: ingredient.ingredientId || ingredient.ingredientName,
+        category: ingredient.categoryName,
+        name: ingredient.ingredientName,
+        amount: ingredient.selectedUnit || ingredient.unit,
+      });
+      return acc;
+    },
+    {},
+  );
+  // Format date as MM/DD/YYYY
+  const formatDisplayDate = (date: Date) => {
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  };
+
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  useImperativeHandle(ref, () => ({
+    expand: () => {
+      if (shouldStartTour) {
+        setIsTourOpen(true);
+        setIsCreateListBottomSheetOpen(true);
+      }
+      bottomSheetRef.current?.expand();
+    },
+    close: () => {
+      if (shouldStartTour) {
+        setIsTourOpen(false);
+        setIsCreateListBottomSheetOpen(false);
+      }
+      bottomSheetRef.current?.close();
+    },
+  }));
+
+  // Register callback to open AddItemToList during tour
+  // useEffect(() => {
+  //   const openAddItem = () => {
+  //     setIsAddItemVisible(true);
+  //   };
+  //   setTriggerOpenAddItemToList(() => openAddItem);
+
+  //   return () => {
+  //     setTriggerOpenAddItemToList(null);
+  //   };
+  // }, [setTriggerOpenAddItemToList]);
+
+  // NOTE: Removed triggerCloseCreateList registration - bottom sheet should stay open during tour
+  // The bottom sheet will be manually closed when needed (e.g., on save or cancel)
+  // useEffect(() => {
+  //   const closeBottomSheet = () => {
+  //     bottomSheetRef.current?.close();
+  //   };
+  //   setTriggerCloseCreateList(() => closeBottomSheet);
+
+  //   return () => {
+  //     setTriggerCloseCreateList(null);
+  //   };
+  // }, [setTriggerCloseCreateList]);
+
+  // Register callback to add dummy ingredients during tour
+  useEffect(() => {
+    const addDummyData = () => {
+      const dummyIngredients = [
+        {
+          ingredientId: "dummy-ing-1",
+          ingredientName: "Spaghetti",
+          categoryId: "cat-1",
+          categoryName: "Pasta",
+          selectedUnit: "400 grams",
+          unit: "400 grams",
+          count: 1,
+          mealId: "tour-dummy-meal",
+        },
+        {
+          ingredientId: "dummy-ing-2",
+          ingredientName: "Ground Beef",
+          categoryId: "cat-2",
+          categoryName: "Meat",
+          selectedUnit: "500 grams",
+          unit: "500 grams",
+          count: 1,
+          mealId: "tour-dummy-meal",
+        },
+        {
+          ingredientId: "dummy-ing-3",
+          ingredientName: "Tomato Sauce",
+          categoryId: "cat-3",
+          categoryName: "Sauces",
+          selectedUnit: "250 ml",
+          unit: "250 ml",
+          count: 1,
+          mealId: "tour-dummy-meal",
+        },
+      ];
+      setReceivedIngredients(dummyIngredients);
+      // Auto-select all dummy ingredients
+      setSelectedItems(dummyIngredients.map((ing) => ing.ingredientId));
+    };
+    setTriggerAddDummyIngredients(() => addDummyData);
+
+    return () => {
+      setTriggerAddDummyIngredients(null);
+    };
+  }, [setTriggerAddDummyIngredients]);
+
+  // Auto-reopen bottom sheet during tour if it was open before navigation
+  useEffect(() => {
+    if (shouldStartTour && isCreateListBottomSheetOpen && !isTourOpen) {
+      // Small delay to ensure the screen is mounted
+      const timer = setTimeout(() => {
+        console.log("🔄 Reopening bottom sheet after navigation");
+        bottomSheetRef.current?.expand();
+        setIsTourOpen(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldStartTour, isCreateListBottomSheetOpen, isTourOpen]);
+
+  const data = [
+    { id: "1", category: "Category", name: "Spaghetti", amount: "400 grams" },
+    { id: "2", category: "Category", name: "Ground Beef", amount: "500 grams" },
+    { id: "3", category: "Category", name: "Ground Beef", amount: "500 grams" },
+  ];
+
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedItems((prev) => {
+      if (prev.includes(itemId)) {
+        return prev.filter((id) => id !== itemId);
+      } else {
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  const renderIngredientItem = ({
+    item,
+  }: {
+    item: { id: string; category: string; name: string; amount: string };
+  }) => {
+    const isSelected = selectedItems.includes(item.id);
+
+    return (
+      <TouchableOpacity
+        style={styles.cardCategory}
+        onPress={() => toggleItemSelection(item.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.checkboxRow}>
+          {isSelected ? (
+            <FilledCheckBox
+              width={verticalScale(22)}
+              height={verticalScale(22)}
+              color={Colors.tertiary}
+              style={styles.checkboxIcon}
+            />
+          ) : (
+            <CheckBox
+              width={verticalScale(22)}
+              height={verticalScale(22)}
+              color={Colors.tertiary}
+              style={styles.checkboxIcon}
+            />
+          )}
+          <View>
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.amount}>{item.amount}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const resetForm = () => {
+    setListName("");
+    setShoppingDay("");
+    setStartDate(new Date());
+    setReceivedIngredients([]);
+    setSelectedItems([]);
+  };
+
+  const renderCategorySection = (category: string) => (
+    <View key={category}>
+      <Text style={styles.sectionTitle}>{category}</Text>
+      <View style={styles.dividerRow} />
+      <FlatList
+        data={groupedIngredients[category]}
+        keyExtractor={(item) => item.id}
+        renderItem={renderIngredientItem}
+        scrollEnabled={false}
+      />
+    </View>
+  );
+
+  const handleSaveShoppingList = async () => {
+    try {
+      if (!listName.trim()) {
+        alert("Please enter a list name");
+        return;
+      }
+
+      if (!shoppingDay.trim()) {
+        alert("Please enter a shopping day");
+        return;
+      }
+
+      if (receivedIngredients.length === 0) {
+        alert("Please add items to your shopping list");
+        return;
+      }
+
+      // Filter only selected ingredients and map to required fields
+      const selectedIngredients = receivedIngredients.filter((ingredient) =>
+        selectedItems.includes(
+          ingredient.ingredientId || ingredient.ingredientName,
+        ),
+      );
+
+      if (selectedIngredients.length === 0) {
+        alert("Please select at least one item to save");
+        return;
+      }
+
+      const mappedIngredients = selectedIngredients.map((ingredient) => ({
+        ingredientId: ingredient.ingredientId,
+        categoryId: ingredient.categoryId,
+        mealId: ingredient.mealId || "",
+        unit: ingredient.selectedUnit || ingredient.unit,
+        count: ingredient.count || 1,
+      }));
+      console.log("mappedIngredients", mappedIngredients);
+
+      const shoppingListData = {
+        listName: listName.trim(),
+        ingredients: mappedIngredients,
+        createdAt: Timestamp.fromDate(new Date()),
+        shoppingDate: Timestamp.fromDate(startDate),
+        uid: user?.id,
+      };
+      console.log("shoppingListData", shoppingListData);
+      showLoader();
+      addShoppingListData(
+        shoppingListData,
+        () => {
+          hideLoader();
+          alert("Shopping list created successfully!");
+          // Reset form
+          setListName("");
+          setShoppingDay("");
+          setReceivedIngredients([]);
+          setSelectedItems([]);
+          bottomSheetRef.current?.close();
+        },
+        (error) => {
+          hideLoader();
+          alert("Error creating shopping list: " + error);
+        },
+      );
+    } catch (error) {
+      alert("Error creating shopping list: " + error);
+    }
+  };
+
+  return (
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={-1}
+      snapPoints={snapPoints}
+      enablePanDownToClose={!shouldStartTour}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
+      topInset={0}
+      handleComponent={() => null}
+      backdropComponent={(props) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+        />
+      )}
+    >
+      <View style={styles.emptyView}></View>
+      <View style={styles.parentCreateMealText}>
+        <Text style={styles.header}>{Strings.createList_createNewList}</Text>
+        <TouchableOpacity
+          onPress={() => {
+            resetForm();
+            bottomSheetRef.current?.close();
+          }}
+        >
+          <Image
+            source={closeIcon}
+            style={styles.closeIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </View>
+
+      <BottomSheetScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TourGuideZone zone={14} shape="rectangle" borderRadius={16}>
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {Strings.createList_listDetails}
+            </Text>
+            <Text style={styles.label}>{Strings.createList_listName}</Text>
+            <CustomTextInput
+              placeholder={Strings.createList_listName_placeholder}
+              value={listName}
+              onChangeText={setListName}
+            />
+
+            <Text style={styles.label}>{Strings.createList_shoppingDay}</Text>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.inputWithIcon}>
+                <CustomTextInput
+                  placeholder={Strings.createList_shoppingDay_placeholder}
+                  value={shoppingDay || formatDisplayDate(startDate)}
+                  editable={false}
+                  pointerEvents="none"
+                />
+                <Image
+                  source={calendaricon}
+                  style={styles.calendarIcon}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+            <CustomDateTimePicker
+              mode="date"
+              value={startDate}
+              visible={showDatePicker}
+              onChange={(date) => {
+                setStartDate(date);
+                setShoppingDay(formatDisplayDate(date));
+              }}
+              onClose={() => setShowDatePicker(false)}
+            />
+          </View>
+        </TourGuideZone>
+        <View style={styles.card}>
+          <TourGuideZone zone={16} shape="rectangle" borderRadius={8}>
+            <TourGuideZone zone={15} shape="rectangle" borderRadius={8}>
+              <Text style={styles.sectionTitle}>
+                {Strings.createList_items}
+              </Text>
+              <View style={styles.dividerRow} />
+              <BaseButton
+                title={Strings.createList_addExtraItems}
+                gradientButton={false}
+                backgroundColor={Colors.white}
+                textStyle={[styles.addExtraButton]}
+                textStyleText={styles.addExtra}
+                onPress={() => setIsAddItemVisible(true)}
+              />
+            </TourGuideZone>
+
+            <View>
+              {Object.keys(groupedIngredients).map((category) =>
+                renderCategorySection(category),
+              )}
+            </View>
+          </TourGuideZone>
+        </View>
+
+        <View style={styles.parentOfConfirmButton}>
+          <BaseButton
+            title={Strings.createList_discard}
+            gradientButton={false}
+            backgroundColor={Colors.white}
+            width={width * 0.28}
+            textStyle={styles.cancelButtonError}
+            textColor={Colors.error}
+            textStyleText={styles.discardText}
+            onPress={() => {
+              resetForm();
+              bottomSheetRef.current?.close();
+            }}
+          />
+          <BaseButton
+            title={Strings.createList_saveShoppingList}
+            gradientButton={true}
+            width={width * 0.65}
+            gradientStartColor={Colors._667D4C}
+            gradientEndColor={Colors._9DAF89}
+            gradientStart={{ x: 0, y: 0 }}
+            gradientEnd={{ x: 1, y: 0 }}
+            textColor={Colors.white}
+            rightChild={
+              <IconCartWhite
+                width={verticalScale(21)}
+                height={verticalScale(21)}
+              />
+            }
+            textStyle={[styles.confirmButton]}
+            textStyleText={styles.saveShopping}
+            onPress={handleSaveShoppingList}
+          />
+        </View>
+      </BottomSheetScrollView>
+      <AddItemToList
+        visible={isAddItemVisible}
+        onClose={() => setIsAddItemVisible(false)}
+        onMealSelect={(ingredients) => {
+          setReceivedIngredients(ingredients);
+          setIsAddItemVisible(false);
+        }}
+      />
+    </BottomSheet>
+  );
+});
+
+export default CreateNewListBottomSheet;
+
+const styles = StyleSheet.create({
+  header: {
+    fontSize: moderateScale(21),
+    color: Colors.primary,
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+  },
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(10),
+    marginBottom: verticalScale(10),
+    elevation: 2,
+
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  sectionTitle: {
+    fontSize: moderateScale(12),
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    color: Colors.primary,
+    marginBottom: verticalScale(10),
+  },
+  label: {
+    fontSize: moderateScale(12),
+    marginTop: moderateScale(8),
+    marginBottom: moderateScale(4),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    color: Colors.primary,
+  },
+
+  uploadButton: {
+    marginLeft: 8,
+    paddingHorizontal: horizontalScale(16),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(8),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    backgroundColor: Colors.white,
+  },
+  uploadButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.primary,
+    fontSize: moderateScale(14),
+  },
+  row: { flexDirection: "row", justifyContent: "flex-start", gap: 8 },
+  rowItem: { flex: 1, minWidth: 80 },
+  deleteButton: {
+    alignSelf: "flex-end",
+    marginBottom: verticalScale(18),
+  },
+  parentCreateMealText: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: verticalScale(20),
+    marginHorizontal: moderateScale(20),
+  },
+  emptyView: {
+    height: verticalScale(35),
+  },
+  placeholderText: {
+    color: Colors.tertiary,
+    fontSize: moderateScale(12),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+  },
+  addIngredientText: {
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    color: Colors.primary,
+    fontSize: moderateScale(14),
+  },
+  addIngredient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: verticalScale(10),
+  },
+  confirmButton: {
+    color: Colors.white,
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(13),
+  },
+  cancelButton: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+
+    fontSize: moderateScale(12),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+  },
+  parentOfConfirmButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: verticalScale(15),
+    marginHorizontal: moderateScale(-5),
+  },
+  plusicon: {
+    color: Colors.primary,
+    fontSize: moderateScale(22),
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    marginRight: moderateScale(8),
+  },
+  addExtra: {
+    fontSize: moderateScale(14),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.primary,
+  },
+  addExtraButton: {
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+    marginHorizontal: moderateScale(-7),
+      marginVertical: verticalScale(3),
+  },
+  dividerRow: {
+    height: moderateScale(1),
+    backgroundColor: Colors.divider,
+    flex: 1,
+
+    marginBottom: verticalScale(10),
+  },
+
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  checkbox: {
+    width: moderateScale(19),
+    height: moderateScale(19),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.tertiary,
+    borderRadius: moderateScale(1),
+    marginRight: horizontalScale(10),
+  },
+  name: {
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    fontSize: moderateScale(12),
+    color: Colors.primary,
+  },
+  amount: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(10),
+    color: Colors.primary,
+    marginTop: moderateScale(2),
+  },
+  cardCategory: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(10),
+    marginBottom: verticalScale(10),
+    elevation: 2,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    marginHorizontal: moderateScale(3),
+  },
+  discardText: {
+    fontSize: moderateScale(14),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.error,
+  },
+  saveShopping: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(16),
+    color: Colors.white,
+  },
+  closeIcon: {
+    width: verticalScale(25),
+    height: verticalScale(25),
+  },
+  scrollViewContent: {
+    paddingHorizontal: moderateScale(20),
+  },
+  cancelButtonError: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.error,
+    fontSize: moderateScale(12),
+    borderWidth: moderateScale(1),
+    borderColor: Colors.borderColor,
+  },
+  checkboxIcon: {
+    marginRight: horizontalScale(10),
+  },
+  inputWithIcon: {
+    position: "relative",
+  },
+  calendarIcon: {
+    position: "absolute",
+    right: horizontalScale(15),
+    top: "43%",
+    transform: [{ translateY: -moderateScale(10) }],
+    width: moderateScale(20),
+    height: moderateScale(20),
+    tintColor: Colors.tertiary,
+  },
+});
