@@ -184,37 +184,40 @@ const CreateMealBottomSheet = forwardRef<
             }
           />
           <View style={styles.row}>
-            <View style={styles.rowItem}>
-              <Text
-                style={[
-                  styles.label,
-                  !isVolumeUnit && { color: Colors.tertiary },
-                ]}
-              >
-                {Strings.createMeal_count}
-              </Text>
-              <CustomStepper
-                value={isVolumeUnit ? item?.count : "0"}
-                onIncrement={() => {
-                  if (!isVolumeUnit) return;
-                  const updated = [...ingredients];
-                  updated[index] = {
-                    ...updated[index],
-                    count: String(Number(item?.count || 0) + 1),
-                  };
-                  setFieldValue(INGREDIENTS_KEY, updated);
-                }}
-                onDecrement={() => {
-                  if (!isVolumeUnit) return;
-                  const updated = [...ingredients];
-                  updated[index] = {
-                    ...updated[index],
-                    count: String(Math.max(1, Number(item?.count || 1) - 1)),
-                  };
-                  setFieldValue(INGREDIENTS_KEY, updated);
-                }}
-              />
-            </View>
+            {isVolumeUnit && (
+              <View style={styles.rowItem}>
+                <Text
+                  style={[
+                    styles.label,
+                    !isVolumeUnit && { color: Colors.tertiary },
+                  ]}
+                >
+                  {Strings.createMeal_count}
+                </Text>
+
+                <CustomStepper
+                  value={isVolumeUnit ? item?.count : "0"}
+                  onIncrement={() => {
+                    if (!isVolumeUnit) return;
+                    const updated = [...ingredients];
+                    updated[index] = {
+                      ...updated[index],
+                      count: String(Number(item?.count || 0) + 1),
+                    };
+                    setFieldValue(INGREDIENTS_KEY, updated);
+                  }}
+                  onDecrement={() => {
+                    if (!isVolumeUnit) return;
+                    const updated = [...ingredients];
+                    updated[index] = {
+                      ...updated[index],
+                      count: String(Math.max(1, Number(item?.count || 1) - 1)),
+                    };
+                    setFieldValue(INGREDIENTS_KEY, updated);
+                  }}
+                />
+              </View>
+            )}
 
             <View style={styles.rowItem}>
               <Text style={styles.label}>{Strings.createMeal_unit}</Text>

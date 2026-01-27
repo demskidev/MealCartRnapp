@@ -41,43 +41,21 @@ export default function AllergiesIntolerance() {
   }, [user?.allergies]);
 
   const handleSave = async () => {
-    showLoader()
+    showLoader();
     await updateUserData(
       { allergies: tags },
       () => {
-        hideLoader()
+        hideLoader();
         showSuccessToast("Allergies saved successfully!");
         router.back();
       },
       (error) => {
-        hideLoader()
+        hideLoader();
         showErrorToast(error || "Failed to save allergies");
-      }
+      },
     );
   };
 
-  // const ALLERGY_SUGGESTIONS = [
-  //     'Peanuts',
-  //     'Tree Nuts',
-  //     'Milk',
-  //     'Eggs',
-  //     'Wheat',
-  //     'Soy',
-  //     'Fish',
-  //     'Shellfish',
-  //     'Sesame',
-  //     'Mustard',
-  //     'Celery',
-  //     'Lupin',
-  //     'Sulphites',
-  //     'Molluscs',
-  //     'Curd',
-  //     'Gluten',
-  //     'Lactose',
-  //     'Corn',
-  // ];
-
-  // Cleanup on unmount and handle hot reload safely
   useEffect(() => {
     // Dismiss keyboard on mount to handle hot reload case
     const subscription = Keyboard.addListener("keyboardDidHide", () => {
@@ -178,11 +156,10 @@ export default function AllergiesIntolerance() {
               placeholderTextColor={Colors.tertiary}
               onChangeText={handleInputChange}
               onSubmitEditing={handleSubmitTag}
-              onFocus={() => input.length > 0 && setShowSuggestions(true)}
               returnKeyType="done"
               blurOnSubmit={false}
               autoCorrect={false}
-              autoCapitalize="none"
+              autoCapitalize="words"
             />
           </ScrollView>
         </View>

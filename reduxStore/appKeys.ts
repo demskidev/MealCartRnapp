@@ -43,6 +43,11 @@ export enum MealStatus{
     COMPLETED = "completed"
 }
 
+export enum SocialLoginProvider{
+    GOOGLE = "google",
+    APPLE = "apple"
+}
+
 
 //prop keys
 export const CREATE_MEAL_PLAN = "createMealPlan"

@@ -182,7 +182,6 @@ const PlansScreen: React.FC = () => {
       return;
     }
 
-    // Prevent starting a plan whose startDate is in the future
     if (status === MealStatus.STARTED) {
       const start = toDateObject(plan.startDate);
       const now = new Date();
@@ -196,9 +195,7 @@ const PlansScreen: React.FC = () => {
       }
     }
 
-    if (!start) showLoader();
-
-    // If tour is active, update plan locally without API call
+    showLoader();
 
     updatePlan(
       {

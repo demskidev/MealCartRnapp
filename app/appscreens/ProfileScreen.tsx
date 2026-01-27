@@ -5,6 +5,7 @@ import { hideLoader, showLoader } from "@/components/Loader";
 import UpdateProfileModal from "@/components/UpdateProfileModal";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
+  capitalizeFirstLetter,
   horizontalScale,
   moderateScale,
   verticalScale,
@@ -18,7 +19,7 @@ import { pushNavigation, resetAndNavigate } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast, showToast } from "@/utils/Toast";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -35,8 +36,8 @@ export default function ProfileScreen() {
   const [showModal, setShowModal] = useState(false);
   const [deleteAccount, setDeleteAccount] = useState(false);
   const [defaultServings, setDefaultServings] = useState(false);
-  const [servingData, setServingData] = useState();
-
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [isSavingServings, setIsSavingServings] = useState(false);
   const dispatch = useAppDispatch();
   const {
     user,
@@ -46,25 +47,58 @@ export default function ProfileScreen() {
     updateUserData,
     fetchDietaryPreferences,
   } = useProfileViewModel();
-  
+
+  useEffect(() => {
+    // Fetch the list of all dietary preferences from Firestore
+    fetchDietaryPreferences(
+      () => {
+        console.log("Dietary preferences fetched successfully");
+        setPreferencesLoaded(true);
+      },
+      (error) => {
+        console.error("Error fetching dietary preferences:", error);
+        setPreferencesLoaded(true);
+      },
+    );
+  }, []);
+
   // Format allergies for display
   const getAllergiesDisplay = () => {
     if (!user?.allergies || user.allergies.length === 0) {
-      return Strings.profile_peanuts; // Default text
+      return Strings.nA;
     }
-    
-    if (user.allergies.length === 1) {
-      return user.allergies[0];
-    }
-    
-    return `${user.allergies[0]}...`;
+
+    return user.allergies.map(capitalizeFirstLetter).join(", ");
   };
-  
+
+  const getPreferencesDisplay = () => {
+    if (!preferencesLoaded) {
+      return "Loading...";
+    }
+
+    if (!user?.dietaryPreferences || user.dietaryPreferences.length === 0) {
+      return Strings.nA;
+    }
+
+    console.log("user.dietaryPreferences", user.dietaryPreferences);
+    console.log("dietaryPreferences", dietaryPreferences);
+
+    return user.dietaryPreferences
+      .map((id: string) => {
+        const preference = dietaryPreferences.find(
+          (pref) => pref.id.toString() === id,
+        );
+        return preference?.name || "";
+      })
+      .filter((name: string) => name !== "")
+      .join(", ");
+  };
+
   const preferencesData = [
     {
       id: "1",
       title: "Dietary Preferences",
-      subtitle: "Vegetarian",
+      subtitle: getPreferencesDisplay(),
     },
     {
       id: "2",
@@ -84,7 +118,6 @@ export default function ProfileScreen() {
         : `1 ${Strings.profile_servings}`,
     },
   ];
-  console.log("user666666", user);
   const onPressItem = (index: any) => {
     if (index === 0) {
       pushNavigation(APP_ROUTES.DietaryPreferences);
@@ -99,19 +132,18 @@ export default function ProfileScreen() {
   };
 
   const handleSaveServings = (selectedServings: number) => {
-    showLoader();
+    setIsSavingServings(true);
     updateUserData(
       { servings: selectedServings },
       () => {
-        hideLoader();
+        setIsSavingServings(false);
         setDefaultServings(false);
         showToast("success", "Servings saved successfully!");
-        router.back();
       },
       (error) => {
-        hideLoader();
+        setIsSavingServings(false);
         showToast("error", error || "Failed to save servings");
-      }
+      },
     );
   };
 
@@ -275,6 +307,7 @@ export default function ProfileScreen() {
         onSave={(selectedServings: number) =>
           handleSaveServings(selectedServings)
         }
+        isSaving={isSavingServings}
       />
     </SafeAreaView>
   );

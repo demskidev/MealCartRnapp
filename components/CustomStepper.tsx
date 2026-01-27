@@ -1,12 +1,22 @@
-
-import { IconDown, IconUp } from '@/assets/svg/IconUpDown';
-import { horizontalScale, moderateScale, verticalScale } from '@/constants/Constants';
-import { Colors, FontFamilies } from '@/constants/Theme';
-import React from 'react';
-import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { IconDown, IconUp } from "@/assets/svg/IconUpDown";
+import {
+  horizontalScale,
+  moderateScale,
+  verticalScale,
+} from "@/constants/Constants";
+import { Colors, FontFamilies } from "@/constants/Theme";
+import React from "react";
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
 
 interface CustomStepperProps {
-  value: string;
+  value: number;
   onIncrement: () => void;
   onDecrement: () => void;
   showUp?: boolean;
@@ -35,7 +45,7 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <IconUp style={styles.iconUp} />
+          <IconUp width={20} height={20} />
         </TouchableOpacity>
       )}
 
@@ -46,18 +56,17 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <IconDown style={styles.iconDown} />
+          <IconDown width={20} height={20} />
         </TouchableOpacity>
       )}
     </View>
   </View>
 );
 
-
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors._F6F6F6,
     borderRadius: moderateScale(8),
     borderWidth: moderateScale(1),
@@ -70,19 +79,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonsContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   iconBtn: {
     padding: moderateScale(2),
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   value: {
     fontSize: moderateScale(12),
     color: Colors.tertiary,
     marginLeft: moderateScale(8),
-    fontFamily: FontFamilies.ROBOTO_REGULAR
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
   },
   iconUp: {
     width: moderateScale(20),
@@ -91,7 +100,7 @@ const styles = StyleSheet.create({
   iconDown: {
     width: moderateScale(20),
     height: moderateScale(20),
-  }
+  },
 });
 
 export default CustomStepper;

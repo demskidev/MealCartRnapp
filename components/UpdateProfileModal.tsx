@@ -6,6 +6,7 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { SocialLoginProvider } from "@/reduxStore/appKeys";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useEffect, useState } from "react";
@@ -23,7 +24,6 @@ import {
 import BaseButton from "./BaseButton";
 import ImagePickerModal from "./ImagePickerModal";
 import { hideLoader, showLoader } from "./Loader";
-import { hide } from "expo-router/build/utils/splash";
 
 type Props = {
   visible: boolean;
@@ -38,6 +38,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
+  const isGoogleUser = user?.provider === SocialLoginProvider.GOOGLE;
   // Load current user name when modal opens
   useEffect(() => {
     if (visible && user?.name) {
@@ -63,7 +64,7 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
       (error) => {
         hideLoader();
         showErrorToast(error || "Failed to update profile");
-      }
+      },
     );
   };
   const handleUpload = () => {
@@ -144,41 +145,46 @@ export default function UpdateProfileModal({ visible, onClose }: Props) {
             onChangeText={setName}
           />
 
-          <Text style={styles.label}>
-            {Strings.updateProfileModal_updateEmail}
-          </Text>
+          <Text style={styles.label}>{Strings.email}</Text>
           <TextInput
             style={styles.input}
+            value={user?.email || ""}
             placeholder={Strings.updateProfileModal_emailPlaceholder}
             placeholderTextColor={Colors.tertiary}
             keyboardType="email-address"
             editable={false}
           />
 
-          <Text style={styles.socialLabel}>
-            {Strings.updateProfileModal_social}
-          </Text>
-          <View style={styles.socialBox}>
-            <View>
-              <Image
-                source={googleicon}
-                style={styles.googleIconImage}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.socialText}>
-              {Strings.updateProfileModal_connectedWithGoogle}
-            </Text>
-            <TouchableOpacity>
-              <TouchableOpacity>
+          {isGoogleUser && (
+            <>
+              <View style={styles.socialDivider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.socialLabel}>
+                  {Strings.updateProfileModal_social}
+                </Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.socialBox}>
                 <Image
-                  source={closeIcon}
-                  style={styles.closeIconImage}
+                  source={googleicon}
+                  style={styles.googleIconImage}
                   resizeMode="contain"
                 />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </View>
+                <Text style={styles.socialText}>
+                  {Strings.updateProfileModal_connectedWithGoogle}
+                </Text>
+                <TouchableOpacity>
+                  <Image
+                    source={closeIcon}
+                    style={styles.closeIconImage}
+                    resizeMode="contain"
+                    
+                  />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
           <View style={styles.footer}>
             <BaseButton
@@ -218,8 +224,8 @@ const styles = StyleSheet.create({
     height: verticalScale(112),
   },
   googleIconImage: {
-    width: verticalScale(16),
-    height: verticalScale(16),
+    width: verticalScale(20),
+    height: verticalScale(20),
   },
   closeIconImage: {
     width: verticalScale(24),
@@ -291,12 +297,21 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(10),
     marginBottom: verticalScale(8),
   },
+  socialDivider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: verticalScale(8),
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.divider,
+  },
   socialLabel: {
     fontSize: moderateScale(13),
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.tertiary,
-    textAlign: "center",
-    marginVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(12),
   },
   socialBox: {
     flexDirection: "row",
@@ -304,8 +319,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.buttonBackground,
     borderRadius: moderateScale(8),
     paddingVertical: verticalScale(14),
-    paddingHorizontal: horizontalScale(12),
-    marginBottom: verticalScale(18),
+    paddingHorizontal: horizontalScale(15),
+    marginVertical: verticalScale(18),
     justifyContent: "space-between",
     elevation: 4,
     shadowColor: Colors.black,
@@ -323,6 +338,8 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.textBlack,
+    flex: 1,
+    marginLeft: horizontalScale(12),
   },
   socialRemove: {
     fontSize: moderateScale(22),

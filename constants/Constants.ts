@@ -73,10 +73,16 @@ export const getCurrentMealCategory = (): string => {
   const hours = now.getHours();
 
   if (hours < 9) {
-    return Strings.plans_breakfast ; // Breakfast
+    return Strings.plans_breakfast; // Breakfast
   } else if (hours >= 9 && hours < 14) {
     return Strings.plans_lunch; // Lunch
   } else {
     return Strings.plans_dinner; // Dinner
   }
+};
+
+// Capitalize first letter of a word
+export const capitalizeFirstLetter = (word: string): string => {
+  if (!word) return word;
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 };
