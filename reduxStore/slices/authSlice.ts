@@ -48,13 +48,13 @@ export const loginAsync = createAsyncThunk(
   LOGIN,
   async (
     credentials: { email: string; password: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         credentials.email,
-        credentials.password
+        credentials.password,
       );
       console.log("auth user signin", userCredential);
       if (userCredential?.user) {
@@ -73,7 +73,7 @@ export const loginAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(getFirebaseAuthErrorMessage(error));
     }
-  }
+  },
 );
 
 // Async thunk for register
@@ -81,14 +81,14 @@ export const registerAsync = createAsyncThunk(
   REGISTER,
   async (
     userData: { email: string; password: string; name?: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       // Create user with Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         userData.email,
-        userData.password
+        userData.password,
       );
       const uid = userCredential.user.uid;
       // Store user profile in Firestore
@@ -104,7 +104,7 @@ export const registerAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(getFirebaseAuthErrorMessage(error));
     }
-  }
+  },
 );
 
 // Async thunk for loading user by UID (for Google sign-in)
@@ -113,41 +113,39 @@ export const loadUserByUidAsync = createAsyncThunk(
   async (uid: string, { rejectWithValue }) => {
     try {
       const userData = await getDocumentById(USERS_COLLECTION, uid);
-      
+
       if (!userData) {
         return rejectWithValue("User data not found in Firestore");
       }
-      
-      console.log('✅ [loadUserByUidAsync] User data loaded:', userData);
+
+      console.log("✅ [loadUserByUidAsync] User data loaded:", userData);
       return userData;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to load user data");
     }
-  }
+  },
 );
-
-
 
 // Async thunk for updating user data
 export const updateUserAsync = createAsyncThunk(
   UPDATE_USER,
   async (
     { userId, userData }: { userId: string; userData: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       // Update user data in Firestore and return the updated data
       const updatedUser = await updateDocument(
         USERS_COLLECTION,
         userId,
-        userData
+        userData,
       );
-      console.log('upppppppp8888',updatedUser)
+      console.log("upppppppp8888", updatedUser);
       return updatedUser;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to update user data");
     }
-  }
+  },
 );
 export const changePasswordAsync = createAsyncThunk<
   boolean,
@@ -168,7 +166,7 @@ export const changePasswordAsync = createAsyncThunk<
 
       const credential = EmailAuthProvider.credential(
         user.email,
-        currentPassword
+        currentPassword,
       );
 
       await reauthenticateWithCredential(user, credential);
@@ -179,18 +177,11 @@ export const changePasswordAsync = createAsyncThunk<
       return rejectWithValue(
         error.code === "auth/wrong-password"
           ? "Current password is incorrect"
-          : error.message
+          : error.message,
       );
     }
-  }
+  },
 );
-
-
-
-
-
-
-
 
 const initialState = {
   isAuthenticated: false,
@@ -202,7 +193,13 @@ const initialState = {
 const authSlice = createSlice({
   name: AUTH_SLICE,
   initialState,
-  reducers: {},
+  reducers: {
+    markTourCompleted: (state) => {
+      if (state.user) {
+        state.user.hasCompletedTour = true;
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Login async
@@ -268,18 +265,18 @@ const authSlice = createSlice({
       })
 
       .addCase(changePasswordAsync.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(changePasswordAsync.fulfilled, (state) => {
-  state.loading = false;
-})
-.addCase(changePasswordAsync.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload as string;
-});
-
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordAsync.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(changePasswordAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
+export const { markTourCompleted } = authSlice.actions;
 export default authSlice.reducer;

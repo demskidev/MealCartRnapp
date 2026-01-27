@@ -7,6 +7,7 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import BottomSheet, {
@@ -16,6 +17,7 @@ import BottomSheet, {
 import { Timestamp } from "firebase/firestore";
 import {
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -30,6 +32,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { TourGuideZone } from "rn-tourguide";
 import AddItemToList from "./AddItemToList";
 import BaseButton from "./BaseButton";
 import CustomTextInput from "./CustomTextInput";
@@ -52,6 +55,14 @@ const CreateNewListBottomSheet = forwardRef<
   const snapPoints = useMemo(() => ["100%"], []);
   const user = useAppSelector((state) => state.auth.user);
   const { addShoppingListData, loading } = useShoppingListViewModel();
+  const {
+    shouldStartTour,
+    setTriggerOpenAddItemToList,
+    setTriggerAddDummyIngredients,
+    setTriggerCloseCreateList,
+    isCreateListBottomSheetOpen,
+    setIsCreateListBottomSheetOpen,
+  } = useTourStep();
   const [listName, setListName] = useState("");
   const [shoppingDay, setShoppingDay] = useState("");
   const [mealName, setMealName] = useState("");
@@ -80,6 +91,7 @@ const CreateNewListBottomSheet = forwardRef<
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [startDate, setStartDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
   // Group ingredients by category
   const groupedIngredients = receivedIngredients.reduce(
     (acc: any, ingredient: any) => {
@@ -95,18 +107,110 @@ const CreateNewListBottomSheet = forwardRef<
       });
       return acc;
     },
-    {}
+    {},
   );
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   useImperativeHandle(ref, () => ({
     expand: () => {
+      if (shouldStartTour) {
+        setIsTourOpen(true);
+        setIsCreateListBottomSheetOpen(true);
+      }
       bottomSheetRef.current?.expand();
     },
     close: () => {
+      if (shouldStartTour) {
+        setIsTourOpen(false);
+        setIsCreateListBottomSheetOpen(false);
+      }
       bottomSheetRef.current?.close();
     },
   }));
+
+  // Register callback to open AddItemToList during tour
+  // useEffect(() => {
+  //   const openAddItem = () => {
+  //     setIsAddItemVisible(true);
+  //   };
+  //   setTriggerOpenAddItemToList(() => openAddItem);
+
+  //   return () => {
+  //     setTriggerOpenAddItemToList(null);
+  //   };
+  // }, [setTriggerOpenAddItemToList]);
+
+  // NOTE: Removed triggerCloseCreateList registration - bottom sheet should stay open during tour
+  // The bottom sheet will be manually closed when needed (e.g., on save or cancel)
+  // useEffect(() => {
+  //   const closeBottomSheet = () => {
+  //     bottomSheetRef.current?.close();
+  //   };
+  //   setTriggerCloseCreateList(() => closeBottomSheet);
+
+  //   return () => {
+  //     setTriggerCloseCreateList(null);
+  //   };
+  // }, [setTriggerCloseCreateList]);
+
+  // Register callback to add dummy ingredients during tour
+  useEffect(() => {
+    const addDummyData = () => {
+      const dummyIngredients = [
+        {
+          ingredientId: "dummy-ing-1",
+          ingredientName: "Spaghetti",
+          categoryId: "cat-1",
+          categoryName: "Pasta",
+          selectedUnit: "400 grams",
+          unit: "400 grams",
+          count: 1,
+          mealId: "tour-dummy-meal",
+        },
+        {
+          ingredientId: "dummy-ing-2",
+          ingredientName: "Ground Beef",
+          categoryId: "cat-2",
+          categoryName: "Meat",
+          selectedUnit: "500 grams",
+          unit: "500 grams",
+          count: 1,
+          mealId: "tour-dummy-meal",
+        },
+        {
+          ingredientId: "dummy-ing-3",
+          ingredientName: "Tomato Sauce",
+          categoryId: "cat-3",
+          categoryName: "Sauces",
+          selectedUnit: "250 ml",
+          unit: "250 ml",
+          count: 1,
+          mealId: "tour-dummy-meal",
+        },
+      ];
+      setReceivedIngredients(dummyIngredients);
+      // Auto-select all dummy ingredients
+      setSelectedItems(dummyIngredients.map((ing) => ing.ingredientId));
+    };
+    setTriggerAddDummyIngredients(() => addDummyData);
+
+    return () => {
+      setTriggerAddDummyIngredients(null);
+    };
+  }, [setTriggerAddDummyIngredients]);
+
+  // Auto-reopen bottom sheet during tour if it was open before navigation
+  useEffect(() => {
+    if (shouldStartTour && isCreateListBottomSheetOpen && !isTourOpen) {
+      // Small delay to ensure the screen is mounted
+      const timer = setTimeout(() => {
+        console.log("🔄 Reopening bottom sheet after navigation");
+        bottomSheetRef.current?.expand();
+        setIsTourOpen(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldStartTour, isCreateListBottomSheetOpen, isTourOpen]);
 
   const data = [
     { id: "1", category: "Category", name: "Spaghetti", amount: "400 grams" },
@@ -195,8 +299,8 @@ const CreateNewListBottomSheet = forwardRef<
       // Filter only selected ingredients and map to required fields
       const selectedIngredients = receivedIngredients.filter((ingredient) =>
         selectedItems.includes(
-          ingredient.ingredientId || ingredient.ingredientName
-        )
+          ingredient.ingredientId || ingredient.ingredientName,
+        ),
       );
 
       if (selectedIngredients.length === 0) {
@@ -237,7 +341,7 @@ const CreateNewListBottomSheet = forwardRef<
         (error) => {
           hideLoader();
           alert("Error creating shopping list: " + error);
-        }
+        },
       );
     } catch (error) {
       alert("Error creating shopping list: " + error);
@@ -249,7 +353,7 @@ const CreateNewListBottomSheet = forwardRef<
       ref={bottomSheetRef}
       index={-1}
       snapPoints={snapPoints}
-      enablePanDownToClose
+      enablePanDownToClose={!shouldStartTour}
       keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       topInset={0}
@@ -278,70 +382,77 @@ const CreateNewListBottomSheet = forwardRef<
         contentContainerStyle={styles.scrollViewContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>
-            {Strings.createList_listDetails}
-          </Text>
-          <Text style={styles.label}>{Strings.createList_listName}</Text>
-          <CustomTextInput
-            placeholder={Strings.createList_listName_placeholder}
-            value={listName}
-            onChangeText={setListName}
-          />
+        <TourGuideZone zone={14} shape="rectangle" borderRadius={16}>
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              {Strings.createList_listDetails}
+            </Text>
+            <Text style={styles.label}>{Strings.createList_listName}</Text>
+            <CustomTextInput
+              placeholder={Strings.createList_listName_placeholder}
+              value={listName}
+              onChangeText={setListName}
+            />
 
-          <Text style={styles.label}>{Strings.createList_shoppingDay}</Text>
-          <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.inputWithIcon}>
-              <CustomTextInput
-                placeholder={Strings.createList_shoppingDay_placeholder}
-                value={shoppingDay}
-                editable={false}
-                pointerEvents="none"
+            <Text style={styles.label}>{Strings.createList_shoppingDay}</Text>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.inputWithIcon}>
+                <CustomTextInput
+                  placeholder={Strings.createList_shoppingDay_placeholder}
+                  value={shoppingDay}
+                  editable={false}
+                  pointerEvents="none"
+                />
+                <Image
+                  source={calendaricon}
+                  style={styles.calendarIcon}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+            <CustomDateTimePicker
+              mode="date"
+              value={startDate}
+              visible={showDatePicker}
+              onChange={(date) => {
+                setStartDate(date);
+                const formattedDate = date.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                });
+                setShoppingDay(formattedDate);
+              }}
+              onClose={() => setShowDatePicker(false)}
+            />
+          </View>
+        </TourGuideZone>
+        <View style={styles.card}>
+          <TourGuideZone zone={16} shape="rectangle" borderRadius={8}>
+            <TourGuideZone zone={15} shape="rectangle" borderRadius={8}>
+              <Text style={styles.sectionTitle}>
+                {Strings.createList_items}
+              </Text>
+              <View style={styles.dividerRow} />
+              <BaseButton
+                title={Strings.createList_addExtraItems}
+                gradientButton={false}
+                backgroundColor={Colors.white}
+                textStyle={[styles.addExtraButton]}
+                textStyleText={styles.addExtra}
+                onPress={() => setIsAddItemVisible(true)}
               />
-              <Image
-                source={calendaricon}
-                style={styles.calendarIcon}
-                resizeMode="contain"
-              />
+            </TourGuideZone>
+
+            <View>
+              {Object.keys(groupedIngredients).map((category) =>
+                renderCategorySection(category),
+              )}
             </View>
-          </TouchableOpacity>
-          <CustomDateTimePicker
-            mode="date"
-            value={startDate}
-            visible={showDatePicker}
-            onChange={(date) => {
-              setStartDate(date);
-              const formattedDate = date.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              });
-              setShoppingDay(formattedDate);
-            }}
-            onClose={() => setShowDatePicker(false)}
-          />
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{Strings.createList_items}</Text>
-          <View style={styles.dividerRow} />
-
-          {/* <Text style={styles.label}>{Strings.createList_importedFrom}</Text> */}
-          <BaseButton
-            title={Strings.createList_addExtraItems}
-            gradientButton={false}
-            backgroundColor={Colors.white}
-            textStyle={[styles.addExtraButton]}
-            textStyleText={styles.addExtra}
-            onPress={() => setIsAddItemVisible(true)}
-          />
-
-          {Object.keys(groupedIngredients).map((category) =>
-            renderCategorySection(category)
-          )}
+          </TourGuideZone>
         </View>
 
         <View style={styles.parentOfConfirmButton}>

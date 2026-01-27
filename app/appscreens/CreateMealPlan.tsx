@@ -17,15 +17,20 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
 import { CREATE_MEAL_PLAN, MealStatus } from "@/reduxStore/appKeys";
-import { useAppSelector } from "@/reduxStore/hooks";
-import { DayData } from "@/reduxStore/slices/planSlice";
+import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
+import {
+  addPlanLocally,
+  DayData,
+  removeTourPlan,
+} from "@/reduxStore/slices/planSlice";
 import { backNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { EnrichedPlan, usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -38,6 +43,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TourGuideZone } from "rn-tourguide";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday"];
 const meals = ["Breakfast", "Lunch", "Dinner"];
@@ -52,6 +58,7 @@ interface SelectedMealSlot {
 
 export default function CreateMealPlan({}) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const params = useLocalSearchParams();
   const planParam = params?.plan as string;
   const existingPlan: EnrichedPlan | null = planParam
@@ -60,6 +67,12 @@ export default function CreateMealPlan({}) {
   console.log("CreateMealPlan - planParam:", planParam);
   const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
   const { addPlan, updatePlan, loading: planLoading } = usePlanViewModel();
+  const {
+    setTriggerMealBoxPress,
+    setTriggerSavePlan,
+    shouldStartTour,
+    setCleanupTourData,
+  } = useTourStep();
 
   const user = useAppSelector((state) => state.auth.user);
 
@@ -206,14 +219,93 @@ export default function CreateMealPlan({}) {
     return selectedMealSlots[slotKey];
   };
 
-  const days = generateWeekDays(startDate);
+  const days = useMemo(
+    () => generateWeekDays(startDate),
+    [startDate, mealPlans],
+  );
 
-  function renderDayCard({ item }: { item: any }) {
+  // Register callback for tour to add dummy meal to first slot
+  useEffect(() => {
+    const addDummyMealToFirstSlot = () => {
+      if (days.length > 0 && days[0].meals.length > 0) {
+        const firstDay = days[0].title;
+        const firstMeal = days[0].meals[0];
+        const slotKey = `${firstDay}-${firstMeal}`;
+
+        // Create a dummy meal object
+        const dummyMeal = {
+          id: "tour-dummy-meal",
+          name: "Omlette",
+          category: "Breakfast",
+          prepTime: "30 min",
+          difficulty: "Easy",
+          imageUrl: null,
+        };
+
+        setSelectedMealSlots((prev) => ({
+          ...prev,
+          [slotKey]: dummyMeal,
+        }));
+
+        // Set a default plan name for the tour
+        if (!planName) {
+          setPlanName("My First Meal Plan");
+        }
+      }
+    };
+
+    setTriggerMealBoxPress(() => addDummyMealToFirstSlot);
+
+    return () => {
+      setTriggerMealBoxPress(null);
+    };
+  }, [days]);
+
+  // Register saveMealPlan callback for tour
+  useEffect(() => {
+    setTriggerSavePlan(() => () => saveMealPlan());
+
+    return () => {
+      setTriggerSavePlan(null);
+    };
+  }, []);
+
+  // Register cleanup function to remove tour data when tour completes
+  useEffect(() => {
+    const cleanup = () => {
+      // Remove tour plan from Redux
+      dispatch(removeTourPlan());
+
+      // Clear dummy meal from selected slots
+      setSelectedMealSlots((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((key) => {
+          if (updated[key]?.id === "tour-dummy-meal") {
+            delete updated[key];
+          }
+        });
+        return updated;
+      });
+
+      // Reset plan name if it's the default tour name
+      if (planName === "My First Meal Plan") {
+        setPlanName("");
+      }
+    };
+
+    setCleanupTourData(() => cleanup);
+
+    return () => {
+      setCleanupTourData(null);
+    };
+  }, [dispatch, planName]);
+
+  function renderDayCard({ item, index }: { item: any; index: number }) {
     const formattedDate = `${item.date.getDate()}/${
       item.date.getMonth() + 1
     }/${item.date.getFullYear()}`;
 
-    return (
+    const content = (
       <View style={styles.daySection}>
         <View style={styles.dayHeader}>
           <Text style={styles.dayTitle}>{item.title}</Text>
@@ -227,8 +319,11 @@ export default function CreateMealPlan({}) {
         >
           {item.meals.map((mealPlanName: string, idx: number) => {
             const selectedMeal = getSelectedMeal(item.title, mealPlanName);
+            const isFirstMealSlot = index === 0 && idx === 0;
+            const hasDummyMeal =
+              isFirstMealSlot && selectedMeal?.id === "tour-dummy-meal";
 
-            return (
+            const mealBoxContent = (
               <View key={mealPlanName + idx} style={styles.mealCol}>
                 <Text style={styles.mealLabel}>{mealPlanName}</Text>
                 <TouchableOpacity
@@ -275,10 +370,37 @@ export default function CreateMealPlan({}) {
                 </TouchableOpacity>
               </View>
             );
+
+            // Wrap first meal box with zone 7 only when it has the dummy meal
+            if (hasDummyMeal) {
+              return (
+                <TourGuideZone
+                  key={mealPlanName + idx}
+                  zone={7}
+                  shape="rectangle"
+                  borderRadius={8}
+                >
+                  {mealBoxContent}
+                </TourGuideZone>
+              );
+            }
+
+            return mealBoxContent;
           })}
         </ScrollView>
       </View>
     );
+
+    // Wrap only the first item (index 0) with TourGuideZone
+    if (index === 0) {
+      return (
+        <TourGuideZone zone={6} shape="rectangle" borderRadius={16}>
+          {content}
+        </TourGuideZone>
+      );
+    }
+
+    return content;
   }
 
   const validateMealPlan = (): boolean => {
@@ -331,6 +453,29 @@ export default function CreateMealPlan({}) {
     return daysData;
   };
 
+  const buildDummyDaysData = () => {
+    // Build dummy data for tour with the tour dummy meal
+    if (days.length === 0) return [];
+
+    const firstDay = days[0];
+    const firstMealPlan = "Breakfast"; // Breakfast
+
+    const dummyDaysData: DayData[] = [
+      {
+        dayTitle: firstDay.title,
+        date: firstDay.date,
+        mealSlots: [
+          {
+            mealPlanId: "dummy-meal-plan-id",
+            mealId: "tour-dummy-meal",
+          },
+        ],
+      },
+    ];
+
+    return dummyDaysData;
+  };
+
   const calculateEndDate = (daysData: DayData[]) => {
     const lastDayWithMeals =
       daysData.length > 0 ? daysData[daysData.length - 1] : null;
@@ -345,15 +490,44 @@ export default function CreateMealPlan({}) {
   };
 
   const saveMealPlan = () => {
+    // Ensure plan name is set (especially for tour)
+
+    // If tour is active, add plan locally to Redux without API call
+    if (shouldStartTour) {
+      // showLoader();
+
+      const daysData = buildDummyDaysData();
+      const endDate = calculateEndDate(daysData);
+
+      const localPlan = {
+        id: `tour-plan-${Date.now()}`,
+        uid: user?.id || "tour-user",
+        planName: planName.trim() || "My First Meal Plan",
+        startDate: startDate,
+        endDate: endDate,
+        status: MealStatus.CREATED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        days: daysData,
+      };
+
+      dispatch(addPlanLocally(localPlan));
+
+      setTimeout(() => {
+        hideLoader();
+        // showSuccessToast(Strings.plan_saved_successfully);
+        backNavigation();
+      }, 500);
+      return;
+    }
     if (!validateMealPlan()) return;
 
     showLoader();
-
     const daysData = buildDaysData();
     const endDate = calculateEndDate(daysData);
 
     const planPayload = {
-      planName: planName || Strings.unknown_plan,
+      planName: planName.trim() || Strings.unknown_plan,
       startDate: startDate,
       endDate: endDate,
       status: MealStatus.CREATED,
@@ -372,7 +546,7 @@ export default function CreateMealPlan({}) {
         hideLoader();
         console.error("❌ ERROR - Failed to save plan:", error);
         showErrorToast(error || Strings.error_adding_plan);
-      }
+      },
     );
   };
 
@@ -409,7 +583,7 @@ export default function CreateMealPlan({}) {
         hideLoader();
         console.log("SUCCESS - Plan updated:", response);
         showSuccessToast(
-          Strings.plan_updated_successfully || "Plan updated successfully"
+          Strings.plan_updated_successfully || "Plan updated successfully",
         );
         backNavigation();
       },
@@ -417,9 +591,9 @@ export default function CreateMealPlan({}) {
         hideLoader();
         console.error("ERROR - Failed to update plan:", error);
         showErrorToast(
-          error || Strings.error_updating_plan || "Failed to update plan"
+          error || Strings.error_updating_plan || "Failed to update plan",
         );
-      }
+      },
     );
   };
 

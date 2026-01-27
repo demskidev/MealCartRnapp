@@ -12,7 +12,9 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
 import { useAppSelector } from "@/reduxStore/hooks";
+import { pushNavigation } from "@/utils/Navigation";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -26,6 +28,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TourGuideZone } from "rn-tourguide";
 
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
@@ -35,12 +38,13 @@ const ListsScreen: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
   const [markedItems, setMarkedItems] = useState<Set<string>>(new Set());
+  const { shouldStartTour, setTriggerOpenCreateList } = useTourStep();
 
   const { shoppingLists, loading, fetchShoppingLists, deleteShoppingListData } =
     useShoppingListViewModel();
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !shouldStartTour) {
       console.log("Fetching shopping lists for user:", user.id);
       showLoader();
       fetchShoppingLists(
@@ -54,10 +58,22 @@ const ListsScreen: React.FC = () => {
           console.error("Error fetching shopping lists:", error);
         },
         10,
-        null
+        null,
       );
     }
   }, [user?.id]);
+
+  // Register callback to open CreateNewListBottomSheet during tour
+  useEffect(() => {
+    const openCreateList = () => {
+      createNewListRef.current?.expand();
+    };
+    setTriggerOpenCreateList(() => openCreateList);
+
+    return () => {
+      setTriggerOpenCreateList(null);
+    };
+  }, [setTriggerOpenCreateList]);
 
   const formatDate = (date: any) => {
     if (!date) return "N/A";
@@ -107,7 +123,7 @@ const ListsScreen: React.FC = () => {
             newSet.delete(listId);
             return newSet;
           });
-        }
+        },
       );
     }, 300);
   };
@@ -161,10 +177,7 @@ const ListsScreen: React.FC = () => {
             textStyle={styles.addButton}
             textStyleText={styles.addButtonText}
             onPress={() =>
-              router.push({
-                pathname: APP_ROUTES.TestPlanShopping,
-                params: { listId: item.id },
-              })
+              pushNavigation(APP_ROUTES.TestPlanShopping, { listId: item.id })
             }
           />
         </View>
@@ -176,16 +189,18 @@ const ListsScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.parentMymeal}>
         <Text style={styles.title}>{Strings.lists_shoppingLists}</Text>
-        <TouchableOpacity
-          style={styles.addNewListButton}
-          onPress={() => createNewListRef.current?.expand()}
-        >
-          <Image
-            source={gradientclose}
-            resizeMode="contain"
-            style={styles.gradientCloseImage}
-          />
-        </TouchableOpacity>
+        <TourGuideZone zone={13} shape="circle" borderRadius={50}>
+          <TouchableOpacity
+            style={styles.addNewListButton}
+            onPress={() => createNewListRef.current?.expand()}
+          >
+            <Image
+              source={gradientclose}
+              resizeMode="contain"
+              style={styles.gradientCloseImage}
+            />
+          </TouchableOpacity>
+        </TourGuideZone>
       </View>
 
       <FlatList

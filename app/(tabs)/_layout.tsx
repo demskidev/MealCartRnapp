@@ -91,7 +91,6 @@ export default function TabLayout() {
             <TourGuideZone
               zone={3}
               shape="circle"
-              
               borderRadius={12}
               maskOffset={10}
             >

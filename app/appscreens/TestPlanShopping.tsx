@@ -9,11 +9,12 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { pushNavigation } from "@/utils/Navigation";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -23,6 +24,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TourGuideZone } from "rn-tourguide";
 const data = [
   {
     id: "1",
@@ -54,14 +56,70 @@ export default function TestPlanShopping() {
   const router = useRouter();
   const { listId } = useLocalSearchParams();
   const user = useAppSelector((state) => state.auth.user);
-  
-  const {
-    shoppingLists,
-    loading,
-    fetchShoppingLists,
-  } = useShoppingListViewModel();
+  const { shouldStartTour } = useTourStep();
+
+  const { shoppingLists, loading, fetchShoppingLists } =
+    useShoppingListViewModel();
+
+  // Check if this is tour mode
+  const isTourMode = listId === "tour-dummy-list" && shouldStartTour;
+
+  // Create dummy list for tour
+  const dummyTourList = useMemo(
+    () => ({
+      id: "tour-dummy-list",
+      listName: "My Weekly Groceries",
+      shoppingDay: new Date(
+        Date.now() + 2 * 24 * 60 * 60 * 1000,
+      ).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      createdAt: new Date(),
+      uid: user?.id || "tour-user",
+      items: [
+        {
+          ingredientId: "dummy-ing-1",
+          ingredientName: "Spaghetti",
+          categoryId: "cat-1",
+          categoryName: "Pasta",
+          unit: "400 grams",
+          mealId: "tour-dummy-meal",
+          mealName: "Omelette",
+          isChecked: false,
+        },
+        {
+          ingredientId: "dummy-ing-2",
+          ingredientName: "Ground Beef",
+          categoryId: "cat-2",
+          categoryName: "Meat",
+          unit: "500 grams",
+          mealId: "tour-dummy-meal",
+          mealName: "Omelette",
+          isChecked: false,
+        },
+        {
+          ingredientId: "dummy-ing-3",
+          ingredientName: "Tomato Sauce",
+          categoryId: "cat-3",
+          categoryName: "Sauces",
+          unit: "250 ml",
+          mealId: "tour-dummy-meal",
+          mealName: "Omelette",
+          isChecked: false,
+        },
+      ],
+    }),
+    [user?.id],
+  );
 
   useEffect(() => {
+    // Skip fetching if in tour mode
+    if (isTourMode) {
+      return;
+    }
+
     if (user?.id) {
       console.log("Fetching shopping lists for user:", user.id);
       fetchShoppingLists(
@@ -73,24 +131,29 @@ export default function TestPlanShopping() {
           console.error("Error fetching shopping lists:", error);
         },
         10,
-        null
+        null,
       );
     }
-  }, [user?.id]);
+  }, [user?.id, isTourMode]);
 
-  console.log('shoppp9999', shoppingLists)
-  console.log('Selected listId:', listId);
-  
-  // Find the specific shopping list by ID
-  const selectedList = shoppingLists.find((list) => list.id === listId);
-  
+  console.log("shoppp9999", shoppingLists);
+  console.log("Selected listId:", listId);
+
+  // Find the specific shopping list by ID, or use dummy data in tour mode
+  const selectedList = isTourMode
+    ? dummyTourList
+    : shoppingLists.find((list) => list.id === listId);
+
+  console.log("Selected list full data:", selectedList);
+
   // Get ingredients only from the selected list
-  const allIngredients = selectedList?.ingredients || [];
-  console.log('Ingredients for selected list:', allIngredients);
-  
+  // API returns 'ingredients', tour mode uses 'items'
+  const allIngredients = selectedList?.ingredients || selectedList?.items || [];
+  console.log("Ingredients for selected list:", allIngredients);
+
   const toggleCheck = (id: string) => {
     setChecked((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -103,20 +166,23 @@ export default function TestPlanShopping() {
   }) => {
     const itemId = `${item.ingredientId}-${item.mealId}-${index}`;
     const isChecked = checked.includes(itemId);
-    
+
     // Check if this is the first item in its category
-    const showCategoryHeader = index === 0 || 
+    const showCategoryHeader =
+      index === 0 ||
       allIngredients[index - 1]?.categoryName !== item.categoryName;
-    
+
     return (
       <View>
         {showCategoryHeader && (
           <>
-            <Text style={styles.sectionTitle}>{item.categoryName || 'Other'}</Text>
+            <Text style={styles.sectionTitle}>
+              {item.categoryName || "Other"}
+            </Text>
             <View style={styles.dividerRow} />
           </>
         )}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.cardCategory}
           onPress={() => toggleCheck(itemId)}
           activeOpacity={0.7}
@@ -138,8 +204,10 @@ export default function TestPlanShopping() {
               />
             )}
             <View>
-              <Text style={styles.name}>{item.ingredientName || 'Unknown Ingredient'}</Text>
-              <Text style={styles.amount}>{item.unit || 'No unit'}</Text>
+              <Text style={styles.name}>
+                {item.ingredientName || "Unknown Ingredient"}
+              </Text>
+              <Text style={styles.amount}>{item.unit || "No unit"}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -148,60 +216,69 @@ export default function TestPlanShopping() {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Image
-            source={iconback}
-            resizeMode="contain"
-            style={styles.backIcon}
+      <TourGuideZone zone={18} shape="rectangle" borderRadius={8}>
+        <TourGuideZone zone={17} shape="rectangle" borderRadius={8}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Image
+                source={iconback}
+                resizeMode="contain"
+                style={styles.backIcon}
+              />
+            </TouchableOpacity>
+            <Text style={styles.backText}>
+              {Strings.testPlanShopping_backToLists}
+            </Text>
+          </View>
+
+          <View style={styles.titleRow}>
+            <Text style={styles.planTitle}>
+              {selectedList?.listName || Strings.testPlanShopping_title}
+            </Text>
+
+            <View style={styles.editdelete}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
+              >
+                <Image
+                  source={iconedit}
+                  resizeMode="contain"
+                  style={styles.editIcon}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Image
+                  source={deleteicon}
+                  resizeMode="contain"
+                  style={styles.deleteIcon}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <Text style={styles.planSubTitle}>
+            {allIngredients.length}{" "}
+            {allIngredients.length === 1 ? "meal" : "meals"}
+          </Text>
+
+          <ProgressBar
+            progress={checked.length / (allIngredients.length || 1)}
+            label={Strings.testPlanShopping_progress}
+            progressText={Strings.testPlanShopping_progressText}
+            containerStyle={styles.progressbar}
           />
-        </TouchableOpacity>
-        <Text style={styles.backText}>
-          {Strings.testPlanShopping_backToLists}
-        </Text>
-      </View>
 
-      <View style={styles.titleRow}>
-        <Text style={styles.planTitle}>{selectedList?.listName || Strings.testPlanShopping_title}</Text>
-
-        <View style={styles.editdelete}>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
-          >
-            <Image
-              source={iconedit}
-              resizeMode="contain"
-              style={styles.editIcon}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Image
-              source={deleteicon}
-              resizeMode="contain"
-              style={styles.deleteIcon}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <Text style={styles.planSubTitle}>
-        {allIngredients.length} {allIngredients.length === 1 ? 'meal' : 'meals'}
-      </Text>
-
-      <ProgressBar
-        progress={checked.length / (allIngredients.length || 1)}
-        label={Strings.testPlanShopping_progress}
-        progressText={Strings.testPlanShopping_progressText}
-        containerStyle={styles.progressbar}
-      />
-
-      <FlatList
-        data={allIngredients}
-        keyExtractor={(item, index) => `${item.ingredientId}-${item.mealId}-${index}`}
-        renderItem={renderIngredientItem}
-        scrollEnabled={true}
-        contentContainerStyle={{ paddingBottom: verticalScale(20) }}
-      />
+          <FlatList
+            data={allIngredients}
+            keyExtractor={(item, index) =>
+              `${item.ingredientId}-${item.mealId}-${index}`
+            }
+            renderItem={renderIngredientItem}
+            scrollEnabled={true}
+            contentContainerStyle={{ paddingBottom: verticalScale(20) }}
+          />
+        </TourGuideZone>
+      </TourGuideZone>
     </SafeAreaView>
   );
 }

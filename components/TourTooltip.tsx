@@ -1,15 +1,17 @@
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Colors } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { FontFamily } from "@/utils/Fonts";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { type IStep } from "rn-tourguide";
 
@@ -58,6 +60,114 @@ const tourSteps = [
     secondaryText: "Back",
     tertiaryText: "Got it!",
   },
+  {
+    title: "Plan Your Week",
+    subTitle:
+      "Ready to plan your week? Tap here to create your first meal plan.",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Daily Planner",
+    subTitle:
+      "You can select at what day - at what time you like to plan your next meal.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "And It’s Done",
+    subTitle:
+      "Slot will look like this when you add you meal. You can remove or replace it anytime.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Your Other Plans",
+    subTitle:
+      "All of your inactive or future meal plans are stored here for easy access.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Start a Plan",
+    subTitle:
+      "Ready for a new week? Click here to make any of your other plans the active one.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Your Active Plan",
+    subTitle:
+      "This card shows your currently active meal plan, with a quick look at today's meals.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Get Shopping List",
+    subTitle:
+      "Instantly generate a complete, organized shopping list for all meals in your active plan.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Pause Plan",
+    subTitle:
+      "If your plans change, you can pause the active plan here. You can always restart it later.",
+    secondaryText: "Back",
+    tertiaryText: "Got it",
+  },
+  {
+    title: "Your Smart List",
+    subTitle:
+      "Your shopping list is ready! We automatically added all the ingredients from your meal plan.\n\nOr you can Create new list by clicking on highlighted action.",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Create List",
+    subTitle:
+      "You can create list manually, start by giving it a name and your shopping day to get notified.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Add Items",
+    subTitle:
+      "Here you will see your items required by your meal. Clicking on “Add items” will opens up a new window.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Check And Save",
+    subTitle:
+      "You can check off items that you dont need from auto-fetched list. Once that done you can save the list and its ready to use.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Your Smart List",
+    subTitle:
+      "Your shopping list is ready! You open it up anytime and check as well as update it.",
+    secondaryText: "Back",
+    primaryText: "Skip Tour",
+    tertiaryText: "Next",
+  },
+  {
+    title: "Check Off Items",
+    subTitle:
+      "You can check off any items you already have at home before you shop.",
+    secondaryText: "Back",
+    tertiaryText: "Got It",
+  },
 ];
 
 const getTooltipPositionStyle = (stepIndex: number) => {
@@ -101,7 +211,23 @@ const TourTooltip: React.FC<TooltipProps> = ({
   handlePrev,
   handleStop,
 }) => {
-  const { completeTour } = useTourStep();
+  const {
+    completeTour,
+    setIsNavigating,
+    triggerMealBoxPress,
+    triggerSavePlan,
+    cleanupTourData,
+    triggerStartPlan,
+    triggerOpenAddItemToList,
+    setTriggerOpenAddItemToList,
+    triggerOpenCreateList,
+    setTriggerOpenCreateList,
+    triggerAddDummyIngredients,
+    setTriggerAddDummyIngredients,
+    triggerCloseCreateList,
+    triggerCloseAddItemToList,
+  } = useTourStep();
+  const router = useRouter();
   const stepIndex = (currentStep?.order ?? 1) - 1;
   console.log(
     "🎯 Tooltip - Step:",
@@ -129,11 +255,291 @@ const TourTooltip: React.FC<TooltipProps> = ({
   const onSkip = async () => {
     await completeTour();
     handleStop?.();
+    // Navigate to home after skipping tour
+    router.push(APP_ROUTES.HOME as any);
   };
 
   const onFinish = async () => {
     await completeTour();
     handleStop?.();
+    // Navigate to home after completing tour
+    router.push(APP_ROUTES.HOME as any);
+  };
+
+  const handleBackOrNavigate = () => {
+    // Handle back navigation with proper bottom sheet and screen navigation
+    if (stepIndex === 13) {
+      // Step 14 (index 13) "Create List" - close bottom sheet and go back
+      if (triggerCloseCreateList) {
+        triggerCloseCreateList();
+      }
+      setTimeout(() => {
+        if (handlePrev) {
+          handlePrev();
+        }
+      }, 300);
+    } else if (stepIndex === 14) {
+      // Step 15 (index 14) "Add Items" - just go back, stay on bottom sheet
+      if (handlePrev) {
+        handlePrev();
+      }
+    } else if (stepIndex === 15) {
+      // Step 16 (index 15) "Check And Save" - just go back, stay on bottom sheet
+      if (handlePrev) {
+        handlePrev();
+      }
+    } else if (stepIndex === 16) {
+      // Step 17 (index 16) "Your Smart List" - navigate back to LISTS, open bottom sheet and show zone 16
+      setIsNavigating(true);
+      router.push(APP_ROUTES.LISTS as any);
+
+      setTimeout(() => {
+        // Open the bottom sheet
+        if (triggerOpenCreateList) {
+          triggerOpenCreateList();
+        }
+
+        // Add dummy ingredients
+        setTimeout(() => {
+          if (triggerAddDummyIngredients) {
+            triggerAddDummyIngredients();
+          }
+
+          // Wait for bottom sheet to fully open and ingredients to load, then go back
+          setTimeout(() => {
+            if (handlePrev) {
+              handlePrev();
+            }
+            setTimeout(() => {
+              setIsNavigating(false);
+            }, 500);
+          }, 500);
+        }, 300);
+      }, 1200);
+    } else if (stepIndex === 17) {
+      // Step 18 (index 17) "Check Off Items" - just go back to previous step (zone 17)
+      if (handlePrev) {
+        handlePrev();
+      }
+    } else if (stepIndex === 12) {
+      // Step 13 (index 12) "Your Smart List" - navigate back to Plans
+      setIsNavigating(true);
+      router.push(APP_ROUTES.PLANS as any);
+      setTimeout(() => {
+        if (handlePrev) {
+          handlePrev();
+        }
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 300);
+      }, 800);
+    } else if (stepIndex === 11) {
+      // Step 12 (index 11) "Pause Plan" - stay on Plans screen
+      if (handlePrev) {
+        handlePrev();
+      }
+    } else if (stepIndex === 7) {
+      // Step 8 (index 7) "Your Other Plans" - navigate back to CreateMealPlan and re-add dummy meal
+      setIsNavigating(true);
+      router.push(APP_ROUTES.CreateMealPlan as any);
+
+      // Wait for screen to render, then add dummy meal and go back
+      setTimeout(() => {
+        if (triggerMealBoxPress) {
+          triggerMealBoxPress();
+        }
+
+        setTimeout(() => {
+          if (handlePrev) {
+            handlePrev();
+          }
+          setTimeout(() => {
+            setIsNavigating(false);
+          }, 500);
+        }, 500);
+      }, 1200);
+    } else if (stepIndex === 8 || stepIndex === 9 || stepIndex === 10) {
+      // Steps 9-11 on Plans screen - just go back
+      if (handlePrev) {
+        handlePrev();
+      }
+    } else if (stepIndex === 5) {
+      // Step 6 (index 5) "Daily Planner" - navigate back to Plans screen
+      setIsNavigating(true);
+      router.push(APP_ROUTES.PLANS as any);
+      setTimeout(() => {
+        if (handlePrev) {
+          handlePrev();
+        }
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 500);
+      }, 1200);
+    } else if (stepIndex === 6) {
+      // Step 7 (index 6) "And It's Done" - stay on CreateMealPlan, just go back
+      if (handlePrev) {
+        handlePrev();
+      }
+    } else if (stepIndex === 4) {
+      // Step 5 (index 4) "Plan Your Week" - navigate back to Plans
+      setIsNavigating(true);
+      router.push(APP_ROUTES.PLANS as any);
+      setTimeout(() => {
+        if (handlePrev) {
+          handlePrev();
+        }
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 300);
+      }, 800);
+    } else {
+      // Default back behavior
+      if (handlePrev) {
+        handlePrev();
+      }
+    }
+  };
+
+  const handleNextOrNavigate = () => {
+    // Step 4 (index 3) is Profile - navigate to Plans tab and continue tour
+    if (stepIndex === 3) {
+      // Set flag to prevent tour from stopping during navigation
+      setIsNavigating(true);
+
+      // Navigate first
+      router.push(APP_ROUTES.PLANS as any);
+
+      // Wait for screen to render and zone to be ready, then advance to next step
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+        // Clear the flag after advancing
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 300);
+      }, 800);
+    } else if (stepIndex === 4) {
+      // Step 5 (index 4) is "Plan Your Week" - navigate to CreateMealPlan and continue tour
+      setIsNavigating(true);
+
+      // Navigate to CreateMealPlan
+      router.push(APP_ROUTES.CreateMealPlan as any);
+
+      // Wait for screen to render and zone to be ready, then advance to step 6
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+        // Clear the flag after advancing
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 300);
+      }, 800);
+    } else if (stepIndex === 5) {
+      // Step 6 (index 5) is "Daily Planner" - add dummy meal and advance to step 7
+      if (triggerMealBoxPress) {
+        triggerMealBoxPress();
+      }
+      // Advance to step 7 after adding dummy meal
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+      }, 300);
+    } else if (stepIndex === 6) {
+      // Step 7 (index 6) is "And It's Done" - save plan with dummy data
+      if (triggerSavePlan) {
+        triggerSavePlan();
+      }
+      // Wait for save to complete, then navigate and advance to next step
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+      }, 1500);
+    } else if (stepIndex === 8) {
+      // Step 9 (index 8) is "Start a Plan" - start the first plan locally
+      if (triggerStartPlan) {
+        triggerStartPlan();
+      }
+      // Wait for update to complete, then advance to next step
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+      }, 1500);
+    } else if (stepIndex === 11) {
+      // Step 12 (index 11) is "Pause Plan" - navigate to LISTS and continue tour
+      setIsNavigating(true);
+      router.push(APP_ROUTES.LISTS as any);
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 300);
+      }, 800);
+    } else if (stepIndex === 12) {
+      // Step 13 (index 12) is "Your Smart List" - open CreateNewListBottomSheet
+      if (triggerOpenCreateList) {
+        triggerOpenCreateList();
+      }
+      // Wait for bottom sheet to open, then advance to next step
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+      }, 500);
+    } else if (stepIndex === 13) {
+      // Step 14 (index 13) is "Create List" - advance normally
+      if (handleNext) {
+        handleNext();
+      }
+    } else if (stepIndex === 14) {
+      // Step 15 (index 14) is "Add Items" - add dummy ingredients and open AddItemToList modal
+      if (triggerAddDummyIngredients) {
+        triggerAddDummyIngredients();
+      }
+      // Wait for ingredients to be added
+      setTimeout(() => {
+        if (triggerOpenAddItemToList) {
+          triggerOpenAddItemToList();
+        }
+        // Advance to next step after opening modal
+        setTimeout(() => {
+          if (handleNext) {
+            handleNext();
+          }
+        }, 500);
+      }, 300);
+    } else if (stepIndex === 15) {
+      // Step 16 (index 15) is "Check And Save" - navigate to TestPlanShopping with dummy list
+      // Don't close the bottom sheet during tour - it will stay in background
+      setIsNavigating(true);
+
+      // Navigate with dummy list ID
+      router.push({
+        pathname: APP_ROUTES.TestPlanShopping as any,
+        params: { listId: "tour-dummy-list" },
+      });
+
+      setTimeout(() => {
+        if (handleNext) {
+          handleNext();
+        }
+        setTimeout(() => {
+          setIsNavigating(false);
+        }, 300);
+      }, 800);
+    } else if (isLastStep) {
+      onFinish();
+    } else {
+      if (handleNext) {
+        handleNext();
+      }
+    }
   };
 
   return (
@@ -152,7 +558,10 @@ const TourTooltip: React.FC<TooltipProps> = ({
 
         <View style={styles.navigationButtons}>
           {step.secondaryText && (
-            <TouchableOpacity style={styles.backButton} onPress={handlePrev}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBackOrNavigate}
+            >
               <Text style={styles.backText}>{step.secondaryText}</Text>
             </TouchableOpacity>
           )}
@@ -160,7 +569,7 @@ const TourTooltip: React.FC<TooltipProps> = ({
           {step.tertiaryText && (
             <TouchableOpacity
               style={styles.nextButton}
-              onPress={isLastStep ? onFinish : handleNext}
+              onPress={handleNextOrNavigate}
             >
               <LinearGradient
                 colors={[Colors._667D4C, Colors._9DAF89]}

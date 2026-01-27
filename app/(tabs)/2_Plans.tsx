@@ -10,12 +10,15 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { useTourStep } from "@/context/TourStepContext";
 import { MealStatus } from "@/reduxStore/appKeys";
+import { useAppDispatch } from "@/reduxStore/hooks";
+import { updatePlanLocally } from "@/reduxStore/slices/planSlice";
 import { pushNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -28,7 +31,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTourGuideController } from "rn-tourguide";
+import { TourGuideZone, useTourGuideController } from "rn-tourguide";
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
@@ -47,19 +50,23 @@ const PlansScreen: React.FC = () => {
   const [zoneReady, setZoneReady] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { start, stop } = useTourGuideController();
+  const { shouldStartTour, setTriggerStartPlan } = useTourStep();
   const { enrichedPlans, fetchPlans, updatePlan } = usePlanViewModel();
   const filteredPlans = enrichedPlans;
 
   useEffect(() => {
-    showLoader();
-    fetchPlans(
-      () => hideLoader(),
-      (error) => {
-        hideLoader();
-        console.error("Error fetching plans:", error);
-      },
-    );
+    if (!shouldStartTour) {
+      showLoader();
+      fetchPlans(
+        () => hideLoader(),
+        (error) => {
+          hideLoader();
+          console.error("Error fetching plans:", error);
+        },
+      );
+    }
   }, []);
 
   const onRefresh = () => {
@@ -73,14 +80,32 @@ const PlansScreen: React.FC = () => {
     );
   };
 
-  const activePlan = filteredPlans.find(
-    (plan) => plan.status === MealStatus.STARTED,
+  const activePlan = useMemo(
+    () => filteredPlans.find((plan) => plan.status === MealStatus.STARTED),
+    [filteredPlans],
   );
-  const otherPlans = filteredPlans.filter(
-    (plan) => plan.status !== MealStatus.STARTED,
+
+  const otherPlans = useMemo(
+    () => filteredPlans.filter((plan) => plan.status !== MealStatus.STARTED),
+    [filteredPlans],
   );
 
   console.log("🏆 Active Plan:", activePlan);
+
+  // Register callback for tour to start first plan
+  useEffect(() => {
+    if (otherPlans.length > 0) {
+      const startFirstPlan = () => {
+        const firstPlan = otherPlans[0];
+        updateThePlan(firstPlan, MealStatus.STARTED);
+      };
+      setTriggerStartPlan(() => startFirstPlan);
+    }
+
+    return () => {
+      setTriggerStartPlan(null);
+    };
+  }, [otherPlans, setTriggerStartPlan]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -96,7 +121,10 @@ const PlansScreen: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      stop();
+      // Don't stop tour if it should be running
+      if (!shouldStartTour) {
+        stop();
+      }
       let isActive = true;
       const timeout = setTimeout(() => {
         if (isActive) {
@@ -107,7 +135,7 @@ const PlansScreen: React.FC = () => {
         isActive = false;
         clearTimeout(timeout);
       };
-    }, []),
+    }, [shouldStartTour]),
   );
 
   // Utility to normalize Firestore/JS timestamps to JS Date
@@ -143,6 +171,17 @@ const PlansScreen: React.FC = () => {
   };
 
   const updateThePlan = (plan: any, status: string) => {
+    if (shouldStartTour) {
+      dispatch(
+        updatePlanLocally({
+          id: plan.id,
+          status: status,
+        }),
+      );
+
+      return;
+    }
+
     // Prevent starting a plan whose startDate is in the future
     if (status === MealStatus.STARTED) {
       const start = toDateObject(plan.startDate);
@@ -156,7 +195,11 @@ const PlansScreen: React.FC = () => {
         return;
       }
     }
-    showLoader();
+
+    if (!start) showLoader();
+
+    // If tour is active, update plan locally without API call
+
     updatePlan(
       {
         id: plan.id,
@@ -178,11 +221,42 @@ const PlansScreen: React.FC = () => {
     pushNavigation(APP_ROUTES.TestMealPlan, { planId });
   };
 
-  const renderShoppingList = ({ item }: { item: any }) => {
+  const renderShoppingList = ({
+    item,
+    index,
+  }: {
+    item: any;
+    index: number;
+  }) => {
     const totalMeals = getTotalMeals(item);
     const startDate = formatDate(item.startDate);
+    const isFirstItem = index === 0;
 
-    return (
+    const startButton = (
+      <BaseButton
+        title={
+          item.status === MealStatus.PAUSED
+            ? Strings.plans_resumePlan
+            : Strings.plans_startPlan
+        }
+        gradientButton={false}
+        textColor={Colors.background}
+        width={width * 0.43}
+        textStyle={
+          item.status === MealStatus.PAUSED
+            ? styles.resumeButton
+            : styles.addButton
+        }
+        textStyleText={
+          item.status === MealStatus.PAUSED
+            ? styles.resumeButtonText
+            : styles.addButtonText
+        }
+        onPress={() => updateThePlan(item, MealStatus.STARTED)}
+      />
+    );
+
+    const cardContent = (
       <View style={styles.listCard}>
         <Text style={styles.listTitle}>{item.planName}</Text>
 
@@ -211,30 +285,27 @@ const PlansScreen: React.FC = () => {
             textStyleText={styles.addButtonText}
             onPress={() => viewPlan(item.id)}
           />
-          <BaseButton
-            title={
-              item.status === MealStatus.PAUSED
-                ? Strings.plans_resumePlan
-                : Strings.plans_startPlan
-            }
-            gradientButton={false}
-            textColor={Colors.background}
-            width={width * 0.43}
-            textStyle={
-              item.status === MealStatus.PAUSED
-                ? styles.resumeButton
-                : styles.addButton
-            }
-            textStyleText={
-              item.status === MealStatus.PAUSED
-                ? styles.resumeButtonText
-                : styles.addButtonText
-            }
-            onPress={() => updateThePlan(item, MealStatus.STARTED)}
-          />
+          {isFirstItem ? (
+            <TourGuideZone zone={9} shape="rectangle" borderRadius={8}>
+              {startButton}
+            </TourGuideZone>
+          ) : (
+            startButton
+          )}
         </View>
       </View>
     );
+
+    // Wrap first item with zone 8
+    if (isFirstItem) {
+      return (
+        <TourGuideZone zone={8} shape="rectangle" borderRadius={8}>
+          {cardContent}
+        </TourGuideZone>
+      );
+    }
+
+    return cardContent;
   };
 
   return (
@@ -258,19 +329,22 @@ const PlansScreen: React.FC = () => {
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{Strings.plans_mealPlans}</Text>
 
-          {/* <TourGuideZone zone={5} shape="circle" maskOffset={10}> */}
-          <View
-            collapsable={false}
-            style={styles.tourTarget}
-            onLayout={() => setZoneReady(true)}
-          >
-            <TouchableOpacity
-              onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
+          <TourGuideZone zone={5} shape="circle" maskOffset={10}>
+            <View
+              collapsable={false}
+              style={styles.tourTarget}
+              onLayout={() => setZoneReady(true)}
             >
-              <Image source={gradientclose} style={styles.gradientCloseImage} />
-            </TouchableOpacity>
-          </View>
-          {/* </TourGuideZone> */}
+              <TouchableOpacity
+                onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
+              >
+                <Image
+                  source={gradientclose}
+                  style={styles.gradientCloseImage}
+                />
+              </TouchableOpacity>
+            </View>
+          </TourGuideZone>
         </View>
         {!activePlan ? (
           <>
@@ -282,103 +356,127 @@ const PlansScreen: React.FC = () => {
             <View style={styles.dividerRowSpaced} />
           </>
         ) : (
-          <View style={styles.activeCard}>
-            <View style={styles.activeBadge}>
-              <Image
-                source={activeImage}
-                resizeMode="contain"
-                style={styles.activeImage}
-              />
-            </View>
-            <Text style={styles.planTitle}>{activePlan.planName}</Text>
-            <Text style={styles.planSubTitle}>{Strings.plans_dayOf}</Text>
-            <View style={styles.mealBox}>
-              <Text style={styles.mealBoxTitle}>
-                {Strings.plans_todaysMeal}
-              </Text>
-              {activePlan &&
-                activePlan.days &&
-                activePlan.days.length > 0 &&
-                (() => {
-                  // Find today's date in activePlan.days
-                  const today = new Date();
-                  const isSameDay = (a: Date, b: Date) =>
-                    a.getFullYear() === b.getFullYear() &&
-                    a.getMonth() === b.getMonth() &&
-                    a.getDate() === b.getDate();
+          <TourGuideZone zone={10} shape="rectangle" borderRadius={16}>
+            <View style={styles.activeCard}>
+              <View style={styles.activeBadge}>
+                <Image
+                  source={activeImage}
+                  resizeMode="contain"
+                  style={styles.activeImage}
+                />
+              </View>
+              <Text style={styles.planTitle}>{activePlan.planName}</Text>
+              <Text style={styles.planSubTitle}>{Strings.plans_dayOf}</Text>
+              <View style={styles.mealBox}>
+                <Text style={styles.mealBoxTitle}>
+                  {Strings.plans_todaysMeal}
+                </Text>
+                {activePlan &&
+                  activePlan.days &&
+                  activePlan.days.length > 0 &&
+                  (() => {
+                    // Find today's date in activePlan.days
+                    const today = new Date();
+                    const isSameDay = (a: Date, b: Date) =>
+                      a.getFullYear() === b.getFullYear() &&
+                      a.getMonth() === b.getMonth() &&
+                      a.getDate() === b.getDate();
 
-                  const findDay = () => {
-                    for (const day of activePlan.days) {
-                      if (day.date) {
-                        const dayDate = toDateObject(day.date);
-                        if (dayDate && isSameDay(dayDate, today)) {
-                          return day;
+                    const findDay = () => {
+                      for (const day of activePlan.days) {
+                        if (day.date) {
+                          const dayDate = toDateObject(day.date);
+                          if (dayDate && isSameDay(dayDate, today)) {
+                            return day;
+                          }
                         }
                       }
+                      return null;
+                    };
+                    const todayDay = findDay();
+                    if (
+                      !todayDay ||
+                      !todayDay.mealSlots ||
+                      todayDay.mealSlots.length === 0
+                    ) {
+                      return (
+                        <Text style={styles.mealValue}>
+                          {Strings.plans_notPlanned}
+                        </Text>
+                      );
                     }
-                    return null;
-                  };
-                  const todayDay = findDay();
-                  if (
-                    !todayDay ||
-                    !todayDay.mealSlots ||
-                    todayDay.mealSlots.length === 0
-                  ) {
                     return (
-                      <Text style={styles.mealValue}>
-                        {Strings.plans_notPlanned}
-                      </Text>
+                      <View style={styles.mealRow}>
+                        {todayDay.mealSlots.map((slot, idx) => {
+                          // Check if this is tour dummy data
+                          const isTourDummy =
+                            slot.mealPlanId === "dummy-meal-plan-id" ||
+                            slot.mealId === "tour-dummy-meal";
+
+                          const mealPlanName = isTourDummy
+                            ? "Breakfast"
+                            : slot.mealPlan?.name || `Meal ${idx + 1}`;
+
+                          const mealName = isTourDummy
+                            ? "Omlette"
+                            : slot.meal?.name || Strings.plans_notPlanned;
+
+                          return (
+                            <View
+                              key={slot.mealPlanId}
+                              style={styles.mealColumn}
+                            >
+                              <Text style={styles.mealLabelTop}>
+                                {mealPlanName}
+                              </Text>
+                              <Text style={styles.mealValue}>{mealName}</Text>
+                            </View>
+                          );
+                        })}
+                      </View>
                     );
-                  }
-                  return (
-                    <View style={styles.mealRow}>
-                      {todayDay.mealSlots.map((slot, idx) => (
-                        <View key={slot.mealPlanId} style={styles.mealColumn}>
-                          <Text style={styles.mealLabelTop}>
-                            {slot.mealPlan?.name || `Meal ${idx + 1}`}
-                          </Text>
-                          <Text style={styles.mealValue}>
-                            {slot.meal?.name || Strings.plans_notPlanned}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  );
-                })()}
-            </View>
-            <View style={styles.footer}>
-              <BaseButton
-                title={Strings.plans_getShoppingList}
-                gradientButton={true}
-                textColor={Colors.background}
-                width={width * 0.53}
-                textStyle={styles.createButtonText}
-                rightChild={
-                  <Image
-                    source={createlist}
-                    resizeMode="contain"
-                    style={styles.createListIcon}
+                  })()}
+              </View>
+              <View style={styles.footer}>
+                <TourGuideZone zone={11} shape="rectangle" borderRadius={16}>
+                  <BaseButton
+                    title={Strings.plans_getShoppingList}
+                    gradientButton={true}
+                    textColor={Colors.background}
+                    width={width * 0.53}
+                    textStyle={styles.createButtonText}
+                    rightChild={
+                      <Image
+                        source={createlist}
+                        resizeMode="contain"
+                        style={styles.createListIcon}
+                      />
+                    }
+                    onPress={() => pushNavigation(APP_ROUTES.LISTS)}
                   />
-                }
-                onPress={() => pushNavigation(APP_ROUTES.LISTS)}
-              />
-              <BaseButton
-                title={Strings.plans_viewPlan}
-                gradientButton={false}
-                textColor={Colors.background}
-                width={width * 0.3}
-                textStyle={styles.confirmButton}
-                textStyleText={styles.confirmButtonText}
-                onPress={() => viewPlan(activePlan.id)}
-              />
+                </TourGuideZone>
+                <BaseButton
+                  title={Strings.plans_viewPlan}
+                  gradientButton={false}
+                  textColor={Colors.background}
+                  width={width * 0.3}
+                  textStyle={styles.confirmButton}
+                  textStyleText={styles.confirmButtonText}
+                  onPress={() => viewPlan(activePlan.id)}
+                />
+              </View>
+              <TouchableOpacity
+                style={styles.pauseButton}
+                onPress={() => setPausePlan(true)}
+              >
+                <TourGuideZone zone={12} shape="rectangle" borderRadius={5}>
+                  <Text style={styles.pauseText}>
+                    {Strings.plans_pausePlan}
+                  </Text>
+                </TourGuideZone>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.pauseButton}
-              onPress={() => setPausePlan(true)}
-            >
-              <Text style={styles.pauseText}>{Strings.plans_pausePlan}</Text>
-            </TouchableOpacity>
-          </View>
+          </TourGuideZone>
         )}
         {otherPlans && otherPlans.length > 0 && (
           <View>
@@ -529,7 +627,6 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.error,
     textAlign: "center",
-    marginTop: 6,
   },
   sectionTitle: {
     fontSize: moderateScale(21),
@@ -601,6 +698,7 @@ const styles = StyleSheet.create({
   },
   pauseButton: {
     marginTop: verticalScale(10),
+    alignSelf: "center",
   },
   listItem: {
     flexDirection: "row",

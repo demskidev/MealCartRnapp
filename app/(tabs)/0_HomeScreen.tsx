@@ -54,9 +54,14 @@ const HomeScreen: React.FC = () => {
   const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
 
   // Tour guide hooks
-  const { shouldStartTour, isLoading: tourLoading } = useTourStep();
+  const {
+    shouldStartTour,
+    isLoading: tourLoading,
+    isNavigating,
+  } = useTourStep();
   const { canStart, start, eventEmitter } = useTourGuideController();
 
   const fetchMealsAndPlan = async () => {
@@ -82,14 +87,18 @@ const HomeScreen: React.FC = () => {
       await fetchMealsAndPlan();
       hideLoader();
     };
-    loadData();
+    if (!shouldStartTour) {
+      loadData();
+    }
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
+
     showLoader();
     await fetchMealsAndPlan();
     hideLoader();
+
     setRefreshing(false);
   };
 
@@ -111,11 +120,11 @@ const HomeScreen: React.FC = () => {
 
       if (tourLoading) return;
 
-      if (shouldStartTour && canStart) {
+      if (shouldStartTour && canStart && isLayoutReady) {
         const timer = setTimeout(() => {
           console.log("🚀 Starting tour guide...");
-          // start();
-        }, 800);
+          start();
+        }, 500);
 
         return () => clearTimeout(timer);
       } else {
@@ -124,15 +133,22 @@ const HomeScreen: React.FC = () => {
           shouldStartTour,
           "canStart:",
           canStart,
+          "isLayoutReady:",
+          isLayoutReady,
         );
       }
-    }, [shouldStartTour, canStart, tourLoading]),
+    }, [shouldStartTour, canStart, tourLoading, isLayoutReady]),
   );
 
   // Handle tour events
   React.useEffect(() => {
     const onStop = () => {
-      console.log("Tour closed by user");
+      // Don't mark tour as complete if we're just navigating to another screen
+      if (!isNavigating) {
+        console.log("Tour closed by user");
+      } else {
+        console.log("Tour navigating to next screen, not closing");
+      }
     };
 
     const onStart = () => {
@@ -146,7 +162,7 @@ const HomeScreen: React.FC = () => {
       eventEmitter?.off("stop", onStop);
       eventEmitter?.off("start", onStart);
     };
-  }, [eventEmitter]);
+  }, [eventEmitter, isNavigating]);
 
   const getTodayMeals = () => {
     if (!activePlan || !activePlan.days) return [];
@@ -281,13 +297,16 @@ const HomeScreen: React.FC = () => {
                 <View style={styles.emptyView} />
 
                 {/* Zone 1: Welcome - Logo */}
-                <TourGuideZone
-                  zone={1}
-                  shape="rectangle"
-                  borderRadius={16}
-                  maskOffset={4}
-                >
-                  <View style={styles.mealcartLogoParent}>
+                <TourGuideZone zone={1} shape="rectangle" borderRadius={16}>
+                  <View
+                    style={styles.mealcartLogoParent}
+                    onLayout={() => {
+                      if (!isLayoutReady) {
+                        console.log("✅ Zone 1 layout ready");
+                        setIsLayoutReady(true);
+                      }
+                    }}
+                  >
                     <Image
                       source={mealcartLogo}
                       style={styles.mealcartLogoImage}

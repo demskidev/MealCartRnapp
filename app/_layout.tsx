@@ -20,25 +20,25 @@ const RootLayout = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <TourStepProvider>
-        <TourGuideProvider
-          tooltipComponent={TourTooltip}
-          androidStatusBarVisible={true}
-          backdropColor="rgba(0,0,0,0.7)"
-          borderRadius={16}
-          preventOutsideInteraction={true}
-          animationDuration={400}
-        >
-          <FontProvider>
-            {/* <AuthContextProvider> */}
-            <Provider store={store}>
+      <Provider store={store}>
+        <TourStepProvider>
+          <TourGuideProvider
+            tooltipComponent={TourTooltip}
+            androidStatusBarVisible={true}
+            backdropColor="rgba(0,0,0,0.7)"
+            borderRadius={16}
+            preventOutsideInteraction={true}
+            animationDuration={400}
+          >
+            <FontProvider>
+              {/* <AuthContextProvider> */}
               <RootNavigator />
-            </Provider>
-            <Toast config={toastConfig} topOffset={moderateScale(200)} />
-            <Loader /> {/* </AuthContextProvider> */}
-          </FontProvider>
-        </TourGuideProvider>
-      </TourStepProvider>
+              <Toast config={toastConfig} topOffset={moderateScale(200)} />
+              <Loader /> {/* </AuthContextProvider> */}
+            </FontProvider>
+          </TourGuideProvider>
+        </TourStepProvider>
+      </Provider>
     </GestureHandlerRootView>
   );
 };

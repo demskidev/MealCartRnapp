@@ -320,67 +320,66 @@ const CreateMealBottomSheet = forwardRef<
 
   const renderInstructionItem =
     (steps, setFieldValue) =>
-    ({ item, index }) =>
-      (
-        <View style={{ marginBottom: verticalScale(15) }}>
-          <View style={[styles.row, { alignItems: "flex-start" }]}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                {
-                  marginTop: verticalScale(5),
-                  marginRight: horizontalScale(8),
-                },
-              ]}
-            >
-              {index + 1}.
-            </Text>
+    ({ item, index }) => (
+      <View style={{ marginBottom: verticalScale(15) }}>
+        <View style={[styles.row, { alignItems: "flex-start" }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              {
+                marginTop: verticalScale(5),
+                marginRight: horizontalScale(8),
+              },
+            ]}
+          >
+            {index + 1}.
+          </Text>
 
-            <View style={{ flex: 1 }}>
-              <CustomTextInput
-                style={{
-                  height: verticalScale(60),
-                  borderRadius: moderateScale(4),
-                  backgroundColor: Colors.greysoft,
-                  paddingHorizontal: horizontalScale(10),
-                  paddingTop: moderateScale(10),
-                  textAlignVertical: "top",
-                }}
-                placeholder={Strings.createMeal_mealDescription_placeholder}
-                multiline
-                value={item?.text}
-                onChangeText={(text) => {
-                  const updated = [...steps];
-                  updated[index] = { ...updated[index], text };
-                  setFieldValue(STEPS_KEY, updated);
-                }}
-              />
-            </View>
-
-            {isEdit ? (
-              <TouchableOpacity
-                onPress={() => {
-                  const updated = steps.filter((_, i) => i !== index);
-                  setFieldValue(STEPS_KEY, updated);
-                }}
-                style={{
-                  marginTop: verticalScale(5),
-                  marginLeft: horizontalScale(8),
-                }}
-              >
-                <Image
-                  source={closeIcon}
-                  style={{
-                    width: verticalScale(22),
-                    height: verticalScale(22),
-                  }}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            ) : null}
+          <View style={{ flex: 1 }}>
+            <CustomTextInput
+              style={{
+                height: verticalScale(60),
+                borderRadius: moderateScale(4),
+                backgroundColor: Colors.greysoft,
+                paddingHorizontal: horizontalScale(10),
+                paddingTop: moderateScale(10),
+                textAlignVertical: "top",
+              }}
+              placeholder={Strings.createMeal_mealDescription_placeholder}
+              multiline
+              value={item?.text}
+              onChangeText={(text) => {
+                const updated = [...steps];
+                updated[index] = { ...updated[index], text };
+                setFieldValue(STEPS_KEY, updated);
+              }}
+            />
           </View>
+
+          {isEdit ? (
+            <TouchableOpacity
+              onPress={() => {
+                const updated = steps.filter((_, i) => i !== index);
+                setFieldValue(STEPS_KEY, updated);
+              }}
+              style={{
+                marginTop: verticalScale(5),
+                marginLeft: horizontalScale(8),
+              }}
+            >
+              <Image
+                source={closeIcon}
+                style={{
+                  width: verticalScale(22),
+                  height: verticalScale(22),
+                }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          ) : null}
         </View>
-      );
+      </View>
+    );
 
   // Add this helper function before handleCreateMeal
   const prepareMealData = (values, isEdit = false) => {
@@ -418,7 +417,7 @@ const CreateMealBottomSheet = forwardRef<
       (ing) =>
         ing.category !== undefined &&
         ing.category !== null &&
-        ing.category !== ""
+        ing.category !== "",
     );
 
     // Filter and map steps - only include non-empty steps
@@ -464,7 +463,7 @@ const CreateMealBottomSheet = forwardRef<
     try {
       const { mealData, validIngredients, mappedIngredients } = prepareMealData(
         values,
-        false
+        false,
       );
 
       if (validIngredients.length !== mappedIngredients.length) {
@@ -474,7 +473,7 @@ const CreateMealBottomSheet = forwardRef<
 
       console.log(
         "Creating meal with data:",
-        JSON.stringify(mealData, null, 2)
+        JSON.stringify(mealData, null, 2),
       );
       showLoader();
       addMealData(
@@ -489,7 +488,7 @@ const CreateMealBottomSheet = forwardRef<
         (error) => {
           hideLoader();
           alert(Strings.error_creating_meal + error);
-        }
+        },
       );
     } catch (error) {
       alert(Strings.error_creating_meal + error);
@@ -501,7 +500,7 @@ const CreateMealBottomSheet = forwardRef<
     try {
       const { mealData, validIngredients, mappedIngredients } = prepareMealData(
         values,
-        true
+        true,
       );
 
       if (validIngredients.length !== mappedIngredients.length) {
@@ -526,7 +525,7 @@ const CreateMealBottomSheet = forwardRef<
         (error) => {
           hideLoader();
           alert(Strings.error_updating_meal + error);
-        }
+        },
       );
     } catch (error) {
       alert(Strings.error_updating_meal + error);
@@ -705,23 +704,23 @@ const CreateMealBottomSheet = forwardRef<
                         value={values.prepTime}
                         onIncrement={() => {
                           const index = prepTimeOptions.indexOf(
-                            values.prepTime
+                            values.prepTime,
                           );
                           if (index < prepTimeOptions.length - 1) {
                             setFieldValue(
                               PREPTIME_KEY,
-                              prepTimeOptions[index + 1]
+                              prepTimeOptions[index + 1],
                             );
                           }
                         }}
                         onDecrement={() => {
                           const index = prepTimeOptions.indexOf(
-                            values.prepTime
+                            values.prepTime,
                           );
                           if (index > 0) {
                             setFieldValue(
                               PREPTIME_KEY,
-                              prepTimeOptions[index - 1]
+                              prepTimeOptions[index - 1],
                             );
                           }
                         }}
@@ -738,13 +737,13 @@ const CreateMealBottomSheet = forwardRef<
                         onIncrement={() =>
                           setFieldValue(
                             SERVINGS_KEY,
-                            String(Number(values.servings) + 1)
+                            String(Number(values.servings) + 1),
                           )
                         }
                         onDecrement={() =>
                           setFieldValue(
                             SERVINGS_KEY,
-                            String(Math.max(1, Number(values.servings) - 1))
+                            String(Math.max(1, Number(values.servings) - 1)),
                           )
                         }
                       />
@@ -800,7 +799,7 @@ const CreateMealBottomSheet = forwardRef<
                       setFieldValue,
                       errors,
                       touched,
-                      setTouched
+                      setTouched,
                     )}
                   />
                   {touched.ingredients &&
@@ -857,7 +856,7 @@ const CreateMealBottomSheet = forwardRef<
                     scrollEnabled={false}
                     renderItem={renderInstructionItem(
                       values.steps,
-                      setFieldValue
+                      setFieldValue,
                     )}
                   />
                   <TouchableOpacity
@@ -929,7 +928,7 @@ const CreateMealBottomSheet = forwardRef<
                             count: true,
                             unit: true,
                             category: true,
-                          })
+                          }),
                         );
 
                         const stepsTouched = values.steps.map(() => true);
@@ -946,7 +945,7 @@ const CreateMealBottomSheet = forwardRef<
                             ingredients: ingredientsTouched,
                             steps: stepsTouched,
                           },
-                          false
+                          false,
                         ); // false means don't validate, just set touched
 
                         return;

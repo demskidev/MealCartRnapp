@@ -70,7 +70,7 @@ export const fetchActivePlanAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_fetching_plans);
     }
-  }
+  },
 );
 
 // Add Plan
@@ -92,7 +92,7 @@ export const addPlanAsync = createAsyncThunk(
         }>;
       }>;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const dataToSave = {
@@ -115,7 +115,7 @@ export const addPlanAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_adding_plan);
     }
-  }
+  },
 );
 
 // Fetch Plans
@@ -131,7 +131,7 @@ export const fetchPlansAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_fetching_plans);
     }
-  }
+  },
 );
 
 // Fetch Plan By ID
@@ -144,7 +144,7 @@ export const fetchPlanByIdAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_fetching_plans);
     }
-  }
+  },
 );
 
 // Update Plan
@@ -166,7 +166,7 @@ export const updatePlanAsync = createAsyncThunk(
         }>;
       }>;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const dataToUpdate: any = {
@@ -190,13 +190,13 @@ export const updatePlanAsync = createAsyncThunk(
       const updatedPlan = await updateDocument(
         PLANS_COLLECTION,
         planData.id,
-        dataToUpdate
+        dataToUpdate,
       );
       return updatedPlan;
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_updating_plan);
     }
-  }
+  },
 );
 
 // Delete Plan
@@ -209,13 +209,45 @@ export const deletePlanAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_deleting_plan);
     }
-  }
+  },
 );
 
 const plansSlice = createSlice({
   name: "plans",
   initialState,
-  reducers: {},
+  reducers: {
+    // Add plan locally without API call (for tour/demo purposes)
+    addPlanLocally: (state, action) => {
+      state.plans.push(action.payload);
+      if (action.payload.status === MealStatus.STARTED) {
+        state.activePlan = action.payload;
+      }
+    },
+    // Remove tour plan when tour completes
+    removeTourPlan: (state) => {
+      state.plans = state.plans.filter(
+        (plan) => !plan.id.startsWith("tour-plan-"),
+      );
+    }, // Update plan status locally without API call
+    updatePlanLocally: (state, action) => {
+      const { id, status } = action.payload;
+      const index = state.plans.findIndex((p) => p.id === id);
+      if (index !== -1) {
+        state.plans[index] = {
+          ...state.plans[index],
+          status,
+          updatedAt: new Date(),
+        };
+        // Update activePlan if status changed to STARTED
+        if (status === MealStatus.STARTED) {
+          state.activePlan = state.plans[index];
+        } else if (state.activePlan && state.activePlan.id === id) {
+          // If the updated plan was the active one but is no longer started, clear activePlan
+          state.activePlan = null;
+        }
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Add Plan
@@ -245,7 +277,7 @@ const plansSlice = createSlice({
         state.plans = action.payload as Plan[];
         // Update activePlan as well
         const active = (action.payload as Plan[]).find(
-          (plan) => plan.status === MealStatus.STARTED
+          (plan) => plan.status === MealStatus.STARTED,
         );
         state.activePlan = active || null;
       })
@@ -312,4 +344,6 @@ const plansSlice = createSlice({
   },
 });
 
+export const { addPlanLocally, removeTourPlan, updatePlanLocally } =
+  plansSlice.actions;
 export default plansSlice.reducer;
