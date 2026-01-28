@@ -297,10 +297,14 @@ export const Strings = {
   testMealPlan_title: "Test Plan",
   testMealPlan_startedOn: "Started on 27/09/2025",
   testMealPlan_removeTitle: "Remove Meal Plan?",
+  shoppingList_removeTitle: "Remove Shopping List?",
   testMealPlan_removeDescription:
     "Meal Plan will be removed and can no longer be accessible.",
+  shoppingList_removeDescription:
+    "Shopping List will be removed and can no longer be accessible.",
   testMealPlan_cancel: "Cancel",
   testMealPlan_remove: "Remove",
+  testMealPlan_removing: "Removing...",
   days: {
     monday: "Monday",
     tuesday: "Tuesday",
@@ -379,7 +383,8 @@ export const Strings = {
   createList_saveShoppingList: "Save Shopping List",
   createList_category: "Category",
   mealUpdated: "Meal updated successfully",
-
+  shoppingList_deleted: "Shopping list deleted successfully",
+  error_deleting_shoppingList: "Error deleting shopping list",
   error_creating_meal: "Error creating meal",
   error_updating_meal: "Error updating meal",
   meal_deleted: "Meal deleted successfully",

@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
   addShoppingList,
   deleteShoppingList,
+  fetchShoppingListById,
   fetchUserShoppingLists,
   updateShoppingList,
 } from "@/reduxStore/slices/shoppingSlice";
@@ -16,7 +17,7 @@ export const useShoppingListViewModel = () => {
   const addShoppingListData = async (
     listData: any,
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(addShoppingList(listData));
     if (addShoppingList.fulfilled.match(resultAction)) {
@@ -29,7 +30,7 @@ export const useShoppingListViewModel = () => {
   const updateShoppingListData = async (
     listData: any,
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(updateShoppingList(listData));
     if (updateShoppingList.fulfilled.match(resultAction)) {
@@ -42,7 +43,7 @@ export const useShoppingListViewModel = () => {
   const deleteShoppingListData = async (
     listId: string,
     onSuccess?: () => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(deleteShoppingList(listId));
     if (deleteShoppingList.fulfilled.match(resultAction)) {
@@ -57,15 +58,32 @@ export const useShoppingListViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void,
     limit: number = 10,
-    startAfter: any = null
+    startAfter: any = null,
   ) => {
     const resultAction = await dispatch(
-      fetchUserShoppingLists({ userId, limit, startAfter })
+      fetchUserShoppingLists({ userId, limit, startAfter }),
     );
     if (fetchUserShoppingLists.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
     } else {
       onError?.(resultAction.payload as string);
+    }
+  };
+
+  const fetchListById = async (
+    shoppingListId: string,
+    onSuccess?: (payload: any) => void,
+    onError?: (error: string) => void,
+  ) => {
+    try {
+      const result = await dispatch(fetchShoppingListById(shoppingListId));
+      if (result) {
+        onSuccess?.(result.payload);
+      } else {
+        onError?.("Shopping list not found");
+      }
+    } catch (error: any) {
+      onError?.(error.message || "Error fetching shopping list");
     }
   };
 
@@ -77,5 +95,6 @@ export const useShoppingListViewModel = () => {
     updateShoppingListData,
     deleteShoppingListData,
     fetchShoppingLists,
+    fetchListById,
   };
 };

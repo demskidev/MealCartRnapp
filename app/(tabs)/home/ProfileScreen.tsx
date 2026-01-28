@@ -270,7 +270,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <View style={styles.bottomNav}></View>
+      {/* <View style={styles.bottomNav}></View> */}
       <UpdateProfileModal
         visible={showModal}
         onClose={() => setShowModal(false)}
@@ -371,10 +371,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
     marginVertical: verticalScale(6),
+    marginHorizontal: horizontalScale(2),
     paddingVertical: verticalScale(11),
-
     elevation: 4,
-
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

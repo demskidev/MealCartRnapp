@@ -36,6 +36,7 @@ import {
 } from "@/viewmodels/SigninViewModel";
 import { Formik } from "formik";
 import { useRef, useState } from "react";
+import { fontSize } from "@/utils/Fonts";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
@@ -246,7 +247,7 @@ const SignInScreen = () => {
                         text={Strings.forgotPassword}
                         startColor={Colors._586E3F}
                         endColor={Colors._5F6C51}
-                        fontSize={14}
+                        fontSize={fontSize(12)}
                         angle="diagonal"
                       />
                     </TouchableOpacity>

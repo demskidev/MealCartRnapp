@@ -41,4 +41,5 @@ export const ADD_SHOPPING_LIST = 'shopping/addShoppingList';
 export const UPDATE_SHOPPING_LIST = 'shopping/updateShoppingList';
 export const DELETE_SHOPPING_LIST = 'shopping/deleteShoppingList';
 export const FETCH_SHOPPING_LISTS = 'shopping/fetchShoppingLists';
+export const FETCH_SHOPPING_LIST_BY_ID = 'shopping/fetchShoppingListById';
 

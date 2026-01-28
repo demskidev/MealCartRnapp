@@ -20,6 +20,7 @@ type ConfirmationModalProps = {
   confirmText?: string;
   confirmGradientStart?: string;
   confirmGradientEnd?: string;
+  isRemoving?: boolean;
 };
 
 const ConfirmationModal = ({
@@ -32,6 +33,7 @@ const ConfirmationModal = ({
   confirmText = Strings.confirmationModal_confirm,
   confirmGradientStart = Colors._A62A2A,
   confirmGradientEnd = Colors._FD4B4B,
+  isRemoving = false,
 }: ConfirmationModalProps) => (
   <Modal
     visible={visible}
@@ -49,7 +51,7 @@ const ConfirmationModal = ({
             title={cancelText}
             gradientButton={false}
             textColor={Colors.background}
-            width={width * 0.38}
+            width={width * 0.35}
             textStyle={styles.editButton}
             textStyleText={styles.textstyle}
             onPress={onCancel}
@@ -58,7 +60,8 @@ const ConfirmationModal = ({
           <BaseButton
             title={confirmText}
             gradientButton={true}
-            width={width * 0.38}
+            width={width * 0.35}
+            disabled={isRemoving}
             gradientStartColor={Colors._A62A2A}
             gradientEndColor={Colors._FD4B4B}
             gradientStart={{ x: 0, y: 0 }}
@@ -66,6 +69,7 @@ const ConfirmationModal = ({
             textColor={Colors.background}
             textStyle={styles.deleteButton}
             onPress={onConfirm}
+            textStyleText={isRemoving ? styles.disabled : styles.active}
           />
         </View>
       </View>
@@ -85,8 +89,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: moderateScale(14),
     paddingHorizontal: moderateScale(22),
-    paddingTop:verticalScale(18),
-    paddingBottom:verticalScale(10),
+    paddingTop: verticalScale(18),
+    paddingBottom: verticalScale(10),
 
     alignItems: "center",
   },
@@ -104,7 +108,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: verticalScale(15),
     lineHeight: moderateScale(20),
-    paddingHorizontal:horizontalScale(30)
+    paddingHorizontal: horizontalScale(30),
   },
 
   buttonRow: {
@@ -112,7 +116,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: verticalScale(24),
     // marginBottom: verticalScale(16),
-    gap: horizontalScale(16),
+    gap: horizontalScale(10),
   },
   cancelButton: {
     flex: 1,
@@ -151,6 +155,12 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
 
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
+  },
+  disabled: {
+    opacity: 0.9,
+  },
+  active: {
+    opacity: 1,
   },
 });
 

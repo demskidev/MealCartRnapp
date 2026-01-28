@@ -45,7 +45,7 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <IconUp width={20} height={20} />
+          <IconUp width={16} height={16} />
         </TouchableOpacity>
       )}
 
@@ -56,7 +56,7 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <IconDown width={20} height={20} />
+          <IconDown width={16} height={16} />
         </TouchableOpacity>
       )}
     </View>

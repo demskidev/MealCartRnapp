@@ -46,7 +46,7 @@ interface BaseButtonProps {
   textStyle?: any;
   showPressedShadow?: boolean;
   textStyleText?: any;
-  buttonGradient?:any
+  buttonGradient?: any;
 }
 
 const BaseButton = React.memo(
@@ -68,7 +68,7 @@ const BaseButton = React.memo(
     disabled = false,
     showPressedShadow,
     textStyleText,
-    buttonGradient
+    buttonGradient,
   }: BaseButtonProps) => {
     const [pressed, setPressed] = useState(false);
     return (
@@ -100,7 +100,11 @@ const BaseButton = React.memo(
                 onPress={onPress}
                 onPressIn={() => setPressed(true)}
                 onPressOut={() => setPressed(false)}
-                style={[styles.button, { backgroundColor: "transparent" },buttonGradient]}
+                style={[
+                  styles.button,
+                  { backgroundColor: "transparent" },
+                  buttonGradient,
+                ]}
                 disabled={disabled}
               >
                 {leftChild && leftChild}
@@ -111,7 +115,7 @@ const BaseButton = React.memo(
                     textStyle,
                   ]}
                 >
-                  {title}{" "}
+                  {title}
                 </Text>
 
                 {rightChild && rightChild}
@@ -123,7 +127,9 @@ const BaseButton = React.memo(
               style={[
                 styles.button,
                 backgroundColor && { backgroundColor },
-                textStyle,
+                { paddingVertical: moderateScale(12) },
+
+                // textStyle,
               ]}
               disabled={disabled}
             >
@@ -146,11 +152,12 @@ const BaseButton = React.memo(
         {description && <Text style={styles.description}>{description}</Text>}
       </TouchableOpacity>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({
   container: {
+    overflow: "hidden",
     gap: verticalScale(10),
   },
 
@@ -159,11 +166,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.buttonBackground,
-    paddingVertical: moderateScale(12),
     paddingHorizontal: moderateScale(6),
-    borderRadius: moderateScale(8),
+    borderRadius: moderateScale(4),
+
     gap: horizontalScale(10),
-    height: verticalScale(48),
   },
 
   description: {
@@ -176,19 +182,21 @@ const styles = StyleSheet.create({
     letterSpacing: fontSize(0.5),
     color: Colors.primary,
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: fontSize(16),
+    textAlign: "center",
+    textAlignVertical: "center",
+    fontSize: fontSize(14),
   },
   gradientButton: {
     borderRadius: moderateScale(12),
     justifyContent: "center",
     alignItems: "center",
     maxWidth: 5000,
-    height: verticalScale(48),
+    height: verticalScale(50),
   },
 
   buttonWrapper: {
-    borderRadius: moderateScale(19),
-    borderWidth: moderateScale(7),
+    borderRadius: moderateScale(12),
+    borderWidth: moderateScale(1),
     borderColor: "transparent",
     overflow: "hidden",
   },

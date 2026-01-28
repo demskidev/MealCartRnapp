@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { type IStep } from "rn-tourguide";
+import { hideLoader, showLoader } from "./Loader";
 
 export interface TooltipProps {
   isFirstStep?: boolean;
@@ -253,15 +254,20 @@ const TourTooltip: React.FC<TooltipProps> = ({
   console.log("✅ Rendering tooltip for step:", step.title);
 
   const onSkip = async () => {
+    showLoader();
     await completeTour();
     handleStop?.();
+    hideLoader();
+
     // Navigate to home after skipping tour
     router.push(APP_ROUTES.HOME as any);
   };
 
   const onFinish = async () => {
+    showLoader();
     await completeTour();
     handleStop?.();
+    hideLoader();
     // Navigate to home after completing tour
     router.push(APP_ROUTES.HOME as any);
   };

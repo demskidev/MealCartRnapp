@@ -33,90 +33,94 @@ const getTabIcon = (
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.secondaryText,
-        tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopColor: "#E8E8E8",
-          borderTopWidth: 1,
-          height: verticalScale(90),
-          paddingBottom: verticalScale(30),
-          paddingTop: verticalScale(8),
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: -2,
+    <View style={{ flex: 1, backgroundColor: Colors.white }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: Colors.primary,
+          tabBarInactiveTintColor: Colors.secondaryText,
+
+          tabBarStyle: {
+            backgroundColor: Colors.white,
+            borderTopColor: Colors.white,
+            // borderTopWidth: 1,
+
+            borderTopEndRadius: moderateScale(30),
+            borderTopStartRadius: moderateScale(30),
+            height: verticalScale(95),
+            paddingBottom: verticalScale(30),
+            paddingTop: verticalScale(4),
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 25,
+            elevation: 8,
           },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: moderateScale(11),
-          marginTop: verticalScale(6),
-          fontWeight: "600",
-        },
-        tabBarIconStyle: {
-          marginBottom: verticalScale(4),
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="0_HomeScreen"
-        options={{
-          title: "Home",
+          tabBarLabelStyle: {
+            fontSize: moderateScale(11),
+            marginTop: verticalScale(6),
+            fontWeight: "600",
+          },
 
-          tabBarIcon: ({ focused, color }) =>
-            getTabIcon(focused, "home", color),
+          tabBarIconStyle: {},
         }}
-      />
-      <Tabs.Screen
-        name="1_Meals"
-        options={{
-          title: "Meals",
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ focused, color }) =>
+              getTabIcon(focused, "home", color),
+          }}
+        />
+        <Tabs.Screen
+          name="1_Meals"
+          options={{
+            title: "Meals",
 
-          tabBarIcon: ({ focused, color }) =>
-            getTabIcon(focused, "meals", color),
-        }}
-      />
-      <Tabs.Screen
-        name="2_Plans"
-        options={{
-          title: "Plans",
+            tabBarIcon: ({ focused, color }) =>
+              getTabIcon(focused, "meals", color),
+          }}
+        />
+        <Tabs.Screen
+          name="2_Plans"
+          options={{
+            title: "Plans",
 
-          tabBarIcon: ({ focused, color }) => (
-            <TourGuideZone
-              zone={3}
-              shape="circle"
-              borderRadius={12}
-              maskOffset={10}
-            >
-              <View
-                style={{
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minHeight: moderateScale(55),
-                  minWidth: moderateScale(40),
-                }}
+            tabBarIcon: ({ focused, color }) => (
+              <TourGuideZone
+                zone={3}
+                shape="circle"
+                borderRadius={12}
+                maskOffset={10}
               >
-                {getTabIcon(focused, "plans", color)}
-              </View>
-            </TourGuideZone>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="3_Lists"
-        options={{
-          title: "Lists",
+                <View
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: moderateScale(55),
+                    minWidth: moderateScale(40),
+                  }}
+                >
+                  {getTabIcon(focused, "plans", color)}
+                </View>
+              </TourGuideZone>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="3_Lists"
+          options={{
+            title: "Lists",
 
-          tabBarIcon: ({ focused, color }) =>
-            getTabIcon(focused, "lists", color),
-        }}
-      />
-    </Tabs>
+            tabBarIcon: ({ focused, color }) =>
+              getTabIcon(focused, "lists", color),
+          }}
+        />
+      </Tabs>{" "}
+    </View>
   );
 }

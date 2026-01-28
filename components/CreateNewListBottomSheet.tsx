@@ -44,17 +44,19 @@ export interface CreateNewListBottomSheetRef {
   close: () => void;
 }
 interface CreateNewListBottomSheetProps {
-  ingredientsData?: any[];
+  shoppingList?: any;
+  onClose?: () => void;
 }
 // const CreateNewListBottomSheet = forwardRef<BottomSheet, CreateNewListBottomSheetProps>(
 //   ({ isEdit = false, mealData }, ref) => {
 const CreateNewListBottomSheet = forwardRef<
   CreateNewListBottomSheetRef,
   CreateNewListBottomSheetProps
->(({ ingredientsData = [] }, ref: React.Ref<CreateNewListBottomSheetRef>) => {
+>(({ shoppingList, onClose }, ref: React.Ref<CreateNewListBottomSheetRef>) => {
   const snapPoints = useMemo(() => ["100%"], []);
   const user = useAppSelector((state) => state.auth.user);
-  const { addShoppingListData, loading } = useShoppingListViewModel();
+  const { addShoppingListData, loading, updateShoppingListData } =
+    useShoppingListViewModel();
   const {
     shouldStartTour,
     setTriggerOpenAddItemToList,
@@ -110,6 +112,57 @@ const CreateNewListBottomSheet = forwardRef<
     {},
   );
 
+  const resetState = () => {
+    setListName("");
+    setShoppingDay("");
+    setReceivedIngredients([]);
+    setSelectedItems([]);
+    setMealName("");
+    setMealDescription("");
+    setImageUrl("");
+    setPrepTime("5 Mins");
+    setServings("1");
+    setDifficulty("Easy");
+    setCategory("Dinner");
+    setIngredientName("");
+    setIngredientCount("1");
+    setIngredientUnit("100grm");
+    setIngredientCategory("Fruit");
+    setUnitweight("100 grms");
+    setStartDate(new Date());
+    setShowDatePicker(false);
+    setIsAddItemVisible(false);
+    setIsTourOpen(false);
+    // ...reset any other state as needed
+  };
+
+  useEffect(() => {
+    if (shoppingList) {
+      setListName(shoppingList.listName || "");
+      setShoppingDay(shoppingList.shoppingDay || "");
+      setReceivedIngredients(
+        shoppingList.ingredients || shoppingList.items || [],
+      );
+      setSelectedItems(
+        (shoppingList.ingredients || shoppingList.items || []).map(
+          (ing: any) => ing.ingredientId || ing.ingredientName,
+        ),
+      );
+      setStartDate(
+        shoppingList.shoppingDate
+          ? new Date(
+              shoppingList.shoppingDate.seconds
+                ? shoppingList.shoppingDate.seconds * 1000
+                : shoppingList.shoppingDate,
+            )
+          : new Date(),
+      );
+    } else {
+      resetState();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shoppingList]);
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   useImperativeHandle(ref, () => ({
     expand: () => {
@@ -124,36 +177,15 @@ const CreateNewListBottomSheet = forwardRef<
         setIsTourOpen(false);
         setIsCreateListBottomSheetOpen(false);
       }
+      resetState();
       bottomSheetRef.current?.close();
     },
   }));
 
-  // Register callback to open AddItemToList during tour
-  // useEffect(() => {
-  //   const openAddItem = () => {
-  //     setIsAddItemVisible(true);
-  //   };
-  //   setTriggerOpenAddItemToList(() => openAddItem);
+  const formatDisplayDate = (date: Date) => {
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  };
 
-  //   return () => {
-  //     setTriggerOpenAddItemToList(null);
-  //   };
-  // }, [setTriggerOpenAddItemToList]);
-
-  // NOTE: Removed triggerCloseCreateList registration - bottom sheet should stay open during tour
-  // The bottom sheet will be manually closed when needed (e.g., on save or cancel)
-  // useEffect(() => {
-  //   const closeBottomSheet = () => {
-  //     bottomSheetRef.current?.close();
-  //   };
-  //   setTriggerCloseCreateList(() => closeBottomSheet);
-
-  //   return () => {
-  //     setTriggerCloseCreateList(null);
-  //   };
-  // }, [setTriggerCloseCreateList]);
-
-  // Register callback to add dummy ingredients during tour
   useEffect(() => {
     const addDummyData = () => {
       const dummyIngredients = [
@@ -286,7 +318,7 @@ const CreateNewListBottomSheet = forwardRef<
         return;
       }
 
-      if (!shoppingDay.trim()) {
+      if (!startDate) {
         alert("Please enter a shopping day");
         return;
       }
@@ -314,6 +346,7 @@ const CreateNewListBottomSheet = forwardRef<
         mealId: ingredient.mealId || "",
         unit: ingredient.selectedUnit || ingredient.unit,
         count: ingredient.count || 1,
+        acquired: ingredient.acquired || false,
       }));
       console.log("mappedIngredients", mappedIngredients);
 
@@ -324,25 +357,70 @@ const CreateNewListBottomSheet = forwardRef<
         shoppingDate: Timestamp.fromDate(startDate),
         uid: user?.id,
       };
-      console.log("shoppingListData", shoppingListData);
+
+      const updatingShoppingListData = {
+        id: shoppingList?.id,
+        listName: listName.trim(),
+        ingredients: mappedIngredients,
+        createdAt: Timestamp.fromDate(new Date()),
+        shoppingDate: Timestamp.fromDate(startDate),
+        uid: user?.id,
+      };
+
       showLoader();
-      addShoppingListData(
-        shoppingListData,
-        () => {
-          hideLoader();
-          alert("Shopping list created successfully!");
-          // Reset form
-          setListName("");
-          setShoppingDay("");
-          setReceivedIngredients([]);
-          setSelectedItems([]);
-          bottomSheetRef.current?.close();
-        },
-        (error) => {
-          hideLoader();
-          alert("Error creating shopping list: " + error);
-        },
-      );
+      if (shoppingList && shoppingList.id) {
+        console.log("shoppingListData", updatingShoppingListData);
+
+        // Edit mode: update existing list
+        updateShoppingListData(
+          updatingShoppingListData,
+          () => {
+            hideLoader();
+            alert("Shopping list updated successfully!");
+            resetState();
+            bottomSheetRef.current?.close();
+            if (onClose) onClose(); // for updaing the previous screen
+          },
+          (error) => {
+            hideLoader();
+            alert("Error updating shopping list: " + error);
+          },
+        );
+      } else {
+        console.log("shoppingListData", shoppingListData);
+
+        // Create mode: add new list
+        addShoppingListData(
+          shoppingListData,
+          () => {
+            hideLoader();
+            alert("Shopping list created successfully!");
+            resetState();
+            bottomSheetRef.current?.close();
+          },
+          (error) => {
+            hideLoader();
+            alert("Error creating shopping list: " + error);
+          },
+        );
+      }
+      // addShoppingListData(
+      //   shoppingListData,
+      //   () => {
+      //     hideLoader();
+      //     alert("Shopping list created successfully!");
+      //     // Reset form
+      //     setListName("");
+      //     setShoppingDay("");
+      //     setReceivedIngredients([]);
+      //     setSelectedItems([]);
+      //     bottomSheetRef.current?.close();
+      //   },
+      //   (error) => {
+      //     hideLoader();
+      //     alert("Error creating shopping list: " + error);
+      //   },
+      // );
     } catch (error) {
       alert("Error creating shopping list: " + error);
     }
@@ -369,7 +447,12 @@ const CreateNewListBottomSheet = forwardRef<
       <View style={styles.emptyView}></View>
       <View style={styles.parentCreateMealText}>
         <Text style={styles.header}>{Strings.createList_createNewList}</Text>
-        <TouchableOpacity onPress={() => bottomSheetRef.current?.close()}>
+        <TouchableOpacity
+          onPress={() => {
+            resetState();
+            bottomSheetRef.current?.close();
+          }}
+        >
           <Image
             source={closeIcon}
             style={styles.closeIcon}
@@ -401,9 +484,10 @@ const CreateNewListBottomSheet = forwardRef<
             >
               <View style={styles.inputWithIcon}>
                 <CustomTextInput
-                  placeholder={Strings.createList_shoppingDay_placeholder}
-                  value={shoppingDay}
+                  placeholder={formatDisplayDate(startDate)}
+                  value={formatDisplayDate(startDate)}
                   editable={false}
+                  placeholderTextColor={Colors.secondaryText}
                   pointerEvents="none"
                 />
                 <Image

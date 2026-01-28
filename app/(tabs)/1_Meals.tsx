@@ -732,7 +732,6 @@ const styles = StyleSheet.create({
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
     paddingHorizontal: horizontalScale(12),
-    height: verticalScale(44),
     width: width * 0.6,
   },
   searchInput: {

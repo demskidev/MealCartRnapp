@@ -882,9 +882,9 @@ const CreateMealBottomSheet = forwardRef<
                         : Strings.createMeal_cancel
                     }
                     gradientButton={false}
-                    backgroundColor={Colors.white}
+                    // backgroundColor={Colors.white}
                     textStyleText={styles.discardText}
-                    width={isEdit ? width * 0.28 : width * 0.41}
+                    width={isEdit ? width * 0.41 : width * 0.41}
                     textStyle={[
                       styles.cancelButton,
                       { color: isEdit ? Colors.error : Colors.primary },
@@ -1065,7 +1065,7 @@ const styles = StyleSheet.create({
 
     fontSize: moderateScale(12),
     borderWidth: moderateScale(1),
-    borderColor: Colors.borderColor,
+    borderColor: Colors.black,
   },
   parentOfConfirmButton: {
     flexDirection: "row",
@@ -1092,7 +1092,6 @@ const styles = StyleSheet.create({
   discardText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     // color: Colors.primary,
-
     fontSize: moderateScale(14),
   },
 });

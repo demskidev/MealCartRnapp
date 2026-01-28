@@ -114,31 +114,6 @@ export default function CreateMealPlan({}) {
       }
     }
   }, [planParam, mealPlans]);
-  // useEffect(() => {
-  //   if (planParam && mealPlans.length > 0) {
-  //     try {
-  //       const parsedPlan: EnrichedPlan = JSON.parse(planParam);
-  //       setExistingPlan(parsedPlan);
-  //       setPlanName(parsedPlan.planName);
-
-  //       const planStartDate = parsedPlan.startDate?.toDate
-  //         ? parsedPlan.startDate.toDate()
-  //         : new Date(parsedPlan.startDate);
-  //       setStartDate(planStartDate);
-
-  //       // Populate selected meal slots from existing plan
-  //       // const slots: Record<string, any> = {};
-  //       // parsedPlan.days.forEach((day: any) => {
-  //       //   day.mealSlots.forEach((slot: any) => {
-  //       //     const slotKey = `${day.dayTitle}-${slot.mealPlan?.name}`;
-  //       //     slots[slotKey] = slot.meal;
-  //       //   });
-  //       // });
-  //     } catch (error) {
-  //       console.error("Error parsing plan:", error);
-  //     }
-  //   }
-  // }, [planParam, mealPlans]);
 
   const formatDisplayDate = (date: Date) => {
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -767,10 +742,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
     marginBottom: verticalScale(10),
+    marginTop: verticalScale(5),
+    marginHorizontal: horizontalScale(5),
     paddingVertical: verticalScale(14),
     paddingHorizontal: horizontalScale(12),
     elevation: 4,
-
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -806,9 +782,9 @@ const styles = StyleSheet.create({
   },
   mealBox: {
     width: width * 0.24,
-    height: moderateScale(40),
+    height: moderateScale(38),
     borderRadius: moderateScale(4),
-    borderWidth: moderateScale(1),
+    borderWidth: moderateScale(1),    
     borderColor: Colors.tertiary,
     borderStyle: "dashed",
     justifyContent: "center",

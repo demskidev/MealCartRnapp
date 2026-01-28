@@ -371,7 +371,7 @@ const HomeScreen: React.FC = () => {
                 <BaseButton
                   title={Strings.home_addNewMeal}
                   gradientButton={true}
-                  width={width * 0.41}
+                  // width={width * 0.41}
                   gradientStartColor={Colors._667D4C}
                   gradientEndColor={Colors._9DAF89}
                   gradientStart={{ x: 0, y: 0 }}

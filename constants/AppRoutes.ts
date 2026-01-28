@@ -11,16 +11,16 @@ export const APP_ROUTES = {
   WelcomeScreen: "/screens/WelcomeScreen",
 
   // App routes
-  HOME: "/(tabs)/0_HomeScreen",
+  HOME: "/(tabs)/home",
   MEALS: "/(tabs)/1_Meals",
   PLANS: "/(tabs)/2_Plans",
   LISTS: "/(tabs)/3_Lists",
-  AllergiesIntolerance: "/appscreens/AllergiesIntolerance",
-  ProfileScreen: "/appscreens/ProfileScreen",
+  AllergiesIntolerance: "/(tabs)/home/AllergiesIntolerance",
+  ProfileScreen: "/(tabs)/home/ProfileScreen",
   CreateMealPlan: "/appscreens/CreateMealPlan",
-  DietaryPreferences: "/appscreens/DietaryPreferences",
-  MealPlanSettings: "/appscreens/MealPlanSettings",
-  PasswordReset: "/appscreens/PasswordReset",
+  DietaryPreferences: "/(tabs)/home/DietaryPreferences",
+  MealPlanSettings: "/(tabs)/home/MealPlanSettings",
+  PasswordReset: "/(tabs)/home/PasswordReset",
   TestMealPlan: "/appscreens/TestMealPlan",
   TestPlanShopping: "/appscreens/TestPlanShopping",
 };

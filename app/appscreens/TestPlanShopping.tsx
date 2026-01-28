@@ -1,7 +1,11 @@
 import { deleteicon, iconback, iconedit } from "@/assets/images";
 import { CheckBox, FilledCheckBox } from "@/assets/svg";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import CreateNewListBottomSheet, {
+  CreateNewListBottomSheetRef,
+} from "@/components/CreateNewListBottomSheet";
+import { hideLoader, showLoader } from "@/components/Loader";
 import ProgressBar from "@/components/ProgressBar";
-import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
   moderateScale,
@@ -11,10 +15,10 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { useAppSelector } from "@/reduxStore/hooks";
-import { pushNavigation } from "@/utils/Navigation";
+import { backNavigation } from "@/utils/Navigation";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -25,41 +29,24 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourGuideZone } from "rn-tourguide";
-const data = [
-  {
-    id: "1",
-    category: "Bakery",
-    name: "Whole-grain bread",
-    amount: "1 slice (Avocado Toast with Egg)",
-  },
-  {
-    id: "2",
-    category: "Dairy",
-    name: "Egg",
-    amount: "1 (Avocado Toast with Egg)",
-  },
-  {
-    id: "3",
-    category: "Pantry",
-    name: "Red pepper flakes",
-    amount: "1 pinch (Avocado Toast with Egg)",
-  },
-  {
-    id: "4",
-    category: "Produce",
-    name: "Avocado",
-    amount: "0.5 (Avocado Toast with Egg)",
-  },
-];
+
 export default function TestPlanShopping() {
   const [checked, setChecked] = useState<string[]>([]);
   const router = useRouter();
   const { listId } = useLocalSearchParams();
   const user = useAppSelector((state) => state.auth.user);
   const { shouldStartTour } = useTourStep();
+  const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
+  const [selectedList, setSelectedList] = useState<any>(null);
+  const [removeList, setRemoveList] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
-  const { shoppingLists, loading, fetchShoppingLists } =
-    useShoppingListViewModel();
+  const {
+    fetchListById,
+    loading,
+    deleteShoppingListData,
+    updateShoppingListData,
+  } = useShoppingListViewModel();
 
   // Check if this is tour mode
   const isTourMode = listId === "tour-dummy-list" && shouldStartTour;
@@ -114,47 +101,137 @@ export default function TestPlanShopping() {
     [user?.id],
   );
 
-  useEffect(() => {
-    // Skip fetching if in tour mode
-    if (isTourMode) {
-      return;
-    }
-
-    if (user?.id) {
-      console.log("Fetching shopping lists for user:", user.id);
-      fetchShoppingLists(
-        user.id,
-        (data) => {
-          console.log("Shopping lists fetched:", data.length);
-        },
-        (error) => {
-          console.error("Error fetching shopping lists:", error);
-        },
-        10,
-        null,
-      );
-    }
-  }, [user?.id, isTourMode]);
-
-  console.log("shoppp9999", shoppingLists);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isTourMode) {
+        setSelectedList(dummyTourList);
+        setChecked([]);
+      } else if (listId) {
+        showLoader();
+        fetchListById(
+          listId as string,
+          (data) => {
+            hideLoader();
+            setSelectedList(data);
+            const checkedIds = (data?.ingredients || []).reduce(
+              (arr: string[], ing: any, idx: number) => {
+                if (ing.acquired) {
+                  arr.push(`${ing.ingredientId}-${ing.mealId}-${idx}`);
+                }
+                return arr;
+              },
+              [],
+            );
+            setChecked(checkedIds);
+          },
+          (error) => {
+            hideLoader();
+            setSelectedList(null);
+            console.error("Error fetching shopping list by id:", error);
+          },
+        );
+      }
+    }, [listId, isTourMode, dummyTourList]),
+  );
   console.log("Selected listId:", listId);
-
-  // Find the specific shopping list by ID, or use dummy data in tour mode
-  const selectedList = isTourMode
-    ? dummyTourList
-    : shoppingLists.find((list) => list.id === listId);
 
   console.log("Selected list full data:", selectedList);
 
-  // Get ingredients only from the selected list
-  // API returns 'ingredients', tour mode uses 'items'
   const allIngredients = selectedList?.ingredients || selectedList?.items || [];
   console.log("Ingredients for selected list:", allIngredients);
 
-  const toggleCheck = (id: string) => {
-    setChecked((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+  // const toggleCheck = (id: string) => {
+  //   setChecked((prev) =>
+  //     prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+  //   );
+  // };
+
+  const acquiredCount = allIngredients.filter(
+    (ing: any) => ing.acquired,
+  ).length;
+
+  const toggleCheck = (id: string, ingredient: any, index: number) => {
+    setChecked((prev) => {
+      const isNowChecked = !prev.includes(id);
+      // Update local checked state
+      const newChecked = isNowChecked
+        ? [...prev, id]
+        : prev.filter((i) => i !== id);
+
+      const mappedIngredients = allIngredients.map(
+        (ingredient: any, idx: number) => ({
+          ingredientId: ingredient.ingredientId,
+          categoryId: ingredient.categoryId,
+          mealId: ingredient.mealId || "",
+          unit: ingredient.selectedUnit || ingredient.unit,
+          count: ingredient.count || 1,
+          acquired: idx === index ? isNowChecked : ingredient.acquired || false,
+        }),
+      );
+      console.log("mappedIngredients", mappedIngredients);
+
+      // Prepare updated ingredients array
+      const updatedIngredients = mappedIngredients.map(
+        (ing: any, idx: number) => {
+          if (idx === index) {
+            // Add or update the acquired key
+            return { ...ing, acquired: isNowChecked };
+          }
+          return ing;
+        },
+      );
+
+      setSelectedList((prevList: any) => {
+        if (!prevList) return prevList;
+        const updatedIngredients = prevList.ingredients.map(
+          (ing: any, idx: number) =>
+            idx === index ? { ...ing, acquired: isNowChecked } : ing,
+        );
+        return { ...prevList, ingredients: updatedIngredients };
+      });
+
+      // Prepare updated list object
+      const updatedList = {
+        ...selectedList,
+        ingredients: updatedIngredients,
+      };
+
+      // Call update API (pass id and updated data)
+      if (selectedList?.id) {
+        updateShoppingListData(
+          { id: selectedList.id, ...updatedList },
+          () => {},
+          (error: any) => {
+            alert("Error updating ingredient status: " + error);
+          },
+        );
+      }
+
+      return newChecked;
+    });
+  };
+
+  const handleDeleteList = () => {
+    if (listId) {
+      setRemoving(true);
+      deleteShoppingListData(
+        listId as string,
+        () => {
+          setRemoving(false);
+          alert(Strings.shoppingList_deleted);
+          backNavigation();
+          console.log("Shopping list deleted successfully");
+        },
+        (error) => {
+          setRemoving(false);
+
+          console.error("Error deleting shopping list:", error);
+          alert(Strings.error_deleting_shoppingList);
+        },
+      );
+    }
+
+    return;
   };
 
   const renderIngredientItem = ({
@@ -184,7 +261,7 @@ export default function TestPlanShopping() {
         )}
         <TouchableOpacity
           style={styles.cardCategory}
-          onPress={() => toggleCheck(itemId)}
+          onPress={() => toggleCheck(itemId, item, index)}
           activeOpacity={0.7}
         >
           <View style={styles.checkboxRow}>
@@ -239,7 +316,11 @@ export default function TestPlanShopping() {
             <View style={styles.editdelete}>
               <TouchableOpacity
                 style={styles.editButton}
-                onPress={() => pushNavigation(APP_ROUTES.CreateMealPlan)}
+                onPress={() => {
+                  setSelectedList({ ...selectedList });
+
+                  createNewListRef.current?.expand();
+                }}
               >
                 <Image
                   source={iconedit}
@@ -247,7 +328,7 @@ export default function TestPlanShopping() {
                   style={styles.editIcon}
                 />
               </TouchableOpacity>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => setRemoveList(true)}>
                 <Image
                   source={deleteicon}
                   resizeMode="contain"
@@ -261,10 +342,17 @@ export default function TestPlanShopping() {
             {allIngredients.length === 1 ? "meal" : "meals"}
           </Text>
 
-          <ProgressBar
+          {/* <ProgressBar
             progress={checked.length / (allIngredients.length || 1)}
             label={Strings.testPlanShopping_progress}
-            progressText={Strings.testPlanShopping_progressText}
+            progressText={`${checked.length} / ${allIngredients.length}`}
+            containerStyle={styles.progressbar}
+          /> */}
+
+          <ProgressBar
+            progress={acquiredCount / (allIngredients.length || 1)}
+            label={Strings.testPlanShopping_progress}
+            progressText={`${acquiredCount} / ${allIngredients.length}`}
             containerStyle={styles.progressbar}
           />
 
@@ -279,6 +367,43 @@ export default function TestPlanShopping() {
           />
         </TourGuideZone>
       </TourGuideZone>
+      <ConfirmationModal
+        visible={removeList}
+        title={Strings.shoppingList_removeTitle}
+        description={Strings.shoppingList_removeDescription}
+        cancelText={Strings.testMealPlan_cancel}
+        confirmText={
+          removing ? Strings.testMealPlan_removing : Strings.testMealPlan_remove
+        }
+        onCancel={() => setRemoveList(false)}
+        onConfirm={() => {
+          handleDeleteList();
+        }}
+        isRemoving={removing}
+      />
+      <CreateNewListBottomSheet
+        ref={createNewListRef}
+        shoppingList={selectedList}
+        onClose={() => {
+          console.log("CreateNewListBottomSheet closed");
+          if (!isTourMode && listId) {
+            showLoader();
+            fetchListById(
+              listId as string,
+              (data) => {
+                hideLoader();
+                setSelectedList(data);
+              },
+              (error) => {
+                hideLoader();
+                setSelectedList(null);
+                console.error("Error fetching shopping list by id:", error);
+              },
+            );
+          }
+        }}
+        // Pass current data here
+      />
     </SafeAreaView>
   );
 }

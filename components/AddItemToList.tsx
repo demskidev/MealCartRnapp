@@ -62,7 +62,7 @@ const AddItemToList = ({
     { id: string; value: string }[]
   >([]);
   const [manualList, setManualList] = useState<{ id: string; value: string }[]>(
-    []
+    [],
   );
   const [unitWeight, setUnitweight] = useState("100 grms");
   const unitWeightOptions = ["100grm", "200grm", "1kg"];
@@ -83,6 +83,26 @@ const AddItemToList = ({
   // Fetch from ingredient collection using ingredientId
 
   useEffect(() => {
+    if (!visible) {
+      setSearch("");
+      setManualInput("");
+      setFilteredSuggestions([]);
+      setSearchText("");
+      setSuggestions([]);
+      setIsInputFocused(false);
+      setPendingItems([]);
+      setManualList([]);
+      setUnitweight("100 grms");
+      setItemWeights({});
+      setFilteredMeals([]);
+      setSelectedMeals([]);
+      setDynamicIngredients([]);
+      setFullIngredientsData([]);
+      setIsLoading(false);
+    }
+  }, [visible]);
+
+  useEffect(() => {
     // Only fetch if meals array is empty
     if (visible && meals.length === 0) {
       console.log("Loading initial meals");
@@ -97,7 +117,7 @@ const AddItemToList = ({
           console.error("Error fetching initial meals:", error);
         },
         3,
-        null
+        null,
       );
     }
   }, [visible]);
@@ -123,7 +143,7 @@ const AddItemToList = ({
           setIsLoading(false);
           setFilteredMeals([]);
           console.error("❌ Error searching meals:", error);
-        }
+        },
       );
     }, 400); // 400ms debounce
 
@@ -143,7 +163,7 @@ const AddItemToList = ({
     }
 
     const selectedMealObjects = meals.filter((meal) =>
-      selectedMeals.includes(meal.id)
+      selectedMeals.includes(meal.id),
     );
 
     const allIngredientNames: string[] = [];
@@ -197,7 +217,7 @@ const AddItemToList = ({
     }
 
     const filtered = dynamicIngredients.filter((item) =>
-      item.toLowerCase().includes(text.toLowerCase())
+      item.toLowerCase().includes(text.toLowerCase()),
     );
 
     setSuggestions(filtered);
@@ -239,7 +259,7 @@ const AddItemToList = ({
     setManualList((prev) => [...prev, item]);
     setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
   };
-  console.log('mealsllllllll999',meals)
+  console.log("mealsllllllll999", meals);
 
   // Use dynamic ingredients from selected meals
   const INGREDIENTS = dynamicIngredients;
@@ -291,7 +311,7 @@ const AddItemToList = ({
         .toLowerCase();
       const defaultUnitIndex = categoryUnits.findIndex(
         (unit) =>
-          unit.replace(/\s+/g, "").toLowerCase() === normalizedDefaultUnit
+          unit.replace(/\s+/g, "").toLowerCase() === normalizedDefaultUnit,
       );
 
       // Get the selected weight index or use default
@@ -299,8 +319,8 @@ const AddItemToList = ({
         itemWeights[ingredientName] !== undefined
           ? itemWeights[ingredientName]
           : defaultUnitIndex >= 0
-          ? defaultUnitIndex
-          : 0;
+            ? defaultUnitIndex
+            : 0;
 
       return {
         ...ingredient,
@@ -387,7 +407,9 @@ const AddItemToList = ({
           </View>
           {meals.length > 0 && <View style={styles.dividerRow} />}
 
-          {isLoading && <ActivityIndicator size="large" style={styles.loader} />}
+          {isLoading && (
+            <ActivityIndicator size="large" style={styles.loader} />
+          )}
 
           {meals.length > 0 &&
             console.log("First meal:", JSON.stringify(meals[0], null, 2))}
@@ -401,7 +423,7 @@ const AddItemToList = ({
             meals[0]?.ingredients?.[0] &&
             console.log(
               "First ingredient:",
-              JSON.stringify(meals[0].ingredients[0], null, 2)
+              JSON.stringify(meals[0].ingredients[0], null, 2),
             )}
 
           <TouchableWithoutFeedback
@@ -452,7 +474,7 @@ const AddItemToList = ({
                   renderItem={({ item }) => {
                     // Find the ingredient data for this item
                     const ingredientData = fullIngredientsData.find(
-                      (ing) => ing.ingredientName === item
+                      (ing) => ing.ingredientName === item,
                     );
                     const categoryUnits = ingredientData?.categoryUnits || [
                       "100grm",
@@ -468,7 +490,7 @@ const AddItemToList = ({
                     const defaultUnitIndex = categoryUnits.findIndex(
                       (unit) =>
                         unit.replace(/\s+/g, "").toLowerCase() ===
-                        normalizedDefaultUnit
+                        normalizedDefaultUnit,
                     );
 
                     // Get current index or find index of default unit
@@ -477,8 +499,8 @@ const AddItemToList = ({
                       itemWeights[item] !== undefined
                         ? itemWeights[item]
                         : defaultUnitIndex >= 0
-                        ? defaultUnitIndex
-                        : 0;
+                          ? defaultUnitIndex
+                          : 0;
                     const safeIndex = currentIndex >= 0 ? currentIndex : 0;
 
                     return (
@@ -502,7 +524,7 @@ const AddItemToList = ({
                                     ...prev,
                                     [item]: Math.min(
                                       current + 1,
-                                      categoryUnits.length - 1
+                                      categoryUnits.length - 1,
                                     ),
                                   };
                                 });
@@ -564,7 +586,7 @@ const AddItemToList = ({
                           <TouchableOpacity
                             onPress={() =>
                               setManualList((prev) =>
-                                prev.filter((i) => i.id !== item.id)
+                                prev.filter((i) => i.id !== item.id),
                               )
                             }
                             style={styles.closeIconButton}
@@ -649,7 +671,6 @@ const styles = StyleSheet.create({
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
     paddingHorizontal: horizontalScale(12),
-    height: verticalScale(44),
     marginTop: verticalScale(5),
     marginBottom: verticalScale(8),
   },
@@ -717,7 +738,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: Colors.primary,
     paddingHorizontal: horizontalScale(10),
-    height: verticalScale(40),
+    // height: verticalScale(40),
     marginBottom: verticalScale(6),
   },
   manualItemRow: {

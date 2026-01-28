@@ -1,14 +1,25 @@
 // reduxStore/slices/shoppingSlice.ts
-import { addDocument, deleteDocument, getDocumentById, queryDocuments, updateDocument } from "@/services/firestore";
+import {
+  addDocument,
+  deleteDocument,
+  getDocumentById,
+  queryDocuments,
+  updateDocument,
+} from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   ADD_SHOPPING_LIST,
   DELETE_SHOPPING_LIST,
+  FETCH_SHOPPING_LIST_BY_ID,
   FETCH_SHOPPING_LISTS,
   SHOPPING_SLICE,
   UPDATE_SHOPPING_LIST,
 } from "../actionTypes";
-import { INGREDIENTS_CATEGORY_COLLECTION, MEAL_INGREDIENTS_COLLECTION, SHOPPING_LIST_COLLECTION } from "../appKeys";
+import {
+  INGREDIENTS_CATEGORY_COLLECTION,
+  MEAL_INGREDIENTS_COLLECTION,
+  SHOPPING_LIST_COLLECTION,
+} from "../appKeys";
 
 export interface ShoppingListItem {
   ingredientId: string;
@@ -56,7 +67,7 @@ const updateShoppingListInDb = async (listData: any) => {
     const list = await updateDocument(
       SHOPPING_LIST_COLLECTION,
       listData.id,
-      listData
+      listData,
     );
     return list;
   } catch (error) {
@@ -71,6 +82,26 @@ const deleteShoppingListFromDb = async (listId: string) => {
     throw error;
   }
 };
+
+
+export const fetchShoppingListById = createAsyncThunk(
+  FETCH_SHOPPING_LIST_BY_ID,
+  async (listId: string, { rejectWithValue }) => {
+    try {
+      const list = await getDocumentById(SHOPPING_LIST_COLLECTION, listId);
+      if (!list) {
+        return rejectWithValue("Shopping list not found");
+      }
+      // Enrich the single list (enrich expects an array)
+      const [enrichedList] = await enrichShoppingListsWithDetails([list]);
+      return enrichedList;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+
 
 const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
   return Promise.all(
@@ -88,31 +119,34 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
               // Fetch ingredient details from meal's subcollection if mealId and ingredientId exist
               if (ing.mealId && ing.ingredientId) {
                 try {
-                  const { getSubcollectionDocuments } = await import("@/services/firestore");
-                  
+                  const { getSubcollectionDocuments } =
+                    await import("@/services/firestore");
+
                   const ingredientsData = await getSubcollectionDocuments(
                     MEAL_INGREDIENTS_COLLECTION,
                     ing.mealId,
-                    "ingredients"
+                    "ingredients",
                   );
-                  
+
                   const ingredientDetails: any = ingredientsData.find(
-                    (data: any) => data.id === ing.ingredientId
+                    (data: any) => data.id === ing.ingredientId,
                   );
-                  
-                  console.log(`📦 Ingredient from meal subcollection:`, ingredientDetails);
-                  
+
+                  console.log(
+                    `📦 Ingredient from meal subcollection:`,
+                    ingredientDetails,
+                  );
+
                   if (ingredientDetails) {
                     // Only fetch the name, preserve the saved unit
                     ingredientName = ingredientDetails.name || ingredientName;
                     // Do NOT override the unit - keep the one saved in shopping list
                     // ingredientUnit is already set from ing.unit above
                   }
-                  
                 } catch (error) {
                   console.error(
                     `❌ Error fetching ingredient ${ing.ingredientId} from meal ${ing.mealId}:`,
-                    error
+                    error,
                   );
                 }
               }
@@ -122,22 +156,25 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                 try {
                   const categoryDoc: any = await getDocumentById(
                     INGREDIENTS_CATEGORY_COLLECTION,
-                    ing.categoryId
+                    ing.categoryId,
                   );
-                  
-                  console.log(`📦 Category doc for ${ing.categoryId}:`, categoryDoc);
-                  
-                  categoryName = categoryDoc?.title || categoryDoc?.name || categoryName;
-                  
+
+                  console.log(
+                    `📦 Category doc for ${ing.categoryId}:`,
+                    categoryDoc,
+                  );
+
+                  categoryName =
+                    categoryDoc?.title || categoryDoc?.name || categoryName;
+
                   // Get category units array
                   if (categoryDoc?.unit && Array.isArray(categoryDoc.unit)) {
                     categoryUnits = categoryDoc.unit;
                   }
-                  
                 } catch (error) {
                   console.error(
                     `❌ Error fetching category ${ing.categoryId}:`,
-                    error
+                    error,
                   );
                 }
               }
@@ -149,18 +186,18 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                 unit: ingredientUnit,
                 categoryUnits,
               };
-              
+
               console.log(`✅ Enriched ingredient:`, enrichedIngredient);
-              
+
               return enrichedIngredient;
-            }) || []
+            }) || [],
           ),
         };
       } catch (error) {
         console.error(`Error enriching shopping list ${list.id}:`, error);
         return list;
       }
-    })
+    }),
   );
 };
 
@@ -173,7 +210,7 @@ export const addShoppingList = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const updateShoppingList = createAsyncThunk(
@@ -185,7 +222,7 @@ export const updateShoppingList = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const deleteShoppingList = createAsyncThunk(
@@ -197,7 +234,7 @@ export const deleteShoppingList = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const fetchUserShoppingLists = createAsyncThunk(
@@ -208,7 +245,7 @@ export const fetchUserShoppingLists = createAsyncThunk(
       limit = 10,
       startAfter = null,
     }: { userId: string; limit?: number; startAfter?: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const options: any = {
@@ -225,7 +262,7 @@ export const fetchUserShoppingLists = createAsyncThunk(
         "uid",
         "==",
         userId,
-        options
+        options,
       );
 
       console.log("Fetched shopping lists from DB:", lists);
@@ -236,7 +273,7 @@ export const fetchUserShoppingLists = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 const shoppingListSlice = createSlice({
@@ -270,7 +307,7 @@ const shoppingListSlice = createSlice({
       .addCase(updateShoppingList.fulfilled, (state, action) => {
         state.loading = false;
         const index = state.lists.findIndex(
-          (list) => list.id === action.payload.id
+          (list) => list.id === action.payload.id,
         );
         if (index !== -1) {
           state.lists[index] = action.payload as ShoppingList;
