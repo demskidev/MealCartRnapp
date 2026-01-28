@@ -260,7 +260,9 @@ const TourTooltip: React.FC<TooltipProps> = ({
     hideLoader();
 
     // Navigate to home after skipping tour
-    router.push(APP_ROUTES.HOME as any);
+    if (router.pathname !== APP_ROUTES.HOME) {
+      router.push(APP_ROUTES.HOME as any);
+    }
   };
 
   const onFinish = async () => {

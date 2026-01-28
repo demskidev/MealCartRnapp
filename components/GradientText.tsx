@@ -161,6 +161,7 @@ const GradientText = React.memo(
               y={fontSize}
               fontSize={fontSize}
               fontFamily={fontFamily}
+              fillRule="evenodd"
               fill="url(#textGradient)"
             >
               {text}

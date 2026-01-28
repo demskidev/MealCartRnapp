@@ -2,6 +2,7 @@ import { burger, closeIcon, mealfoodA } from "@/assets/images";
 import { CheckBox, FilledCheckBox, SearchIcon } from "@/assets/svg";
 import {
   horizontalScale,
+  isAndroid,
   moderateScale,
   verticalScale,
 } from "@/constants/Constants";
@@ -17,6 +18,7 @@ import {
   FlatList,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
   Modal,
   StyleSheet,
   Text,
@@ -374,260 +376,267 @@ const AddItemToList = ({
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={StyleSheet.absoluteFillObject} />
         </TouchableWithoutFeedback>
-
-        <View style={styles.container}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View>
-              <Text style={styles.title}>
-                {from === CREATE_MEAL_PLAN
-                  ? Strings.createPlan_selectAMeal
-                  : Strings.addItemToList_title}
-              </Text>
-              {from !== CREATE_MEAL_PLAN && (
-                <Text style={styles.subtitle}>
-                  {Strings.addItemToList_subtitle}
+        <KeyboardAvoidingView
+          behavior={"padding"}
+          keyboardVerticalOffset={isAndroid ? 0 : 0}
+          style={{ width: "100%", alignItems: "center" }}
+        >
+          <View style={styles.container}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View>
+                <Text style={styles.title}>
+                  {from === CREATE_MEAL_PLAN
+                    ? Strings.createPlan_selectAMeal
+                    : Strings.addItemToList_title}
                 </Text>
-              )}
+                {from !== CREATE_MEAL_PLAN && (
+                  <Text style={styles.subtitle}>
+                    {Strings.addItemToList_subtitle}
+                  </Text>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+
+            <View style={styles.searchBox}>
+              <SearchIcon
+                width={verticalScale(22)}
+                height={verticalScale(22)}
+                color={Colors.tertiary}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder={Strings.addItemToList_searchPlaceholder}
+                placeholderTextColor={Colors.tertiary}
+                value={search}
+                onChangeText={setSearch}
+              />
             </View>
-          </TouchableWithoutFeedback>
+            {meals.length > 0 && <View style={styles.dividerRow} />}
 
-          <View style={styles.searchBox}>
-            <SearchIcon
-              width={verticalScale(22)}
-              height={verticalScale(22)}
-              color={Colors.tertiary}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={Strings.addItemToList_searchPlaceholder}
-              placeholderTextColor={Colors.tertiary}
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
-          {meals.length > 0 && <View style={styles.dividerRow} />}
-
-          {isLoading && (
-            <ActivityIndicator size="large" style={styles.loader} />
-          )}
-
-          {meals.length > 0 &&
-            console.log("First meal:", JSON.stringify(meals[0], null, 2))}
-          {meals.length > 0 &&
-            console.log("First meal:rrrrr", meals[0], null, 2)}
-
-          {meals.length > 0 &&
-            console.log("First meal:1111", JSON.stringify(meals, null, 2))}
-
-          {meals.length > 0 &&
-            meals[0]?.ingredients?.[0] &&
-            console.log(
-              "First ingredient:",
-              JSON.stringify(meals[0].ingredients[0], null, 2),
+            {isLoading && (
+              <ActivityIndicator size="large" style={styles.loader} />
             )}
 
-          <TouchableWithoutFeedback
-            onPress={() => {
-              Keyboard.dismiss();
-              inputRef.current?.blur();
-            }}
-          >
-            <View>
-              <FlatList
-                data={search.trim() ? filteredMeals : meals}
-                showsVerticalScrollIndicator={false}
-                keyExtractor={(item) => item.id}
-                renderItem={renderMealItem}
-                contentContainerStyle={styles.mealsListContent}
-                ItemSeparatorComponent={() => (
-                  <View style={styles.mealSeparator} />
-                )}
-                style={styles.mealsListStyle}
-              />
-            </View>
-          </TouchableWithoutFeedback>
+            {meals.length > 0 &&
+              console.log("First meal:", JSON.stringify(meals[0], null, 2))}
+            {meals.length > 0 &&
+              console.log("First meal:rrrrr", meals[0], null, 2)}
 
-          {from !== CREATE_MEAL_PLAN && (
-            <View>
-              <View style={styles.divider} />
+            {meals.length > 0 &&
+              console.log("First meal:1111", JSON.stringify(meals, null, 2))}
 
-              <Text style={styles.addManualLabel}>
-                {Strings.addItemToList_addManualLabel}
-              </Text>
+            {meals.length > 0 &&
+              meals[0]?.ingredients?.[0] &&
+              console.log(
+                "First ingredient:",
+                JSON.stringify(meals[0].ingredients[0], null, 2),
+              )}
 
-              <CustomTextInput
-                ref={inputRef}
-                placeholder={Strings.addItemToList_searchIngredient}
-                style={styles.manualInput}
-                placeholderTextColor={Colors.tertiary}
-                onChangeText={handleSearch}
-                value={searchText}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
-              />
-
-              {suggestions.length > 0 && isInputFocused && (
+            <TouchableWithoutFeedback
+              onPress={() => {
+                Keyboard.dismiss();
+                inputRef.current?.blur();
+              }}
+            >
+              <View>
                 <FlatList
-                  data={suggestions}
-                  keyExtractor={(item) => item}
-                  style={styles.suggestionsListStyle}
+                  data={search.trim() ? filteredMeals : meals}
+                  showsVerticalScrollIndicator={false}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderMealItem}
+                  contentContainerStyle={styles.mealsListContent}
+                  ItemSeparatorComponent={() => (
+                    <View style={styles.mealSeparator} />
+                  )}
+                  style={styles.mealsListStyle}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+
+            {from !== CREATE_MEAL_PLAN && (
+              <View>
+                <View style={styles.divider} />
+
+                <Text style={styles.addManualLabel}>
+                  {Strings.addItemToList_addManualLabel}
+                </Text>
+
+                <CustomTextInput
+                  ref={inputRef}
+                  placeholder={Strings.addItemToList_searchIngredient}
+                  style={styles.manualInput}
+                  placeholderTextColor={Colors.tertiary}
+                  onChangeText={handleSearch}
+                  value={searchText}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                />
+
+                {suggestions.length > 0 && isInputFocused && (
+                  <FlatList
+                    data={suggestions}
+                    keyExtractor={(item) => item}
+                    style={styles.suggestionsListStyle}
+                    renderItem={({ item }) => {
+                      // Find the ingredient data for this item
+                      const ingredientData = fullIngredientsData.find(
+                        (ing) => ing.ingredientName === item,
+                      );
+                      const categoryUnits = ingredientData?.categoryUnits || [
+                        "100grm",
+                        "200grm",
+                        "1kg",
+                      ];
+                      const defaultUnit = ingredientData?.unit || "100grm";
+
+                      // Normalize the unit strings by removing spaces for comparison
+                      const normalizedDefaultUnit = defaultUnit
+                        .replace(/\s+/g, "")
+                        .toLowerCase();
+                      const defaultUnitIndex = categoryUnits.findIndex(
+                        (unit) =>
+                          unit.replace(/\s+/g, "").toLowerCase() ===
+                          normalizedDefaultUnit,
+                      );
+
+                      // Get current index or find index of default unit
+                      // Check if itemWeights[item] is undefined to use default unit index
+                      const currentIndex =
+                        itemWeights[item] !== undefined
+                          ? itemWeights[item]
+                          : defaultUnitIndex >= 0
+                            ? defaultUnitIndex
+                            : 0;
+                      const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+
+                      return (
+                        <View>
+                          <View style={styles.suggestionItemContainer}>
+                            <TouchableOpacity
+                              activeOpacity={0.7}
+                              onPress={() => handleSelectSuggestion(item)}
+                              style={styles.suggestionTouchable}
+                            >
+                              <Text style={styles.suggestionText}>{item}</Text>
+                            </TouchableOpacity>
+
+                            <View style={styles.rowItem}>
+                              <CustomStepper
+                                value={categoryUnits[safeIndex]}
+                                onIncrement={() => {
+                                  setItemWeights((prev) => {
+                                    const current = prev[item] ?? safeIndex;
+                                    return {
+                                      ...prev,
+                                      [item]: Math.min(
+                                        current + 1,
+                                        categoryUnits.length - 1,
+                                      ),
+                                    };
+                                  });
+                                }}
+                                onDecrement={() => {
+                                  setItemWeights((prev) => {
+                                    const current = prev[item] ?? safeIndex;
+                                    return {
+                                      ...prev,
+                                      [item]: Math.max(current - 1, 0),
+                                    };
+                                  });
+                                }}
+                                containerStyle={styles.stepperContainer}
+                              />
+                            </View>
+                          </View>
+
+                          <View style={styles.dividerRowList} />
+                        </View>
+                      );
+                    }}
+                  />
+                )}
+
+                <FlatList
+                  data={[...pendingItems, ...manualList]}
+                  keyExtractor={(item) => item.id}
+                  style={styles.manualListStyle}
+                  showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => {
-                    // Find the ingredient data for this item
-                    const ingredientData = fullIngredientsData.find(
-                      (ing) => ing.ingredientName === item,
+                    const isPending = pendingItems.some(
+                      (i) => i.id === item.id,
                     );
-                    const categoryUnits = ingredientData?.categoryUnits || [
-                      "100grm",
-                      "200grm",
-                      "1kg",
-                    ];
-                    const defaultUnit = ingredientData?.unit || "100grm";
-
-                    // Normalize the unit strings by removing spaces for comparison
-                    const normalizedDefaultUnit = defaultUnit
-                      .replace(/\s+/g, "")
-                      .toLowerCase();
-                    const defaultUnitIndex = categoryUnits.findIndex(
-                      (unit) =>
-                        unit.replace(/\s+/g, "").toLowerCase() ===
-                        normalizedDefaultUnit,
-                    );
-
-                    // Get current index or find index of default unit
-                    // Check if itemWeights[item] is undefined to use default unit index
-                    const currentIndex =
-                      itemWeights[item] !== undefined
-                        ? itemWeights[item]
-                        : defaultUnitIndex >= 0
-                          ? defaultUnitIndex
-                          : 0;
-                    const safeIndex = currentIndex >= 0 ? currentIndex : 0;
 
                     return (
-                      <View>
-                        <View style={styles.suggestionItemContainer}>
-                          <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => handleSelectSuggestion(item)}
-                            style={styles.suggestionTouchable}
-                          >
-                            <Text style={styles.suggestionText}>{item}</Text>
-                          </TouchableOpacity>
-
-                          <View style={styles.rowItem}>
-                            <CustomStepper
-                              value={categoryUnits[safeIndex]}
-                              onIncrement={() => {
-                                setItemWeights((prev) => {
-                                  const current = prev[item] ?? safeIndex;
-                                  return {
-                                    ...prev,
-                                    [item]: Math.min(
-                                      current + 1,
-                                      categoryUnits.length - 1,
-                                    ),
-                                  };
-                                });
-                              }}
-                              onDecrement={() => {
-                                setItemWeights((prev) => {
-                                  const current = prev[item] ?? safeIndex;
-                                  return {
-                                    ...prev,
-                                    [item]: Math.max(current - 1, 0),
-                                  };
-                                });
-                              }}
-                              containerStyle={styles.stepperContainer}
+                      <View style={styles.manualAddRow}>
+                        {isPending ? (
+                          <>
+                            <TextInput
+                              style={styles.manualAddInput}
+                              value={item.value}
+                              editable={isPending}
                             />
+                            <TouchableOpacity
+                              style={styles.addButton}
+                              onPress={() => handleAddPendingItem(item)}
+                            >
+                              <Text style={styles.addButtonText}>
+                                {Strings.addItemToList_add}
+                              </Text>
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <View style={styles.manualItemContainer}>
+                            <TextInput
+                              style={styles.manualItemInput}
+                              value={item.value}
+                              editable={false}
+                            />
+                            <TouchableOpacity
+                              onPress={() =>
+                                setManualList((prev) =>
+                                  prev.filter((i) => i.id !== item.id),
+                                )
+                              }
+                              style={styles.closeIconButton}
+                            >
+                              <Image
+                                source={closeIcon}
+                                style={styles.closeIconImage}
+                              />
+                            </TouchableOpacity>
                           </View>
-                        </View>
-
-                        <View style={styles.dividerRowList} />
+                        )}
                       </View>
                     );
                   }}
                 />
-              )}
-
-              <FlatList
-                data={[...pendingItems, ...manualList]}
-                keyExtractor={(item) => item.id}
-                style={styles.manualListStyle}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => {
-                  const isPending = pendingItems.some((i) => i.id === item.id);
-
-                  return (
-                    <View style={styles.manualAddRow}>
-                      {isPending ? (
-                        <>
-                          <TextInput
-                            style={styles.manualAddInput}
-                            value={item.value}
-                            editable={isPending}
-                          />
-                          <TouchableOpacity
-                            style={styles.addButton}
-                            onPress={() => handleAddPendingItem(item)}
-                          >
-                            <Text style={styles.addButtonText}>
-                              {Strings.addItemToList_add}
-                            </Text>
-                          </TouchableOpacity>
-                        </>
-                      ) : (
-                        <View style={styles.manualItemContainer}>
-                          <TextInput
-                            style={styles.manualItemInput}
-                            value={item.value}
-                            editable={false}
-                          />
-                          <TouchableOpacity
-                            onPress={() =>
-                              setManualList((prev) =>
-                                prev.filter((i) => i.id !== item.id),
-                              )
-                            }
-                            style={styles.closeIconButton}
-                          >
-                            <Image
-                              source={closeIcon}
-                              style={styles.closeIconImage}
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  );
-                }}
-              />
-            </View>
-          )}
-
-          <View style={styles.footer}>
-            <BaseButton
-              title={Strings.addItemToList_cancel}
-              gradientButton={false}
-              textColor={Colors.background}
-              width={from === CREATE_MEAL_PLAN ? 0 : width * 0.42}
-              textStyle={styles.cancelButton}
-              textStyleText={styles.cancelButtonText}
-              onPress={onClose}
-            />
-            {from !== CREATE_MEAL_PLAN && (
-              <BaseButton
-                title={Strings.addItemToList_generateList}
-                gradientButton={true}
-                textColor={Colors.background}
-                width={width * 0.42}
-                textStyle={styles.confirmButton}
-                textStyleText={styles.confirmButtonText}
-                onPress={handleGenerateList}
-              />
+              </View>
             )}
+
+            <View style={styles.footer}>
+              <BaseButton
+                title={Strings.addItemToList_cancel}
+                gradientButton={false}
+                textColor={Colors.background}
+                width={from === CREATE_MEAL_PLAN ? 0 : width * 0.42}
+                textStyle={styles.cancelButton}
+                textStyleText={styles.cancelButtonText}
+                onPress={onClose}
+              />
+              {from !== CREATE_MEAL_PLAN && (
+                <BaseButton
+                  title={Strings.addItemToList_generateList}
+                  gradientButton={true}
+                  textColor={Colors.background}
+                  width={width * 0.42}
+                  textStyle={styles.confirmButton}
+                  textStyleText={styles.confirmButtonText}
+                  onPress={handleGenerateList}
+                />
+              )}
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -671,6 +680,7 @@ const styles = StyleSheet.create({
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
     paddingHorizontal: horizontalScale(12),
+    height: isAndroid ? verticalScale(50) : verticalScale(44),
     marginTop: verticalScale(5),
     marginBottom: verticalScale(8),
   },
@@ -738,7 +748,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: Colors.primary,
     paddingHorizontal: horizontalScale(10),
-    // height: verticalScale(40),
+    height: verticalScale(44),
     marginBottom: verticalScale(6),
   },
   manualItemRow: {

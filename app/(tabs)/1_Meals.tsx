@@ -12,6 +12,7 @@ import FilterModal from "@/components/FilterModal";
 import { hideLoader, showLoader } from "@/components/Loader";
 import {
   horizontalScale,
+  isAndroid,
   moderateScale,
   verticalScale,
 } from "@/constants/Constants";
@@ -107,13 +108,13 @@ const MealsScreen: React.FC = () => {
               resolve();
             },
             NORMAL_PAGE_SIZE,
-            null
+            null,
           );
         }),
         new Promise<void>((resolve) => {
           fetchTheRecentMeals(
             () => resolve(),
-            () => resolve()
+            () => resolve(),
           );
         }),
       ]);
@@ -165,7 +166,7 @@ const MealsScreen: React.FC = () => {
         console.error("Error fetching initial meals:", error);
       },
       NORMAL_PAGE_SIZE,
-      null
+      null,
     );
   };
 
@@ -200,7 +201,7 @@ const MealsScreen: React.FC = () => {
         setNormalMeals((prev) => {
           const existingIds = new Set(prev.map((meal: Meal) => meal.id));
           const newMeals = data.filter(
-            (meal: Meal) => !existingIds.has(meal.id)
+            (meal: Meal) => !existingIds.has(meal.id),
           );
           console.log("New meals to add:", newMeals.length);
           return [...prev, ...newMeals];
@@ -216,7 +217,7 @@ const MealsScreen: React.FC = () => {
         setNormalIsLoadingMore(false);
       },
       NORMAL_PAGE_SIZE,
-      normalLastDoc
+      normalLastDoc,
     );
   };
 
@@ -234,7 +235,7 @@ const MealsScreen: React.FC = () => {
     console.log("Loading filtered meals with:", { filters, search, isInitial }); // Updated log
     setFilteredIsLoadingMore(true);
 
-    showLoader()
+    showLoader();
     searchMealsCombined(
       {
         category: filters.category,
@@ -260,7 +261,7 @@ const MealsScreen: React.FC = () => {
           setFilteredMeals((prev) => {
             const existingIds = new Set(prev.map((meal: Meal) => meal.id));
             const newMeals = data.filter(
-              (meal: Meal) => !existingIds.has(meal.id)
+              (meal: Meal) => !existingIds.has(meal.id),
             );
             console.log("New filtered meals to add:", newMeals.length);
             return [...prev, ...newMeals];
@@ -270,18 +271,18 @@ const MealsScreen: React.FC = () => {
           setFilteredLastDoc(data[data.length - 1]);
         }
         setFilteredIsLoadingMore(false);
-        hideLoader()
+        hideLoader();
       },
       (error) => {
-        hideLoader()
+        hideLoader();
         console.error("Error fetching filtered meals:", error);
         setFilteredIsLoadingMore(false);
-      }
+      },
     );
   };
 
   const handleScrollViewScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>
+    event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     const paddingToBottom = 20;
@@ -344,7 +345,7 @@ const MealsScreen: React.FC = () => {
         (error) => {
           console.error("Error refreshing filtered meals:", error);
           setRefreshing(false);
-        }
+        },
       );
     } else {
       // Refresh normal meals and recent meals
@@ -370,7 +371,7 @@ const MealsScreen: React.FC = () => {
           setRefreshing(false);
         },
         NORMAL_PAGE_SIZE,
-        null
+        null,
       );
     }
   };
@@ -731,6 +732,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(30),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
+    height: isAndroid ? verticalScale(50) : verticalScale(44),
     paddingHorizontal: horizontalScale(12),
     width: width * 0.6,
   },
@@ -739,6 +741,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     fontSize: moderateScale(14),
     color: Colors.primary,
+    textAlignVertical:"center",
     marginLeft: horizontalScale(8),
   },
   parentSearchBox: {

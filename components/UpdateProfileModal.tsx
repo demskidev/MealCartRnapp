@@ -1,4 +1,5 @@
 import { closeIcon, googleicon, updateprofile } from "@/assets/images";
+import { AppleIcon } from "@/assets/svg";
 import {
   horizontalScale,
   moderateScale,
@@ -44,6 +45,7 @@ export default function UpdateProfileModal({
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const isGoogleUser = user?.provider === SocialLoginProvider.GOOGLE;
+  const isAppleUser = user?.provider === SocialLoginProvider.APPLE;
   // Load current user name when modal opens
   useEffect(() => {
     if (visible && user?.name) {
@@ -178,6 +180,34 @@ export default function UpdateProfileModal({
                 />
                 <Text style={styles.socialText}>
                   {Strings.updateProfileModal_connectedWithGoogle}
+                </Text>
+                <TouchableOpacity onPress={onUnlinkSocialAccount}>
+                  <Image
+                    source={closeIcon}
+                    style={styles.closeIconImage}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {isAppleUser && (
+            <>
+              <View style={styles.socialDivider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.socialLabel}>
+                  {Strings.updateProfileModal_social}
+                </Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View
+                style={[styles.socialBox, { backgroundColor: Colors.black }]}
+              >
+                <AppleIcon width={20} height={20} />
+                <Text style={[styles.socialText,{ color: Colors.white }]}>
+                  {Strings.updateProfileModal_connectedWithApple}
                 </Text>
                 <TouchableOpacity onPress={onUnlinkSocialAccount}>
                   <Image

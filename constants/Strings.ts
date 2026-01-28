@@ -157,6 +157,7 @@ export const Strings = {
   updateProfileModal_emailPlaceholder: "youemail@example.com",
   updateProfileModal_social: "Social",
   updateProfileModal_connectedWithGoogle: "Connected with Google",
+  updateProfileModal_connectedWithApple: "Connected with Apple",
   updateProfileModal_cancel: "Cancel",
   sendShoppingList_title: "Send To Shopping List",
   sendShoppingList_subtitle:
