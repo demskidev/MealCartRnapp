@@ -1,9 +1,10 @@
 import { gradientclose, whitecorrect } from "@/assets/images";
-import BaseButton from "@/components/BaseButton";
 import CreateNewListBottomSheet, {
   CreateNewListBottomSheetRef,
 } from "@/components/CreateNewListBottomSheet";
 import { hideLoader, showLoader } from "@/components/Loader";
+import SpaceBetweenButtons from "@/components/SpaceBetweenButtons";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
@@ -148,39 +149,44 @@ const ListsScreen: React.FC = () => {
           </Text>
         </View>
         <View style={styles.dividerRow} />
-        <View style={styles.parentOfMarkDone}>
-          <BaseButton
-            title={Strings.lists_markDone}
-            gradientButton={isMarked}
-            textColor={isMarked ? Colors.white : Colors.primary}
-            width={width * 0.43}
-            textStyle={isMarked ? undefined : styles.addButton}
-            textStyleText={styles.addButtonText}
-            onPress={() => handleDeleteList(item.id)}
-            rightChild={
-              isMarked ? (
-                <Image
-                  source={whitecorrect}
-                  style={{
-                    width: moderateScale(20),
-                    height: moderateScale(20),
-                  }}
-                />
-              ) : null
-            }
-          />
-          <BaseButton
-            title={Strings.lists_viewList}
-            gradientButton={false}
-            textColor="#fff"
-            width={width * 0.43}
-            textStyle={styles.addButton}
-            textStyleText={styles.addButtonText}
-            onPress={() =>
-              pushNavigation(APP_ROUTES.TestPlanShopping, { listId: item.id })
-            }
-          />
-        </View>
+        <SpaceBetweenButtons
+          containerStyle={styles.parentOfMarkDone}
+          left={
+            <ThemeNormalButton
+              title={Strings.lists_markDone}
+              textColor={isMarked ? Colors.white : Colors.primary}
+              containerStyle={isMarked ? styles.markedButton : styles.addButton}
+              textStyle={
+                isMarked ? styles.markedButtonText : styles.addButtonText
+              }
+              showElevation={false}
+              onPress={() => handleDeleteList(item.id)}
+              rightChild={
+                isMarked ? (
+                  <Image
+                    source={whitecorrect}
+                    style={{
+                      width: moderateScale(20),
+                      height: moderateScale(20),
+                    }}
+                  />
+                ) : null
+              }
+            />
+          }
+          right={
+            <ThemeNormalButton
+              title={Strings.lists_viewList}
+              textColor="#fff"
+              containerStyle={styles.addButton}
+              showElevation={false}
+              textStyle={styles.addButtonText}
+              onPress={() =>
+                pushNavigation(APP_ROUTES.TestPlanShopping, { listId: item.id })
+              }
+            />
+          }
+        />
       </View>
     );
   };
@@ -261,9 +267,22 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(3),
     paddingHorizontal: horizontalScale(4),
   },
+  markedButton: {
+    backgroundColor: Colors._3A4D25,
+    borderColor: Colors._3A4D25,
+    borderWidth: moderateScale(1),
+    borderRadius: moderateScale(8),
+    paddingVertical: verticalScale(3),
+    paddingHorizontal: horizontalScale(4),
+  },
   addButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.primary,
+    fontSize: moderateScale(14),
+  },
+  markedButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.white,
     fontSize: moderateScale(14),
   },
   dividerRow: {

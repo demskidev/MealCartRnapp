@@ -37,6 +37,8 @@ import {
 import { Formik } from "formik";
 import { useRef, useState } from "react";
 import { fontSize } from "@/utils/Fonts";
+import ThemeGradientButton from "@/components/ThemeGradientButton";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
@@ -252,10 +254,9 @@ const SignInScreen = () => {
                       />
                     </TouchableOpacity>
 
-                    <BaseButton
+                    <ThemeGradientButton
                       title={Strings.logIn}
-                      gradientButton={true}
-                      textColor={Colors.white}
+                      textStyle={{ color: Colors.white }}
                       buttonGradient={styles.loginButton}
                       disabled={isSubmitting}
                       onPress={async () => {
@@ -277,7 +278,7 @@ const SignInScreen = () => {
                   <Divider style={styles.dividerStyle} />
 
                   <View style={styles.buttonContainer}>
-                    <BaseButton
+                    <ThemeNormalButton
                       title={Strings.continueWithGoogle}
                       rightChild={<GoogleIcon />}
                       onPress={handleGoogleSignIn}
@@ -285,7 +286,7 @@ const SignInScreen = () => {
                       disabled={isGoogleSigningIn || isAppleSigningIn}
                     />
                     {Platform.OS === "ios" && (
-                      <BaseButton
+                      <ThemeNormalButton
                         title={Strings.continueWithApple}
                         backgroundColor={Colors.black}
                         textColor={Colors.white}

@@ -7,6 +7,7 @@ import {
     thirdslide,
 } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
+import ThemeGradientButton from "@/components/ThemeGradientButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
     horizontalScale,
@@ -124,19 +125,18 @@ const WelcomeMealCart: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          <BaseButton
+          <ThemeGradientButton
             title={
               currentIndex === 2
                 ? Strings.welcomeMealCart_getStarted
                 : Strings.welcomeMealCart_next
             }
-            gradientButton={true}
             width={currentIndex > 0 ? width * 0.7 : width * 0.9}
             gradientStartColor={Colors._667D4C}
             gradientEndColor={Colors._9DAF89}
             gradientStart={{ x: 0, y: 0 }}
             gradientEnd={{ x: 1, y: 0 }}
-            textColor={Colors.background}
+            textStyle={{ color: Colors.background }}
             onPress={goNext}
           />
         </View>

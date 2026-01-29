@@ -71,7 +71,7 @@ const BaseTextInput = React.memo(
         onBlur,
         textAlign = "left",
       },
-      ref
+      ref,
     ) => {
       const [showPassword, setShowPassword] = React.useState(secureTextEntry);
 
@@ -96,10 +96,7 @@ const BaseTextInput = React.memo(
           >
             <TextInput
               ref={ref}
-              style={[
-                styles.textInput,
-                { textAlign },
-              ]}
+              style={[styles.textInput, { textAlign, color: Colors.primary }]}
               value={value ?? ""}
               onChangeText={onChangeText}
               placeholder={placeholder}
@@ -128,8 +125,8 @@ const BaseTextInput = React.memo(
           {error && <Text style={styles.errorMsg}>{error}</Text>}
         </View>
       );
-    }
-  )
+    },
+  ),
 );
 
 const styles = StyleSheet.create({
@@ -166,7 +163,7 @@ const styles = StyleSheet.create({
   errorMsg: {
     color: Colors.error,
     fontSize: fontSize(14),
-    fontFamily: FontFamilies.ROBOTO_REGULAR
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
   },
 });
 

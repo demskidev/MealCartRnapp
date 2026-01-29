@@ -4,7 +4,7 @@ import { Colors } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { FontFamily } from "@/utils/Fonts";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import {
   Dimensions,
@@ -229,6 +229,8 @@ const TourTooltip: React.FC<TooltipProps> = ({
     triggerCloseAddItemToList,
   } = useTourStep();
   const router = useRouter();
+  const pathname = usePathname();
+
   const stepIndex = (currentStep?.order ?? 1) - 1;
   console.log(
     "🎯 Tooltip - Step:",
@@ -260,7 +262,7 @@ const TourTooltip: React.FC<TooltipProps> = ({
     hideLoader();
 
     // Navigate to home after skipping tour
-    if (router.pathname !== APP_ROUTES.HOME) {
+    if (pathname !== APP_ROUTES.HOME) {
       router.push(APP_ROUTES.HOME as any);
     }
   };

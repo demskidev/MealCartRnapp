@@ -26,9 +26,10 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import BaseButton from "./BaseButton";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
+import ThemeGradientButton from "./ThemeGradientButton";
+import ThemeNormalButton from "./ThemeNormalButton";
 
 const mealsData = [
   { id: "1", name: "Classic Spaghetti Bolognese", image: burger },
@@ -626,28 +627,32 @@ const AddItemToList = ({
               </View>
             )}
 
-            <View style={styles.footer}>
-              <BaseButton
-                title={Strings.addItemToList_cancel}
-                gradientButton={false}
-                textColor={Colors.background}
-                width={from === CREATE_MEAL_PLAN ? 0 : width * 0.42}
-                textStyle={styles.cancelButton}
-                textStyleText={styles.cancelButtonText}
-                onPress={onClose}
-              />
-              {from !== CREATE_MEAL_PLAN && (
-                <BaseButton
-                  title={Strings.addItemToList_generateList}
-                  gradientButton={true}
+            {from !== CREATE_MEAL_PLAN ? (
+              <View style={styles.footer}>
+                <ThemeNormalButton
+                  title={Strings.addItemToList_cancel}
                   textColor={Colors.background}
-                  width={width * 0.42}
-                  textStyle={styles.confirmButton}
-                  textStyleText={styles.confirmButtonText}
+                  containerStyle={[styles.cancelButton, { flex: 0.6 }]}
+                  textStyle={styles.cancelButtonText}
+                  onPress={onClose}
+                />
+
+                <ThemeGradientButton
+                  title={Strings.addItemToList_generateList}
+                  containerStyle={styles.confirmButton}
+                  textStyle={styles.confirmButtonText}
                   onPress={handleGenerateList}
                 />
-              )}
-            </View>
+              </View>
+            ) : (
+              <ThemeNormalButton
+                title={Strings.addItemToList_cancel}
+                textColor={Colors.background}
+                containerStyle={styles.cancelButton}
+                textStyle={styles.cancelButtonText}
+                onPress={onClose}
+              />
+            )}
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -834,10 +839,10 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(8),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
-    marginRight: horizontalScale(8),
     justifyContent: "center",
     alignItems: "center",
   },
+
   cancelButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     fontSize: moderateScale(14),
@@ -871,6 +876,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.white,
+    flex: 1,
     fontSize: moderateScale(14),
   },
   confirmButtonText: {
@@ -882,6 +888,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: verticalScale(18),
+    gap: moderateScale(10),
   },
   rowItem: {
     minWidth: 100,

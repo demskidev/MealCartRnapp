@@ -1,5 +1,7 @@
 import { CreateAccount, ForwardIcon, SplashIcon } from "@/assets/svg";
 import BaseButton from "@/components/BaseButton";
+import ThemeGradientButton from "@/components/ThemeGradientButton";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { moderateScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
@@ -26,15 +28,14 @@ const WelcomeScreen = () => {
       </View>
 
       <View style={styles.bottomContainer}>
-        <BaseButton
+        <ThemeGradientButton
           title={Strings.createAccount}
-          gradientButton={true}
           rightChild={<CreateAccount />}
-          textColor={Colors.white}
+          textStyle={{ color: Colors.white }}
           onPress={() => navigate(APP_ROUTES.SIGNUP)}
         />
 
-        <BaseButton
+        <ThemeNormalButton
           title={Strings.logIn}
           rightChild={<ForwardIcon />}
           backgroundColor={Colors.buttonBackground}

@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { hideLoader, showLoader } from "@/components/Loader";
+import ThemeGradientButton from "@/components/ThemeGradientButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { signInWithApple } from "@/services/appleSignin";
 import { signInWithGoogle } from "@/services/googleSignIn";
@@ -36,6 +37,7 @@ import {
 } from "@/viewmodels/SignupViewModel";
 import { Formik } from "formik";
 import { useRef, useState } from "react";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
@@ -267,11 +269,10 @@ const SignupScreen = () => {
                   />
 
                   <View style={styles.buttonSpace}>
-                    <BaseButton
+                    <ThemeGradientButton
                       title={Strings.signUp}
-                      gradientButton={true}
                       buttonGradient={styles.loginButton}
-                      textColor={Colors.white}
+                      textStyle={{ color: Colors.white }}
                       disabled={isSubmitting}
                       onPress={async () => {
                         if (isSubmitting) return;
@@ -298,7 +299,7 @@ const SignupScreen = () => {
                   <Divider style={styles.dividerStyle} />
 
                   <View style={styles.buttonContainer}>
-                    <BaseButton
+                    <ThemeNormalButton
                       title={Strings.continueWithGoogle}
                       rightChild={<GoogleIcon />}
                       textStyle={styles.loginButton}
@@ -306,7 +307,7 @@ const SignupScreen = () => {
                       onPress={handleGoogleSignIn}
                     />
                     {Platform.OS === "ios" && (
-                      <BaseButton
+                      <ThemeNormalButton
                         title={Strings.continueWithApple}
                         backgroundColor={Colors.black}
                         textColor={Colors.white}

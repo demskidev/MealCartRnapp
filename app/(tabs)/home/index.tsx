@@ -1,4 +1,3 @@
-import BaseButton from "@/components/BaseButton";
 import {
   horizontalScale,
   moderateScale,
@@ -18,6 +17,9 @@ import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily } from "@/utils/Fonts";
 
 import { hideLoader, showLoader } from "@/components/Loader";
+import SpaceBetweenButtons from "@/components/SpaceBetweenButtons";
+import ThemeGradientButton from "@/components/ThemeGradientButton";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { useTourStep } from "@/context/TourStepContext";
 import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
@@ -200,12 +202,10 @@ const HomeScreen: React.FC = () => {
           {item.description}
         </Text>
 
-        <BaseButton
+        <ThemeNormalButton
           title={Strings.home_view}
-          gradientButton={false}
-          backgroundColor={Colors.white}
-          textStyle={[styles.mealCardButton]}
-          textStyleText={styles.mealCardButtonText}
+          containerStyle={styles.mealCardButton}
+          showElevation={false}
           onPress={() => navigateToMealDetail(item)}
         />
       </View>
@@ -365,41 +365,38 @@ const HomeScreen: React.FC = () => {
               </View>
             </LinearGradient>
 
-            <View style={styles.parentCreateMeal}>
-              {/* Zone 3: Add New Meal */}
-              <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
-                <BaseButton
-                  title={Strings.home_addNewMeal}
-                  gradientButton={true}
-                  // width={width * 0.41}
-                  gradientStartColor={Colors._667D4C}
-                  gradientEndColor={Colors._9DAF89}
-                  gradientStart={{ x: 0, y: 0 }}
-                  gradientEnd={{ x: 1, y: 0 }}
-                  textColor={Colors.white}
+            <SpaceBetweenButtons
+              containerStyle={styles.parentCreateMeal}
+              left={
+                <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
+                  <ThemeGradientButton
+                    title={Strings.home_addNewMeal}
+                    textStyle={styles.createMeal}
+                    onPress={goNext}
+                    containerStyle={styles.createMealButton}
+                    rightChild={
+                      <IconPlus
+                        width={verticalScale(21)}
+                        height={verticalScale(21)}
+                      />
+                    }
+                  />
+                </TourGuideZone>
+              }
+              right={
+                <ThemeNormalButton
+                  onPress={() => pushNavigation(APP_ROUTES.MEALS)}
+                  title={Strings.home_myMeals}
+                  containerStyle={styles.createMealButton}
                   rightChild={
-                    <IconPlus
+                    <MealsLogo
                       width={verticalScale(21)}
                       height={verticalScale(21)}
                     />
                   }
-                  textStyle={styles.createMeal}
-                  onPress={goNext}
                 />
-              </TourGuideZone>
-
-              <TouchableOpacity
-                style={styles.myMeals}
-                activeOpacity={0.7}
-                onPress={() => pushNavigation(APP_ROUTES.MEALS)}
-              >
-                <Text style={styles.myMealText}>{Strings.home_myMeals}</Text>
-                <MealsLogo
-                  width={verticalScale(21)}
-                  height={verticalScale(21)}
-                />
-              </TouchableOpacity>
-            </View>
+              }
+            />
 
             {mealData && mealData.length > 0 ? (
               <View style={styles.recentMealsContent}>
@@ -466,6 +463,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     overflow: "visible",
     marginBottom: moderateScale(8),
+  },
+  createMealButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 0,
   },
   mealCardImage: {
     width: "100%",
@@ -589,10 +593,7 @@ const styles = StyleSheet.create({
   createMeal: {
     paddingHorizontal: horizontalScale(10),
     borderRadius: moderateScale(8),
-    fontWeight: "500",
-    fontSize: moderateScale(14),
     color: Colors.white,
-    fontFamily: FontFamily.ROBOTO_MEDIUM,
   },
   myMeals: {
     backgroundColor: Colors._F5F9FB,
@@ -611,10 +612,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   parentCreateMeal: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginHorizontal: horizontalScale(18),
+    paddingHorizontal: horizontalScale(18),
     marginVertical: verticalScale(25),
   },
   mealcartLogoParent: {

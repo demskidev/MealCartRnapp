@@ -7,6 +7,9 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { Dimensions, Modal, StyleSheet, Text, View } from "react-native";
 import BaseButton from "./BaseButton";
+import SpaceBetweenButtons from "./SpaceBetweenButtons";
+import ThemeNormalButton from "./ThemeNormalButton";
+import ThemeGradientButton from "./ThemeGradientButton";
 
 const { width } = Dimensions.get("window");
 
@@ -45,33 +48,33 @@ const ConfirmationModal = ({
       <View style={styles.container}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{description}</Text>
-
-        <View style={styles.buttonRow}>
-          <BaseButton
-            title={cancelText}
-            gradientButton={false}
-            textColor={Colors.background}
-            width={width * 0.35}
-            textStyle={styles.editButton}
-            textStyleText={styles.textstyle}
-            onPress={onCancel}
-          />
-
-          <BaseButton
-            title={confirmText}
-            gradientButton={true}
-            width={width * 0.35}
-            disabled={isRemoving}
-            gradientStartColor={Colors._A62A2A}
-            gradientEndColor={Colors._FD4B4B}
-            gradientStart={{ x: 0, y: 0 }}
-            gradientEnd={{ x: 1, y: 0 }}
-            textColor={Colors.background}
-            textStyle={styles.deleteButton}
-            onPress={onConfirm}
-            textStyleText={isRemoving ? styles.disabled : styles.active}
-          />
-        </View>
+        <SpaceBetweenButtons
+          containerStyle={styles.buttonRow}
+          left={
+            <ThemeNormalButton
+              title={cancelText}
+              textColor={Colors.background}
+              width={width * 0.35}
+              showElevation={false}
+              containerStyle={styles.editButton}
+              textStyle={styles.textstyle}
+              onPress={onCancel}
+            />
+          }
+          right={
+            <ThemeGradientButton
+              title={confirmText}
+              disabled={isRemoving}
+              gradientStartColor={Colors._A62A2A}
+              gradientEndColor={Colors._FD4B4B}
+              gradientStart={{ x: 0, y: 0 }}
+              gradientEnd={{ x: 1, y: 0 }}
+              textStyle={styles.deleteButton}
+              onPress={onConfirm}
+              containerStyle={isRemoving ? styles.disabled : styles.active}
+            />
+          }
+        />
       </View>
     </View>
   </Modal>
@@ -140,8 +143,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
   },
   editButton: {
-    fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: moderateScale(16),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
   },
@@ -153,7 +154,6 @@ const styles = StyleSheet.create({
   textstyle: {
     color: Colors.primary,
     fontSize: moderateScale(14),
-
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
   },
   disabled: {

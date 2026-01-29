@@ -38,6 +38,7 @@ import BaseButton from "./BaseButton";
 import CustomTextInput from "./CustomTextInput";
 import CustomDateTimePicker from "./DateTimePicker";
 import { hideLoader, showLoader } from "./Loader";
+import ThemeNormalButton from "./ThemeNormalButton";
 
 export interface CreateNewListBottomSheetRef {
   expand: () => void;
@@ -404,23 +405,6 @@ const CreateNewListBottomSheet = forwardRef<
           },
         );
       }
-      // addShoppingListData(
-      //   shoppingListData,
-      //   () => {
-      //     hideLoader();
-      //     alert("Shopping list created successfully!");
-      //     // Reset form
-      //     setListName("");
-      //     setShoppingDay("");
-      //     setReceivedIngredients([]);
-      //     setSelectedItems([]);
-      //     bottomSheetRef.current?.close();
-      //   },
-      //   (error) => {
-      //     hideLoader();
-      //     alert("Error creating shopping list: " + error);
-      //   },
-      // );
     } catch (error) {
       alert("Error creating shopping list: " + error);
     }
@@ -540,14 +524,14 @@ const CreateNewListBottomSheet = forwardRef<
         </View>
 
         <View style={styles.parentOfConfirmButton}>
-          <BaseButton
+          <ThemeNormalButton
             title={Strings.createList_discard}
-            gradientButton={false}
             backgroundColor={Colors.white}
             width={width * 0.28}
-            textStyle={styles.cancelButtonError}
+            containerStyle={styles.cancelButtonError}
             textColor={Colors.error}
-            textStyleText={styles.discardText}
+            showElevation={false}
+            textStyle={styles.discardText}
             onPress={() => bottomSheetRef.current?.close()}
           />
           <BaseButton
@@ -597,7 +581,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(10),
     marginBottom: verticalScale(10),
     elevation: 2,
-
+    marginTop: verticalScale(10),
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -762,6 +746,7 @@ const styles = StyleSheet.create({
   cancelButtonError: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
     color: Colors.error,
+    width: "28%",
     fontSize: moderateScale(12),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,

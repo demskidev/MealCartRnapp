@@ -40,12 +40,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import BaseButton from "./BaseButton";
 import CustomDropdown from "./CustomDropdown";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
 import ImagePickerModal from "./ImagePickerModal";
 import { hideLoader, showLoader } from "./Loader";
+import SpaceBetweenButtons from "./SpaceBetweenButtons";
+import ThemeGradientButton from "./ThemeGradientButton";
+import ThemeNormalButton from "./ThemeNormalButton";
 
 export interface CreateMealBottomSheetRef {
   expand: () => void;
@@ -609,6 +611,7 @@ const CreateMealBottomSheet = forwardRef<
 
               <BottomSheetScrollView
                 contentContainerStyle={{
+                  paddingTop: moderateScale(10),
                   paddingHorizontal: moderateScale(20),
                   paddingBottom: verticalScale(30),
                 }}
@@ -874,89 +877,87 @@ const CreateMealBottomSheet = forwardRef<
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.parentOfConfirmButton}>
-                  <BaseButton
-                    title={
-                      isEdit
-                        ? Strings.createMeal_discard
-                        : Strings.createMeal_cancel
-                    }
-                    gradientButton={false}
-                    // backgroundColor={Colors.white}
-                    textStyleText={styles.discardText}
-                    width={isEdit ? width * 0.41 : width * 0.41}
-                    textStyle={[
-                      styles.cancelButton,
-                      { color: isEdit ? Colors.error : Colors.primary },
-                    ]}
-                    textColor={isEdit ? Colors.error : Colors.primary}
-                    onPress={() => ref?.current?.close()}
-                  />
-                  <BaseButton
-                    title={
-                      isEdit
-                        ? Strings.createMeal_updateMeal
-                        : Strings.createMeal_confirm
-                    }
-                    gradientButton={true}
-                    width={isEdit ? width * 0.65 : width * 0.41}
-                    gradientStartColor={Colors._667D4C}
-                    gradientEndColor={Colors._9DAF89}
-                    gradientStart={{ x: 0, y: 0 }}
-                    gradientEnd={{ x: 1, y: 0 }}
-                    textColor={Colors.white}
-                    rightChild={
-                      isEdit ? (
-                        <Image
-                          source={iconMeal}
-                          style={{
-                            width: verticalScale(21),
-                            height: verticalScale(21),
-                            tintColor: Colors.white,
-                          }}
-                          resizeMode="contain"
-                        />
-                      ) : null
-                    }
-                    textStyle={[styles.confirmButton]}
-                    onPress={async () => {
-                      const formErrors = await validateForm();
-                      console.log("Validation errors:", formErrors);
 
-                      if (Object.keys(formErrors).length > 0) {
-                        // Mark all fields as touched to show validation errors
-                        const ingredientsTouched = values.ingredients.map(
-                          () => ({
-                            name: true,
-                            count: true,
-                            unit: true,
-                            category: true,
-                          }),
-                        );
-
-                        const stepsTouched = values.steps.map(() => true);
-
-                        setTouched(
-                          {
-                            name: true,
-                            description: true,
-                            imageUrl: true,
-                            prepTime: true,
-                            servings: true,
-                            difficulty: true,
-                            category: true,
-                            ingredients: ingredientsTouched,
-                            steps: stepsTouched,
-                          },
-                          false,
-                        ); // false means don't validate, just set touched
-
-                        return;
+                <SpaceBetweenButtons
+                  containerStyle={styles.parentOfConfirmButton}
+                  left={
+                    <ThemeNormalButton
+                      title={
+                        isEdit
+                          ? Strings.createMeal_discard
+                          : Strings.createMeal_cancel
                       }
-                      handleSubmit();
-                    }}
-                  />
-                </View>
+                      // backgroundColor={Colors.white}
+                      textStyle={
+                        isEdit ? styles.editCancelButton : styles.cancelButton
+                      }
+                      onPress={() => ref?.current?.close()}
+                    />
+                  }
+                  right={
+                    <ThemeGradientButton
+                      title={
+                        isEdit
+                          ? Strings.createMeal_updateMeal
+                          : Strings.createMeal_confirm
+                      }
+                      gradientStartColor={Colors._667D4C}
+                      gradientEndColor={Colors._9DAF89}
+                      gradientStart={{ x: 0, y: 0 }}
+                      gradientEnd={{ x: 1, y: 0 }}
+                      rightChild={
+                        isEdit ? (
+                          <Image
+                            source={iconMeal}
+                            style={{
+                              width: verticalScale(21),
+                              height: verticalScale(21),
+                              tintColor: Colors.white,
+                            }}
+                            resizeMode="contain"
+                          />
+                        ) : null
+                      }
+                      textStyle={styles.confirmButton}
+                      onPress={async () => {
+                        const formErrors = await validateForm();
+                        console.log("Validation errors:", formErrors);
+
+                        if (Object.keys(formErrors).length > 0) {
+                          // Mark all fields as touched to show validation errors
+                          const ingredientsTouched = values.ingredients.map(
+                            () => ({
+                              name: true,
+                              count: true,
+                              unit: true,
+                              category: true,
+                            }),
+                          );
+
+                          const stepsTouched = values.steps.map(() => true);
+
+                          setTouched(
+                            {
+                              name: true,
+                              description: true,
+                              imageUrl: true,
+                              prepTime: true,
+                              servings: true,
+                              difficulty: true,
+                              category: true,
+                              ingredients: ingredientsTouched,
+                              steps: stepsTouched,
+                            },
+                            false,
+                          ); // false means don't validate, just set touched
+
+                          return;
+                        }
+                        handleSubmit();
+                      }}
+                    />
+                  }
+                />
                 <View style={styles.emptybottom}></View>
               </BottomSheetScrollView>
             </BottomSheet>
@@ -1037,6 +1038,7 @@ const styles = StyleSheet.create({
   },
   emptyView: {
     height: verticalScale(35),
+    marginBottom: verticalScale(10),
   },
   placeholderText: {
     color: Colors.tertiary,
@@ -1061,11 +1063,13 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    // color: Colors.primary,
-
-    fontSize: moderateScale(12),
-    borderWidth: moderateScale(1),
-    borderColor: Colors.black,
+    color: Colors.primary,
+    fontSize: fontSize(16),
+  },
+  editCancelButton: {
+    fontFamily: FontFamilies.ROBOTO_BLACK,
+    color: Colors.error,
+    fontSize: fontSize(16),
   },
   parentOfConfirmButton: {
     flexDirection: "row",

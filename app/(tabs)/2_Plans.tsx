@@ -2,6 +2,8 @@ import { activeImage, createlist, gradientclose } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { hideLoader, showLoader } from "@/components/Loader";
+import SpaceBetweenButtons from "@/components/SpaceBetweenButtons";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
@@ -84,7 +86,6 @@ const PlansScreen: React.FC = () => {
     () => filteredPlans.find((plan) => plan.status === MealStatus.STARTED),
     [filteredPlans],
   );
-
 
   const otherPlans = useMemo(
     () => filteredPlans.filter((plan) => plan.status !== MealStatus.STARTED),
@@ -231,21 +232,19 @@ const PlansScreen: React.FC = () => {
     const isFirstItem = index === 0;
 
     const startButton = (
-      <BaseButton
+      <ThemeNormalButton
         title={
           item.status === MealStatus.PAUSED
             ? Strings.plans_resumePlan
             : Strings.plans_startPlan
         }
-        gradientButton={false}
-        textColor={Colors.background}
-        width={width * 0.43}
-        textStyle={
+        textColor={Colors.primary}
+        containerStyle={
           item.status === MealStatus.PAUSED
             ? styles.resumeButton
             : styles.addButton
         }
-        textStyleText={
+        textStyle={
           item.status === MealStatus.PAUSED
             ? styles.resumeButtonText
             : styles.addButtonText
@@ -273,24 +272,27 @@ const PlansScreen: React.FC = () => {
           </Text>
         </View>
         <View style={styles.dividerRow} />
-        <View style={styles.parentOfMarkDone}>
-          <BaseButton
-            title={Strings.plans_viewPlan}
-            gradientButton={false}
-            textColor={Colors.background}
-            width={width * 0.43}
-            textStyle={styles.addButton}
-            textStyleText={styles.addButtonText}
-            onPress={() => viewPlan(item.id)}
-          />
-          {isFirstItem ? (
-            <TourGuideZone zone={9} shape="rectangle" borderRadius={8}>
-              {startButton}
-            </TourGuideZone>
-          ) : (
-            startButton
-          )}
-        </View>
+        <SpaceBetweenButtons
+          containerStyle={styles.parentOfMarkDone}
+          left={
+            <ThemeNormalButton
+              title={Strings.plans_viewPlan}
+              textColor={Colors.primary}
+              containerStyle={styles.addButton}
+              textStyle={styles.addButtonText}
+              onPress={() => viewPlan(item.id)}
+            />
+          }
+          right={
+            isFirstItem ? (
+              <TourGuideZone zone={9} shape="rectangle" borderRadius={8}>
+                {startButton}
+              </TourGuideZone>
+            ) : (
+              startButton
+            )
+          }
+        />
       </View>
     );
 
@@ -354,7 +356,6 @@ const PlansScreen: React.FC = () => {
             <View style={styles.dividerRowSpaced} />
           </>
         ) : (
-          
           <TourGuideZone zone={10} shape="rectangle" borderRadius={16}>
             <View style={styles.activeCard}>
               <View style={styles.activeBadge}>
@@ -482,13 +483,12 @@ const PlansScreen: React.FC = () => {
                     onPress={() => pushNavigation(APP_ROUTES.LISTS)}
                   />
                 </TourGuideZone>
-                <BaseButton
+                <ThemeNormalButton
                   title={Strings.plans_viewPlan}
-                  gradientButton={false}
                   textColor={Colors.background}
-                  width={width * 0.3}
-                  textStyle={styles.confirmButton}
-                  textStyleText={styles.confirmButtonText}
+                  containerStyle={styles.confirmButton}
+                  textStyle={styles.confirmButtonText}
+                  showElevation={false}
                   onPress={() => viewPlan(activePlan.id)}
                 />
               </View>
@@ -708,8 +708,8 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
   },
   confirmButton: {
-    borderRadius: moderateScale(8),
-    alignItems: "center",
+    marginLeft: horizontalScale(8),
+    width: "32%",
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
   },

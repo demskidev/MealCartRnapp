@@ -5,7 +5,6 @@ import {
   icon_edit,
   mealfoodH,
 } from "@/assets/images";
-import BaseButton from "@/components/BaseButton";
 import {
   addDotAtEnd,
   horizontalScale,
@@ -34,7 +33,8 @@ import ConfirmationModal from "./ConfirmationModal";
 import CreateMealBottomSheet from "./CreateMealBottomSheet";
 import { hideLoader, showLoader } from "./Loader";
 import SendToShoppingList from "./SendShoppingList";
-const { height } = Dimensions.get("window");
+import SpaceBetweenButtons from "./SpaceBetweenButtons";
+import ThemeGradientButton from "./ThemeGradientButton";
 const { width } = Dimensions.get("window");
 
 type MealDetailProps = {
@@ -62,24 +62,24 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
 
   const handleDeleteMeal = async () => {
     setShowDeleteModal(false);
-    showLoader()
+    showLoader();
     try {
       await deleteTheMeal(
         meal.id,
         (payload) => {
           console.log("✅ Meal deleted successfully:", payload);
-          hideLoader()
+          hideLoader();
           showSuccessToast(Strings.meal_deleted);
           onBack();
         },
         (error) => {
-          hideLoader()
+          hideLoader();
           console.error(
             "❌ Error deleting meal from deleteTheMeal callback:",
-            error
+            error,
           );
           showErrorToast(error || Strings.error_deleting_meal);
-        }
+        },
       );
     } catch (error: any) {
       console.error("❌ Exception caught in handleDeleteMeal:", {
@@ -149,36 +149,37 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
           <Text style={styles.description}>{meal.description || ""}</Text>
         )}
 
-        <View style={styles.buttonRow}>
-          <BaseButton
-            title={Strings.mealDetail_edit}
-            gradientButton={true}
-            textColor={Colors.white}
-            width={width * 0.47}
-            textStyle={styles.editButton}
-            rightChild={
-              <Image
-                source={icon_edit}
-                style={styles.editImage}
-                resizeMode="contain"
-              />
-            }
-            onPress={handleEditPress}
-          />
+        <SpaceBetweenButtons
+          containerStyle={styles.buttonRow}
+          left={
+            <ThemeGradientButton
+              title={Strings.mealDetail_edit}
+              textStyle={{ color: Colors.white }}
+              // textStyle={styles.editButton}
+              rightChild={
+                <Image
+                  source={icon_edit}
+                  style={styles.editImage}
+                  resizeMode="contain"
+                />
+              }
+              onPress={handleEditPress}
+            />
+          }
+          right={
+            <ThemeGradientButton
+              title={Strings.mealDetail_delete}
+              gradientStartColor={Colors._A62A2A}
+              gradientEndColor={Colors._FD4B4B}
+              gradientStart={{ x: 0, y: 0 }}
+              gradientEnd={{ x: 1, y: 0 }}
+              textStyle={{ color: Colors.white }}
+              // textStyle={styles.deleteButton}
+              onPress={() => setShowDeleteModal(true)}
+            />
+          }
+        />
 
-          <BaseButton
-            title={Strings.mealDetail_delete}
-            gradientButton={true}
-            width={width * 0.47}
-            gradientStartColor={Colors._A62A2A}
-            gradientEndColor={Colors._FD4B4B}
-            gradientStart={{ x: 0, y: 0 }}
-            gradientEnd={{ x: 1, y: 0 }}
-            textColor={Colors.white}
-            textStyle={styles.deleteButton}
-            onPress={() => setShowDeleteModal(true)}
-          />
-        </View>
         {meal.ingredients && meal.ingredients.length > 0 && (
           <View>
             <Text style={styles.sectionTitle}>
@@ -307,8 +308,6 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: "row",
-    alignItems: "center",
-    marginStart: horizontalScale(-8),
     marginVertical: verticalScale(25),
   },
   editButton: {
@@ -384,6 +383,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: width * moderateScale(0.3),
+    marginEnd: horizontalScale(15),
     justifyContent: "space-between",
   },
   image: {

@@ -9,6 +9,7 @@ import AddItemToList from "@/components/AddItemToList";
 import BaseButton from "@/components/BaseButton";
 import CustomDateTimePicker from "@/components/DateTimePicker";
 import { hideLoader, showLoader } from "@/components/Loader";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import {
   horizontalScale,
   moderateScale,
@@ -631,14 +632,13 @@ export default function CreateMealPlan({}) {
         contentContainerStyle={styles.flatListContent}
       />
       <View style={styles.parentOfConfirmButton}>
-        <BaseButton
+        <ThemeNormalButton
           title={Strings.createMealPlan_discard}
-          gradientButton={false}
           backgroundColor={Colors.white}
-          width={width * 0.28}
-          textStyle={styles.discardButton}
+          containerStyle={styles.discardButton}
+          showElevation={false}
           textColor={Colors.error}
-          textStyleText={styles.discardText}
+          textStyle={styles.discardText}
           onPress={() => backNavigation()}
         />
         <BaseButton
@@ -856,11 +856,9 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   discardButton: {
-    fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: moderateScale(12),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
-    color: Colors.error,
+    width:"27%"
   },
   selectedMealContent: {
     flexDirection: "row",
