@@ -37,16 +37,24 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Animated,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourGuideZone, useTourGuideController } from "rn-tourguide";
 
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
+const SWIPE_THRESHOLD = 30; // Minimum swipe distance to trigger hide
+const GREETING_SECTION_HEIGHT = verticalScale(80);
+
 const HomeScreen: React.FC = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [showAll, setShowAll] = useState(false);
   const router = useRouter();
   const { enrichedActivePlan, fetchActivePlan } = usePlanViewModel();
@@ -56,6 +64,17 @@ const HomeScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [isLayoutReady, setIsLayoutReady] = useState(false);
+
+  // Scroll animation states
+  const scrollY = useRef(0);
+  const greetingHeight = useRef(new Animated.Value(GREETING_SECTION_HEIGHT)).current;
+  const greetingOpacity = useRef(new Animated.Value(1)).current;
+  const [isGreetingVisible, setIsGreetingVisible] = useState(true);
+  
+  // Meal card image animation states
+  const mealCardImageHeight = useRef(new Animated.Value(verticalScale(120))).current;
+  const mealCardImageOpacity = useRef(new Animated.Value(1)).current;
+  const [isMealCardImageVisible, setIsMealCardImageVisible] = useState(true);
 
   // Tour guide hooks
   const {
@@ -95,6 +114,40 @@ const HomeScreen: React.FC = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
+
+    // Reset greeting section visibility on refresh
+    if (!isGreetingVisible) {
+      Animated.parallel([
+        Animated.timing(greetingHeight, {
+          toValue: GREETING_SECTION_HEIGHT,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(greetingOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
+      setIsGreetingVisible(true);
+    }
+
+    // Reset meal card image visibility on refresh
+    if (!isMealCardImageVisible) {
+      Animated.parallel([
+        Animated.timing(mealCardImageHeight, {
+          toValue: verticalScale(120),
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(mealCardImageOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
+      setIsMealCardImageVisible(true);
+    }
 
     showLoader();
     await fetchMealsAndPlan();
@@ -154,6 +207,98 @@ const HomeScreen: React.FC = () => {
     };
   }, [eventEmitter, isNavigating]);
 
+  // Handle scroll to track position
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    scrollY.current = currentScrollY;
+  };
+
+  // Handle pan gesture for swipe up and swipe down detection
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      const { translationY: swipeDistance } = event.nativeEvent;
+      
+      // Swipe up detected (negative translationY means swipe up)
+      // Only hide if greeting is visible and user swiped up
+      if (
+        swipeDistance < -SWIPE_THRESHOLD && 
+        isGreetingVisible &&
+        scrollY.current <= 10 // Only allow swipe gesture when near the top
+      ) {
+        console.log("Hiding greeting and meal images - swipe up gesture", swipeDistance);
+        
+        // Hide greeting section
+        Animated.parallel([
+          Animated.timing(greetingHeight, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+          Animated.timing(greetingOpacity, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: false,
+          }),
+        ]).start();
+        setIsGreetingVisible(false);
+
+        // Hide meal card images
+        Animated.parallel([
+          Animated.timing(mealCardImageHeight, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: false,
+          }),
+          Animated.timing(mealCardImageOpacity, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: false,
+          }),
+        ]).start();
+        setIsMealCardImageVisible(false);
+      }
+      // Swipe down detected (positive translationY means swipe down)
+      // Only show if greeting is hidden, user swiped down, and at the top
+      else if (
+        swipeDistance > SWIPE_THRESHOLD && 
+        !isGreetingVisible &&
+        scrollY.current <= 10 // Only allow swipe gesture when at the top
+      ) {
+        console.log("Showing greeting and meal images - swipe down gesture", swipeDistance);
+        
+        // Show greeting section
+        Animated.parallel([
+          Animated.timing(greetingHeight, {
+            toValue: GREETING_SECTION_HEIGHT,
+            duration: 300,
+            useNativeDriver: false,
+          }),
+          Animated.timing(greetingOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: false,
+          }),
+        ]).start();
+        setIsGreetingVisible(true);
+
+        // Show meal card images
+        Animated.parallel([
+          Animated.timing(mealCardImageHeight, {
+            toValue: verticalScale(120),
+            duration: 300,
+            useNativeDriver: false,
+          }),
+          Animated.timing(mealCardImageOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: false,
+          }),
+        ]).start();
+        setIsMealCardImageVisible(true);
+      }
+    }
+  };
+
   const getTodayMeals = () => {
     if (!activePlan || !activePlan.days) return [];
     console.log("wearegettingupcomingmeals", activePlan);
@@ -179,15 +324,23 @@ const HomeScreen: React.FC = () => {
 
   const renderMealItem = ({ item }: { item: Meal }) => (
     <View style={styles.mealCard}>
-      <Image
-        source={
-          item.imageUrl && item.imageUrl !== "string"
-            ? { uri: item.imageUrl }
-            : mealfoodH
-        }
-        resizeMode="cover"
-        style={styles.mealCardImage}
-      />
+      <Animated.View
+        style={{
+          height: mealCardImageHeight,
+          opacity: mealCardImageOpacity,
+          overflow: 'hidden',
+        }}
+      >
+        <Image
+          source={
+            item.imageUrl && item.imageUrl !== "string"
+              ? { uri: item.imageUrl }
+              : mealfoodH
+          }
+          resizeMode="cover"
+          style={styles.mealCardImage}
+        />
+      </Animated.View>
 
       <View style={styles.mealCardContent}>
         <View style={styles.mealCardTitleRow}>
@@ -260,191 +413,210 @@ const HomeScreen: React.FC = () => {
       {selectedMeal ? (
         <MealDetail meal={selectedMeal} onBack={() => setSelectedMeal(null)} />
       ) : (
-        <View style={{ flex: 1 }}>
-          <KeyboardAwareScrollView
-            extraScrollHeight={20}
-            enableOnAndroid={true}
-            keyboardShouldPersistTaps="handled"
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[Colors.primary]}
-                tintColor={Colors.primary}
-              />
-            }
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <PanGestureHandler
+            onHandlerStateChange={onHandlerStateChange}
+            activeOffsetY={[-10, 10]}
           >
-            <LinearGradient
-              colors={[Colors._667D4C, Colors._9DAF89]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.gradientContainer}
-            >
-              <View style={styles.mainMealCartContainer}>
-                <View style={styles.emptyView} />
+            <View style={{ flex: 1 }}>
+              <LinearGradient
+                colors={[Colors._667D4C, Colors._9DAF89]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientContainer}
+              >
+                <View style={styles.mainMealCartContainer}>
+                  <View style={styles.emptyView} />
 
-                {/* Zone 1: Welcome - Logo */}
-                <TourGuideZone zone={1} shape="rectangle" borderRadius={16}>
-                  <View
-                    style={styles.mealcartLogoParent}
-                    onLayout={() => {
-                      if (!isLayoutReady) {
-                        console.log("✅ Zone 1 layout ready");
-                        setIsLayoutReady(true);
-                      }
-                    }}
-                  >
-                    <Image
-                      source={mealcartLogo}
-                      style={styles.mealcartLogoImage}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>{Strings.home_mealCart}</Text>
-                  </View>
-                </TourGuideZone>
-
-                <View style={styles.parentGreetingAvatar}>
-                  <View>
-                    <Text style={styles.greetingText}>
-                      {Strings.home_greeting}
-                    </Text>
-                    <Text style={styles.subgreetingText}>
-                      {Strings.home_subgreeting}
-                    </Text>
-                  </View>
-
-                  {/* Zone 5: Profile */}
-                  <TourGuideZone zone={4} shape="circle" borderRadius={30}>
-                    <View style={styles.avatarContainer}>
-                      <TouchableOpacity
-                        onPress={() =>
-                          router.push(APP_ROUTES.ProfileScreen as any)
+                  {/* Zone 1: Welcome - Logo */}
+                  <TourGuideZone zone={1} shape="rectangle" borderRadius={16}>
+                    <View
+                      style={styles.mealcartLogoParent}
+                      onLayout={() => {
+                        if (!isLayoutReady) {
+                          console.log("✅ Zone 1 layout ready");
+                          setIsLayoutReady(true);
                         }
-                      >
-                        <Image
-                          source={userDummy}
-                          style={styles.image}
-                          resizeMode="contain"
-                        />
-                      </TouchableOpacity>
+                      }}
+                    >
+                      <Image
+                        source={mealcartLogo}
+                        style={styles.mealcartLogoImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>{Strings.home_mealCart}</Text>
                     </View>
                   </TourGuideZone>
-                </View>
 
-                {todayMeals && todayMeals.length > 0 && (
-                  <View style={styles.upcomingSection}>
-                    <View style={styles.upcomingHeader}>
-                      {/* Zone 4: Today's Meals */}
-                      <Text style={styles.upcomingText}>
-                        {Strings.home_nextMeal}
-                      </Text>
-
-                      {/* Zone 2: View All */}
-                      <TouchableOpacity
-                        onPress={() =>
-                          pushNavigation(APP_ROUTES.TestMealPlan, {
-                            planId: activePlan?.id,
-                          })
-                        }
-                      >
-                        <Text style={styles.viewAllText}>
-                          {Strings.home_viewAll}
+                  {/* Animated collapsible greeting section */}
+                  <Animated.View
+                    style={[
+                      {
+                        height: greetingHeight,
+                        opacity: greetingOpacity,
+                        overflow: 'hidden',
+                      },
+                    ]}
+                  >
+                    <View style={styles.parentGreetingAvatar}>
+                      <View>
+                        <Text style={styles.greetingText}>
+                          {Strings.home_greeting}
                         </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <FlatList
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      data={todayMeals}
-                      renderItem={renderMealItem}
-                      keyExtractor={(item, index) => `${item.id}-${index}`}
-                      contentContainerStyle={styles.upcomingListContent}
-                    />
-                  </View>
-                )}
-              </View>
-            </LinearGradient>
+                        <Text style={styles.subgreetingText}>
+                          {Strings.home_subgreeting}
+                        </Text>
+                      </View>
 
-            <SpaceBetweenButtons
-              containerStyle={styles.parentCreateMeal}
-              left={
-                <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
-                  <ThemeGradientButton
-                    title={Strings.home_addNewMeal}
-                    textStyle={styles.createMeal}
-                    onPress={goNext}
-                    containerStyle={styles.createMealButton}
-                    rightChild={
-                      <IconPlus
-                        width={verticalScale(21)}
-                        height={verticalScale(21)}
+                      {/* Zone 5: Profile */}
+                      <TourGuideZone zone={4} shape="circle" borderRadius={30}>
+                        <View style={styles.avatarContainer}>
+                          <TouchableOpacity
+                            onPress={() =>
+                              router.push(APP_ROUTES.ProfileScreen as any)
+                            }
+                          >
+                            <Image
+                              source={userDummy}
+                              style={styles.image}
+                              resizeMode="contain"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </TourGuideZone>
+                    </View>
+                  </Animated.View>
+
+                  {todayMeals && todayMeals.length > 0 && (
+                    <View style={styles.upcomingSection}>
+                      <View style={styles.upcomingHeader}>
+                        {/* Zone 4: Today's Meals */}
+                        <Text style={styles.upcomingText}>
+                          {Strings.home_nextMeal}
+                        </Text>
+
+                        {/* Zone 2: View All */}
+                        <TouchableOpacity
+                          onPress={() =>
+                            pushNavigation(APP_ROUTES.TestMealPlan, {
+                              planId: activePlan?.id,
+                            })
+                          }
+                        >
+                          <Text style={styles.viewAllText}>
+                            {Strings.home_viewAll}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <FlatList
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        data={todayMeals}
+                        renderItem={renderMealItem}
+                        keyExtractor={(item, index) => `${item.id}-${index}`}
+                        contentContainerStyle={styles.upcomingListContent}
                       />
-                    }
+                    </View>
+                  )}
+                </View>
+              </LinearGradient>
+              <ScrollView
+                ref={scrollViewRef}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                bounces={true}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={[Colors.primary]}
+                    tintColor={Colors.primary}
                   />
-                </TourGuideZone>
-              }
-              right={
-                <ThemeNormalButton
-                  onPress={() => pushNavigation(APP_ROUTES.MEALS)}
-                  title={Strings.home_myMeals}
-                  containerStyle={styles.createMealButton}
-                  rightChild={
-                    <MealsLogo
-                      width={verticalScale(21)}
-                      height={verticalScale(21)}
+                }
+              >
+                <SpaceBetweenButtons
+                  containerStyle={styles.parentCreateMeal}
+                  left={
+                    <TourGuideZone zone={2} shape="rectangle" borderRadius={10}>
+                      <ThemeGradientButton
+                        title={Strings.home_addNewMeal}
+                        textStyle={styles.createMeal}
+                        onPress={goNext}
+                        containerStyle={styles.createMealButton}
+                        rightChild={
+                          <IconPlus
+                            width={verticalScale(21)}
+                            height={verticalScale(21)}
+                          />
+                        }
+                      />
+                    </TourGuideZone>
+                  }
+                  right={
+                    <ThemeNormalButton
+                      onPress={() => pushNavigation(APP_ROUTES.MEALS)}
+                      title={Strings.home_myMeals}
+                      containerStyle={styles.createMealButton}
+                      rightChild={
+                        <MealsLogo
+                          width={verticalScale(21)}
+                          height={verticalScale(21)}
+                        />
+                      }
                     />
                   }
                 />
-              }
-            />
 
-            {mealData && mealData.length > 0 ? (
-              <View style={styles.recentMealsContent}>
-                <View style={styles.parentOfRecentMeal}>
-                  <Text style={styles.recentText}>
-                    {Strings.home_recentMeals}
-                  </Text>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => setShowAll(!showAll)}
-                  >
-                    <Text style={styles.viewText}>
-                      {Strings.home_viewAllRecent}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                {mealData && mealData.length > 0 ? (
+                  <View style={styles.recentMealsContent}>
+                    <View style={styles.parentOfRecentMeal}>
+                      <Text style={styles.recentText}>
+                        {Strings.home_recentMeals}
+                      </Text>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setShowAll(!showAll)}
+                      >
+                        <Text style={styles.viewText}>
+                          {Strings.home_viewAllRecent}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    flexWrap: "wrap",
-                    justifyContent: "space-between",
-                    marginVertical: verticalScale(8),
-                  }}
-                >
-                  {mealData.slice(0, 4).map((item, index) => (
                     <View
-                      key={item.id}
                       style={{
-                        width: itemWidth,
-                        marginBottom: verticalScale(8),
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        justifyContent: "space-between",
+                        marginVertical: verticalScale(8),
                       }}
                     >
-                      {renderMealCard({ item, index })}
+                      {mealData.slice(0, 4).map((item, index) => (
+                        <View
+                          key={item.id}
+                          style={{
+                            width: itemWidth,
+                            marginBottom: verticalScale(8),
+                          }}
+                        >
+                          {renderMealCard({ item, index })}
+                        </View>
+                      ))}
                     </View>
-                  ))}
-                </View>
-              </View>
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  {Strings.meals_noMealsFound}
-                </Text>
-              </View>
-            )}
-          </KeyboardAwareScrollView>
-          <CreateMealBottomSheet ref={bottomSheetRef} />
-        </View>
+                  </View>
+                ) : (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>
+                      {Strings.meals_noMealsFound}
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+              <CreateMealBottomSheet ref={bottomSheetRef} />
+            </View>
+          </PanGestureHandler>
+        </GestureHandlerRootView>
       )}
     </SafeAreaView>
   );
