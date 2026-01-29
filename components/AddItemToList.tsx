@@ -17,7 +17,6 @@ import {
   Dimensions,
   FlatList,
   Image,
-  Keyboard,
   KeyboardAvoidingView,
   Modal,
   StyleSheet,
@@ -227,36 +226,34 @@ const AddItemToList = ({
 
   const handleInputFocus = () => {
     setIsInputFocused(true);
-    // Show all ingredients from selected meals when user focuses on the input
     if (dynamicIngredients.length > 0) {
       setSuggestions(dynamicIngredients);
     } else {
-      // If no meals selected, show empty suggestions
       setSuggestions([]);
     }
   };
 
-  const handleInputBlur = () => {
-    // Clear focus state and hide suggestions
-    setIsInputFocused(false);
-  };
   const handleSelectSuggestion = (value: string) => {
+    console.log("🔵 handleSelectSuggestion called with:", value);
+
     if (
       pendingItems.some((i) => i.value === value) ||
       manualList.some((i) => i.value === value)
     ) {
+      console.log("⚠️ Item already exists, returning");
       setSearchText("");
-      Keyboard.dismiss();
+      setIsInputFocused(false);
       return;
     }
 
-    setPendingItems((prev) => [...prev, { id: Date.now().toString(), value }]);
+    const newItem = { id: Date.now().toString(), value };
+    console.log("✅ Adding new item:", newItem);
 
+    setPendingItems((prev) => [...prev, newItem]);
     setSearchText("");
-    Keyboard.dismiss();
+    setIsInputFocused(false);
   };
 
-  const manualItems = [{ id: "1", value: "1 egg" }];
   const handleAddPendingItem = (item: { id: string; value: string }) => {
     setManualList((prev) => [...prev, item]);
     setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
@@ -264,7 +261,6 @@ const AddItemToList = ({
   console.log("mealsllllllll999", meals);
 
   // Use dynamic ingredients from selected meals
-  const INGREDIENTS = dynamicIngredients;
 
   const handleAddItem = (value: string) => {
     if (!value.trim()) return;
@@ -277,8 +273,8 @@ const AddItemToList = ({
 
   const handleMealPress = (meal: any) => {
     // Dismiss keyboard and blur input when selecting meals
-    Keyboard.dismiss();
-    inputRef.current?.blur();
+    // Keyboard.dismiss();
+    // inputRef.current?.blur();
 
     if (from === CREATE_MEAL_PLAN) {
       // For meal plan: single selection, call callback immediately
@@ -382,7 +378,7 @@ const AddItemToList = ({
           style={{ width: "100%", alignItems: "center" }}
         >
           <View style={styles.container}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View>
                 <Text style={styles.title}>
                   {from === CREATE_MEAL_PLAN
@@ -432,12 +428,7 @@ const AddItemToList = ({
                 JSON.stringify(meals[0].ingredients[0], null, 2),
               )}
 
-            <TouchableWithoutFeedback
-              onPress={() => {
-                Keyboard.dismiss();
-                inputRef.current?.blur();
-              }}
-            >
+            <TouchableWithoutFeedback>
               <View>
                 <FlatList
                   data={search.trim() ? filteredMeals : meals}
@@ -469,7 +460,6 @@ const AddItemToList = ({
                   onChangeText={handleSearch}
                   value={searchText}
                   onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
                 />
 
                 {suggestions.length > 0 && isInputFocused && (
@@ -477,6 +467,7 @@ const AddItemToList = ({
                     data={suggestions}
                     keyExtractor={(item) => item}
                     style={styles.suggestionsListStyle}
+                    extraData={[pendingItems, manualList, itemWeights]} // Add this too
                     renderItem={({ item }) => {
                       // Find the ingredient data for this item
                       const ingredientData = fullIngredientsData.find(
@@ -512,9 +503,22 @@ const AddItemToList = ({
                       return (
                         <View>
                           <View style={styles.suggestionItemContainer}>
-                            <TouchableOpacity
+                            {/* <TouchableOpacity
                               activeOpacity={0.7}
                               onPress={() => handleSelectSuggestion(item)}
+                              style={styles.suggestionTouchable}
+                            >
+                              <Text style={styles.suggestionText}>{item}</Text>
+                            </TouchableOpacity> */}
+
+                            <TouchableOpacity
+                              onPress={() => {
+                                console.log(
+                                  "🟢 TouchableOpacity pressed:",
+                                  item,
+                                );
+                                handleSelectSuggestion(item);
+                              }}
                               style={styles.suggestionTouchable}
                             >
                               <Text style={styles.suggestionText}>{item}</Text>
@@ -556,12 +560,21 @@ const AddItemToList = ({
                   />
                 )}
 
+                {console.log("📊 FlatList data:", [
+                  ...pendingItems,
+                  ...manualList,
+                ])}
+                {console.log("📊 pendingItems length:", pendingItems.length)}
+                {console.log("📊 manualList length:", manualList.length)}
+
                 <FlatList
                   data={[...pendingItems, ...manualList]}
+                  extraData={[pendingItems, manualList]}
                   keyExtractor={(item) => item.id}
                   style={styles.manualListStyle}
                   showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => {
+                    console.log("🎨 Rendering item:", item);
                     const isPending = pendingItems.some(
                       (i) => i.id === item.id,
                     );
@@ -772,6 +785,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: verticalScale(16),
+    marginHorizontal: horizontalScale(2),
+    marginTop: verticalScale(4),
   },
   manualAddInput: {
     flex: 1,
@@ -788,7 +803,7 @@ const styles = StyleSheet.create({
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 2.5,
   },
   addButton: {
     backgroundColor: Colors.white,
@@ -802,7 +817,7 @@ const styles = StyleSheet.create({
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 2.54,
   },
   addButtonText: {
     fontFamily: FontFamilies.ROBOTO_MEDIUM,
@@ -911,9 +926,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   suggestionTouchable: {
-    width: width * 0.5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flex: 1,
     height: verticalScale(40),
-    justifyContent: "center",
   },
   suggestionText: {
     fontFamily: FontFamilies.ROBOTO_REGULAR,

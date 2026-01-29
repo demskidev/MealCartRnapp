@@ -4,53 +4,65 @@ import GradientText from "@/components/GradientText";
 import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
-    horizontalScale,
-    moderateScale,
-    verticalScale,
+  horizontalScale,
+  moderateScale,
+  verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { Plan } from "@/reduxStore/slices/planSlice";
 import { pushNavigation } from "@/utils/Navigation";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-    Image,
-    SectionList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  SectionList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TestMealPlan({}) {
   const [removePlan, setRemovePlan] = useState(false);
+  const [planData, setPlanData] = useState<Plan | null>(null);
   const router = useRouter();
   const params = useLocalSearchParams();
   const planId = params.planId as string;
 
   const { enrichedPlans, fetchPlanById, deletePlan, loading } =
     usePlanViewModel();
-  //   const [planData, setPlanData] = useState<EnrichedPlan | null>(null);
-  const planData = useMemo(() => {
-    return enrichedPlans.find((p) => p.id === planId) || null;
-  }, [enrichedPlans, planId]);
-  
+  // //   const [planData, setPlanData] = useState<EnrichedPlan | null>(null);
+  // const planData: Plan | null = useMemo(() => {
+  //   return enrichedPlans.find((p) => p.id === planId) || null;
+  // }, [enrichedPlans, planId]);
+
+  // Set planData from enrichedPlans if available, otherwise fetch from API
 
   useFocusEffect(
     useCallback(() => {
-      // Show loader when screen focuses
-      if (!planData || loading) {
-        showLoader();
+      showLoader();
+      const foundPlan = enrichedPlans.find((p) => p.id === planId) || null;
+      setPlanData(foundPlan);
+
+      if (!foundPlan && planId) {
+        fetchPlanById(
+          planId,
+          (enrichedPlan) => {
+            hideLoader();
+            setPlanData(enrichedPlan);
+          },
+          (error) => {
+            hideLoader();
+            console.error("Error fetching plan:", error);
+          },
+        );
       } else {
         hideLoader();
       }
-
-      return () => {
-        hideLoader(); // Clean up when screen unfocuses
-      };
-    }, [planData, loading])
+    }, [enrichedPlans, planId]),
   );
 
   const handleDeletePlan = () => {
@@ -64,7 +76,7 @@ export default function TestMealPlan({}) {
         (error) => {
           console.error("Error deleting plan:", error);
           setRemovePlan(false);
-        }
+        },
       );
     }
   };

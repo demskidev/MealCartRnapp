@@ -85,6 +85,7 @@ const PlansScreen: React.FC = () => {
     [filteredPlans],
   );
 
+
   const otherPlans = useMemo(
     () => filteredPlans.filter((plan) => plan.status !== MealStatus.STARTED),
     [filteredPlans],
@@ -353,6 +354,7 @@ const PlansScreen: React.FC = () => {
             <View style={styles.dividerRowSpaced} />
           </>
         ) : (
+          
           <TourGuideZone zone={10} shape="rectangle" borderRadius={16}>
             <View style={styles.activeCard}>
               <View style={styles.activeBadge}>
@@ -363,7 +365,35 @@ const PlansScreen: React.FC = () => {
                 />
               </View>
               <Text style={styles.planTitle}>{activePlan.planName}</Text>
-              <Text style={styles.planSubTitle}>{Strings.plans_dayOf}</Text>
+              <Text style={styles.planSubTitle}>
+                {(() => {
+                  if (
+                    activePlan &&
+                    activePlan.days &&
+                    activePlan.days.length > 0
+                  ) {
+                    const today = new Date();
+                    const isSameDay = (a: Date, b: Date) =>
+                      a.getFullYear() === b.getFullYear() &&
+                      a.getMonth() === b.getMonth() &&
+                      a.getDate() === b.getDate();
+
+                    let currentDayIndex = activePlan.days.findIndex(
+                      (day: any) => {
+                        const dayDate = toDateObject(day.date);
+                        return dayDate && isSameDay(dayDate, today);
+                      },
+                    );
+
+                    // If today is not found, show 0
+                    currentDayIndex =
+                      currentDayIndex === -1 ? 0 : currentDayIndex + 1;
+
+                    return `Day ${currentDayIndex} of ${activePlan.days.length}`;
+                  }
+                  return "";
+                })()}
+              </Text>{" "}
               <View style={styles.mealBox}>
                 <Text style={styles.mealBoxTitle}>
                   {Strings.plans_todaysMeal}
