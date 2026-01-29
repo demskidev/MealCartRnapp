@@ -28,21 +28,25 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
+  Animated,
   Dimensions,
   FlatList,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Animated,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
 } from "react-native";
-import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
+import {
+  GestureHandlerRootView,
+  PanGestureHandler,
+  State,
+} from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourGuideZone, useTourGuideController } from "rn-tourguide";
 
@@ -50,7 +54,7 @@ const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
 
 const SWIPE_THRESHOLD = 30; // Minimum swipe distance to trigger hide
-const GREETING_SECTION_HEIGHT = verticalScale(80);
+const GREETING_SECTION_HEIGHT = verticalScale(100);
 
 const HomeScreen: React.FC = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -67,12 +71,16 @@ const HomeScreen: React.FC = () => {
 
   // Scroll animation states
   const scrollY = useRef(0);
-  const greetingHeight = useRef(new Animated.Value(GREETING_SECTION_HEIGHT)).current;
+  const greetingHeight = useRef(
+    new Animated.Value(GREETING_SECTION_HEIGHT),
+  ).current;
   const greetingOpacity = useRef(new Animated.Value(1)).current;
   const [isGreetingVisible, setIsGreetingVisible] = useState(true);
-  
+
   // Meal card image animation states
-  const mealCardImageHeight = useRef(new Animated.Value(verticalScale(120))).current;
+  const mealCardImageHeight = useRef(
+    new Animated.Value(verticalScale(120)),
+  ).current;
   const mealCardImageOpacity = useRef(new Animated.Value(1)).current;
   const [isMealCardImageVisible, setIsMealCardImageVisible] = useState(true);
 
@@ -217,16 +225,19 @@ const HomeScreen: React.FC = () => {
   const onHandlerStateChange = (event: any) => {
     if (event.nativeEvent.state === State.END) {
       const { translationY: swipeDistance } = event.nativeEvent;
-      
+
       // Swipe up detected (negative translationY means swipe up)
       // Only hide if greeting is visible and user swiped up
       if (
-        swipeDistance < -SWIPE_THRESHOLD && 
+        swipeDistance < -SWIPE_THRESHOLD &&
         isGreetingVisible &&
         scrollY.current <= 10 // Only allow swipe gesture when near the top
       ) {
-        console.log("Hiding greeting and meal images - swipe up gesture", swipeDistance);
-        
+        console.log(
+          "Hiding greeting and meal images - swipe up gesture",
+          swipeDistance,
+        );
+
         // Hide greeting section
         Animated.parallel([
           Animated.timing(greetingHeight, {
@@ -260,12 +271,15 @@ const HomeScreen: React.FC = () => {
       // Swipe down detected (positive translationY means swipe down)
       // Only show if greeting is hidden, user swiped down, and at the top
       else if (
-        swipeDistance > SWIPE_THRESHOLD && 
+        swipeDistance > SWIPE_THRESHOLD &&
         !isGreetingVisible &&
         scrollY.current <= 10 // Only allow swipe gesture when at the top
       ) {
-        console.log("Showing greeting and meal images - swipe down gesture", swipeDistance);
-        
+        console.log(
+          "Showing greeting and meal images - swipe down gesture",
+          swipeDistance,
+        );
+
         // Show greeting section
         Animated.parallel([
           Animated.timing(greetingHeight, {
@@ -328,7 +342,7 @@ const HomeScreen: React.FC = () => {
         style={{
           height: mealCardImageHeight,
           opacity: mealCardImageOpacity,
-          overflow: 'hidden',
+          overflow: "hidden",
         }}
       >
         <Image
@@ -454,7 +468,7 @@ const HomeScreen: React.FC = () => {
                       {
                         height: greetingHeight,
                         opacity: greetingOpacity,
-                        overflow: 'hidden',
+                        overflow: "hidden",
                       },
                     ]}
                   >
