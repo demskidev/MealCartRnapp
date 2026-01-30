@@ -47,13 +47,14 @@ export interface CreateNewListBottomSheetRef {
 interface CreateNewListBottomSheetProps {
   shoppingList?: any;
   onClose?: () => void;
+  from?: string;
 }
 // const CreateNewListBottomSheet = forwardRef<BottomSheet, CreateNewListBottomSheetProps>(
 //   ({ isEdit = false, mealData }, ref) => {
 const CreateNewListBottomSheet = forwardRef<
   CreateNewListBottomSheetRef,
   CreateNewListBottomSheetProps
->(({ shoppingList, onClose }, ref: React.Ref<CreateNewListBottomSheetRef>) => {
+>(({ shoppingList, onClose, from }, ref: React.Ref<CreateNewListBottomSheetRef>) => {
   const snapPoints = useMemo(() => ["100%"], []);
   const user = useAppSelector((state) => state.auth.user);
   const { addShoppingListData, loading, updateShoppingListData } =
@@ -369,7 +370,7 @@ const CreateNewListBottomSheet = forwardRef<
       };
 
       showLoader();
-      if (shoppingList && shoppingList.id) {
+      if (shoppingList && shoppingList.id && from !== "plan") {
         console.log("shoppingListData", updatingShoppingListData);
 
         // Edit mode: update existing list
@@ -458,6 +459,7 @@ const CreateNewListBottomSheet = forwardRef<
             <CustomTextInput
               placeholder={Strings.createList_listName_placeholder}
               value={listName}
+              style={{ color: Colors.primary }}
               onChangeText={setListName}
             />
 

@@ -1,4 +1,9 @@
-import { closeIcon, forwardicon, Profileimage } from "@/assets/images";
+import {
+  closeIcon,
+  forwardicon,
+  iconedit,
+  Profileimage,
+} from "@/assets/images";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import DefaultServingsModal from "@/components/DefaultServingsModal";
 import { hideLoader, showLoader } from "@/components/Loader";
@@ -161,11 +166,19 @@ export default function ProfileScreen() {
       </View>
       <View style={styles.avatarContainer}>
         <TouchableOpacity onPress={() => setShowModal(true)}>
-          <Image
-            source={Profileimage}
-            style={styles.profileImage}
-            resizeMode="contain"
-          />
+          <View style={styles.imageParentStyle}>
+            <Image
+              source={user?.imageUrl ? { uri: user.imageUrl } : Profileimage}
+              style={styles.profileImage}
+              resizeMode="cover"
+            />
+            <Image
+              source={iconedit}
+              style={styles.editIconImage}
+              tintColor={Colors.white}
+              resizeMode="cover"
+            />
+          </View>
         </TouchableOpacity>
         <Text style={styles.name}>{user?.name}</Text>
         <Text style={styles.email}>{user?.email}</Text>
@@ -458,9 +471,27 @@ const styles = StyleSheet.create({
     width: verticalScale(24),
     height: verticalScale(24),
   },
+  imageParentStyle: {
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   profileImage: {
-    width: verticalScale(112),
-    height: verticalScale(112),
+    width: verticalScale(95),
+    height: verticalScale(95),
+    borderRadius: verticalScale(50),
+  },
+  editIconImage: {
+    width: moderateScale(30),
+    height: moderateScale(30),
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [
+      { translateX: -moderateScale(15) },
+      { translateY: -moderateScale(15) },
+    ],
+    zIndex: 1,
   },
   scrollViewContent: {
     paddingBottom: 32,

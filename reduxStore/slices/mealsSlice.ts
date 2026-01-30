@@ -78,7 +78,7 @@ const initialState: MealsState = {
 
 const saveMealIngredientsToSubcollection = async (
   mealId: string,
-  ingredients: any[]
+  ingredients: any[],
 ) => {
   try {
     // First, create the parent document in MEAL_INGREDIENTS_COLLECTION
@@ -101,7 +101,7 @@ const saveMealIngredientsToSubcollection = async (
           mealId,
           INGREDIENTS_KEY,
           ing.ingredientId,
-          ingredientData
+          ingredientData,
         );
       }
     }
@@ -133,7 +133,7 @@ const addMealToDb = async (mealData: any) => {
     // Save ingredients to subcollection
     await saveMealIngredientsToSubcollection(
       meal.id,
-      ingredientsForSubcollection
+      ingredientsForSubcollection,
     );
 
     return meal;
@@ -152,15 +152,13 @@ const deleteMealFromDb = async (mealId: string) => {
   }
 };
 
-const addMealImage = async (mealData: any) => {
+const addMealImage = async (imageUrl: string) => {
   try {
-    const imageUri = await uploadImageToFirebase(
-      mealData?.imageUrl,
-      MEAL_IMAGE_FOLDER + Date.now().toString()
+    const uploadedImageUrl = await uploadImageToFirebase(
+      imageUrl,
+      MEAL_IMAGE_FOLDER + Date.now().toString(),
     );
-    mealData.imageUrl = imageUri;
-    const meal = await addMealToDb(mealData);
-    return meal;
+    return uploadedImageUrl;
   } catch (error) {
     throw error;
   }
@@ -170,13 +168,25 @@ export const addMeal = createAsyncThunk(
   ADD_MEAL,
   async (mealData: any, { rejectWithValue }) => {
     try {
-      const meal = await addMealToDb(mealData);
+      let finalMealData = { ...mealData };
+      if (
+        finalMealData.imageUrl &&
+        typeof finalMealData.imageUrl === "string" &&
+        !finalMealData.imageUrl.startsWith("http")
+      ) {
+        try {
+          const uploadedImageUrl = await addMealImage(finalMealData.imageUrl);
+          finalMealData.imageUrl = uploadedImageUrl;
+        } catch (imgErr) {
+          return rejectWithValue("Image upload failed: " + imgErr);
+        }
+      }
+      const meal = await addMealToDb(finalMealData);
       return meal;
-      // }
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const updateMeal = createAsyncThunk(
@@ -186,15 +196,28 @@ export const updateMeal = createAsyncThunk(
       mealData,
       updateWithIngredients = true,
     }: { mealData: any; updateWithIngredients?: boolean },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
-      const meal = await updateMealInDb(mealData, updateWithIngredients);
+      let finalMealData = { ...mealData };
+      if (
+        finalMealData.imageUrl &&
+        typeof finalMealData.imageUrl === "string" &&
+        !finalMealData.imageUrl.startsWith("http")
+      ) {
+        try {
+          const uploadedImageUrl = await addMealImage(finalMealData.imageUrl);
+          finalMealData.imageUrl = uploadedImageUrl;
+        } catch (imgErr) {
+          return rejectWithValue("Image upload failed: " + imgErr);
+        }
+      }
+      const meal = await updateMealInDb(finalMealData, updateWithIngredients);
       return meal;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const deleteMeal = createAsyncThunk(
@@ -206,16 +229,18 @@ export const deleteMeal = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
-const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
+export const enrichMealsWithIngredients = async (
+  meals: any[],
+): Promise<any[]> => {
   return Promise.all(
     meals.map(async (meal: any) => {
       try {
         const mealIngredientsDoc = await getDocumentById(
           MEAL_INGREDIENTS_COLLECTION,
-          meal.id
+          meal.id,
         );
 
         if (!mealIngredientsDoc) {
@@ -225,7 +250,7 @@ const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
         const ingredientsData = await getSubcollectionDocuments(
           MEAL_INGREDIENTS_COLLECTION,
           meal.id,
-          "ingredients"
+          "ingredients",
         );
 
         return {
@@ -233,7 +258,7 @@ const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
           ingredients: await Promise.all(
             meal.ingredients?.map(async (ing: any) => {
               const ingredientDetails: any = ingredientsData.find(
-                (data: any) => data.id === ing.ingredientId
+                (data: any) => data.id === ing.ingredientId,
               );
 
               let categoryName = ing.categoryName;
@@ -242,14 +267,14 @@ const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
                 try {
                   const categoryDoc: any = await getDocumentById(
                     INGREDIENTS_CATEGORY_COLLECTION,
-                    ing.categoryId
+                    ing.categoryId,
                   );
                   categoryName = categoryDoc?.title || categoryName;
                   categoryUnits = categoryDoc?.unit || categoryUnits;
                 } catch (error) {
                   console.error(
                     `Error fetching category ${ing.categoryId}:`,
-                    error
+                    error,
                   );
                 }
               }
@@ -263,14 +288,14 @@ const enrichMealsWithIngredients = async (meals: any[]): Promise<any[]> => {
                 categoryName: categoryName,
                 categoryUnits: categoryUnits,
               };
-            }) || []
+            }) || [],
           ),
         };
       } catch (error) {
         console.error(`Error fetching ingredients for meal ${meal.id}:`, error);
         return meal;
       }
-    })
+    }),
   );
 };
 
@@ -282,7 +307,7 @@ export const fetchUserMeals = createAsyncThunk(
       limit = 10,
       startAfter = null,
     }: { userId: string; limit?: number; startAfter?: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     ``;
     try {
@@ -298,7 +323,7 @@ export const fetchUserMeals = createAsyncThunk(
         "uid",
         "==",
         userId,
-        options
+        options,
       );
 
       console.log("Fetched meals from DB:", meals);
@@ -309,14 +334,14 @@ export const fetchUserMeals = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const fetchAllMeals = createAsyncThunk(
   FETCH_ALL_MEALS,
   async (
     { limit = 10, startAfter = null }: { limit?: number; startAfter?: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const options: any = {
@@ -328,7 +353,7 @@ export const fetchAllMeals = createAsyncThunk(
 
       const meals = await getAllDocumentsWithPagination(
         MEALS_COLLECTION,
-        options
+        options,
       );
 
       console.log("Fetched meals from DB:", meals);
@@ -339,7 +364,7 @@ export const fetchAllMeals = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const fetchRecentMeals = createAsyncThunk(
@@ -350,7 +375,7 @@ export const fetchRecentMeals = createAsyncThunk(
       limit = 4,
       startAfter = null,
     }: { userId: string; limit?: number; startAfter?: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const now = new Date();
@@ -373,7 +398,7 @@ export const fetchRecentMeals = createAsyncThunk(
             value: Timestamp.fromDate(twoDaysAgo),
           },
         ],
-        options
+        options,
       );
 
       console.log("Fetched recent meals from DB:", meals);
@@ -384,7 +409,7 @@ export const fetchRecentMeals = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 export const searchMeals = createAsyncThunk(
@@ -407,7 +432,7 @@ export const searchMeals = createAsyncThunk(
       limit?: number;
       startAfter?: any;
     },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const filters: any[] = [{ field: "uid", op: "==", value: userId }];
@@ -434,7 +459,7 @@ export const searchMeals = createAsyncThunk(
       let meals = await compoundQueryDocuments(
         MEALS_COLLECTION,
         filters,
-        options
+        options,
       );
 
       if (prepTime) {
@@ -456,19 +481,19 @@ export const searchMeals = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
 
 // Helper function to update meal ingredients in subcollection
 const updateMealIngredientsSubcollection = async (
   mealId: string,
-  ingredients: any[]
+  ingredients: any[],
 ) => {
   try {
     // Get the mealIngredients document
     const mealIngredientsDoc = await getDocumentById(
       MEAL_INGREDIENTS_COLLECTION,
-      mealId
+      mealId,
     );
 
     if (!mealIngredientsDoc) {
@@ -491,7 +516,7 @@ const updateMealIngredientsSubcollection = async (
           mealId,
           INGREDIENTS_KEY,
           ing.ingredientId,
-          ingredientData
+          ingredientData,
         );
       }
     }
@@ -502,7 +527,7 @@ const updateMealIngredientsSubcollection = async (
 
 const updateMealInDb = async (
   mealData: any,
-  updateWithIngredients: boolean = true
+  updateWithIngredients: boolean = true,
 ) => {
   try {
     console.log("=== UPDATE MEAL START ===");
@@ -520,7 +545,7 @@ const updateMealInDb = async (
 
     console.log(
       "Cleaned ingredients:",
-      JSON.stringify(cleanedIngredients, null, 2)
+      JSON.stringify(cleanedIngredients, null, 2),
     );
 
     // Build clean meal data object with only valid Firestore fields
@@ -544,7 +569,7 @@ const updateMealInDb = async (
 
     console.log(
       "Final cleanedMealData before update:",
-      JSON.stringify(cleanedMealData, null, 2)
+      JSON.stringify(cleanedMealData, null, 2),
     );
 
     // Check for undefined values
@@ -558,7 +583,7 @@ const updateMealInDb = async (
           Object.keys(item).forEach((itemKey) => {
             if (item[itemKey] === undefined) {
               console.warn(
-                `Warning: ${key}[${index}].${itemKey} is undefined, removing`
+                `Warning: ${key}[${index}].${itemKey} is undefined, removing`,
               );
               delete item[itemKey];
             }
@@ -572,7 +597,7 @@ const updateMealInDb = async (
     const meal = await updateDocument(
       MEALS_COLLECTION,
       mealData.id,
-      cleanedMealData
+      cleanedMealData,
     );
     console.log("Meal document updated successfully");
 
@@ -585,12 +610,12 @@ const updateMealInDb = async (
       console.log("Starting subcollection update...");
       await updateMealIngredientsSubcollection(
         mealData.id,
-        ingredientsForSubcollection
+        ingredientsForSubcollection,
       );
       console.log("Subcollection update completed");
     } else {
       console.log(
-        "Skipping subcollection update (updateWithIngredients: false)"
+        "Skipping subcollection update (updateWithIngredients: false)",
       );
     }
 
@@ -646,7 +671,7 @@ const mealsSlice = createSlice({
         // Only add meals that don't already exist
         const existingIds = new Set(state.meals.map((meal) => meal.id));
         const newMeals = fetchedMeals.filter(
-          (meal) => !existingIds.has(meal.id)
+          (meal) => !existingIds.has(meal.id),
         );
 
         state.meals = [...state.meals, ...newMeals] as Meal[];
@@ -666,7 +691,7 @@ const mealsSlice = createSlice({
 
         const existingIds = new Set(state.allMeals.map((meal) => meal.id));
         const newMeals = fetchedMeals.filter(
-          (meal) => !existingIds.has(meal.id)
+          (meal) => !existingIds.has(meal.id),
         );
 
         state.allMeals = [...state.allMeals, ...newMeals] as Meal[];
@@ -687,7 +712,7 @@ const mealsSlice = createSlice({
 
         // Update in meals array
         const index = state.meals.findIndex(
-          (meal) => meal.id === updatedMeal.id
+          (meal) => meal.id === updatedMeal.id,
         );
         if (index !== -1) {
           state.meals[index] = updatedMeal;
@@ -695,7 +720,7 @@ const mealsSlice = createSlice({
 
         // Update in allMeals array
         const allMealsIndex = state.allMeals.findIndex(
-          (meal) => meal.id === updatedMeal.id
+          (meal) => meal.id === updatedMeal.id,
         );
         if (allMealsIndex !== -1) {
           state.allMeals[allMealsIndex] = updatedMeal;
@@ -714,10 +739,10 @@ const mealsSlice = createSlice({
         const deletedMealId = action.payload;
         state.meals = state.meals.filter((meal) => meal.id !== deletedMealId);
         state.allMeals = state.allMeals.filter(
-          (meal) => meal.id !== deletedMealId
+          (meal) => meal.id !== deletedMealId,
         );
         state.recentMeals = state.recentMeals.filter(
-          (meal) => meal.id !== deletedMealId
+          (meal) => meal.id !== deletedMealId,
         );
       })
       .addCase(deleteMeal.rejected, (state, action) => {

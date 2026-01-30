@@ -5,6 +5,7 @@ import {
   getDocumentById,
   setDocumentById,
   updateDocument,
+  uploadImageToFirebase,
 } from "@/services/firestore";
 import { waitForAuthReady } from "@/services/waitForAuth";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -24,7 +25,7 @@ import {
   REGISTER,
   UPDATE_USER,
 } from "../actionTypes";
-import { USERS_COLLECTION } from "../appKeys";
+import { MEAL_IMAGE_FOLDER, USER_IMAGE_FOLDER, USERS_COLLECTION } from "../appKeys";
 // Utility to map Firebase Auth error codes to user-friendly messages
 function getFirebaseAuthErrorMessage(error: any): string {
   console.log("Firebase Auth Error:", JSON.stringify(error));
@@ -126,7 +127,20 @@ export const loadUserByUidAsync = createAsyncThunk(
   },
 );
 
-// Async thunk for updating user data
+
+const addUserImage = async (imageUrl: string) => {
+  try {
+    const uploadedImageUrl = await uploadImageToFirebase(
+      imageUrl,
+      USER_IMAGE_FOLDER + Date.now().toString(),
+    );
+    return uploadedImageUrl;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ...existing code...
 export const updateUserAsync = createAsyncThunk(
   UPDATE_USER,
   async (
@@ -134,6 +148,11 @@ export const updateUserAsync = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
+      // If there's a new image to upload, handle it
+      if (userData.image && typeof userData.image === "string" && userData.image.startsWith("file")) {
+        const uploadedImageUrl = await addUserImage(userData.image);
+        userData.image = uploadedImageUrl;
+      }
       // Update user data in Firestore and return the updated data
       const updatedUser = await updateDocument(
         USERS_COLLECTION,
@@ -147,6 +166,8 @@ export const updateUserAsync = createAsyncThunk(
     }
   },
 );
+
+// ...existing code...
 export const changePasswordAsync = createAsyncThunk<
   boolean,
   { currentPassword: string; newPassword: string },

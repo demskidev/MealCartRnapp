@@ -1,6 +1,9 @@
 import { activeImage, createlist, gradientclose } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import CreateNewListBottomSheet, {
+  CreateNewListBottomSheetRef,
+} from "@/components/CreateNewListBottomSheet";
 import { hideLoader, showLoader } from "@/components/Loader";
 import SpaceBetweenButtons from "@/components/SpaceBetweenButtons";
 import ThemeNormalButton from "@/components/ThemeNormalButton";
@@ -15,12 +18,13 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { MealStatus } from "@/reduxStore/appKeys";
 import { useAppDispatch } from "@/reduxStore/hooks";
+import { enrichMealsWithIngredients } from "@/reduxStore/slices/mealsSlice";
 import { updatePlanLocally } from "@/reduxStore/slices/planSlice";
 import { pushNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -50,6 +54,8 @@ const PlansScreen: React.FC = () => {
   const [pausePlan, setPausePlan] = useState(false);
   const [layoutReady, setLayoutReady] = useState(false);
   const [zoneReady, setZoneReady] = useState(false);
+  const [generatedList, setGeneratedList] = useState<any>();
+  const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -218,6 +224,76 @@ const PlansScreen: React.FC = () => {
 
   const viewPlan = (planId: string) => {
     pushNavigation(APP_ROUTES.TestMealPlan, { planId });
+  };
+
+  const handleGenerateShoppingList = async (plan: any) => {
+    showLoader();
+    try {
+      // 1. Gather all meals from all days/slots
+      const allMeals = plan.days
+        .flatMap((day: any) =>
+          (day.mealSlots || []).map((slot: any) => slot.meal),
+        )
+        .filter(Boolean);
+
+      // 2. Enrich meals
+      const enrichedMeals = await enrichMealsWithIngredients(allMeals);
+
+      // 3. Create a map for quick lookup
+      const enrichedMap = new Map(enrichedMeals.map((meal) => [meal.id, meal]));
+
+      // 4. Replace each meal in the plan with its enriched version
+      const enrichedPlan = {
+        ...plan,
+        days: plan.days.map((day: any) => ({
+          ...day,
+          mealSlots: (day.mealSlots || []).map((slot: any) => ({
+            ...slot,
+            meal:
+              slot.meal && enrichedMap.get(slot.meal.id)
+                ? enrichedMap.get(slot.meal.id)
+                : slot.meal,
+          })),
+        })),
+      };
+
+      console.log("🛒 Enriched Plan for Shopping List:", enrichedPlan);
+      const allIngredients = enrichedPlan.days
+        .flatMap((day: any) =>
+          (day.mealSlots || [])
+            .map((slot: any) =>
+              (slot.meal?.ingredients || []).map((ingredient: any) => ({
+                ...ingredient,
+                mealId: slot.meal?.id,
+              })),
+            )
+            .flat(),
+        )
+        .filter(Boolean);
+
+      // 2. Optionally, deduplicate by ingredientId+mealId if needed
+      // (If you want to group by ingredientId only, you can further reduce)
+
+      // 3. Prepare the shoppingList object for the bottom sheet
+      const shoppingList = {
+        listName: `${plan.planName} Shopping List` || "",
+        shoppingDay: "", // or set as needed
+        ingredients: allIngredients,
+        // ...add other fields if needed
+      };
+
+      setGeneratedList(shoppingList);
+      createNewListRef?.current?.expand();
+      // pushNavigation(APP_ROUTES.TestPlanShopping, { enrichedPlan });
+
+      // Now enrichedPlan has all meals enriched
+      // You can use enrichedPlan for further logic or navigation
+      // Example: pushNavigation(APP_ROUTES.TestPlanShopping, { enrichedPlan });
+    } catch (error) {
+      showErrorToast("Failed to generate shopping list");
+    } finally {
+      hideLoader();
+    }
   };
 
   const renderShoppingList = ({
@@ -480,7 +556,7 @@ const PlansScreen: React.FC = () => {
                         style={styles.createListIcon}
                       />
                     }
-                    onPress={() => pushNavigation(APP_ROUTES.LISTS)}
+                    onPress={() => handleGenerateShoppingList(activePlan)}
                   />
                 </TourGuideZone>
                 <ThemeNormalButton
@@ -535,6 +611,13 @@ const PlansScreen: React.FC = () => {
           }
         }}
       />
+      <CreateNewListBottomSheet
+        ref={createNewListRef}
+        shoppingList={generatedList}
+        from="plan"
+        onClose={() => createNewListRef?.current?.close()}
+      />
+
       {/* <Loader visible={isLoading} /> */}
     </SafeAreaView>
   );

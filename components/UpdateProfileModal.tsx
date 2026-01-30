@@ -22,9 +22,11 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import BaseButton from "./BaseButton";
 import ImagePickerModal from "./ImagePickerModal";
 import { hideLoader, showLoader } from "./Loader";
+import SpaceBetweenButtons from "./SpaceBetweenButtons";
+import ThemeGradientButton from "./ThemeGradientButton";
+import ThemeNormalButton from "./ThemeNormalButton";
 
 type Props = {
   visible: boolean;
@@ -41,17 +43,25 @@ export default function UpdateProfileModal({
 }: Props) {
   const { updateUserData, user } = useProfileViewModel();
   const [name, setName] = useState("");
+  const [userImage, setUserImage] = useState("");
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const isGoogleUser = user?.provider === SocialLoginProvider.GOOGLE;
   const isAppleUser = user?.provider === SocialLoginProvider.APPLE;
+
   // Load current user name when modal opens
   useEffect(() => {
     if (visible && user?.name) {
       setName(user.name);
     }
   }, [visible, user?.name]);
+
+  useEffect(() => {
+    if (visible && user?.imageUrl) {
+      setUserImage(user.imageUrl);
+    }
+  }, [visible, user?.imageUrl]);
 
   const handleUpdate = async () => {
     if (!name.trim()) {
@@ -62,7 +72,7 @@ export default function UpdateProfileModal({
     showLoader();
 
     await updateUserData(
-      { name: name.trim() },
+      { name: name.trim(), imageUrl: imageUri || "" },
       () => {
         hideLoader();
         showSuccessToast("Profile updated successfully!");
@@ -115,28 +125,35 @@ export default function UpdateProfileModal({
           </Text>
 
           <View style={styles.avatarRow}>
-            <TouchableOpacity onPress={handleUpload}>
-              <Image
-                source={imageUri ? { uri: imageUri } : updateprofile}
-                style={styles.updateProfileImage}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+            <Image
+              source={
+                imageUri
+                  ? { uri: imageUri }
+                  : userImage
+                    ? { uri: userImage }
+                    : updateprofile
+              }
+              style={styles.updateProfileImage}
+              resizeMode="cover"
+            />
             <View style={styles.avatarBtnCol}>
-              <BaseButton
+              <ThemeNormalButton
                 title={Strings.updateProfileModal_update}
-                gradientButton={false}
                 backgroundColor={Colors.white}
-                textStyle={[styles.updateBtn]}
-                textStyleText={styles.updateBtnText}
+                showElevation={false}
+                containerStyle={styles.updateBtn}
+                textStyle={styles.updateBtnText}
+                onPress={handleUpload}
               />
-              <BaseButton
+              <ThemeGradientButton
                 title={Strings.updateProfileModal_remove}
-                gradientButton={true}
-                backgroundColor={Colors.white}
                 gradientStartColor={Colors._A62A2A}
                 gradientEndColor={Colors._FD4B4B}
                 textStyle={styles.gradientbtnText}
+                onPress={() => {
+                  setUserImage("");
+                  setImageUri("");
+                }}
               />
             </View>
           </View>
@@ -206,7 +223,7 @@ export default function UpdateProfileModal({
                 style={[styles.socialBox, { backgroundColor: Colors.black }]}
               >
                 <AppleIcon width={20} height={20} />
-                <Text style={[styles.socialText,{ color: Colors.white }]}>
+                <Text style={[styles.socialText, { color: Colors.white }]}>
                   {Strings.updateProfileModal_connectedWithApple}
                 </Text>
                 <TouchableOpacity onPress={onUnlinkSocialAccount}>
@@ -220,26 +237,26 @@ export default function UpdateProfileModal({
             </>
           )}
 
-          <View style={styles.footer}>
-            <BaseButton
-              title={Strings.updateProfileModal_cancel}
-              gradientButton={false}
-              textColor={Colors.background}
-              width={width * 0.4}
-              textStyle={styles.cancelButton}
-              textStyleText={styles.cancelButtonText}
-              onPress={onClose}
-            />
-            <BaseButton
-              title={Strings.updateProfileModal_update}
-              gradientButton={true}
-              textColor={Colors.background}
-              width={width * 0.4}
-              textStyle={styles.confirmButton}
-              textStyleText={styles.confirmButtonText}
-              onPress={handleUpdate}
-            />
-          </View>
+          <SpaceBetweenButtons
+            containerStyle={styles.footer}
+            left={
+              <ThemeNormalButton
+                title={Strings.updateProfileModal_cancel}
+                textColor={Colors.background}
+                containerStyle={styles.cancelButton}
+                textStyle={styles.cancelButtonText}
+                onPress={onClose}
+              />
+            }
+            right={
+              <ThemeGradientButton
+                title={Strings.updateProfileModal_update}
+                containerStyle={styles.confirmButton}
+                textStyle={styles.confirmButtonText}
+                onPress={handleUpdate}
+              />
+            }
+          />
         </View>
       </View>
     </Modal>
@@ -254,8 +271,9 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(4),
   },
   updateProfileImage: {
-    width: verticalScale(112),
-    height: verticalScale(112),
+    width: verticalScale(85),
+    height: verticalScale(85),
+    borderRadius: verticalScale(50),
   },
   googleIconImage: {
     width: verticalScale(20),
@@ -274,7 +292,7 @@ const styles = StyleSheet.create({
   avatarRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: verticalScale(18),
+    marginVertical: verticalScale(18),
   },
   avatar: {
     width: moderateScale(120),
@@ -286,6 +304,7 @@ const styles = StyleSheet.create({
   avatarBtnCol: {
     flex: 1,
     justifyContent: "center",
+    marginHorizontal: horizontalScale(12),
   },
   updateBtn: {
     backgroundColor: Colors.white,

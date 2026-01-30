@@ -47,7 +47,7 @@ const MealsScreen: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const itemWidth = (width - horizontalScale(40) - horizontalScale(8)) / 2;
+  const itemWidth = (width - horizontalScale(50)) / 2;
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [isMyMeals, setIsMyMeals] = useState(true);
@@ -390,7 +390,6 @@ const MealsScreen: React.FC = () => {
         shadowOffset: { width: 0, height: 2 },
         overflow: "visible",
         marginBottom: verticalScale(8),
-        marginRight: index % 2 === 0 ? horizontalScale(14) : 0,
       }}
       onPress={() => {
         console.log("Selected Meal:", item);
@@ -547,6 +546,7 @@ const MealsScreen: React.FC = () => {
                           style={{
                             width: itemWidth,
                             marginBottom: verticalScale(8),
+                            marginHorizontal: horizontalScale(2),
                           }}
                         >
                           {renderMealCard({ item, index })}
@@ -565,6 +565,7 @@ const MealsScreen: React.FC = () => {
                     <Text style={styles.upcomingText}>
                       {Strings.meals_yourMeals}
                     </Text>
+
                     <FlatList
                       data={normalMeals}
                       renderItem={renderMealCard}
@@ -574,9 +575,11 @@ const MealsScreen: React.FC = () => {
                         justifyContent: "space-between",
                         marginBottom: verticalScale(8),
                       }}
+                      
                       scrollEnabled={false}
                       contentContainerStyle={{
                         paddingBottom: verticalScale(100),
+                        marginHorizontal: horizontalScale(2),
                       }}
                       showsVerticalScrollIndicator={false}
                     />
@@ -741,7 +744,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     fontSize: moderateScale(14),
     color: Colors.primary,
-    textAlignVertical:"center",
+    textAlignVertical: "center",
     marginLeft: horizontalScale(8),
   },
   parentSearchBox: {

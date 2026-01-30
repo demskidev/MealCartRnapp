@@ -16,6 +16,7 @@ export const SHOPPING_LIST_COLLECTION = 'shoppingList';
 
 
 export const MEAL_IMAGE_FOLDER = 'mealImages/';
+export const USER_IMAGE_FOLDER = 'userImages/';
 
 
 export const HTTPPREFIX = 'http://';
