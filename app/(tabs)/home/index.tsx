@@ -49,6 +49,7 @@ import {
 } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourGuideZone, useTourGuideController } from "rn-tourguide";
+import { useAppSelector } from "@/reduxStore/hooks";
 
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
@@ -61,6 +62,7 @@ const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [showAll, setShowAll] = useState(false);
   const router = useRouter();
+  const user = useAppSelector((state) => state.auth.user);
   const { enrichedActivePlan, fetchActivePlan } = usePlanViewModel();
   const { recentMeals, fetchTheRecentMeals } = useMealsViewModel();
   const [activePlan, setActivePlan] = useState(enrichedActivePlan);
@@ -491,7 +493,11 @@ const HomeScreen: React.FC = () => {
                             }
                           >
                             <Image
-                              source={userDummy}
+                              source={
+                                user?.imageUrl
+                                  ? { uri: user.imageUrl }
+                                  : userDummy
+                              }
                               style={styles.image}
                               resizeMode="contain"
                             />
