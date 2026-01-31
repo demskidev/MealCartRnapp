@@ -21,6 +21,7 @@ import SpaceBetweenButtons from "@/components/SpaceBetweenButtons";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
 import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { useTourStep } from "@/context/TourStepContext";
+import { useAppSelector } from "@/reduxStore/hooks";
 import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
@@ -49,7 +50,6 @@ import {
 } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourGuideZone, useTourGuideController } from "rn-tourguide";
-import { useAppSelector } from "@/reduxStore/hooks";
 
 const { height } = Dimensions.get("window");
 const { width } = Dimensions.get("window");
@@ -499,7 +499,7 @@ const HomeScreen: React.FC = () => {
                                   : userDummy
                               }
                               style={styles.image}
-                              resizeMode="contain"
+                              resizeMode="cover"
                             />
                           </TouchableOpacity>
                         </View>
