@@ -4,9 +4,14 @@ import {
   iconedit,
   Profileimage,
 } from "@/assets/images";
+import { KrogerIcon } from "@/assets/svg";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import DefaultServingsModal from "@/components/DefaultServingsModal";
+import Divider from "@/components/Divider";
+import KrogerSelectedStoreCard from "@/components/KrogerSelectedStoreCard";
 import { hideLoader, showLoader } from "@/components/Loader";
+import SelectKrogerStore from "@/components/SelectKrogerStore";
+import ThemeGradientButton from "@/components/ThemeGradientButton";
 import UpdateProfileModal from "@/components/UpdateProfileModal";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
@@ -19,15 +24,23 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useAppDispatch } from "@/reduxStore/hooks";
 import { deleteAccountAsync } from "@/reduxStore/slices/profileSlice";
+import {
+  disconnectKrogerAccount,
+  getKrogerConnectionStatus,
+  saveKrogerSelectedStore,
+  searchKrogerStores,
+} from "@/services/krogerApi";
 import { performLogout } from "@/utils/auth";
 import { pushNavigation, resetAndNavigate } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast, showToast } from "@/utils/Toast";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -40,9 +53,15 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [deleteAccount, setDeleteAccount] = useState(false);
+  const [disconnectKroger, setDisconnectKroger] = useState(false);
   const [defaultServings, setDefaultServings] = useState(false);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [isSavingServings, setIsSavingServings] = useState(false);
+  const [krogerStatus, setKrogerStatus] = useState<any>(null);
+  const [krogerLoading, setKrogerLoading] = useState(true);
+  const [krogerDisconnecting, setKrogerDisconnecting] = useState(false);
+  const [showStoreModal, setShowStoreModal] = useState(false);
+  const [krogerStores, setKrogerStores] = useState<any[]>([]);
   const dispatch = useAppDispatch();
   const {
     user,
@@ -57,15 +76,31 @@ export default function ProfileScreen() {
     // Fetch the list of all dietary preferences from Firestore
     fetchDietaryPreferences(
       () => {
-        console.log("Dietary preferences fetched successfully");
         setPreferencesLoaded(true);
       },
       (error) => {
-        console.error("Error fetching dietary preferences:", error);
         setPreferencesLoaded(true);
       },
     );
   }, []);
+
+  const loadKrogerStatus = async () => {
+    try {
+      setKrogerLoading(true);
+      const status = await getKrogerConnectionStatus();
+      setKrogerStatus(status);
+    } catch (error: any) {
+      setKrogerStatus(null);
+    } finally {
+      setKrogerLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadKrogerStatus();
+    }, []),
+  );
 
   // Format allergies for display
   const getAllergiesDisplay = () => {
@@ -84,9 +119,6 @@ export default function ProfileScreen() {
     if (!user?.dietaryPreferences || user.dietaryPreferences.length === 0) {
       return Strings.nA;
     }
-
-    console.log("user.dietaryPreferences", user.dietaryPreferences);
-    console.log("dietaryPreferences", dietaryPreferences);
 
     return user.dietaryPreferences
       .map((id: string) => {
@@ -150,6 +182,93 @@ export default function ProfileScreen() {
         showToast("error", error || "Failed to save servings");
       },
     );
+  };
+
+  const isKrogerConnected = Boolean(krogerStatus?.connected);
+  const selectedKrogerStore = krogerStatus?.selectedStore || null;
+
+  const handleOpenKrogerFlow = () => {
+    pushNavigation(APP_ROUTES.KROGER_SIGNUP, {
+      source: "profile",
+    });
+  };
+
+  const [isSearchingStores, setIsSearchingStores] = useState(false);
+
+  const handleSearchStores = async (zipCode: string) => {
+    try {
+      setIsSearchingStores(true);
+      const response = (await searchKrogerStores(zipCode)) as { data?: any[] };
+      const mappedStores = response.data || [];
+      if (!mappedStores.length) {
+        showToast("info", "No Kroger stores found.", "Try another ZIP code.");
+        return;
+      }
+      setKrogerStores(mappedStores);
+    } catch (error: any) {
+      showErrorToast(error?.message || "Unable to search stores.");
+    } finally {
+      setIsSearchingStores(false);
+    }
+  };
+
+  const handleChangeStore = async () => {
+    const zipCode = selectedKrogerStore?.address?.zipCode;
+    if (!zipCode) {
+      setKrogerStores([]);
+      setShowStoreModal(true);
+      return;
+    }
+    try {
+      showLoader();
+      const response = (await searchKrogerStores(zipCode)) as { data?: any[] };
+      const mappedStores = response.data || [];
+      setKrogerStores(mappedStores);
+      setShowStoreModal(true);
+    } catch (error: any) {
+      showErrorToast(error?.message || "Unable to search stores.");
+      setKrogerStores([]);
+      setShowStoreModal(true);
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const handleStoreSelect = async (store: any) => {
+    try {
+      showLoader();
+      const result = await saveKrogerSelectedStore(store);
+      const updatedStore = result?.selectedStore || store;
+      setKrogerStatus((prev: any) => ({
+        ...prev,
+        selectedStore: updatedStore,
+      }));
+      setShowStoreModal(false);
+      showSuccessToast("Default Kroger store saved.");
+    } catch (error: any) {
+      showErrorToast(error?.message || "Unable to save Kroger store.");
+    } finally {
+      hideLoader();
+    }
+  };
+
+  const getSelectedStoreId = () => {
+    if (!selectedKrogerStore) return null;
+    return selectedKrogerStore.locationId || null;
+  };
+
+  const handleDisconnectKroger = async () => {
+    try {
+      setKrogerDisconnecting(true);
+      await disconnectKrogerAccount();
+      setDisconnectKroger(false);
+      setKrogerStatus(null);
+      showSuccessToast("Kroger account disconnected.");
+    } catch (error: any) {
+      showErrorToast(error?.message || "Failed to disconnect Kroger account");
+    } finally {
+      setKrogerDisconnecting(false);
+    }
   };
 
   return (
@@ -221,6 +340,93 @@ export default function ProfileScreen() {
               </>
             )}
           />
+        </View>
+        <View style={styles.krogerTitle}>
+          <KrogerIcon width={horizontalScale(51)} height={verticalScale(29)} />
+          <Text style={styles.sectionHeader}>
+            {Strings.profile_krogerAccount}
+          </Text>
+        </View>
+
+        <View style={styles.krogerCard}>
+          <View style={styles.krogerHeaderRow}>
+            <View style={styles.krogerTitleRow}>
+              <Text style={styles.krogerStatusLabel}>
+                {Strings.profile_krogerStatus}
+              </Text>
+            </View>
+            <Pressable
+              style={[
+                styles.krogerStatusPill,
+                isKrogerConnected
+                  ? styles.krogerConnectedPill
+                  : styles.krogerDisconnectedPill,
+              ]}
+              onPress={() => {}}
+              disabled={krogerLoading}
+            >
+              <Text style={styles.krogerStatusText}>
+                {krogerLoading
+                  ? "Checking..."
+                  : isKrogerConnected
+                    ? Strings.profile_krogerConnected
+                    : Strings.profile_krogerDisconnected}
+              </Text>
+            </Pressable>
+          </View>
+
+          {!isKrogerConnected ? (
+            <View style={styles.krogerEmptyState}>
+              <Text style={styles.krogerEmptyText}>
+                {Strings.profile_krogerDisconnectedSubtitle}
+              </Text>
+              <ThemeGradientButton
+                title={Strings.profile_krogerConnect}
+                onPress={handleOpenKrogerFlow}
+                buttonGradient={styles.krogerPrimaryButton}
+                textStyle={{ color: Colors.white }}
+                disabled={krogerLoading}
+              />
+            </View>
+          ) : (
+            <View style={styles.krogerConnectedBody}>
+              <Text style={styles.krogerStoreLabel}>
+                {Strings.profile_krogerDefaultStore}
+              </Text>
+              <Divider showText={false} style={{ gap: 0 }} />
+              {selectedKrogerStore ? (
+                <KrogerSelectedStoreCard
+                  store={selectedKrogerStore}
+                  actionLabel={Strings.profile_krogerChange}
+                  onActionPress={handleChangeStore}
+                />
+              ) : (
+                <View style={styles.krogerEmptyState}>
+                  <Text style={styles.krogerEmptyText}>
+                    {Strings.profile_krogerNoStore}
+                  </Text>
+                  <ThemeGradientButton
+                    title={Strings.profile_krogerSelectStore}
+                    onPress={handleOpenKrogerFlow}
+                    buttonGradient={styles.krogerPrimaryButton}
+                    textStyle={{ color: Colors.white }}
+                  />
+                </View>
+              )}
+            </View>
+          )}
+
+          {isKrogerConnected ? (
+            <TouchableOpacity
+              style={styles.krogerDisconnectRow}
+              onPress={() => setDisconnectKroger(true)}
+              disabled={krogerDisconnecting}
+            >
+              <Text style={styles.krogerDisconnectText}>
+                {Strings.profile_krogerDisconnectAccount}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         <Text style={styles.sectionHeader}>
@@ -295,6 +501,15 @@ export default function ProfileScreen() {
         }}
       />
       <ConfirmationModal
+        visible={disconnectKroger}
+        title={Strings.profile_krogerDisconnectTitle}
+        description={Strings.profile_krogerDisconnectDescription}
+        cancelText={Strings.profile_cancel}
+        confirmText={Strings.profile_confirmDelete}
+        onCancel={() => setDisconnectKroger(false)}
+        onConfirm={handleDisconnectKroger}
+      />
+      <ConfirmationModal
         visible={deleteAccount}
         title={Strings.profile_deleteAccountTitle}
         description={Strings.profile_deleteAccountDescription}
@@ -319,6 +534,16 @@ export default function ProfileScreen() {
             hideLoader();
           }
         }}
+      />
+      <SelectKrogerStore
+        visible={showStoreModal}
+        onClose={() => setShowStoreModal(false)}
+        stores={krogerStores}
+        onSelect={handleStoreSelect}
+        initialSelectedStoreId={getSelectedStoreId()}
+        onSearch={handleSearchStores}
+        isSearching={isSearchingStores}
+        initialZipCode={selectedKrogerStore?.address?.zipCode || ""}
       />
       <DefaultServingsModal
         visible={defaultServings}
@@ -377,13 +602,105 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
     color: Colors.tertiary,
+  },
+  krogerCard: {
+    backgroundColor: Colors.white,
+    borderRadius: moderateScale(8),
+    marginTop: verticalScale(4),
+    marginBottom: verticalScale(15),
+    marginHorizontal: horizontalScale(2),
+    paddingVertical: verticalScale(18),
+    elevation: 5,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+  },
+  krogerTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: horizontalScale(5),
+  },
+  krogerHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+
+    justifyContent: "space-between",
+    marginBottom: verticalScale(18),
+    marginHorizontal: horizontalScale(18),
+  },
+  krogerTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: horizontalScale(10),
+  },
+  krogerTitleText: {
+    fontSize: moderateScale(18),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.tertiary,
+    letterSpacing: 0.4,
+  },
+  krogerStatusLabel: {
+    fontSize: moderateScale(16),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.primary,
+  },
+  krogerStoreLabel: {
+    fontSize: moderateScale(16),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.primary,
+    textAlign: "center",
+  },
+  krogerStatusPill: {
+    minWidth: horizontalScale(126),
+    borderRadius: moderateScale(24),
+    paddingHorizontal: horizontalScale(16),
+    paddingVertical: verticalScale(12),
+    alignItems: "center",
+  },
+  krogerConnectedPill: {
+    backgroundColor: Colors._2E6937,
+  },
+  krogerDisconnectedPill: {
+    backgroundColor: Colors.secondaryButtonBackground,
+  },
+  krogerStatusText: {
+    color: Colors.white,
+    fontSize: moderateScale(14),
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+  },
+  krogerConnectedBody: {
+    gap: verticalScale(8),
+  },
+  krogerEmptyState: {
+    gap: verticalScale(12),
+    marginHorizontal: horizontalScale(18),
+  },
+  krogerEmptyText: {
+    fontSize: moderateScale(13),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    color: Colors.tertiary,
+    lineHeight: moderateScale(20),
+  },
+  krogerPrimaryButton: {
+    flex: 0,
+    minHeight: verticalScale(48),
+  },
+  krogerDisconnectRow: {
     marginTop: verticalScale(18),
-    marginBottom: verticalScale(6),
+    paddingTop: verticalScale(10),
+    marginHorizontal: horizontalScale(18),
+  },
+  krogerDisconnectText: {
+    fontSize: moderateScale(16),
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    color: Colors.error,
   },
   card: {
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
-    marginVertical: verticalScale(6),
+    marginTop: verticalScale(6),
+    marginBottom: verticalScale(15),
     marginHorizontal: horizontalScale(2),
     paddingVertical: verticalScale(11),
     elevation: 4,

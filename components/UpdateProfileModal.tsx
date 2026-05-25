@@ -89,13 +89,6 @@ export default function UpdateProfileModal({
   };
 
   const handleImagePicked = (url: string) => {
-    console.log("Selected Image URI:", url);
-    console.log("Image Details:", {
-      uri: url,
-      type: url.includes("data:") ? "base64" : "file",
-      extension: url.split(".").pop(),
-      timestamp: new Date().toISOString(),
-    });
     setImageUri(url);
   };
 

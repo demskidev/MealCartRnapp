@@ -20,6 +20,12 @@ export class SignupViewModel {
       .required("Confirm password is required"),
   });
 
+
+  validateFieldZipSchema = yup.object({
+    zip: yup.string().required("Zip is required"),
+   
+  });
+
   dispatch = useAppDispatch();
 
   // async handleSignup(values: SignupFormValues): Promise<{ success: boolean; message: string }> {
@@ -74,7 +80,6 @@ export class SignupViewModel {
       }
     } catch (error: any) {
       onError?.(error.message || 'Validation error');
-      console.log('Validation error:', error);
     }
   }
 

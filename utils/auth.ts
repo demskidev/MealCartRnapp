@@ -28,12 +28,7 @@ export const performLogout = async () => {
     // const { persistor, store } = await import("@/reduxStore/store");
     try {
       await googleSignOut();
-      console.log("✅ Google sign-out successful");
     } catch (googleError) {
-      console.log(
-        "⚠️ Google sign-out error (user might not be signed in with Google):",
-        googleError,
-      );
       // If not signed in with Google, sign out from Firebase directly
       await auth.signOut();
     }
@@ -48,7 +43,6 @@ export const performLogout = async () => {
 
     //  }
   } catch (error) {
-    console.error("Logout error:", error);
     // Still try to navigate to signin even if purge fails
     replaceNavigation(APP_ROUTES.SIGNIN);
   }

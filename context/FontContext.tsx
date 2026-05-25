@@ -41,7 +41,6 @@ export const FontProvider: React.FC<FontProviderProps> = ({ children }) => {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown font loading error";
-        console.error("Font initialization failed:", errorMessage);
         setFontError(errorMessage);
         setFontsLoaded(true);
       }

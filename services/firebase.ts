@@ -1,10 +1,14 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  Auth,
+  getAuth,
+  getReactNativePersistence,
+  initializeAuth,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
-
-
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyDLGQsd7Kr3nA1DwOkzZZI941azqXp7OLg",
@@ -20,16 +24,22 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication with AsyncStorage persistence (React Native)
-// const auth = initializeAuth(app, {
-//   persistence: getReactNativePersistence(AsyncStorage)
-// });
+// Persist Firebase Auth across cold app launches so server-backed flows like
+// Kroger status checks can rely on auth.currentUser after restart.
+let auth: Auth;
 
-const auth = getAuth(app);
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch (error) {
+  auth = getAuth(app);
+}
+
+const functions = getFunctions(app, "us-central1");
 
 // Initialize Firebase Storage
 const storage = getStorage(app);
 
 export const db = getFirestore(app);
-export { auth, storage };
-
+export { auth, functions, storage };

@@ -203,7 +203,6 @@ const profileSlice = createSlice({
       .addCase(fetchDietryPreferencesAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.dietaryPreferences = action.payload as [] as DietaryPreferences[];
-        console.log("Fetched dietary preferences:", state.dietaryPreferences);
         state.error = null;
       })
       .addCase(fetchDietryPreferencesAsync.rejected, (state, action) => {
@@ -217,7 +216,6 @@ const profileSlice = createSlice({
       .addCase(addMealPlanAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.mealPlans.push(...action.payload);
-        console.log("Added meal plans:", action.payload);
         state.error = null;
       })
       .addCase(addMealPlanAsync.rejected, (state, action) => {
@@ -233,7 +231,6 @@ const profileSlice = createSlice({
         state.mealPlans = state.mealPlans.filter(
           (plan) => plan.id !== action.payload
         );
-        console.log("Deleted meal plan:", action.payload);
         state.error = null;
       })
       .addCase(deleteMealPlanAsync.rejected, (state, action) => {
@@ -254,7 +251,6 @@ const profileSlice = createSlice({
             state.mealPlans[index].name = updatedPlan.name;
           }
         });
-        console.log("Updated meal plans (batch):", action.payload.length);
         state.error = null;
       })
       .addCase(updateMealPlansBatchAsync.rejected, (state, action) => {
@@ -268,7 +264,6 @@ const profileSlice = createSlice({
       .addCase(fetchMealPlansAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.mealPlans = action.payload;
-        console.log("Fetched meal plans:", state.mealPlans);
         state.error = null;
       })
       .addCase(fetchMealPlansAsync.rejected, (state, action) => {

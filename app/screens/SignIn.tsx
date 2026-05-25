@@ -1,5 +1,4 @@
 import AuthFooter from "@/components/AuthFooter";
-import BaseButton from "@/components/BaseButton";
 import BaseTextInput from "@/components/BaseTextInput";
 import Divider from "@/components/Divider";
 import GradientText from "@/components/GradientText";
@@ -28,17 +27,17 @@ import { Colors } from "@/constants/Theme";
 
 import { hideLoader, showLoader } from "@/components/Loader";
 
+import ThemeGradientButton from "@/components/ThemeGradientButton";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { signInWithApple } from "@/services/appleSignin";
 import { signInWithGoogle } from "@/services/googleSignIn";
+import { fontSize } from "@/utils/Fonts";
 import {
   SigninFormValues,
   SigninViewModel,
 } from "@/viewmodels/SigninViewModel";
 import { Formik } from "formik";
 import { useRef, useState } from "react";
-import { fontSize } from "@/utils/Fonts";
-import ThemeGradientButton from "@/components/ThemeGradientButton";
-import ThemeNormalButton from "@/components/ThemeNormalButton";
 
 const SignInScreen = () => {
   const signinViewModel = new SigninViewModel();
@@ -56,13 +55,13 @@ const SignInScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastGoogleClickRef.current < 2000) {
-      console.log("⚠️ [Google Sign-In] Too many requests, please wait");
+
       return;
     }
     lastGoogleClickRef.current = now;
 
     if (isGoogleSigningIn) {
-      console.log("⚠️ [Google Sign-In] Already signing in");
+
       return;
     }
 
@@ -93,7 +92,6 @@ const SignInScreen = () => {
     } catch (error) {
       hideLoader();
       showErrorToast("An unexpected error occurred");
-      console.error("[Google Sign-In] Unexpected error:", error);
     } finally {
       setIsGoogleSigningIn(false);
     }
@@ -103,13 +101,13 @@ const SignInScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastAppleClickRef.current < 2000) {
-      console.log("⚠️ [Apple Sign-In] Too many requests, please wait");
+
       return;
     }
     lastAppleClickRef.current = now;
 
     if (isAppleSigningIn) {
-      console.log("⚠️ [Apple Sign-In] Already signing in");
+
       return;
     }
 
@@ -140,7 +138,7 @@ const SignInScreen = () => {
     } catch (error) {
       hideLoader();
       showErrorToast("An unexpected error occurred");
-      console.error("[Apple Sign-In] Unexpected error:", error);
+
     } finally {
       setIsAppleSigningIn(false);
     }

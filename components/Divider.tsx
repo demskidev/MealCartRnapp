@@ -1,7 +1,4 @@
-import {
-  horizontalScale,
-  verticalScale
-} from "@/constants/Constants";
+import { horizontalScale, verticalScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
@@ -9,28 +6,15 @@ import { StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface DividerProps {
   style?: ViewStyle;
+  showText?: boolean;
 }
 
-/**
- * Divider Component
- *
- * A horizontal line with "OR" text in the middle.
- * Commonly used to separate sections in forms, e.g., social login vs email login.
- *
- * Structure:
- *  - Two lines on either side of a centered "OR" text
- *  - Lines stretch to fill remaining horizontal space
- *
- * Usage:
- *  <Divider />
- *  <Divider style={{ gap: 20, marginVertical: 10 }} />
- */
-const Divider = ({ style }: DividerProps) => {
+const Divider = ({ style, showText = true }: DividerProps) => {
   return (
     <View style={[styles.container, style]}>
       <View style={styles.line} />
 
-      <Text style={styles.text}>{Strings.divider_or}</Text>
+      {showText && <Text style={styles.text}>{Strings.divider_or}</Text>}
 
       <View style={styles.line} />
     </View>

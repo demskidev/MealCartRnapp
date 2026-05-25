@@ -11,7 +11,6 @@ const AuthNavigator = () => {
       <Stack.Screen name="NewPassword" options={{ headerShown: false }} />
       <Stack.Screen name="IntroScreen" options={{ headerShown: false }} />
       <Stack.Screen name="WelcomeMealCart" options={{ headerShown: false }} />
-
     </Stack>
   );
 };

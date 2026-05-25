@@ -62,7 +62,6 @@ export default function CreateMealPlan({}) {
   const dispatch = useAppDispatch();
   const params = useLocalSearchParams();
   const planParam = params?.plan as string;
-  console.log("CreateMealPlan - planParam:", planParam);
   const { mealPlans, fetchMealPlans, profileLoading } = useProfileViewModel();
   const { addPlan, updatePlan, loading: planLoading } = usePlanViewModel();
   const {
@@ -111,7 +110,6 @@ export default function CreateMealPlan({}) {
         });
         setSelectedMealSlots(slots);
       } catch (error) {
-        console.error("Error parsing plan:", error);
       }
     }
   }, [planParam, mealPlans]);
@@ -399,7 +397,6 @@ export default function CreateMealPlan({}) {
 
   const getMealPlanId = (mealPlanName: string) => {
     const plan = mealPlans.find((p) => p.name === mealPlanName);
-    console.log(`  Finding plan for "${mealPlanName}":`, plan?.id);
     return plan?.id;
   };
 
@@ -461,9 +458,6 @@ export default function CreateMealPlan({}) {
       ? setEndOfDay(lastDayWithMeals.date)
       : setEndOfDay(startDate);
 
-    console.log("Last Day with Meals:", lastDayWithMeals);
-    console.log("End Date:", endDate);
-
     return endDate;
   };
 
@@ -516,13 +510,11 @@ export default function CreateMealPlan({}) {
       planPayload,
       (response) => {
         hideLoader();
-        console.log("✅ SUCCESS - Plan saved:", response);
         showSuccessToast(Strings.plan_saved_successfully);
         backNavigation();
       },
       (error) => {
         hideLoader();
-        console.error("❌ ERROR - Failed to save plan:", error);
         showErrorToast(error || Strings.error_adding_plan);
       },
     );
@@ -541,8 +533,6 @@ export default function CreateMealPlan({}) {
     const daysData = buildDaysData();
     const endDate = calculateEndDate(daysData);
 
-    console.log("Days Data to update:", JSON.stringify(daysData, null, 2));
-
     const existingPlan: EnrichedPlan = JSON.parse(planParam);
     const planPayload = {
       id: existingPlan.id,
@@ -553,14 +543,10 @@ export default function CreateMealPlan({}) {
       days: daysData,
     };
 
-    console.log("Final Update Payload:", JSON.stringify(planPayload, null, 2));
-    console.log("Calling updatePlan...");
-
     updatePlan(
       planPayload,
       (response) => {
         hideLoader();
-        console.log("SUCCESS - Plan updated:", response);
         showSuccessToast(
           Strings.plan_updated_successfully || "Plan updated successfully",
         );
@@ -568,7 +554,6 @@ export default function CreateMealPlan({}) {
       },
       (error) => {
         hideLoader();
-        console.error("ERROR - Failed to update plan:", error);
         showErrorToast(
           error || Strings.error_updating_plan || "Failed to update plan",
         );
@@ -676,7 +661,6 @@ export default function CreateMealPlan({}) {
         onClose={() => setAddToListVisible(false)}
         from={CREATE_MEAL_PLAN}
         onMealSelect={(meal) => {
-          console.log("Selected meal:", meal);
           handleMealSelect(meal);
         }}
       />

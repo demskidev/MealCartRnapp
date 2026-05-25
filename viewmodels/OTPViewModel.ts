@@ -16,9 +16,6 @@ export class OTPViewModel {
       await this.validationSchema.validate(values, { abortEarly: false });
 
       // TODO: Call API to verify OTP
-      console.log('OTP verification attempt:', {
-        otp: values.otp,
-      });
 
       // Simulate API call
       return {

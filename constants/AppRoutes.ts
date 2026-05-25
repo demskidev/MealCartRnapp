@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   INTRO_SCREEN: "/screens/IntroScreen",
   WELCOME_MEAL_CART: "/screens/WelcomeMealCart",
   WelcomeScreen: "/screens/WelcomeScreen",
+  KROGER_SIGNUP: "/screens/KrogerSignupScreen",
 
   // App routes
   HOME: "/(tabs)/home",

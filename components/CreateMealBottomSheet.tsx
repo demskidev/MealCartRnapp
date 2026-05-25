@@ -153,9 +153,6 @@ const CreateMealBottomSheet = forwardRef<
           ? item.categoryUnits
           : getUnitsForCategory(item?.category || item?.categoryId);
 
-      console.log("Item:", item);
-      console.log("Unit Options:", unitOptions);
-
       return (
         <View>
           <Text style={styles.label}>{Strings.createMeal_ingredientName}</Text>
@@ -476,10 +473,6 @@ const CreateMealBottomSheet = forwardRef<
         return;
       }
 
-      console.log(
-        "Creating meal with data:",
-        JSON.stringify(mealData, null, 2),
-      );
       showLoader();
       addMealData(
         mealData,
@@ -501,7 +494,6 @@ const CreateMealBottomSheet = forwardRef<
   };
 
   const handleEditMeal = async (values) => {
-    console.log("Editing meal with values:", values);
     try {
       const { mealData, validIngredients, mappedIngredients } = prepareMealData(
         values,
@@ -513,7 +505,6 @@ const CreateMealBottomSheet = forwardRef<
         return;
       }
 
-      console.log("Updating meal with data:", mealData);
       showLoader();
       updateMealData(
         {
@@ -557,8 +548,6 @@ const CreateMealBottomSheet = forwardRef<
         validateForm,
         resetForm,
       }) => (
-        console.log("Formik Values:", values),
-        (
           <>
             <ImagePickerModal
               visible={showImagePickerModal}
@@ -921,7 +910,6 @@ const CreateMealBottomSheet = forwardRef<
                       textStyle={styles.confirmButton}
                       onPress={async () => {
                         const formErrors = await validateForm();
-                        console.log("Validation errors:", formErrors);
 
                         if (Object.keys(formErrors).length > 0) {
                           // Mark all fields as touched to show validation errors

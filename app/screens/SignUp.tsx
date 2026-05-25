@@ -78,13 +78,12 @@ const SignupScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastAppleClickRef.current < 2000) {
-      console.log("⚠️ [Apple Sign-In] Too many requests, please wait");
       return;
     }
     lastAppleClickRef.current = now;
 
     if (isAppleSigningIn) {
-      console.log("⚠️ [Apple Sign-In] Already signing in");
+
       return;
     }
 
@@ -115,7 +114,6 @@ const SignupScreen = () => {
     } catch (error) {
       hideLoader();
       showErrorToast("An unexpected error occurred");
-      console.error("[Apple Sign-In] Unexpected error:", error);
     } finally {
       setIsAppleSigningIn(false);
     }
@@ -125,13 +123,13 @@ const SignupScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastGoogleClickRef.current < 2000) {
-      console.log("⚠️ [Google Sign-In] Too many requests, please wait");
+
       return;
     }
     lastGoogleClickRef.current = now;
 
     if (isGoogleSigningIn) {
-      console.log("⚠️ [Google Sign-In] Already signing in");
+
       return;
     }
 
@@ -162,7 +160,7 @@ const SignupScreen = () => {
     } catch (error) {
       hideLoader();
       showErrorToast("An unexpected error occurred");
-      console.error("[Google Sign-In] Unexpected error:", error);
+
     } finally {
       setIsGoogleSigningIn(false);
     }

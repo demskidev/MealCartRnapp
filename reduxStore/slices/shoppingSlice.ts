@@ -132,11 +132,6 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                     (data: any) => data.id === ing.ingredientId,
                   );
 
-                  console.log(
-                    `📦 Ingredient from meal subcollection:`,
-                    ingredientDetails,
-                  );
-
                   if (ingredientDetails) {
                     // Only fetch the name, preserve the saved unit
                     ingredientName = ingredientDetails.name || ingredientName;
@@ -144,10 +139,6 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                     // ingredientUnit is already set from ing.unit above
                   }
                 } catch (error) {
-                  console.error(
-                    `❌ Error fetching ingredient ${ing.ingredientId} from meal ${ing.mealId}:`,
-                    error,
-                  );
                 }
               }
 
@@ -159,11 +150,6 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                     ing.categoryId,
                   );
 
-                  console.log(
-                    `📦 Category doc for ${ing.categoryId}:`,
-                    categoryDoc,
-                  );
-
                   categoryName =
                     categoryDoc?.title || categoryDoc?.name || categoryName;
 
@@ -172,10 +158,6 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                     categoryUnits = categoryDoc.unit;
                   }
                 } catch (error) {
-                  console.error(
-                    `❌ Error fetching category ${ing.categoryId}:`,
-                    error,
-                  );
                 }
               }
 
@@ -187,14 +169,11 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                 categoryUnits,
               };
 
-              console.log(`✅ Enriched ingredient:`, enrichedIngredient);
-
               return enrichedIngredient;
             }) || [],
           ),
         };
       } catch (error) {
-        console.error(`Error enriching shopping list ${list.id}:`, error);
         return list;
       }
     }),
@@ -264,8 +243,6 @@ export const fetchUserShoppingLists = createAsyncThunk(
         userId,
         options,
       );
-
-      console.log("Fetched shopping lists from DB:", lists);
 
       const enrichedLists = await enrichShoppingListsWithDetails(lists);
 

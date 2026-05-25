@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Platform.select({
       ios: verticalScale(16),
-      android: verticalScale(3),
+      android: verticalScale(5),
     }),
     borderColor: Colors.borderColor,
     borderRadius: moderateScale(5),

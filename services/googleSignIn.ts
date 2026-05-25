@@ -52,7 +52,6 @@ export interface GoogleSignOutResult {
 
 export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   if (isSigningIn) {
-    console.log("⚠️ [Google Sign-In] Sign-in already in progress");
     return {
       success: false,
       error: "Sign-in is already in progress. Please wait.",
@@ -63,7 +62,6 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
 
   // Safety timeout - reset flag after 30 seconds in case something goes wrong
   signInTimeout = setTimeout(() => {
-    console.log("⚠️ [Google Sign-In] Timeout reached, resetting flag");
     isSigningIn = false;
   }, 30000);
 
@@ -77,23 +75,16 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
     // Clear any previous session to prevent stale OAuth state
     try {
       await GoogleSignin.signOut();
-      console.log("🧹 [Google Sign-In] Cleared any previous session");
 
       // CRITICAL: Add delay to ensure OAuth session is fully cleaned up
       // This prevents the "OAuth redirect sent after session completed" error
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (clearError) {
-      console.log("⚠️ [Google Sign-In] No previous session to clear");
     }
 
     const response = await GoogleSignin.signIn();
 
     if (!isSuccessResponse(response)) {
-      console.log(
-        "[Google Sign-In] Sign-in not successful, type:",
-        response.type,
-      );
-
       return {
         success: false,
         error: "Sign-in was cancelled",
@@ -104,7 +95,6 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
     const { idToken } = data;
 
     if (!idToken) {
-      console.log("[Google Sign-In] No ID token received");
       return {
         success: false,
         error: "No ID token received from Google",
@@ -133,7 +123,6 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
       };
       await setDocumentById(USERS_COLLECTION, firebaseUser.uid, newUserData);
     } else {
-      console.log("[Existing User] User already exists");
     }
 
     return {
@@ -147,10 +136,6 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
       },
     };
   } catch (error: any) {
-    console.error("[Google Sign-In] Error:", error);
-    console.error("[Google Sign-In] Error code:", error.code);
-    console.error("[Google Sign-In] Error message:", error.message);
-
     let errorMessage = "Failed to sign in with Google";
 
     // Use type guard from documentation
@@ -203,7 +188,6 @@ export const signOut = async (): Promise<GoogleSignOutResult> => {
     await firebaseSignOut(auth);
     return { success: true };
   } catch (error: any) {
-    console.error("Sign out error:", error);
     return {
       success: false,
       error: error.message || "Failed to sign out",
@@ -218,7 +202,6 @@ export const revokeAccess = async (): Promise<GoogleSignOutResult> => {
     await firebaseSignOut(auth);
     return { success: true };
   } catch (error: any) {
-    console.error("Error revoking access:", error);
     return {
       success: false,
       error: error.message || "Failed to revoke access",

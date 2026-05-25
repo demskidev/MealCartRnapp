@@ -1,4 +1,11 @@
 export const Strings = {
+  connectTo: "Connect to",
+  connectToKroger: "Connect to Kroger",
+  location_selected: "Location Selected",
+  selected_store_desc: "You have selected this store as your nearest location:",
+  find_your_location: "Find your location",
+  find_store_desc: "Enter your zip code and find your nearest Kroger store",
+  search: "Search",
   mealDetail_info: "• 4 Servings • Medium",
   mealDetail_edit: "Edit",
   mealDetail_delete: "Delete",
@@ -204,6 +211,7 @@ export const Strings = {
     "Media library permission is required!",
   logIn: "Log In",
   continueWithGoogle: "Continue with Google",
+  continue: "Continue",
   continueWithApple: "Continue with Apple",
   signUp: "Sign Up",
   signup: "Sign up",
@@ -228,6 +236,7 @@ export const Strings = {
   password: "Password",
   confirmPassword: "Confirm Password",
   name: "Name",
+  zipCode: "Zip Code",
   mealsAreSecure:
     "Your meal plans and recipes will be securely synced to your account.",
   userNotRegistered: "User is not registered in the database",
@@ -283,6 +292,21 @@ export const Strings = {
   profile_defaultServings: "Default Servings",
   profile_defaultServingsSubtitle: "2 People",
   profile_accountSecurity: "ACCOUNT & SECURITY",
+  profile_krogerAccount: "ACCOUNT",
+  profile_krogerStatus: "Status",
+  profile_krogerConnected: "Connected",
+  profile_krogerDisconnected: "Disconnected",
+  profile_krogerConnect: "Connect",
+  profile_krogerDefaultStore: "Default Store",
+  profile_krogerChange: "Change",
+  profile_krogerSelectStore: "Select Store",
+  profile_krogerDisconnectedSubtitle:
+    "Connect your Kroger account to choose a default store and send items to cart.",
+  profile_krogerNoStore: "No default store selected yet.",
+  profile_krogerDisconnectAccount: "Disconnect Account",
+  profile_krogerDisconnectTitle: "Disconnect Kroger Account?",
+  profile_krogerDisconnectDescription:
+    "This will remove your Kroger connection and saved store from Meal Cart.",
   profile_changePassword: "Change Password",
   profile_deleteAccount: "Delete Account",
   profile_logout: "Logout",
@@ -365,6 +389,12 @@ export const Strings = {
   addItemToList_subtitle:
     "Choose one or more meals to generate a combined list.",
   addItemToList_searchPlaceholder: "Search your meals...",
+  search_store: "Search Store...",
+  selectKrogerStore_searchingLocations: "Searching locations",
+  selectKrogerStore_subtitle:
+    "Find your store location and select it to begin connecting Meal Cart with your Kroger store.",
+  selectKrogerStore_cancel: "Cancel",
+  selectKrogerStore_selectStore: "Select Store",
   addItemToList_addManualLabel: "Add item Manually",
   addItemToList_searchIngredient: "Search Ingredient",
   addItemToList_add: "Add",
@@ -427,4 +457,8 @@ export const Strings = {
   profile_servings: "People",
   clearFilters: "Clear Filters",
   meal_not_found: "Meal not found",
+  kroger_signup_desc:
+    "Link your Meal Cart account with your Kroger account to send meals directly to your Kroger cart for pickup or delivery!",
+  skip_for_now: "Skip For Now",
+  store:"Store",
 };

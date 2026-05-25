@@ -106,9 +106,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         (data) => {
           processMealPlans(data);
         },
-        (error) => {
-          console.error("Error fetching meal plans:", error);
-        }
+        () => {}
       );
     }
   };
@@ -116,14 +114,8 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
   const handleDeleteMealPlan = (mealPlanId: string) => {
     deleteMealPlan(
       mealPlanId,
-      () => {
-        console.log("Meal plan deleted successfully");
-        // const updated = [...mealTypes];
-        // setMealTypes(updated);
-      },
-      (error) => {
-        console.error("Error deleting meal plan:", error);
-      }
+      () => {},
+      () => {}
     );
   };
 
@@ -137,7 +129,6 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         setRefreshing(false);
       },
       (error) => {
-        console.error("Error refreshing meal plans:", error);
         setRefreshing(false);
       }
     );
@@ -210,7 +201,6 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
     const checkCompletion = () => {
       completedOperations++;
       if (completedOperations === totalOperations) {
-        console.log("All meal plans saved successfully");
         // Reset modified flags
         const updated = mealTypes.map((type) => ({
           ...type,
@@ -226,11 +216,9 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
       addMealPlans(
         newPlans,
         (data) => {
-          console.log("New meal plans saved:", data);
           checkCompletion();
         },
         (error) => {
-          console.error("Error saving new meal plans:", error);
           checkCompletion();
         }
       );
@@ -244,11 +232,9 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
           name: plan.label.trim(),
         })),
         () => {
-          console.log("Meal plans updated:", modifiedPlans.length);
           checkCompletion();
         },
         (error) => {
-          console.error("Error updating meal plans:", error);
           checkCompletion();
         }
       );

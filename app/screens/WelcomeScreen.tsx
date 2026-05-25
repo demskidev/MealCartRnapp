@@ -1,5 +1,4 @@
 import { CreateAccount, ForwardIcon, SplashIcon } from "@/assets/svg";
-import BaseButton from "@/components/BaseButton";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
 import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
@@ -12,12 +11,12 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const WelcomeScreen = () => {
-  const navigate = (screen: typeof APP_ROUTES[keyof typeof APP_ROUTES]) => {
+  const navigate = (screen: (typeof APP_ROUTES)[keyof typeof APP_ROUTES]) => {
     router.push(screen as any);
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <SplashIcon width={moderateScale(145)} height={moderateScale(196)} />
 
       <View style={styles.middleContainer}>
@@ -79,9 +78,9 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: moderateScale(10),
   },
-  loginButton:{
-    paddingVertical:moderateScale(0)
-  }
+  loginButton: {
+    paddingVertical: moderateScale(0),
+  },
 });
 
 export default WelcomeScreen;

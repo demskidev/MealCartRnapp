@@ -106,7 +106,6 @@ const saveMealIngredientsToSubcollection = async (
       }
     }
   } catch (error) {
-    console.error("Error saving meal ingredients to subcollection:", error);
     throw error;
   }
 };
@@ -138,7 +137,6 @@ const addMealToDb = async (mealData: any) => {
 
     return meal;
   } catch (error) {
-    console.error("Error in addMealToDb:", error);
     throw error;
   }
 };
@@ -272,12 +270,8 @@ export const enrichMealsWithIngredients = async (
                   categoryName = categoryDoc?.title || categoryName;
                   categoryUnits = categoryDoc?.unit || categoryUnits;
                 } catch (error) {
-                  console.error(
-                    `Error fetching category ${ing.categoryId}:`,
-                    error,
-                  );
-                }
               }
+            }
 
               return {
                 categoryId: ing.categoryId,
@@ -292,7 +286,6 @@ export const enrichMealsWithIngredients = async (
           ),
         };
       } catch (error) {
-        console.error(`Error fetching ingredients for meal ${meal.id}:`, error);
         return meal;
       }
     }),
@@ -326,8 +319,6 @@ export const fetchUserMeals = createAsyncThunk(
         options,
       );
 
-      console.log("Fetched meals from DB:", meals);
-
       const enrichedMeals = await enrichMealsWithIngredients(meals);
 
       return enrichedMeals;
@@ -355,8 +346,6 @@ export const fetchAllMeals = createAsyncThunk(
         MEALS_COLLECTION,
         options,
       );
-
-      console.log("Fetched meals from DB:", meals);
 
       const enrichedMeals = await enrichMealsWithIngredients(meals);
 
@@ -400,8 +389,6 @@ export const fetchRecentMeals = createAsyncThunk(
         ],
         options,
       );
-
-      console.log("Fetched recent meals from DB:", meals);
 
       const enrichedMeals = await enrichMealsWithIngredients(meals);
 
@@ -521,7 +508,6 @@ const updateMealIngredientsSubcollection = async (
       }
     }
   } catch (error) {
-    console.error("Error updating meal ingredients subcollection:", error);
   }
 };
 
@@ -530,10 +516,6 @@ const updateMealInDb = async (
   updateWithIngredients: boolean = true,
 ) => {
   try {
-    console.log("=== UPDATE MEAL START ===");
-    console.log("Raw mealData received:", JSON.stringify(mealData, null, 2));
-    console.log("Update with ingredients:", updateWithIngredients);
-
     // Store ingredients for subcollection before cleaning
     const ingredientsForSubcollection = mealData.ingredients || [];
 
@@ -542,11 +524,6 @@ const updateMealInDb = async (
       ingredientId: ing.ingredientId,
       categoryId: ing.categoryId,
     }));
-
-    console.log(
-      "Cleaned ingredients:",
-      JSON.stringify(cleanedIngredients, null, 2),
-    );
 
     // Build clean meal data object with only valid Firestore fields
     const cleanedMealData: any = {
@@ -567,24 +544,15 @@ const updateMealInDb = async (
       cleanedMealData.lastViewedAt = mealData.lastViewedAt;
     }
 
-    console.log(
-      "Final cleanedMealData before update:",
-      JSON.stringify(cleanedMealData, null, 2),
-    );
-
     // Check for undefined values
     Object.keys(cleanedMealData).forEach((key) => {
       if (cleanedMealData[key] === undefined) {
-        console.warn(`Warning: ${key} is undefined, removing from update`);
         delete cleanedMealData[key];
       }
       if (Array.isArray(cleanedMealData[key])) {
         cleanedMealData[key].forEach((item: any, index: number) => {
           Object.keys(item).forEach((itemKey) => {
             if (item[itemKey] === undefined) {
-              console.warn(
-                `Warning: ${key}[${index}].${itemKey} is undefined, removing`,
-              );
               delete item[itemKey];
             }
           });
@@ -593,13 +561,11 @@ const updateMealInDb = async (
     });
 
     // Update the main meal document
-    console.log("Updating meal document with ID:", mealData.id);
     const meal = await updateDocument(
       MEALS_COLLECTION,
       mealData.id,
       cleanedMealData,
     );
-    console.log("Meal document updated successfully");
 
     // Update ingredient details in subcollection only if updateWithIngredients is true
     if (
@@ -607,24 +573,15 @@ const updateMealInDb = async (
       ingredientsForSubcollection &&
       ingredientsForSubcollection.length > 0
     ) {
-      console.log("Starting subcollection update...");
       await updateMealIngredientsSubcollection(
         mealData.id,
         ingredientsForSubcollection,
       );
-      console.log("Subcollection update completed");
-    } else {
-      console.log(
-        "Skipping subcollection update (updateWithIngredients: false)",
-      );
     }
 
-    console.log("=== UPDATE MEAL END ===");
     const enrichedMeals = await enrichMealsWithIngredients([meal]);
     return enrichedMeals[0];
   } catch (error) {
-    console.error("=== UPDATE MEAL ERROR ===");
-    console.error("Error details:", error);
     throw error;
   }
 };
@@ -675,7 +632,6 @@ const mealsSlice = createSlice({
         );
 
         state.meals = [...state.meals, ...newMeals] as Meal[];
-        console.log("Meals fetched:", state.meals);
       })
       .addCase(fetchUserMeals.rejected, (state, action) => {
         state.loading = false;
@@ -695,7 +651,6 @@ const mealsSlice = createSlice({
         );
 
         state.allMeals = [...state.allMeals, ...newMeals] as Meal[];
-        console.log("All Meals fetched:", state.allMeals);
       })
       .addCase(fetchAllMeals.rejected, (state, action) => {
         state.loading = false;

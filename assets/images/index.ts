@@ -50,6 +50,7 @@ export { default as iconCalendar } from "./iconCalendar.png";
 export { default as iconMeal } from "./iconmeal.png";
 export { default as filledcheckbox } from "./filledcheckbox.png";
 export { default as whitecorrect } from "./whitecorrect.png";
+export { default as krogerStore } from "./krogerStore.png";
 
 
 

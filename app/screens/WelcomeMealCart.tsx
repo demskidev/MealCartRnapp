@@ -1,18 +1,17 @@
 import {
-    FirstSlideshot,
-    SecondSlideshot,
-    ThirdSlideshot,
-    firstslide,
-    secondslide,
-    thirdslide,
+  FirstSlideshot,
+  SecondSlideshot,
+  ThirdSlideshot,
+  firstslide,
+  secondslide,
+  thirdslide,
 } from "@/assets/images";
-import BaseButton from "@/components/BaseButton";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
-    horizontalScale,
-    moderateScale,
-    verticalScale,
+  horizontalScale,
+  moderateScale,
+  verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
@@ -20,13 +19,13 @@ import { FontFamily, fontSize } from "@/utils/Fonts";
 import { pushNavigation } from "@/utils/Navigation";
 import React, { useRef, useState } from "react";
 import {
-    Dimensions,
-    FlatList,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  FlatList,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -65,7 +64,7 @@ const WelcomeMealCart: React.FC = () => {
       setCurrentIndex(nextIndex);
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
     } else {
-      pushNavigation(APP_ROUTES.HOME);
+      pushNavigation(APP_ROUTES.KROGER_SIGNUP);
     }
   };
 

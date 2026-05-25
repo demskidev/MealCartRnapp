@@ -4,6 +4,10 @@ const AppNavigator = () => {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="screens/KrogerSignupScreen"
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="TestMealPlan" options={{ headerShown: false }} />
       <Stack.Screen name="CreateMealPlan" options={{ headerShown: false }} />
       <Stack.Screen name="TestPlanShopping" options={{ headerShown: false }} />

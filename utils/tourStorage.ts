@@ -8,7 +8,6 @@ export const tourStorage = {
       const value = await AsyncStorage.getItem(TOUR_COMPLETED_KEY);
       return value === 'true';
     } catch (error) {
-      console.error('Error checking tour status:', error);
       return false;
     }
   },
@@ -17,7 +16,6 @@ export const tourStorage = {
     try {
       await AsyncStorage.setItem(TOUR_COMPLETED_KEY, 'true');
     } catch (error) {
-      console.error('Error saving tour status:', error);
     }
   },
 
@@ -25,7 +23,6 @@ export const tourStorage = {
     try {
       await AsyncStorage.removeItem(TOUR_COMPLETED_KEY);
     } catch (error) {
-      console.error('Error resetting tour:', error);
     }
   },
 };

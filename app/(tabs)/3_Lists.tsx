@@ -46,17 +46,14 @@ const ListsScreen: React.FC = () => {
 
   useEffect(() => {
     if (user?.id && !shouldStartTour) {
-      console.log("Fetching shopping lists for user:", user.id);
       showLoader();
       fetchShoppingLists(
         user.id,
         (data) => {
           hideLoader();
-          console.log("Shopping lists fetched:", data.length);
         },
         (error) => {
           hideLoader();
-          console.error("Error fetching shopping lists:", error);
         },
         10,
         null,
@@ -109,7 +106,6 @@ const ListsScreen: React.FC = () => {
       deleteShoppingListData(
         listId,
         () => {
-          console.log("Shopping list deleted successfully");
           setMarkedItems((prev) => {
             const newSet = new Set(prev);
             newSet.delete(listId);
@@ -117,7 +113,6 @@ const ListsScreen: React.FC = () => {
           });
         },
         (error) => {
-          console.error("Error deleting shopping list:", error);
           alert("Error deleting shopping list: " + error);
           setMarkedItems((prev) => {
             const newSet = new Set(prev);

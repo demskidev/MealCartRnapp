@@ -71,7 +71,6 @@ const PlansScreen: React.FC = () => {
         () => hideLoader(),
         (error) => {
           hideLoader();
-          console.error("Error fetching plans:", error);
         },
       );
     }
@@ -83,7 +82,6 @@ const PlansScreen: React.FC = () => {
       () => setRefreshing(false),
       (error) => {
         setRefreshing(false);
-        console.error("Error fetching plans:", error);
       },
     );
   };
@@ -98,7 +96,6 @@ const PlansScreen: React.FC = () => {
     [filteredPlans],
   );
 
-  console.log("🏆 Active Plan:", activePlan);
 
   // Register callback for tour to start first plan
   useEffect(() => {
@@ -257,7 +254,6 @@ const PlansScreen: React.FC = () => {
         })),
       };
 
-      console.log("🛒 Enriched Plan for Shopping List:", enrichedPlan);
       const allIngredients = enrichedPlan.days
         .flatMap((day: any) =>
           (day.mealSlots || [])

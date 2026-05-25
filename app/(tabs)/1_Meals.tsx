@@ -104,7 +104,6 @@ const MealsScreen: React.FC = () => {
               resolve();
             },
             (error) => {
-              console.error("Error fetching initial meals:", error);
               resolve();
             },
             NORMAL_PAGE_SIZE,
@@ -146,14 +145,12 @@ const MealsScreen: React.FC = () => {
   }, [meals, hasActiveFilters]);
 
   const loadInitialMeals = async () => {
-    console.log("Loading initial meals");
     setNormalMeals([]);
     setNormalLastDoc(null);
     setNormalIsEndReached(false);
 
     fetchMeals(
       (data) => {
-        console.log("Initial meals fetched:", data.length);
         if (data.length < NORMAL_PAGE_SIZE) {
           setNormalIsEndReached(true);
         }
@@ -162,9 +159,7 @@ const MealsScreen: React.FC = () => {
           setNormalLastDoc(data[data.length - 1]);
         }
       },
-      (error) => {
-        console.error("Error fetching initial meals:", error);
-      },
+      (error) => {},
       NORMAL_PAGE_SIZE,
       null,
     );
@@ -178,22 +173,13 @@ const MealsScreen: React.FC = () => {
       !normalLastDoc ||
       hasActiveFilters
     ) {
-      console.log("Skipping load more:", {
-        normalIsEndReached,
-        loading,
-        normalIsLoadingMore,
-        hasLastDoc: !!normalLastDoc,
-        hasActiveFilters,
-      });
       return;
     }
 
-    console.log("Loading more meals");
     setNormalIsLoadingMore(true);
 
     fetchMeals(
       (data) => {
-        console.log("More meals fetched:", data.length);
         if (data.length < NORMAL_PAGE_SIZE) {
           setNormalIsEndReached(true);
         }
@@ -203,7 +189,6 @@ const MealsScreen: React.FC = () => {
           const newMeals = data.filter(
             (meal: Meal) => !existingIds.has(meal.id),
           );
-          console.log("New meals to add:", newMeals.length);
           return [...prev, ...newMeals];
         });
 
@@ -213,7 +198,6 @@ const MealsScreen: React.FC = () => {
         setNormalIsLoadingMore(false);
       },
       (error) => {
-        console.error("Error loading more meals:", error);
         setNormalIsLoadingMore(false);
       },
       NORMAL_PAGE_SIZE,
@@ -222,17 +206,10 @@ const MealsScreen: React.FC = () => {
   };
 
   const loadFilteredMeals = async (isInitial: boolean = false) => {
-    console.log("loadFilteredMeals called with isInitial:", isInitial); // Add this
-
     if (!isInitial && (filteredIsEndReached || filteredIsLoadingMore)) {
-      console.log("Skipping load more filtered meals:", {
-        filteredIsEndReached,
-        filteredIsLoadingMore,
-      });
       return;
     }
 
-    console.log("Loading filtered meals with:", { filters, search, isInitial }); // Updated log
     setFilteredIsLoadingMore(true);
 
     showLoader();
@@ -246,24 +223,18 @@ const MealsScreen: React.FC = () => {
         startAfter: isInitial ? null : filteredLastDoc,
       },
       (data) => {
-        console.log("Filtered meals fetched:", data.length);
-        console.log("isInitial in callback:", isInitial); // Add this
-
         if (data.length < FILTERED_PAGE_SIZE) {
           setFilteredIsEndReached(true);
         }
 
         if (isInitial) {
-          console.log("Setting filtered meals directly (initial load)"); // Add this
           setFilteredMeals(data);
         } else {
-          console.log("Appending to existing filtered meals"); // Add this
           setFilteredMeals((prev) => {
             const existingIds = new Set(prev.map((meal: Meal) => meal.id));
             const newMeals = data.filter(
               (meal: Meal) => !existingIds.has(meal.id),
             );
-            console.log("New filtered meals to add:", newMeals.length);
             return [...prev, ...newMeals];
           });
         }
@@ -275,7 +246,6 @@ const MealsScreen: React.FC = () => {
       },
       (error) => {
         hideLoader();
-        console.error("Error fetching filtered meals:", error);
         setFilteredIsLoadingMore(false);
       },
     );
@@ -296,18 +266,11 @@ const MealsScreen: React.FC = () => {
       !loading &&
       !normalIsLoadingMore
     ) {
-      console.log("ScrollView reached bottom, loading more normal meals");
       loadMoreNormalMeals();
     }
   };
 
   const handleFilteredEndReached = () => {
-    console.log("Filtered FlatList end reached", {
-      filteredIsEndReached,
-      loading,
-      filteredIsLoadingMore,
-    });
-
     if (!filteredIsEndReached && !loading && !filteredIsLoadingMore) {
       loadFilteredMeals(false);
     }
@@ -332,7 +295,6 @@ const MealsScreen: React.FC = () => {
           startAfter: null,
         },
         (data) => {
-          console.log("Refreshed filtered meals fetched:", data.length);
           if (data.length < FILTERED_PAGE_SIZE) {
             setFilteredIsEndReached(true);
           }
@@ -343,7 +305,6 @@ const MealsScreen: React.FC = () => {
           setRefreshing(false);
         },
         (error) => {
-          console.error("Error refreshing filtered meals:", error);
           setRefreshing(false);
         },
       );
@@ -355,7 +316,6 @@ const MealsScreen: React.FC = () => {
 
       fetchMeals(
         (data) => {
-          console.log("Refreshed meals fetched:", data.length);
           if (data.length < NORMAL_PAGE_SIZE) {
             setNormalIsEndReached(true);
           }
@@ -367,7 +327,6 @@ const MealsScreen: React.FC = () => {
           setRefreshing(false);
         },
         (error) => {
-          console.error("Error refreshing meals:", error);
           setRefreshing(false);
         },
         NORMAL_PAGE_SIZE,
@@ -392,7 +351,6 @@ const MealsScreen: React.FC = () => {
         marginBottom: verticalScale(8),
       }}
       onPress={() => {
-        console.log("Selected Meal:", item);
         router.push({
           pathname: "/appscreens/MealDetailScreen",
           params: { mealId: item.id },
@@ -426,13 +384,6 @@ const MealsScreen: React.FC = () => {
       </View>
     </Pressable>
   );
-  console.log("Render state:", {
-    hasActiveFilters,
-    isMyMeals,
-    filteredMealsLength: filteredMeals.length,
-    displayMealsLength: displayMeals.length,
-  });
-
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={{ flex: 1 }}>

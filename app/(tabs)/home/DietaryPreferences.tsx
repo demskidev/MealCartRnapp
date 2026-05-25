@@ -43,12 +43,8 @@ export default function DietaryPreferences({
   useEffect(() => {
     // Fetch the list of all dietary preferences from Firestore
     fetchDietaryPreferences(
-      () => {
-        console.log("Dietary preferences fetched successfully");
-      },
-      (error) => {
-        console.error("Error fetching dietary preferences:", error);
-      },
+      () => {},
+      () => {},
     );
   }, []);
 
@@ -79,7 +75,6 @@ export default function DietaryPreferences({
       (error) => {
         hideLoader();
         showErrorToast(Strings.failedToSavePreferences);
-        console.error("Error updating dietary preferences:", error);
       },
     );
   };

@@ -233,7 +233,6 @@ export const usePlanViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void
   ) => {
-    console.log("Fetching plans for user:", userId);
     if (!userId) {
       onError?.("User not found");
       return;

@@ -20,7 +20,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Listen to Firebase auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("Auth state changed:", user?.uid);
       if (user) {
         // User is signed in, verify they exist in Firestore
         try {
@@ -31,7 +30,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             setIsAuthenticated(false);
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
           setIsAuthenticated(false);
         }
       } else {

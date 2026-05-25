@@ -50,7 +50,6 @@ export const loadCustomFonts = async (): Promise<void> => {
     await Font.loadAsync(FONTS_TO_LOAD);
     fontsLoaded = true;
   } catch (error) {
-    console.error('Failed to load fonts:', error);
     throw new Error('Font loading failed');
   }
 };

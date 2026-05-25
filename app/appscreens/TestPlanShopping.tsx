@@ -127,18 +127,13 @@ export default function TestPlanShopping() {
           (error) => {
             hideLoader();
             setSelectedList(null);
-            console.error("Error fetching shopping list by id:", error);
           },
         );
       }
     }, [listId, isTourMode, dummyTourList]),
   );
-  console.log("Selected listId:", listId);
-
-  console.log("Selected list full data:", selectedList);
 
   const allIngredients = selectedList?.ingredients || selectedList?.items || [];
-  console.log("Ingredients for selected list:", allIngredients);
 
   // const toggleCheck = (id: string) => {
   //   setChecked((prev) =>
@@ -168,7 +163,6 @@ export default function TestPlanShopping() {
           acquired: idx === index ? isNowChecked : ingredient.acquired || false,
         }),
       );
-      console.log("mappedIngredients", mappedIngredients);
 
       // Prepare updated ingredients array
       const updatedIngredients = mappedIngredients.map(
@@ -220,12 +214,9 @@ export default function TestPlanShopping() {
           setRemoving(false);
           alert(Strings.shoppingList_deleted);
           backNavigation();
-          console.log("Shopping list deleted successfully");
         },
         (error) => {
           setRemoving(false);
-
-          console.error("Error deleting shopping list:", error);
           alert(Strings.error_deleting_shoppingList);
         },
       );
@@ -385,7 +376,6 @@ export default function TestPlanShopping() {
         ref={createNewListRef}
         shoppingList={selectedList}
         onClose={() => {
-          console.log("CreateNewListBottomSheet closed");
           if (!isTourMode && listId) {
             showLoader();
             fetchListById(
@@ -397,7 +387,6 @@ export default function TestPlanShopping() {
               (error) => {
                 hideLoader();
                 setSelectedList(null);
-                console.error("Error fetching shopping list by id:", error);
               },
             );
           }

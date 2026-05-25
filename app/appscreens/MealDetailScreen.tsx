@@ -23,9 +23,8 @@ export default function MealDetailScreen() {
     if (meals.length === 0) {
       showLoader();
       fetchMeals(
-        () => console.log("MealDetailScreen - Meals fetched successfully"),
-        (error) =>
-          console.error("MealDetailScreen - Error fetching meals:", error)
+        () => {},
+        () => {}
       );
     }
   }, []);
@@ -59,9 +58,8 @@ export default function MealDetailScreen() {
         },
         updateWithIngredients: false,
       },
-      () => console.log("MealDetailScreen - Updated lastViewedAt"),
-      (error) =>
-        console.error("MealDetailScreen - Error updating lastViewedAt:", error)
+      () => {},
+      () => {}
     );
   }, [meal?.id]);
 

@@ -54,15 +54,11 @@ export class ResetPasswordViewModel {
 
       await sendPasswordResetEmail(auth, email);
 
-      console.log('Password reset email sent to:', email);
-
       return {
         success: true,
         message: 'Reset password email sent successfully',
       };
     } catch (error: any) {
-      console.error('Error sending reset password email:', error);
-
       let errorMessage = 'Failed to send reset password email';
 
       if (error.code === 'auth/user-not-found') {

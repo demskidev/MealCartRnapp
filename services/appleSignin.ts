@@ -36,8 +36,6 @@ export const signInWithApple = async (): Promise<AppleSignInResult> => {
       ],
     });
 
-    console.log('🍎 [Apple Sign-In] Credential:', JSON.stringify(appleCredential, null, 2));
-
     const { identityToken, email, fullName } = appleCredential;
 
     if (!identityToken) {
@@ -56,8 +54,6 @@ export const signInWithApple = async (): Promise<AppleSignInResult> => {
  
     const userCredential = await signInWithCredential(auth, credential);
     const firebaseUser = userCredential.user;
-
-    console.log('🔥 [Firebase] User signed in:', firebaseUser.uid);
 
    
     const existingUser = await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
@@ -80,13 +76,10 @@ export const signInWithApple = async (): Promise<AppleSignInResult> => {
         uid: firebaseUser.uid,
       };
 
-      console.log('💾 [New User] Saving to Firestore:', JSON.stringify(newUserData, null, 2));
       await setDocumentById(USERS_COLLECTION, firebaseUser.uid, newUserData);
 
-      const savedData = await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
-      console.log('✅ [New User] Saved successfully:', JSON.stringify(savedData, null, 2));
+      await getDocumentById(USERS_COLLECTION, firebaseUser.uid);
     } else {
-      console.log('✅ [Existing User] User already exists, skipping Firestore write');
     }
 
     return {
@@ -100,8 +93,6 @@ export const signInWithApple = async (): Promise<AppleSignInResult> => {
       },
     };
   } catch (error: any) {
-    console.error('🍎 [Apple Sign-In] Error:', error);
-
     let errorMessage = 'Failed to sign in with Apple';
 
     if (error.code === 'ERR_REQUEST_CANCELED') {
@@ -124,7 +115,6 @@ export const signOutApple = async () => {
     await auth.signOut();
     return { success: true };
   } catch (error) {
-    console.error('Apple sign-out error:', error);
     return { success: false, error: 'Failed to sign out' };
   }
 };

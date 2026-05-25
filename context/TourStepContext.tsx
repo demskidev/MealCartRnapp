@@ -109,7 +109,6 @@ export const TourStepProvider: React.FC<{ children: React.ReactNode }> = ({
     if (user) {
       // If field doesn't exist or is false, show tour
       const hasCompletedTour = user.hasCompletedTour ?? false;
-      console.log("📊 User tour status from Firebase:", hasCompletedTour);
       setShouldStartTour(!hasCompletedTour);
     } else {
       // No user logged in, don't show tour
@@ -132,7 +131,6 @@ export const TourStepProvider: React.FC<{ children: React.ReactNode }> = ({
           userData: { hasCompletedTour: true },
         }),
       );
-      console.log("✅ Tour completed and saved to Firebase");
     }
 
     setShouldStartTour(false);
@@ -147,7 +145,6 @@ export const TourStepProvider: React.FC<{ children: React.ReactNode }> = ({
           userData: { hasCompletedTour: false },
         }),
       );
-      console.log("🔄 Tour reset in Firebase");
     }
     setShouldStartTour(true);
   };

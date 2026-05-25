@@ -177,36 +177,18 @@ const HomeScreen: React.FC = () => {
 
       if (shouldStartTour && canStart && isLayoutReady) {
         const timer = setTimeout(() => {
-          console.log("🚀 Starting tour guide...");
           start();
         }, 500);
 
         return () => clearTimeout(timer);
-      } else {
-        console.log(
-          "❌ Tour NOT starting - shouldStartTour:",
-          shouldStartTour,
-          "canStart:",
-          canStart,
-          "isLayoutReady:",
-          isLayoutReady,
-        );
       }
     }, [shouldStartTour, canStart, tourLoading, isLayoutReady]),
   );
 
   React.useEffect(() => {
-    const onStop = () => {
-      if (!isNavigating) {
-        console.log("Tour closed by user");
-      } else {
-        console.log("Tour navigating to next screen, not closing");
-      }
-    };
+    const onStop = () => {};
 
-    const onStart = () => {
-      console.log("Tour started");
-    };
+    const onStart = () => {};
 
     eventEmitter?.on("stop", onStop);
     eventEmitter?.on("start", onStart);
@@ -235,10 +217,6 @@ const HomeScreen: React.FC = () => {
         isGreetingVisible &&
         scrollY.current <= 10 // Only allow swipe gesture when near the top
       ) {
-        console.log(
-          "Hiding greeting and meal images - swipe up gesture",
-          swipeDistance,
-        );
 
         // Hide greeting section
         Animated.parallel([
@@ -277,10 +255,7 @@ const HomeScreen: React.FC = () => {
         !isGreetingVisible &&
         scrollY.current <= 10 // Only allow swipe gesture when at the top
       ) {
-        console.log(
-          "Showing greeting and meal images - swipe down gesture",
-          swipeDistance,
-        );
+
 
         // Show greeting section
         Animated.parallel([
@@ -317,7 +292,6 @@ const HomeScreen: React.FC = () => {
 
   const getTodayMeals = () => {
     if (!activePlan || !activePlan.days) return [];
-    console.log("wearegettingupcomingmeals", activePlan);
 
     // Collect all meals from all days in plan order
     const allUpcomingMeals: Meal[] = [];
@@ -450,7 +424,6 @@ const HomeScreen: React.FC = () => {
                       style={styles.mealcartLogoParent}
                       onLayout={() => {
                         if (!isLayoutReady) {
-                          console.log("✅ Zone 1 layout ready");
                           setIsLayoutReady(true);
                         }
                       }}

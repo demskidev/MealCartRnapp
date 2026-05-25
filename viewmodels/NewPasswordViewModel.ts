@@ -16,7 +16,6 @@ export class NewPasswordViewModel {
       await this.validationSchema.validate(values, { abortEarly: false });
 
       // TODO: Call API to set new password
-      console.log('New password set attempt');
 
       return {
         success: true,

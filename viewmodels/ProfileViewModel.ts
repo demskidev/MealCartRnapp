@@ -112,7 +112,6 @@ export const useProfileViewModel = () => {
       onError?.("User not found");
       return;
     }
-    console.log("wearecallinguserupdate333335555", userData);
 
     const resultAction = await dispatch(
       updateUserAsync({ userId: user.id, userData }),

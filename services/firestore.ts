@@ -18,14 +18,10 @@ import { db, storage } from "./firebase";
 
 export const getAllDocuments = async (collectionName: string) => {
   try {
-    console.log("getAllDocuments called with:", collectionName);
     const colRef = collection(db, collectionName);
-    console.log("colRef:", colRef);
     const snapshot = await getDocs(colRef);
-    console.log("Firestore getAllDocuments snapshot:", snapshot);
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error("Error in getAllDocuments:", err);
     throw err;
   }
 };
@@ -52,15 +48,8 @@ export const setDocumentById = async (
   id: string,
   data: any
 ) => {
-  console.log('📝 [setDocumentById] Called with:');
-  console.log('  Collection:', collectionName);
-  console.log('  Document ID:', id);
-  console.log('  Data:', JSON.stringify(data, null, 2));
-  
   const docRef = doc(db, collectionName, id);
   await setDoc(docRef, data);
-  
-  console.log('✅ [setDocumentById] Document written successfully');
 };
 
 export const updateDocument = async (
@@ -224,7 +213,6 @@ export const getSubcollectionDocuments = async (
     const snapshot = await getDocs(subcollectionRef);
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error("Error in getSubcollectionDocuments:", err);
     return [];
   }
 };

@@ -107,16 +107,13 @@ const AddItemToList = ({
   useEffect(() => {
     // Only fetch if meals array is empty
     if (visible && meals.length === 0) {
-      console.log("Loading initial meals");
       setIsLoading(true);
       fetchMeals(
         (data) => {
           setIsLoading(false);
-          console.log("addmealtolist meals fetched:", data.length);
         },
         (error) => {
           setIsLoading(false);
-          console.error("Error fetching initial meals:", error);
         },
         3,
         null,
@@ -144,7 +141,6 @@ const AddItemToList = ({
         (error) => {
           setIsLoading(false);
           setFilteredMeals([]);
-          console.error("❌ Error searching meals:", error);
         },
       );
     }, 400); // 400ms debounce
@@ -193,9 +189,6 @@ const AddItemToList = ({
 
     setDynamicIngredients(allIngredientNames);
     setFullIngredientsData(allFullIngredients);
-
-    console.log("📝 Extracted ingredient names:", allIngredientNames);
-    console.log("📝 Full ingredients data:", allFullIngredients);
   }, [selectedMeals, meals]);
 
   // Removed initialization of itemWeights - let them be undefined by default
@@ -235,20 +228,16 @@ const AddItemToList = ({
   };
 
   const handleSelectSuggestion = (value: string) => {
-    console.log("🔵 handleSelectSuggestion called with:", value);
-
     if (
       pendingItems.some((i) => i.value === value) ||
       manualList.some((i) => i.value === value)
     ) {
-      console.log("⚠️ Item already exists, returning");
       setSearchText("");
       setIsInputFocused(false);
       return;
     }
 
     const newItem = { id: Date.now().toString(), value };
-    console.log("✅ Adding new item:", newItem);
 
     setPendingItems((prev) => [...prev, newItem]);
     setSearchText("");
@@ -259,7 +248,6 @@ const AddItemToList = ({
     setManualList((prev) => [...prev, item]);
     setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
   };
-  console.log("mealsllllllll999", meals);
 
   // Use dynamic ingredients from selected meals
 
@@ -414,21 +402,6 @@ const AddItemToList = ({
               <ActivityIndicator size="large" style={styles.loader} />
             )}
 
-            {meals.length > 0 &&
-              console.log("First meal:", JSON.stringify(meals[0], null, 2))}
-            {meals.length > 0 &&
-              console.log("First meal:rrrrr", meals[0], null, 2)}
-
-            {meals.length > 0 &&
-              console.log("First meal:1111", JSON.stringify(meals, null, 2))}
-
-            {meals.length > 0 &&
-              meals[0]?.ingredients?.[0] &&
-              console.log(
-                "First ingredient:",
-                JSON.stringify(meals[0].ingredients[0], null, 2),
-              )}
-
             <TouchableWithoutFeedback>
               <View>
                 <FlatList
@@ -514,10 +487,6 @@ const AddItemToList = ({
 
                             <TouchableOpacity
                               onPress={() => {
-                                console.log(
-                                  "🟢 TouchableOpacity pressed:",
-                                  item,
-                                );
                                 handleSelectSuggestion(item);
                               }}
                               style={styles.suggestionTouchable}
@@ -561,13 +530,6 @@ const AddItemToList = ({
                   />
                 )}
 
-                {console.log("📊 FlatList data:", [
-                  ...pendingItems,
-                  ...manualList,
-                ])}
-                {console.log("📊 pendingItems length:", pendingItems.length)}
-                {console.log("📊 manualList length:", manualList.length)}
-
                 <FlatList
                   data={[...pendingItems, ...manualList]}
                   extraData={[pendingItems, manualList]}
@@ -575,7 +537,6 @@ const AddItemToList = ({
                   style={styles.manualListStyle}
                   showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => {
-                    console.log("🎨 Rendering item:", item);
                     const isPending = pendingItems.some(
                       (i) => i.id === item.id,
                     );

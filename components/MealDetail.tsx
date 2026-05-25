@@ -67,26 +67,16 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
       await deleteTheMeal(
         meal.id,
         (payload) => {
-          console.log("✅ Meal deleted successfully:", payload);
           hideLoader();
           showSuccessToast(Strings.meal_deleted);
           onBack();
         },
         (error) => {
           hideLoader();
-          console.error(
-            "❌ Error deleting meal from deleteTheMeal callback:",
-            error,
-          );
           showErrorToast(error || Strings.error_deleting_meal);
         },
       );
     } catch (error: any) {
-      console.error("❌ Exception caught in handleDeleteMeal:", {
-        message: error?.message,
-        code: error?.code,
-        error: error,
-      });
       showErrorToast(error?.message || Strings.error_occurred_deleting_meal);
     }
   };

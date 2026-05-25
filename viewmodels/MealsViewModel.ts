@@ -114,12 +114,8 @@ export const useMealsViewModel = () => {
       fetchRecentMeals({ userId: userId!, limit, startAfter })
     );
     if (fetchRecentMeals.fulfilled.match(resultAction)) {
-      console.log("Fetched recent meals:", resultAction.payload);
-
       onSuccess?.(resultAction.payload);
     } else {
-      console.log("Error fetching recent meals:", resultAction.payload);
-
       onError?.(resultAction.payload as string);
     }
   };

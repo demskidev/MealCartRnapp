@@ -1,7 +1,6 @@
 import "react-native-gesture-handler";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { TourGuideProvider } from "rn-tourguide";
-
 import Loader from "@/components/Loader";
 import TourTooltip from "@/components/TourTooltip";
 import { moderateScale } from "@/constants/Constants";

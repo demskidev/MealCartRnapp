@@ -238,7 +238,6 @@ const CreateNewListBottomSheet = forwardRef<
     if (shouldStartTour && isCreateListBottomSheetOpen && !isTourOpen) {
       // Small delay to ensure the screen is mounted
       const timer = setTimeout(() => {
-        console.log("🔄 Reopening bottom sheet after navigation");
         bottomSheetRef.current?.expand();
         setIsTourOpen(true);
       }, 300);
@@ -350,7 +349,6 @@ const CreateNewListBottomSheet = forwardRef<
         count: ingredient.count || 1,
         acquired: ingredient.acquired || false,
       }));
-      console.log("mappedIngredients", mappedIngredients);
 
       const shoppingListData = {
         listName: listName.trim(),
@@ -371,8 +369,6 @@ const CreateNewListBottomSheet = forwardRef<
 
       showLoader();
       if (shoppingList && shoppingList.id && from !== "plan") {
-        console.log("shoppingListData", updatingShoppingListData);
-
         // Edit mode: update existing list
         updateShoppingListData(
           updatingShoppingListData,
@@ -389,8 +385,6 @@ const CreateNewListBottomSheet = forwardRef<
           },
         );
       } else {
-        console.log("shoppingListData", shoppingListData);
-
         // Create mode: add new list
         addShoppingListData(
           shoppingListData,

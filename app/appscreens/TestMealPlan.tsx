@@ -56,7 +56,6 @@ export default function TestMealPlan({}) {
           },
           (error) => {
             hideLoader();
-            console.error("Error fetching plan:", error);
           },
         );
       } else {
@@ -74,7 +73,6 @@ export default function TestMealPlan({}) {
           router.back();
         },
         (error) => {
-          console.error("Error deleting plan:", error);
           setRemovePlan(false);
         },
       );

@@ -28,7 +28,6 @@ import {
 import { MEAL_IMAGE_FOLDER, USER_IMAGE_FOLDER, USERS_COLLECTION } from "../appKeys";
 // Utility to map Firebase Auth error codes to user-friendly messages
 function getFirebaseAuthErrorMessage(error: any): string {
-  console.log("Firebase Auth Error:", JSON.stringify(error));
   switch (error.code) {
     case "auth/invalid-credential":
     case "auth/user-not-found":
@@ -57,7 +56,6 @@ export const loginAsync = createAsyncThunk(
         credentials.email,
         credentials.password,
       );
-      console.log("auth user signin", userCredential);
       if (userCredential?.user) {
         const userUid = userCredential.user.uid;
 
@@ -119,7 +117,6 @@ export const loadUserByUidAsync = createAsyncThunk(
         return rejectWithValue("User data not found in Firestore");
       }
 
-      console.log("✅ [loadUserByUidAsync] User data loaded:", userData);
       return userData;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to load user data");
@@ -159,7 +156,6 @@ export const updateUserAsync = createAsyncThunk(
         userId,
         userData,
       );
-      console.log("upppppppp8888", updatedUser);
       return updatedUser;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to update user data");
@@ -232,7 +228,6 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
 
         state.user = action.payload;
-        console.log("User logged in:", action.payload);
         state.loading = false;
         state.error = null;
       })

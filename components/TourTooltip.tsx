@@ -232,28 +232,11 @@ const TourTooltip: React.FC<TooltipProps> = ({
   const pathname = usePathname();
 
   const stepIndex = (currentStep?.order ?? 1) - 1;
-  console.log(
-    "🎯 Tooltip - Step:",
-    stepIndex,
-    "Name:",
-    currentStep?.name,
-    "Order:",
-    currentStep?.order,
-  );
-  console.log("Current step properties:", {
-    name: currentStep?.name,
-    order: currentStep?.order,
-    text: currentStep?.text,
-    visible: currentStep?.visible,
-  });
   const step = tourSteps[stepIndex];
 
   if (!step) {
-    console.log("❌ No step found for index:", stepIndex);
     return null;
   }
-
-  console.log("✅ Rendering tooltip for step:", step.title);
 
   const onSkip = async () => {
     showLoader();

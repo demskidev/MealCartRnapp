@@ -11,6 +11,8 @@ export { default as FilledCheckBox } from "./iconfilledcheckbox.svg";
 export { default as MealsLogo } from "./meals_logo.svg";
 export { default as SearchIcon } from "./searchIcon.svg";
 export { default as SplashIcon } from "./splash_icon.svg";
+export { default as KrogerIcon } from "./kroger.svg";
+
 
 
 
