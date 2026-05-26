@@ -55,13 +55,11 @@ const SignInScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastGoogleClickRef.current < 2000) {
-
       return;
     }
     lastGoogleClickRef.current = now;
 
     if (isGoogleSigningIn) {
-
       return;
     }
 
@@ -101,13 +99,11 @@ const SignInScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastAppleClickRef.current < 2000) {
-
       return;
     }
     lastAppleClickRef.current = now;
 
     if (isAppleSigningIn) {
-
       return;
     }
 
@@ -138,7 +134,6 @@ const SignInScreen = () => {
     } catch (error) {
       hideLoader();
       showErrorToast("An unexpected error occurred");
-
     } finally {
       setIsAppleSigningIn(false);
     }

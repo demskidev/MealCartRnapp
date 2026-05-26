@@ -46,7 +46,7 @@ export const addDocument = async (collectionName: string, data: any) => {
 export const setDocumentById = async (
   collectionName: string,
   id: string,
-  data: any
+  data: any,
 ) => {
   const docRef = doc(db, collectionName, id);
   await setDoc(docRef, data);
@@ -55,7 +55,7 @@ export const setDocumentById = async (
 export const updateDocument = async (
   collectionName: string,
   id: string,
-  data: any
+  data: any,
 ) => {
   const docRef = doc(db, collectionName, id);
   await updateDoc(docRef, data);
@@ -81,7 +81,7 @@ export const queryDocuments = async (
     startAfter?: any;
     orderBy?: string;
     orderDirection?: "asc" | "desc";
-  }
+  },
 ) => {
   const colRef = collection(db, collectionName);
 
@@ -89,7 +89,7 @@ export const queryDocuments = async (
 
   if (options?.orderBy) {
     queryConstraints.push(
-      orderBy(options.orderBy, options.orderDirection || "asc")
+      orderBy(options.orderBy, options.orderDirection || "asc"),
     );
   }
 
@@ -104,11 +104,11 @@ export const queryDocuments = async (
       } else if (options.startAfter.createdAt.seconds) {
         cursorValue = new Timestamp(
           options.startAfter.createdAt.seconds,
-          options.startAfter.createdAt.nanoseconds || 0
+          options.startAfter.createdAt.nanoseconds || 0,
         );
       } else {
         cursorValue = Timestamp.fromDate(
-          new Date(options.startAfter.createdAt)
+          new Date(options.startAfter.createdAt),
         );
       }
 
@@ -133,7 +133,7 @@ export const compoundQueryDocuments = async (
     startAfter?: any;
     orderBy?: string;
     orderDirection?: "asc" | "desc";
-  }
+  },
 ) => {
   const colRef = collection(db, collectionName);
 
@@ -148,7 +148,7 @@ export const compoundQueryDocuments = async (
 
   if (options?.orderBy) {
     queryConstraints.push(
-      orderBy(options.orderBy, options.orderDirection || "asc")
+      orderBy(options.orderBy, options.orderDirection || "asc"),
     );
   }
 
@@ -162,11 +162,11 @@ export const compoundQueryDocuments = async (
       } else if (options.startAfter.createdAt.seconds) {
         cursorValue = new Timestamp(
           options.startAfter.createdAt.seconds,
-          options.startAfter.createdAt.nanoseconds || 0
+          options.startAfter.createdAt.nanoseconds || 0,
         );
       } else {
         cursorValue = Timestamp.fromDate(
-          new Date(options.startAfter.createdAt)
+          new Date(options.startAfter.createdAt),
         );
       }
       queryConstraints.push(qStartAfter(cursorValue));
@@ -201,14 +201,14 @@ export const uploadImageToFirebase = async (uri: string, path: string) => {
 export const getSubcollectionDocuments = async (
   parentCollection: string,
   parentDocId: string,
-  subcollectionName: string
+  subcollectionName: string,
 ) => {
   try {
     const subcollectionRef = collection(
       db,
       parentCollection,
       parentDocId,
-      subcollectionName
+      subcollectionName,
     );
     const snapshot = await getDocs(subcollectionRef);
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -222,14 +222,14 @@ export const updateSubcollectionDocument = async (
   parentDocId: string,
   subcollectionName: string,
   docId: string,
-  data: any
+  data: any,
 ) => {
   const docRef = doc(
     db,
     parentCollection,
     parentDocId,
     subcollectionName,
-    docId
+    docId,
   );
   await updateDoc(docRef, data);
   const updatedDoc = await getDoc(docRef);
@@ -246,14 +246,14 @@ export const setSubcollectionDocument = async (
   parentDocId: string,
   subcollectionName: string,
   docId: string,
-  data: any
+  data: any,
 ) => {
   const docRef = doc(
     db,
     parentCollection,
     parentDocId,
     subcollectionName,
-    docId
+    docId,
   );
   await setDoc(docRef, data);
   return { id: docId, ...data };
@@ -266,7 +266,7 @@ export const getAllDocumentsWithPagination = async (
     startAfter?: any;
     orderBy?: string;
     orderDirection?: "asc" | "desc";
-  }
+  },
 ) => {
   const colRef = collection(db, collectionName);
 
@@ -274,7 +274,7 @@ export const getAllDocumentsWithPagination = async (
 
   if (options?.orderBy) {
     queryConstraints.push(
-      orderBy(options.orderBy, options.orderDirection || "asc")
+      orderBy(options.orderBy, options.orderDirection || "asc"),
     );
   }
 
@@ -288,11 +288,11 @@ export const getAllDocumentsWithPagination = async (
       } else if (options.startAfter.createdAt.seconds) {
         cursorValue = new Timestamp(
           options.startAfter.createdAt.seconds,
-          options.startAfter.createdAt.nanoseconds || 0
+          options.startAfter.createdAt.nanoseconds || 0,
         );
       } else {
         cursorValue = Timestamp.fromDate(
-          new Date(options.startAfter.createdAt)
+          new Date(options.startAfter.createdAt),
         );
       }
       queryConstraints.push(qStartAfter(cursorValue));

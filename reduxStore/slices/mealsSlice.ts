@@ -90,11 +90,19 @@ const saveMealIngredientsToSubcollection = async (
     // Then add each ingredient to the subcollection
     for (const ing of ingredients) {
       if (ing.ingredientId) {
-        const ingredientData = {
+        const ingredientData: any = {
           name: ing.name || ing.ingredientName,
           unit: ing.unit,
           count: ing.count || "0",
         };
+
+        if (ing.isKroger) {
+          ingredientData.isKroger = true;
+          ingredientData.krogerIngredientId = ing.krogerIngredientId || "";
+          ingredientData.category = ing.category || "";
+        } else {
+          ingredientData.categoryId = ing.categoryId || ing.category || "";
+        }
 
         await setSubcollectionDocument(
           MEAL_INGREDIENTS_COLLECTION,
@@ -115,11 +123,21 @@ const addMealToDb = async (mealData: any) => {
     // Extract ingredients for subcollection
     const ingredientsForSubcollection = mealData.ingredients || [];
 
-    // Clean the meal data - only store ingredientId and categoryId in main meal document
-    const cleanedIngredients = ingredientsForSubcollection.map((ing: any) => ({
-      ingredientId: ing.ingredientId,
-      categoryId: ing.category, // This is the categoryId
-    }));
+    // Clean the meal data - store IDs + Kroger-specific fields in main meal document
+    const cleanedIngredients = ingredientsForSubcollection.map((ing: any) => {
+      const base: any = {
+        ingredientId: ing.ingredientId,
+      };
+
+      if (ing.isKroger) {
+        base.isKroger = true;
+        base.krogerIngredientId = ing.krogerIngredientId || "";
+      } else {
+        base.categoryId = ing.categoryId || ing.category;
+      }
+
+      return base;
+    });
 
     const cleanedMealData = {
       ...mealData,
@@ -251,39 +269,52 @@ export const enrichMealsWithIngredients = async (
           "ingredients",
         );
 
-        return {
-          ...meal,
-          ingredients: await Promise.all(
-            meal.ingredients?.map(async (ing: any) => {
-              const ingredientDetails: any = ingredientsData.find(
-                (data: any) => data.id === ing.ingredientId,
-              );
-
-              let categoryName = ing.categoryName;
-              let categoryUnits = ing.categoryName;
-              if (ing.categoryId) {
-                try {
-                  const categoryDoc: any = await getDocumentById(
-                    INGREDIENTS_CATEGORY_COLLECTION,
-                    ing.categoryId,
-                  );
-                  categoryName = categoryDoc?.title || categoryName;
-                  categoryUnits = categoryDoc?.unit || categoryUnits;
-                } catch (error) {
-              }
+        // Build ingredients from subcollection (source of truth)
+        const enrichedIngredients = await Promise.all(
+          ingredientsData.map(async (subDoc: any) => {
+            // Kroger ingredient
+            if (subDoc.isKroger) {
+              return {
+                ingredientId: subDoc.id,
+                isKroger: true,
+                krogerIngredientId: subDoc.krogerIngredientId || "",
+                count: subDoc.count || "0",
+                ingredientName: subDoc.name || "",
+                unit: subDoc.unit || "",
+                categoryName: subDoc.category || "",
+              };
             }
 
-              return {
-                categoryId: ing.categoryId,
-                ingredientId: ing.ingredientId,
-                count: ing.count ?? "0",
-                ingredientName: ingredientDetails?.name,
-                unit: ingredientDetails?.unit,
-                categoryName: categoryName,
-                categoryUnits: categoryUnits,
-              };
-            }) || [],
-          ),
+            // Non-Kroger: look up category from Firestore
+            const categoryId = subDoc.categoryId || "";
+            let categoryName = "";
+            let categoryUnits: any = [];
+            if (categoryId) {
+              try {
+                const categoryDoc: any = await getDocumentById(
+                  INGREDIENTS_CATEGORY_COLLECTION,
+                  categoryId,
+                );
+                categoryName = categoryDoc?.title || "";
+                categoryUnits = categoryDoc?.unit || [];
+              } catch (error) {}
+            }
+
+            return {
+              ingredientId: subDoc.id,
+              categoryId,
+              count: subDoc.count || "0",
+              ingredientName: subDoc.name || "",
+              unit: subDoc.unit || "",
+              categoryName,
+              categoryUnits,
+            };
+          }),
+        );
+
+        return {
+          ...meal,
+          ingredients: enrichedIngredients,
         };
       } catch (error) {
         return meal;
@@ -492,11 +523,19 @@ const updateMealIngredientsSubcollection = async (
 
     for (const ing of ingredients) {
       if (ing.ingredientId) {
-        const ingredientData = {
+        const ingredientData: any = {
           name: ing.ingredientName || ing.name,
           unit: ing.unit,
           count: ing.count || "0",
         };
+
+        if (ing.isKroger) {
+          ingredientData.isKroger = true;
+          ingredientData.krogerIngredientId = ing.krogerIngredientId || "";
+          ingredientData.category = ing.category || "";
+        } else {
+          ingredientData.categoryId = ing.categoryId || ing.category || "";
+        }
 
         await setSubcollectionDocument(
           MEAL_INGREDIENTS_COLLECTION,
@@ -507,8 +546,7 @@ const updateMealIngredientsSubcollection = async (
         );
       }
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 const updateMealInDb = async (
@@ -519,11 +557,21 @@ const updateMealInDb = async (
     // Store ingredients for subcollection before cleaning
     const ingredientsForSubcollection = mealData.ingredients || [];
 
-    // Clean ingredients for main meal document - only store IDs
-    const cleanedIngredients = ingredientsForSubcollection.map((ing: any) => ({
-      ingredientId: ing.ingredientId,
-      categoryId: ing.categoryId,
-    }));
+    // Clean ingredients for main meal document - store IDs + Kroger-specific fields
+    const cleanedIngredients = ingredientsForSubcollection.map((ing: any) => {
+      const base: any = {
+        ingredientId: ing.ingredientId,
+      };
+
+      if (ing.isKroger) {
+        base.isKroger = true;
+        base.krogerIngredientId = ing.krogerIngredientId || "";
+      } else {
+        base.categoryId = ing.categoryId;
+      }
+
+      return base;
+    });
 
     // Build clean meal data object with only valid Firestore fields
     const cleanedMealData: any = {

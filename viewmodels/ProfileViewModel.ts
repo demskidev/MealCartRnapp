@@ -1,7 +1,5 @@
 // viewmodels/ProfileViewModel.ts
-import {
-  MEAL_PLAN_COLLECTION
-} from "@/reduxStore/appKeys";
+import { MEAL_PLAN_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
   changePasswordAsync,
@@ -12,7 +10,7 @@ import {
   deleteMealPlanAsync,
   fetchDietryPreferencesAsync,
   fetchMealPlansAsync,
-  updateMealPlansBatchAsync
+  updateMealPlansBatchAsync,
 } from "@/reduxStore/slices/profileSlice";
 import { getDocumentById } from "@/services/firestore";
 

@@ -30,7 +30,7 @@ export const useMealsViewModel = () => {
       startAfter?: any;
     },
     onSuccess?: (meals: any[]) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     if (!userId) {
       onError?.("User ID not found");
@@ -45,7 +45,7 @@ export const useMealsViewModel = () => {
         searchText: filters.searchText,
         limit: filters.limit ?? 10,
         startAfter: filters.startAfter ?? null,
-      })
+      }),
     );
     if (searchMeals.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
@@ -58,10 +58,10 @@ export const useMealsViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void,
     limit: number = 10,
-    startAfter: any = null
+    startAfter: any = null,
   ) => {
     const resultAction = await dispatch(
-      fetchUserMeals({ userId: userId!, limit, startAfter })
+      fetchUserMeals({ userId: userId!, limit, startAfter }),
     );
     if (fetchUserMeals.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
@@ -73,7 +73,7 @@ export const useMealsViewModel = () => {
   const deleteTheMeal = async (
     mealId: string,
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(deleteMeal(mealId));
     if (deleteMeal.fulfilled.match(resultAction)) {
@@ -86,7 +86,7 @@ export const useMealsViewModel = () => {
   const getMealById = async (
     mealId: string,
     onSuccess?: (meal: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     try {
       const meal = await getDocumentById(MEALS_COLLECTION, mealId);
@@ -104,14 +104,14 @@ export const useMealsViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void,
     limit: number = 4,
-    startAfter: any = null
+    startAfter: any = null,
   ) => {
     if (!userId) {
       onError?.("User ID not found");
       return;
     }
     const resultAction = await dispatch(
-      fetchRecentMeals({ userId: userId!, limit, startAfter })
+      fetchRecentMeals({ userId: userId!, limit, startAfter }),
     );
     if (fetchRecentMeals.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
@@ -123,7 +123,7 @@ export const useMealsViewModel = () => {
   const updateMealData = async (
     mealData: any,
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(updateMeal(mealData));
     if (updateMeal.fulfilled.match(resultAction)) {
@@ -138,7 +138,7 @@ export const useMealsViewModel = () => {
     onSuccess?: (payload: any) => void,
     onError?: (error: string) => void,
     limit: number = 10,
-    startAfter: any = null
+    startAfter: any = null,
   ) => {
     const resultAction = await dispatch(fetchAllMeals({ limit, startAfter }));
     if (fetchAllMeals.fulfilled.match(resultAction)) {

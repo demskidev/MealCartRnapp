@@ -1,14 +1,12 @@
-import { resetPasswordValidationSchema } from '@/utils/validators/AuthValidators';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import * as yup from 'yup';
+import { resetPasswordValidationSchema } from "@/utils/validators/AuthValidators";
+import { sendPasswordResetEmail } from "firebase/auth";
+import * as yup from "yup";
 import { auth } from "../services/firebase";
 // import { useDispatch, useSelector } from "react-redux";
 // import { changePasswordAsync } from "@/store/slices/authSlice";
 // import { RootState, AppDispatch } from "@/store";
 // import { changePasswordAsync } from "@/store/slices/authSlice";
 // import { RootState, AppDispatch } from "@/store";
-
-
 
 export interface ResetPasswordFormValues {
   email: string;
@@ -17,7 +15,7 @@ export interface ResetPasswordFormValues {
 export class ResetPasswordViewModel {
   validationSchema = resetPasswordValidationSchema;
 
-  constructor() { }
+  constructor() {}
 
   // async handleResetPassword(values: ResetPasswordFormValues): Promise<{ success: boolean; message: string }> {
   //   try {
@@ -46,7 +44,9 @@ export class ResetPasswordViewModel {
   //   }
   // }
 
-  async handleResetPassword(values: ResetPasswordFormValues): Promise<{ success: boolean; message: string }> {
+  async handleResetPassword(
+    values: ResetPasswordFormValues,
+  ): Promise<{ success: boolean; message: string }> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
 
@@ -56,19 +56,19 @@ export class ResetPasswordViewModel {
 
       return {
         success: true,
-        message: 'Reset password email sent successfully',
+        message: "Reset password email sent successfully",
       };
     } catch (error: any) {
-      let errorMessage = 'Failed to send reset password email';
+      let errorMessage = "Failed to send reset password email";
 
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'No user found with this email address';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address format';
+      if (error.code === "auth/user-not-found") {
+        errorMessage = "No user found with this email address";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address format";
       }
 
       if (error instanceof yup.ValidationError) {
-        errorMessage = error.errors[0] || 'Validation failed';
+        errorMessage = error.errors[0] || "Validation failed";
       }
 
       return {
@@ -78,7 +78,10 @@ export class ResetPasswordViewModel {
     }
   }
 
-  async validateField(fieldName: string, value: string): Promise<string | undefined> {
+  async validateField(
+    fieldName: string,
+    value: string,
+  ): Promise<string | undefined> {
     try {
       const fieldSchema = yup.reach(this.validationSchema, fieldName);
       await (fieldSchema as any).validate(value);
@@ -87,11 +90,7 @@ export class ResetPasswordViewModel {
       if (error instanceof yup.ValidationError) {
         return error.message;
       }
-      return 'Invalid input';
+      return "Invalid input";
     }
   }
-
-
-
-  
 }

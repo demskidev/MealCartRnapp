@@ -1,5 +1,4 @@
 import AuthFooter from "@/components/AuthFooter";
-import BaseButton from "@/components/BaseButton";
 import BaseTextInput from "@/components/BaseTextInput";
 import Divider from "@/components/Divider";
 import Header from "@/components/Header";
@@ -20,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppleIcon, GoogleIcon } from "@/assets/svg";
 import { hideLoader, showLoader } from "@/components/Loader";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
+import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { signInWithApple } from "@/services/appleSignin";
 import { signInWithGoogle } from "@/services/googleSignIn";
@@ -37,7 +37,6 @@ import {
 } from "@/viewmodels/SignupViewModel";
 import { Formik } from "formik";
 import { useRef, useState } from "react";
-import ThemeNormalButton from "@/components/ThemeNormalButton";
 
 const SignupScreen = () => {
   const signupViewModel = new SignupViewModel();
@@ -83,7 +82,6 @@ const SignupScreen = () => {
     lastAppleClickRef.current = now;
 
     if (isAppleSigningIn) {
-
       return;
     }
 
@@ -123,13 +121,11 @@ const SignupScreen = () => {
     // Prevent rapid clicks (debounce)
     const now = Date.now();
     if (now - lastGoogleClickRef.current < 2000) {
-
       return;
     }
     lastGoogleClickRef.current = now;
 
     if (isGoogleSigningIn) {
-
       return;
     }
 
@@ -160,7 +156,6 @@ const SignupScreen = () => {
     } catch (error) {
       hideLoader();
       showErrorToast("An unexpected error occurred");
-
     } finally {
       setIsGoogleSigningIn(false);
     }

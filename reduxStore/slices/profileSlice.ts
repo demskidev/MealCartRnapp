@@ -9,10 +9,7 @@ import {
   updateDocument,
 } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import {
-  deleteUser,
-  signOut
-} from "firebase/auth";
+import { deleteUser, signOut } from "firebase/auth";
 import { deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import {
   ADD_MEAL_PLAN,
@@ -27,14 +24,12 @@ import {
   MEAL_PLAN_COLLECTION,
 } from "../appKeys";
 
-
-
 export const fetchDietryPreferencesAsync = createAsyncThunk(
   FETCH_DIETARY_PREFERENCES,
   async (_, { rejectWithValue }) => {
     try {
       const dietaryPreferences = await getAllDocuments(
-        DIETARY_PREFERENCES_COLLECTION
+        DIETARY_PREFERENCES_COLLECTION,
       );
 
       if (!dietaryPreferences) {
@@ -44,17 +39,17 @@ export const fetchDietryPreferencesAsync = createAsyncThunk(
       return dietaryPreferences;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || Strings.error_fetching_dietary_preferences
+        error.message || Strings.error_fetching_dietary_preferences,
       );
     }
-  }
+  },
 );
 
 export const addMealPlanAsync = createAsyncThunk(
   ADD_MEAL_PLAN,
   async (
     mealPlanData: { uid: string; mealPlans: string[] },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const { uid, mealPlans } = mealPlanData;
@@ -80,7 +75,7 @@ export const addMealPlanAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_adding_meal_plan);
     }
-  }
+  },
 );
 
 export const deleteMealPlanAsync = createAsyncThunk(
@@ -92,30 +87,28 @@ export const deleteMealPlanAsync = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_deleting_meal_plan);
     }
-  }
+  },
 );
 
 export const updateMealPlansBatchAsync = createAsyncThunk(
   UPDATE_MEAL_PLANS_BATCH,
   async (
     mealPlans: Array<{ id: string; name: string }>,
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       // Update all meal plans in parallel
       await Promise.all(
         mealPlans.map((plan) =>
-          updateDocument(MEAL_PLAN_COLLECTION, plan.id, { name: plan.name })
-        )
+          updateDocument(MEAL_PLAN_COLLECTION, plan.id, { name: plan.name }),
+        ),
       );
       return mealPlans;
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_updating_meal_plan);
     }
-  }
+  },
 );
-
-
 
 export const fetchMealPlansAsync = createAsyncThunk(
   FETCH_MEAL_PLANS,
@@ -125,7 +118,7 @@ export const fetchMealPlansAsync = createAsyncThunk(
         MEAL_PLAN_COLLECTION,
         "uid",
         "==",
-        ""
+        "",
       );
 
       // Query 2: Plans matching current user
@@ -133,7 +126,7 @@ export const fetchMealPlansAsync = createAsyncThunk(
         MEAL_PLAN_COLLECTION,
         "uid",
         "==",
-        uid
+        uid,
       );
 
       // Merge results (max 18 documents: 9 empty + 9 user-specific)
@@ -142,12 +135,11 @@ export const fetchMealPlansAsync = createAsyncThunk(
       return allMealPlans;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || Strings.error_fetching_meal_plans
+        error.message || Strings.error_fetching_meal_plans,
       );
     }
-  }
+  },
 );
-
 
 export interface DietaryPreferences {
   id: number;
@@ -160,7 +152,6 @@ const initialState = {
   loading: false,
   error: null as any,
 };
-
 
 export const deleteAccountAsync = createAsyncThunk<
   void,
@@ -229,7 +220,7 @@ const profileSlice = createSlice({
       .addCase(deleteMealPlanAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.mealPlans = state.mealPlans.filter(
-          (plan) => plan.id !== action.payload
+          (plan) => plan.id !== action.payload,
         );
         state.error = null;
       })
@@ -245,7 +236,7 @@ const profileSlice = createSlice({
         state.loading = false;
         action.payload.forEach((updatedPlan) => {
           const index = state.mealPlans.findIndex(
-            (plan) => plan.id === updatedPlan.id
+            (plan) => plan.id === updatedPlan.id,
           );
           if (index !== -1) {
             state.mealPlans[index].name = updatedPlan.name;
@@ -270,7 +261,6 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
 
       .addCase(deleteAccountAsync.pending, (state) => {
         state.loading = true;

@@ -1,5 +1,5 @@
-import { otpValidationSchema } from '@/utils/validators/AuthValidators';
-import * as yup from 'yup';
+import { otpValidationSchema } from "@/utils/validators/AuthValidators";
+import * as yup from "yup";
 
 export interface OTPFormValues {
   otp: string;
@@ -8,9 +8,11 @@ export interface OTPFormValues {
 export class OTPViewModel {
   validationSchema = otpValidationSchema;
 
-  constructor() { }
+  constructor() {}
 
-  async handleOTPVerification(values: OTPFormValues): Promise<{ success: boolean; message: string }> {
+  async handleOTPVerification(
+    values: OTPFormValues,
+  ): Promise<{ success: boolean; message: string }> {
     try {
       // Validate using schema
       await this.validationSchema.validate(values, { abortEarly: false });
@@ -20,23 +22,26 @@ export class OTPViewModel {
       // Simulate API call
       return {
         success: true,
-        message: 'OTP verified successfully',
+        message: "OTP verified successfully",
       };
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         return {
           success: false,
-          message: error.errors[0] || 'Validation failed',
+          message: error.errors[0] || "Validation failed",
         };
       }
       return {
         success: false,
-        message: 'OTP verification failed',
+        message: "OTP verification failed",
       };
     }
   }
 
-  async validateField(fieldName: string, value: string): Promise<string | undefined> {
+  async validateField(
+    fieldName: string,
+    value: string,
+  ): Promise<string | undefined> {
     try {
       const fieldSchema = yup.reach(this.validationSchema, fieldName);
       await (fieldSchema as any).validate(value);
@@ -45,7 +50,7 @@ export class OTPViewModel {
       if (error instanceof yup.ValidationError) {
         return error.message;
       }
-      return 'Invalid OTP';
+      return "Invalid OTP";
     }
   }
 }

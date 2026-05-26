@@ -460,5 +460,27 @@ export const Strings = {
   kroger_signup_desc:
     "Link your Meal Cart account with your Kroger account to send meals directly to your Kroger cart for pickup or delivery!",
   skip_for_now: "Skip For Now",
-  store:"Store",
+  store: "Store",
+  addKrogerIngredient_title: "Add Ingredient",
+  addKrogerIngredient_subtitle:
+    "Searching available items at your connected Kroger location",
+  addKrogerIngredient_searchPlaceholder: "Search ingredient...",
+  addKrogerIngredient_cancel: "Cancel",
+  addKrogerIngredient_addIngredient: "Add Ingredient",
+  addKrogerIngredient_searching: "Searching products...",
+  addKrogerIngredient_noResults: "No products found. Try another search.",
+  addKrogerIngredient_searchPrompt:
+    "Search for an ingredient to see available products",
+  addKrogerIngredient_addManualResult: "Add Typed Ingredient",
+  addKrogerIngredient_lowStock: "Low Stock",
+  addKrogerIngredient_inStore: "In Store",
+  addKrogerIngredient_curbside: "Curbside",
+  addKrogerIngredient_delivery: "Delivery",
+  addKrogerIngredient_shipToHome: "Ship To Home",
+  addKrogerIngredient_outOfStock: "Out of Stock",
+  addKrogerIngredient_each: "each",
+  addKrogerIngredient_change: "Change",
+  profile_krogerConnectAccount: "Connect Account",
+  profile_krogerTokenExpiredSubtitle:
+    "Your Kroger session has expired. Please reconnect to continue using Kroger features.",
 };

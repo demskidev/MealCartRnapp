@@ -106,7 +106,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         (data) => {
           processMealPlans(data);
         },
-        () => {}
+        () => {},
       );
     }
   };
@@ -115,7 +115,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
     deleteMealPlan(
       mealPlanId,
       () => {},
-      () => {}
+      () => {},
     );
   };
 
@@ -130,7 +130,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
       },
       (error) => {
         setRefreshing(false);
-      }
+      },
     );
   };
 
@@ -185,7 +185,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
 
     // Get all MODIFIED meal plans that need to be updated
     const modifiedPlans = mealTypes.filter(
-      (type) => type.isModified && type.id && type.label.trim() !== ""
+      (type) => type.isModified && type.id && type.label.trim() !== "",
     );
 
     if (newPlans.length === 0 && modifiedPlans.length === 0) {
@@ -220,7 +220,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         },
         (error) => {
           checkCompletion();
-        }
+        },
       );
     }
 
@@ -236,7 +236,7 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         },
         (error) => {
           checkCompletion();
-        }
+        },
       );
     }
   };

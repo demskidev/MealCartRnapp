@@ -26,15 +26,15 @@ const getConnectionStatusCallable = httpsCallable<void, KrogerConnectionStatus>(
   "getKrogerConnectionStatus",
 );
 
-const saveKrogerSelectedStoreCallable = httpsCallable<
-  { store: any },
-  any
->(functions, "saveKrogerSelectedStore");
-
-const disconnectKrogerAccountCallable = httpsCallable<void, { success: boolean }>(
+const saveKrogerSelectedStoreCallable = httpsCallable<{ store: any }, any>(
   functions,
-  "disconnectKrogerAccount",
+  "saveKrogerSelectedStore",
 );
+
+const disconnectKrogerAccountCallable = httpsCallable<
+  void,
+  { success: boolean }
+>(functions, "disconnectKrogerAccount");
 
 const getKrogerAppTokenCallable = httpsCallable<
   { scope?: string },
@@ -100,7 +100,10 @@ export async function disconnectKrogerAccount() {
 
 async function callKrogerApi<T = unknown>(params: KrogerProxyParams) {
   await ensureSignedIn();
-  console.log("[Kroger API] Calling proxy with params:", JSON.stringify(params));
+  console.log(
+    "[Kroger API] Calling proxy with params:",
+    JSON.stringify(params),
+  );
 
   try {
     const result = await krogerProxyCallable(params);
@@ -108,7 +111,10 @@ async function callKrogerApi<T = unknown>(params: KrogerProxyParams) {
   } catch (error: any) {
     console.log("[Kroger API] Proxy error code:", error?.code);
     console.log("[Kroger API] Proxy error message:", error?.message);
-    console.log("[Kroger API] Proxy error details:", JSON.stringify(error?.details));
+    console.log(
+      "[Kroger API] Proxy error details:",
+      JSON.stringify(error?.details),
+    );
     throw error;
   }
 }
@@ -196,17 +202,34 @@ export async function searchKrogerStores(zipCode: string) {
 }
 
 export async function searchKrogerProducts(
-  term: string,
+  term: string | undefined,
   locationId: string,
-  limit = 5,
+  limit = 20,
+) {
+  const query: Record<string, string | number> = {
+    "filter.locationId": locationId,
+    "filter.limit": limit,
+  };
+  if (term) {
+    query["filter.term"] = term;
+  }
+  return callKrogerReadApi({
+    path: "/v1/products",
+    scope: "product.compact",
+    query,
+  });
+}
+
+export async function fetchKrogerProductById(
+  productId: string,
+  locationId: string,
 ) {
   return callKrogerReadApi({
     path: "/v1/products",
     scope: "product.compact",
     query: {
-      "filter.term": term,
+      "filter.productId": productId,
       "filter.locationId": locationId,
-      "filter.limit": limit,
     },
   });
 }

@@ -83,7 +83,6 @@ const deleteShoppingListFromDb = async (listId: string) => {
   }
 };
 
-
 export const fetchShoppingListById = createAsyncThunk(
   FETCH_SHOPPING_LIST_BY_ID,
   async (listId: string, { rejectWithValue }) => {
@@ -98,10 +97,8 @@ export const fetchShoppingListById = createAsyncThunk(
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
-  }
+  },
 );
-
-
 
 const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
   return Promise.all(
@@ -138,8 +135,7 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                     // Do NOT override the unit - keep the one saved in shopping list
                     // ingredientUnit is already set from ing.unit above
                   }
-                } catch (error) {
-                }
+                } catch (error) {}
               }
 
               // Fetch category details if categoryId exists
@@ -157,8 +153,7 @@ const enrichShoppingListsWithDetails = async (lists: any[]): Promise<any[]> => {
                   if (categoryDoc?.unit && Array.isArray(categoryDoc.unit)) {
                     categoryUnits = categoryDoc.unit;
                   }
-                } catch (error) {
-                }
+                } catch (error) {}
               }
 
               const enrichedIngredient = {

@@ -9,7 +9,6 @@ import {
   updatePlanAsync,
 } from "@/reduxStore/slices/planSlice";
 
-
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useEffect, useState } from "react";
@@ -107,7 +106,7 @@ export const usePlanViewModel = () => {
   };
 
   const fetchMealsMap = async (
-    mealIds: string[]
+    mealIds: string[],
   ): Promise<Record<string, any>> => {
     const mealPromises = mealIds.map(
       (id: string) =>
@@ -115,16 +114,16 @@ export const usePlanViewModel = () => {
           getMealById(
             id,
             (meal) => resolve([id, meal]),
-            () => resolve([id, null])
-          )
-        )
+            () => resolve([id, null]),
+          ),
+        ),
     );
     const mealResults = await Promise.all(mealPromises);
     return Object.fromEntries(mealResults);
   };
 
   const fetchMealPlansMap = async (
-    mealPlanIds: string[]
+    mealPlanIds: string[],
   ): Promise<Record<string, any>> => {
     const mealPlanPromises = mealPlanIds.map(
       (id: string) =>
@@ -132,9 +131,9 @@ export const usePlanViewModel = () => {
           getMealPlanById(
             id,
             (mealPlan) => resolve([id, mealPlan]),
-            () => resolve([id, null])
-          )
-        )
+            () => resolve([id, null]),
+          ),
+        ),
     );
     const mealPlanResults = await Promise.all(mealPlanPromises);
     return Object.fromEntries(mealPlanResults);
@@ -174,7 +173,7 @@ export const usePlanViewModel = () => {
 
   const fetchActivePlan = async (
     onSuccess?: (enrichedPlan: EnrichedPlan | null) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     if (!userId) {
       onError?.("User not found");
@@ -210,7 +209,7 @@ export const usePlanViewModel = () => {
       }>;
     },
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     if (!userId) {
       onError?.("User not found");
@@ -220,7 +219,7 @@ export const usePlanViewModel = () => {
       addPlanAsync({
         uid: userId,
         ...planData,
-      })
+      }),
     );
     if (addPlanAsync.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);
@@ -231,7 +230,7 @@ export const usePlanViewModel = () => {
 
   const fetchPlans = async (
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     if (!userId) {
       onError?.("User not found");
@@ -262,7 +261,7 @@ export const usePlanViewModel = () => {
       }>;
     },
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(updatePlanAsync(planData));
     if (updatePlanAsync.fulfilled.match(resultAction)) {
@@ -275,7 +274,7 @@ export const usePlanViewModel = () => {
   const deletePlan = async (
     planId: string,
     onSuccess?: () => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(deletePlanAsync(planId));
     if (deletePlanAsync.fulfilled.match(resultAction)) {
@@ -292,7 +291,7 @@ export const usePlanViewModel = () => {
   const fetchPlanById = async (
     planId: string,
     onSuccess?: (enrichedPlan: EnrichedPlan | null) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ) => {
     const resultAction = await dispatch(fetchPlanByIdAsync(planId));
     if (fetchPlanByIdAsync.fulfilled.match(resultAction)) {

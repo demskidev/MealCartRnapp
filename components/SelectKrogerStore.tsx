@@ -103,7 +103,8 @@ const SelectKrogerStore = ({
       />
       <View style={styles.storeInfo}>
         <Text style={styles.storeName} numberOfLines={2} ellipsizeMode="tail">
-          {Strings.store} {item.storeNumber || ""} - {getStoreAddress(item) || ""}
+          {Strings.store} {item.storeNumber || ""} -{" "}
+          {getStoreAddress(item) || ""}
         </Text>
       </View>
       <View style={styles.checkboxContainer}>
@@ -184,7 +185,9 @@ const SelectKrogerStore = ({
             </View>
           ) : stores.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Enter a ZIP code to search for stores</Text>
+              <Text style={styles.loadingText}>
+                Enter a ZIP code to search for stores
+              </Text>
             </View>
           ) : (
             <FlatList

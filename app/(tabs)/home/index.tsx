@@ -217,7 +217,6 @@ const HomeScreen: React.FC = () => {
         isGreetingVisible &&
         scrollY.current <= 10 // Only allow swipe gesture when near the top
       ) {
-
         // Hide greeting section
         Animated.parallel([
           Animated.timing(greetingHeight, {
@@ -255,8 +254,6 @@ const HomeScreen: React.FC = () => {
         !isGreetingVisible &&
         scrollY.current <= 10 // Only allow swipe gesture when at the top
       ) {
-
-
         // Show greeting section
         Animated.parallel([
           Animated.timing(greetingHeight, {

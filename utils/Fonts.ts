@@ -1,23 +1,22 @@
-import { moderateScale } from '@/constants/Constants';
-import * as Font from 'expo-font';
+import { moderateScale } from "@/constants/Constants";
+import * as Font from "expo-font";
 
 /**
  * Font enumeration for type-safe font usage throughout the app
  */
 export enum FontFamily {
-  ROBOTO_REGULAR = 'Roboto-Regular',
-  ROBOTO_MEDIUM = 'Roboto-Medium',
-  ROBOTO_SEMI_BOLD = 'Roboto-SemiBold',
-  ROBOTO_BLACK = 'Roboto-Black',
-  ROBOTO_LIGHTWEIGHT = 'Roboto-Light',
+  ROBOTO_REGULAR = "Roboto-Regular",
+  ROBOTO_MEDIUM = "Roboto-Medium",
+  ROBOTO_SEMI_BOLD = "Roboto-SemiBold",
+  ROBOTO_BLACK = "Roboto-Black",
+  ROBOTO_LIGHTWEIGHT = "Roboto-Light",
 }
-
 
 /**
  * Scale a font size using moderateScale
  * @param size - Font size in pixels
  * @returns Scaled font size
- * 
+ *
  * Usage: fontSize: scaleFontSize(16)
  */
 export const fontSize = (size: number): number => {
@@ -28,10 +27,10 @@ export const fontSize = (size: number): number => {
  * Font loading configuration
  */
 const FONTS_TO_LOAD = {
-  [FontFamily.ROBOTO_REGULAR]: require('@/assets/fonts/Roboto-Regular.ttf'),
-  [FontFamily.ROBOTO_MEDIUM]: require('@/assets/fonts/Roboto-Medium.ttf'),
-  [FontFamily.ROBOTO_SEMI_BOLD]: require('@/assets/fonts/Roboto-SemiBold.ttf'),
-  [FontFamily.ROBOTO_BLACK]: require('@/assets/fonts/Roboto-Black.ttf'),
+  [FontFamily.ROBOTO_REGULAR]: require("@/assets/fonts/Roboto-Regular.ttf"),
+  [FontFamily.ROBOTO_MEDIUM]: require("@/assets/fonts/Roboto-Medium.ttf"),
+  [FontFamily.ROBOTO_SEMI_BOLD]: require("@/assets/fonts/Roboto-SemiBold.ttf"),
+  [FontFamily.ROBOTO_BLACK]: require("@/assets/fonts/Roboto-Black.ttf"),
 };
 
 let fontsLoaded = false;
@@ -50,7 +49,7 @@ export const loadCustomFonts = async (): Promise<void> => {
     await Font.loadAsync(FONTS_TO_LOAD);
     fontsLoaded = true;
   } catch (error) {
-    throw new Error('Font loading failed');
+    throw new Error("Font loading failed");
   }
 };
 
@@ -87,4 +86,3 @@ export const getTextStyle = (
     fontFamily,
   };
 };
-

@@ -30,10 +30,10 @@ export const fetchIngredientCategories = createAsyncThunk(
       return data;
     } catch (error: any) {
       return rejectWithValue(
-        error.message || "Failed to fetch ingredient categories"
+        error.message || "Failed to fetch ingredient categories",
       );
     }
-  }
+  },
 );
 
 const ingredientCategorySlice = createSlice({

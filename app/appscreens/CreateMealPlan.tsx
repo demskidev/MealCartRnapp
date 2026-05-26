@@ -109,8 +109,7 @@ export default function CreateMealPlan({}) {
           });
         });
         setSelectedMealSlots(slots);
-      } catch (error) {
-      }
+      } catch (error) {}
     }
   }, [planParam, mealPlans]);
 
@@ -768,7 +767,7 @@ const styles = StyleSheet.create({
     width: width * 0.24,
     height: moderateScale(38),
     borderRadius: moderateScale(4),
-    borderWidth: moderateScale(1),    
+    borderWidth: moderateScale(1),
     borderColor: Colors.tertiary,
     borderStyle: "dashed",
     justifyContent: "center",
@@ -842,7 +841,7 @@ const styles = StyleSheet.create({
   discardButton: {
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
-    width:"27%"
+    width: "27%",
   },
   selectedMealContent: {
     flexDirection: "row",

@@ -1,5 +1,5 @@
-import { newPasswordValidationSchema } from '@/utils/validators/AuthValidators';
-import * as yup from 'yup';
+import { newPasswordValidationSchema } from "@/utils/validators/AuthValidators";
+import * as yup from "yup";
 
 export interface NewPasswordFormValues {
   password: string;
@@ -9,9 +9,11 @@ export interface NewPasswordFormValues {
 export class NewPasswordViewModel {
   validationSchema = newPasswordValidationSchema;
 
-  constructor() { }
+  constructor() {}
 
-  async handleNewPassword(values: NewPasswordFormValues): Promise<{ success: boolean; message: string }> {
+  async handleNewPassword(
+    values: NewPasswordFormValues,
+  ): Promise<{ success: boolean; message: string }> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
 
@@ -19,23 +21,26 @@ export class NewPasswordViewModel {
 
       return {
         success: true,
-        message: 'Password changed successfully',
+        message: "Password changed successfully",
       };
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         return {
           success: false,
-          message: error.errors[0] || 'Validation failed',
+          message: error.errors[0] || "Validation failed",
         };
       }
       return {
         success: false,
-        message: 'Failed to change password',
+        message: "Failed to change password",
       };
     }
   }
 
-  async validateField(fieldName: string, value: string): Promise<string | undefined> {
+  async validateField(
+    fieldName: string,
+    value: string,
+  ): Promise<string | undefined> {
     try {
       const fieldSchema = yup.reach(this.validationSchema, fieldName);
       await (fieldSchema as any).validate(value);
@@ -44,7 +49,7 @@ export class NewPasswordViewModel {
       if (error instanceof yup.ValidationError) {
         return error.message;
       }
-      return 'Invalid input';
+      return "Invalid input";
     }
   }
 }

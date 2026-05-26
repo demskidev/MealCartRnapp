@@ -526,7 +526,6 @@ const MealsScreen: React.FC = () => {
                         justifyContent: "space-between",
                         marginBottom: verticalScale(8),
                       }}
-                      
                       scrollEnabled={false}
                       contentContainerStyle={{
                         paddingBottom: verticalScale(100),

@@ -28,7 +28,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type KrogerLocationsResponse = {
@@ -45,7 +45,7 @@ const KrogerSignupScreen = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const navigation = useNavigation();
-  const params = useLocalSearchParams()
+  const params = useLocalSearchParams();
   const signupViewModel = new SignupViewModel();
   const openedFromProfile = params.source === "profile";
 
@@ -56,7 +56,7 @@ const KrogerSignupScreen = () => {
         const connected = Boolean(status.connected);
 
         setStartedConnecting(connected);
-        setSelectedStore(connected ? (status.selectedStore || null) : null);
+        setSelectedStore(connected ? status.selectedStore || null : null);
       } catch (error: any) {
       } finally {
         setIsCheckingConnection(false);
@@ -85,8 +85,7 @@ const KrogerSignupScreen = () => {
             showToast("success", "Kroger account connected.");
             return;
           }
-        } catch (error) {
-        }
+        } catch (error) {}
 
         showToast(
           "error",
@@ -122,7 +121,7 @@ const KrogerSignupScreen = () => {
     const connected = Boolean(status.connected);
 
     setStartedConnecting(connected);
-    setSelectedStore(connected ? (status.selectedStore || null) : null);
+    setSelectedStore(connected ? status.selectedStore || null : null);
 
     return connected;
   };

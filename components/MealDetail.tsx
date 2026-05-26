@@ -18,7 +18,7 @@ import { FontFamily, fontSize } from "@/utils/Fonts";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -42,19 +42,12 @@ type MealDetailProps = {
   onBack: () => void;
 };
 
-const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
+const MealDetail = ({ meal, onBack }: MealDetailProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const { meals, deleteTheMeal } = useMealsViewModel();
-  const [selectedMeal, setSelectedMeal] = useState(null);
-
-  // Get the updated meal from Redux state, fallback to initial meal
-  const meal = useMemo(() => {
-    const updatedMeal = meals.find((m) => m.id === initialMeal.id);
-    return updatedMeal || initialMeal;
-  }, [meals, initialMeal.id]);
+  const { deleteTheMeal } = useMealsViewModel();
 
   const handleEditPress = () => {
     bottomSheetRef.current?.expand();
@@ -178,13 +171,17 @@ const MealDetail = ({ meal: initialMeal, onBack }: MealDetailProps) => {
             <View style={styles.divider} />
             {meal.ingredients.map((ingredient: any, index: number) => (
               <View style={styles.ingredientRow} key={index}>
-                <Text style={styles.ingredientName}>
+                <Text
+                  style={styles.ingredientName}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {ingredient.ingredientName}
                 </Text>
                 <View style={styles.dividerRow} />
                 <Text style={styles.ingredientValue}>
                   {ingredient.count &&
-                    ingredient.count > 0 &&
+                    Number(ingredient.count) > 0 &&
                     `${ingredient.count} `}
                   {ingredient.unit}
                 </Text>
@@ -343,6 +340,7 @@ const styles = StyleSheet.create({
   ingredientName: {
     fontSize: moderateScale(14),
     fontFamily: FontFamily.ROBOTO_MEDIUM,
+    maxWidth: width * moderateScale(0.7),
     color: Colors.primary,
   },
   ingredientValue: {

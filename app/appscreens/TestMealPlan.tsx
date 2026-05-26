@@ -14,7 +14,7 @@ import { Plan } from "@/reduxStore/slices/planSlice";
 import { pushNavigation } from "@/utils/Navigation";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Image,
   SectionList,

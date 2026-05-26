@@ -1,6 +1,11 @@
 import { closeIcon, deleteicon, iconMeal } from "@/assets/images";
 import { IconPlus } from "@/assets/svg";
 import { IconDown } from "@/assets/svg/IconUpDown";
+import AddKrogerIngredient, {
+  IngredientSelection,
+  KrogerProductMeta,
+} from "@/components/AddKrogerIngredient";
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
   moderateScale,
@@ -23,6 +28,12 @@ import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
 // import { getUnitOptions } from "@/utils/unitOptions";
 import { generateFirebaseId } from "@/services/firestore";
+import {
+  fetchKrogerProductById,
+  getKrogerConnectionStatus,
+} from "@/services/krogerApi";
+import { pushNavigation } from "@/utils/Navigation";
+import { showToast } from "@/utils/Toast";
 import { createMealValidationSchema } from "@/utils/validators/MealValidators";
 import { useCreateMealViewModel } from "@/viewmodels/CreateMealViewModel";
 import BottomSheet, {
@@ -30,7 +41,7 @@ import BottomSheet, {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { Formik } from "formik";
-import { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -48,6 +59,44 @@ import { hideLoader, showLoader } from "./Loader";
 import SpaceBetweenButtons from "./SpaceBetweenButtons";
 import ThemeGradientButton from "./ThemeGradientButton";
 import ThemeNormalButton from "./ThemeNormalButton";
+
+type IngredientCategory = {
+  id: string;
+  title: string;
+  unit: string[];
+};
+
+type MealIngredientForm = {
+  ingredientId?: string;
+  ingredientName: string;
+  count?: string;
+  unit: string;
+  category?: string | IngredientCategory;
+  categoryId?: string;
+  categoryName?: string;
+  categoryUnits?: string[];
+  allowCountSelection?: boolean;
+  krogerMeta?: KrogerProductMeta | null;
+  isKroger?: boolean;
+  krogerIngredientId?: string;
+};
+
+type MealStepForm = {
+  text: string;
+};
+
+type MealFormValues = {
+  id?: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  prepTime: string;
+  servings: string;
+  difficulty: string;
+  category: string;
+  ingredients: MealIngredientForm[];
+  steps: MealStepForm[];
+};
 
 export interface CreateMealBottomSheetRef {
   expand: () => void;
@@ -84,8 +133,15 @@ const CreateMealBottomSheet = forwardRef<
   ];
 
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  const [showKrogerIngredientModal, setShowKrogerIngredientModal] =
+    useState(false);
+  const [krogerStatus, setKrogerStatus] = useState<any>(null);
+  const [isPreparingKroger, setIsPreparingKroger] = useState(false);
+  const [krogerRefreshedMap, setKrogerRefreshedMap] = useState<
+    Record<string, any>
+  >({});
 
-  const initialValues = useMemo(() => {
+  const initialValues = useMemo<MealFormValues>(() => {
     if (isEdit && mealData) {
       return {
         id: mealData.id || "",
@@ -96,8 +152,31 @@ const CreateMealBottomSheet = forwardRef<
         servings: String(mealData.servings || "1"),
         difficulty: mealData.difficulty || Strings.filterModal_easy,
         category: mealData.category || Strings.plans_breakfast,
-        ingredients: mealData.ingredients,
-        steps: mealData.steps?.map((text) => ({ text })) || [{ text: "" }],
+        ingredients: (mealData.ingredients || []).map((ing: any) => {
+          if (ing.isKroger || ing.krogerIngredientId) {
+            const refreshed = ing.krogerIngredientId
+              ? krogerRefreshedMap[ing.krogerIngredientId]
+              : null;
+
+            return {
+              ...ing,
+              ingredientName:
+                refreshed?.name || ing.ingredientName || ing.name || "",
+              categoryName: ing.categoryName || ing.category || "",
+              categoryUnits: ing.categoryUnits || [ing.unit].filter(Boolean),
+              isKroger: true,
+              krogerIngredientId: ing.krogerIngredientId || "",
+            };
+          }
+
+          return {
+            ...ing,
+            ingredientName: ing.ingredientName || ing.name || "",
+          };
+        }) as MealIngredientForm[],
+        steps: mealData.steps?.map((text: string) => ({ text })) || [
+          { text: "" },
+        ],
       };
     }
 
@@ -112,15 +191,69 @@ const CreateMealBottomSheet = forwardRef<
       ingredients: [],
       steps: [{ text: "" }],
     };
+  }, [isEdit, mealData, krogerRefreshedMap]);
+
+  // Fetch fresh Kroger product data for Kroger ingredients in edit mode
+  useEffect(() => {
+    if (!isEdit || !mealData?.ingredients) return;
+
+    const krogerIngredients = (mealData.ingredients || []).filter(
+      (ing: any) => ing.isKroger && ing.krogerIngredientId,
+    );
+    if (krogerIngredients.length === 0) return;
+
+    // Need kroger status to get locationId
+    (async () => {
+      try {
+        const status = await getKrogerConnectionStatus();
+        setKrogerStatus(status);
+
+        const locationId = status?.selectedStore?.locationId;
+        if (!locationId || !status?.connected) return;
+
+        const refreshed: Record<string, any> = {};
+
+        await Promise.all(
+          krogerIngredients.map(async (ing: any) => {
+            try {
+              const response = (await fetchKrogerProductById(
+                ing.krogerIngredientId,
+                locationId,
+              )) as { data?: any[] };
+
+              const product = response?.data?.[0];
+              if (product) {
+                const item = product.items?.[0];
+                const size = item?.size || "";
+                const price =
+                  item?.price?.regular ?? item?.price?.promo ?? null;
+                refreshed[ing.krogerIngredientId] = {
+                  name: product.description || ing.ingredientName,
+                  unit: size || ing.unit,
+                  stockLevel: item?.inventory?.stockLevel || "",
+                  price,
+                };
+              }
+            } catch {
+              // Fallback — keep saved text values
+            }
+          }),
+        );
+
+        if (Object.keys(refreshed).length > 0) {
+          setKrogerRefreshedMap(refreshed);
+        }
+      } catch {
+        // Silently fail — saved text values will be used
+      }
+    })();
   }, [isEdit, mealData]);
 
-  // useEffect(() => {
-
-  // }, [loading]);
-
   // Helper to get units for a given category (object or id)
   // Helper to get units for a given category (object or id)
-  const getUnitsForCategory = (category) => {
+  const getUnitsForCategory = (
+    category?: string | IngredientCategory | null,
+  ): string[] => {
     if (!category) return [];
 
     // If category is an object with id
@@ -138,20 +271,195 @@ const CreateMealBottomSheet = forwardRef<
     return [];
   };
 
+  const normalizeValue = (value = "") =>
+    String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const findMatchingCategory = (meta: KrogerProductMeta | null) => {
+    if (!meta || ingredientCategories.length === 0) {
+      return ingredientCategories[0] ?? null;
+    }
+
+    const krogerCategories = [meta.category, meta.secondaryCategory].filter(
+      Boolean,
+    );
+
+    for (const krogerCategory of krogerCategories) {
+      const normalizedKrogerCategory = normalizeValue(krogerCategory);
+
+      const exactMatch = ingredientCategories.find(
+        (category) =>
+          normalizeValue(category.title) === normalizedKrogerCategory,
+      );
+      if (exactMatch) return exactMatch;
+
+      const partialMatch = ingredientCategories.find((category) => {
+        const normalizedTitle = normalizeValue(category.title);
+        return (
+          normalizedTitle.includes(normalizedKrogerCategory) ||
+          normalizedKrogerCategory.includes(normalizedTitle)
+        );
+      });
+
+      if (partialMatch) return partialMatch;
+    }
+
+    return ingredientCategories[0] ?? null;
+  };
+
+  const mergeUnitOptions = (baseOptions: string[] = [], parsedUnit = "") => {
+    const cleanedBaseOptions = Array.isArray(baseOptions)
+      ? baseOptions.filter(Boolean)
+      : [];
+
+    if (!parsedUnit) {
+      return cleanedBaseOptions;
+    }
+
+    const hasParsedUnit = cleanedBaseOptions.some(
+      (option) => normalizeValue(option) === normalizeValue(parsedUnit),
+    );
+
+    if (hasParsedUnit) {
+      return cleanedBaseOptions;
+    }
+
+    return [parsedUnit, ...cleanedBaseOptions];
+  };
+
+  const findPreferredUnit = (unitOptions: string[] = [], parsedUnit = "") => {
+    if (!unitOptions.length) {
+      return parsedUnit || "";
+    }
+
+    if (!parsedUnit) {
+      return unitOptions[0];
+    }
+
+    const exactMatch = unitOptions.find(
+      (option) => normalizeValue(option) === normalizeValue(parsedUnit),
+    );
+
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    const partialMatch = unitOptions.find((option) => {
+      const normalizedOption = normalizeValue(option);
+      const normalizedParsedUnit = normalizeValue(parsedUnit);
+
+      return (
+        normalizedOption.includes(normalizedParsedUnit) ||
+        normalizedParsedUnit.includes(normalizedOption)
+      );
+    });
+
+    if (partialMatch) {
+      return partialMatch;
+    }
+
+    return parsedUnit;
+  };
+
+  const loadKrogerStatus = async () => {
+    const status = await getKrogerConnectionStatus();
+    setKrogerStatus(status);
+    return status;
+  };
+
+  const buildDefaultIngredient = (ingredientName = "") => {
+    const firstCategory =
+      ingredientCategories.length > 0 ? ingredientCategories[0] : null;
+    const unitOptions = getUnitsForCategory(firstCategory);
+
+    return {
+      ingredientId: generateFirebaseId(),
+      ingredientName,
+      count: "0",
+      unit: unitOptions[0] ?? "",
+      categoryId: firstCategory?.id ?? "",
+      categoryName: firstCategory?.title ?? "",
+      categoryUnits: firstCategory?.unit ?? [],
+    };
+  };
+
+  const closeSheet = () => {
+    if (ref && typeof ref !== "function") {
+      ref.current?.close?.();
+    }
+  };
+
+  const handleOpenKrogerPicker = async () => {
+    try {
+      setIsPreparingKroger(true);
+      const status = await loadKrogerStatus();
+
+      if (!status?.connected) {
+        showToast(
+          "info",
+          Strings.profile_krogerConnectAccount,
+          Strings.profile_krogerDisconnectedSubtitle,
+        );
+        pushNavigation(APP_ROUTES.KROGER_SIGNUP, { source: "profile" });
+        return;
+      }
+
+      if (!status?.selectedStore) {
+        showToast(
+          "info",
+          Strings.profile_krogerSelectStore,
+          Strings.profile_krogerNoStore,
+        );
+        pushNavigation(APP_ROUTES.KROGER_SIGNUP, { source: "profile" });
+        return;
+      }
+
+      setShowKrogerIngredientModal(true);
+    } catch (error: any) {
+      showToast(
+        "error",
+        "Unable to open Kroger ingredients.",
+        error?.message || "Please try again.",
+      );
+    } finally {
+      setIsPreparingKroger(false);
+    }
+  };
+
   const renderIngredientItem =
-    (ingredients, setFieldValue, errors, touched, setTouched) =>
-    ({ item, index }) => {
+    (
+      ingredients: MealIngredientForm[],
+      setFieldValue: (field: string, value: any) => void,
+      errors: any,
+      touched: any,
+      setTouched: (touched: any) => void,
+    ) =>
+    ({ item, index }: { item: MealIngredientForm; index: number }) => {
       // Check if the current unit is tablespoon (or similar volume measurements)
       const isVolumeUnit =
         item?.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
         item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
         item?.unit?.toLowerCase().includes(Strings.units.cup);
+      const shouldShowCount =
+        isVolumeUnit || Boolean(item?.allowCountSelection);
 
       // Get units - use categoryUnits if available (edit mode), otherwise get from ingredientCategories
       const unitOptions =
         item?.categoryUnits && Array.isArray(item.categoryUnits)
           ? item.categoryUnits
           : getUnitsForCategory(item?.category || item?.categoryId);
+
+      // Resolve category display name for non-Kroger ingredients
+      const resolvedCategoryName =
+        item?.categoryName ||
+        ingredientCategories.find(
+          (cat) => cat.id === item?.categoryId || cat.id === item?.category,
+        )?.title ||
+        item?.category ||
+        "";
 
       return (
         <View>
@@ -183,21 +491,20 @@ const CreateMealBottomSheet = forwardRef<
             }
           />
           <View style={styles.row}>
-            {isVolumeUnit && (
+            {shouldShowCount && (
               <View style={styles.rowItem}>
                 <Text
                   style={[
                     styles.label,
-                    !isVolumeUnit && { color: Colors.tertiary },
+                    !shouldShowCount && { color: Colors.tertiary },
                   ]}
                 >
                   {Strings.createMeal_count}
                 </Text>
 
                 <CustomStepper
-                  value={isVolumeUnit ? item?.count : "0"}
+                  value={(item?.count || "0") as any}
                   onIncrement={() => {
-                    if (!isVolumeUnit) return;
                     const updated = [...ingredients];
                     updated[index] = {
                       ...updated[index],
@@ -206,7 +513,6 @@ const CreateMealBottomSheet = forwardRef<
                     setFieldValue(INGREDIENTS_KEY, updated);
                   }}
                   onDecrement={() => {
-                    if (!isVolumeUnit) return;
                     const updated = [...ingredients];
                     updated[index] = {
                       ...updated[index],
@@ -222,7 +528,7 @@ const CreateMealBottomSheet = forwardRef<
               <Text style={styles.label}>{Strings.createMeal_unit}</Text>
 
               <CustomStepper
-                value={item?.unit}
+                value={item?.unit as any}
                 onIncrement={() => {
                   const unitWeightIndex = unitOptions.indexOf(item?.unit);
                   if (unitWeightIndex < unitOptions.length - 1) {
@@ -231,17 +537,6 @@ const CreateMealBottomSheet = forwardRef<
                     updated[index] = {
                       ...updated[index],
                       unit: newUnit,
-                      // Reset count if switching from volume to non-volume unit
-                      count:
-                        newUnit
-                          ?.toLowerCase()
-                          .includes(Strings.units.tablespoon) ||
-                        newUnit
-                          ?.toLowerCase()
-                          .includes(Strings.units.teaspoon) ||
-                        newUnit?.toLowerCase().includes(Strings.units.cup)
-                          ? updated[index].count
-                          : "0",
                     };
                     setFieldValue(INGREDIENTS_KEY, updated);
                   }
@@ -254,17 +549,6 @@ const CreateMealBottomSheet = forwardRef<
                     updated[index] = {
                       ...updated[index],
                       unit: newUnit,
-                      // Reset count if switching from volume to non-volume unit
-                      count:
-                        newUnit
-                          ?.toLowerCase()
-                          .includes(Strings.units.tablespoon) ||
-                        newUnit
-                          ?.toLowerCase()
-                          .includes(Strings.units.teaspoon) ||
-                        newUnit?.toLowerCase().includes(Strings.units.cup)
-                          ? updated[index].count
-                          : "0",
                     };
                     setFieldValue(INGREDIENTS_KEY, updated);
                   }
@@ -276,9 +560,9 @@ const CreateMealBottomSheet = forwardRef<
               <Text style={styles.label}>{Strings.createMeal_category}</Text>
 
               <CustomDropdown
-                value={item?.categoryName || item?.category} // Show categoryName (edit) or category object (create)
-                options={ingredientCategories}
-                onSelect={(category) => {
+                value={resolvedCategoryName as any}
+                options={ingredientCategories as any}
+                onSelect={(category: any) => {
                   const updated = [...ingredients];
                   const newUnitOptions = getUnitsForCategory(category);
                   updated[index] = {
@@ -286,7 +570,7 @@ const CreateMealBottomSheet = forwardRef<
                     unit: newUnitOptions[0] ?? "",
                     categoryId: category.id,
                     categoryName: category.title,
-                    categoryUnits: category.unit, // Store categoryUnits
+                    categoryUnits: category.unit,
                     count: "0",
                   };
                   setFieldValue(INGREDIENTS_KEY, updated);
@@ -298,7 +582,9 @@ const CreateMealBottomSheet = forwardRef<
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => {
-                const updated = ingredients.filter((_, i) => i !== index);
+                const updated = ingredients.filter(
+                  (_: any, i: number) => i !== index,
+                );
                 setFieldValue(INGREDIENTS_KEY, updated);
               }}
             >
@@ -316,13 +602,16 @@ const CreateMealBottomSheet = forwardRef<
       );
     };
 
-  const handleUpload = (setFieldValue) => {
+  const handleUpload = (setFieldValue: (field: string, value: any) => void) => {
     setShowImagePickerModal(true);
   };
 
   const renderInstructionItem =
-    (steps, setFieldValue) =>
-    ({ item, index }) => (
+    (
+      steps: MealStepForm[],
+      setFieldValue: (field: string, value: any) => void,
+    ) =>
+    ({ item, index }: { item: MealStepForm; index: number }) => (
       <View style={{ marginBottom: verticalScale(15) }}>
         <View style={[styles.row, { alignItems: "flex-start" }]}>
           <Text
@@ -361,7 +650,9 @@ const CreateMealBottomSheet = forwardRef<
           {isEdit ? (
             <TouchableOpacity
               onPress={() => {
-                const updated = steps.filter((_, i) => i !== index);
+                const updated = steps.filter(
+                  (_: any, i: number) => i !== index,
+                );
                 setFieldValue(STEPS_KEY, updated);
               }}
               style={{
@@ -384,39 +675,59 @@ const CreateMealBottomSheet = forwardRef<
     );
 
   // Add this helper function before handleCreateMeal
-  const prepareMealData = (values, isEdit = false) => {
+  const prepareMealData = (values: MealFormValues, isEditMode = false) => {
     // Map ingredients - include all data needed for subcollection
-    const mappedIngredients = values.ingredients.map((ing) => {
-      // Get the categoryId properly
-      const categoryId =
-        ing.categoryId ||
-        (typeof ing.category === "object" && ing.category?.id
-          ? ing.category.id
-          : ing.category);
+    const mappedIngredients = values.ingredients.map(
+      (ing: MealIngredientForm) => {
+        // Parse count - it's always a string from the stepper
+        const countValue = parseInt(ing.count || "0", 10);
+        if (ing.krogerMeta || ing.isKroger || ing.krogerIngredientId) {
+          // Kroger ingredient: save everything as text
+          const ingredient: any = {
+            ingredientId: ing.ingredientId || generateFirebaseId(),
+            name: ing.ingredientName,
+            ingredientName: ing.ingredientName,
+            isKroger: true,
+            krogerIngredientId:
+              ing.krogerIngredientId || ing.krogerMeta?.productId || "",
+            count: countValue > 0 ? countValue.toString() : "0",
+            unit: ing.unit,
+            category:
+              ing.categoryName ||
+              (typeof ing.category === "string" ? ing.category : "") ||
+              ing.krogerMeta?.displayCategory ||
+              "",
+          };
+          return ingredient;
+        }
 
-      // Parse count - it's always a string from the stepper
-      const countValue = parseInt(ing.count || "0", 10);
+        // Non-Kroger: save category as document ID (default)
+        const categoryId =
+          ing.categoryId ||
+          (typeof ing.category === "object" && ing.category?.id
+            ? ing.category.id
+            : ing.category);
 
-      const ingredient = {
-        ingredientId: ing.ingredientId || generateFirebaseId(),
-        name: ing.ingredientName,
-        ingredientName: ing.ingredientName,
-        unit: ing.unit,
-        category: categoryId,
-        categoryId: categoryId,
-      };
+        const ingredient: any = {
+          ingredientId: ing.ingredientId || generateFirebaseId(),
+          name: ing.ingredientName,
+          ingredientName: ing.ingredientName,
+          unit: ing.unit,
+          category: categoryId,
+          categoryId: categoryId,
+        };
 
-      // Only add count if it's greater than 0
-      if (countValue > 0) {
-        ingredient.count = countValue.toString();
-      }
+        if (countValue > 0) {
+          ingredient.count = countValue.toString();
+        }
 
-      return ingredient;
-    });
+        return ingredient;
+      },
+    );
 
     // Filter out any ingredients with undefined category before sending
     const validIngredients = mappedIngredients.filter(
-      (ing) =>
+      (ing: any) =>
         ing.category !== undefined &&
         ing.category !== null &&
         ing.category !== "",
@@ -424,11 +735,11 @@ const CreateMealBottomSheet = forwardRef<
 
     // Filter and map steps - only include non-empty steps
     const mappedSteps = values.steps
-      .map((step) => step.text?.trim())
-      .filter((text) => text && text.length > 0);
+      .map((step: MealStepForm) => step.text?.trim())
+      .filter((text: string | undefined) => text && text.length > 0);
 
     // Build meal data
-    const mealData = {
+    const mealData: any = {
       name: values.name.trim(),
       description: values.description,
       imageUrl: values.imageUrl,
@@ -441,7 +752,7 @@ const CreateMealBottomSheet = forwardRef<
     };
 
     // Add id for edit mode
-    if (isEdit) {
+    if (isEditMode) {
       mealData.id = values.id;
     } else {
       // Add nameCharacters for create mode
@@ -461,7 +772,7 @@ const CreateMealBottomSheet = forwardRef<
     return { mealData, validIngredients, mappedIngredients };
   };
 
-  const handleCreateMeal = async (values) => {
+  const handleCreateMeal = async (values: MealFormValues) => {
     try {
       const { mealData, validIngredients, mappedIngredients } = prepareMealData(
         values,
@@ -493,7 +804,7 @@ const CreateMealBottomSheet = forwardRef<
     }
   };
 
-  const handleEditMeal = async (values) => {
+  const handleEditMeal = async (values: MealFormValues) => {
     try {
       const { mealData, validIngredients, mappedIngredients } = prepareMealData(
         values,
@@ -548,409 +859,463 @@ const CreateMealBottomSheet = forwardRef<
         validateForm,
         resetForm,
       }) => (
-          <>
-            <ImagePickerModal
-              visible={showImagePickerModal}
-              onClose={() => setShowImagePickerModal(false)}
-              onImagePicked={(url) => setFieldValue("imageUrl", url)}
-            />
+        <>
+          <ImagePickerModal
+            visible={showImagePickerModal}
+            onClose={() => setShowImagePickerModal(false)}
+            onImagePicked={(url) => setFieldValue("imageUrl", url)}
+          />
 
-            <BottomSheet
-              ref={ref}
-              index={-1}
-              snapPoints={snapPoints}
-              enablePanDownToClose
-              keyboardBehavior="extend"
-              keyboardBlurBehavior="restore"
-              topInset={0}
-              handleComponent={() => null}
-              onClose={() => {
-                resetForm();
-              }}
-              backdropComponent={(props) => (
-                <BottomSheetBackdrop
-                  {...props}
-                  disappearsOnIndex={-1}
-                  appearsOnIndex={0}
+          <BottomSheet
+            ref={ref}
+            index={-1}
+            snapPoints={snapPoints}
+            enablePanDownToClose
+            keyboardBehavior="extend"
+            keyboardBlurBehavior="restore"
+            topInset={0}
+            handleComponent={() => null}
+            onClose={() => {
+              resetForm();
+            }}
+            backdropComponent={(props) => (
+              <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+              />
+            )}
+          >
+            <View style={styles.emptyView}></View>
+            <View style={styles.parentCreateMealText}>
+              <Text style={styles.header}>
+                {isEdit
+                  ? Strings.createMeal_editMeal
+                  : Strings.createMeal_createMeal}
+              </Text>
+              <TouchableOpacity onPress={closeSheet}>
+                <Image
+                  source={closeIcon}
+                  style={{
+                    width: verticalScale(24),
+                    height: verticalScale(24),
+                  }}
+                  resizeMode="contain"
                 />
-              )}
+              </TouchableOpacity>
+            </View>
+
+            <BottomSheetScrollView
+              contentContainerStyle={{
+                paddingTop: moderateScale(10),
+                paddingHorizontal: moderateScale(20),
+                paddingBottom: verticalScale(30),
+              }}
+              keyboardShouldPersistTaps="handled"
             >
-              <View style={styles.emptyView}></View>
-              <View style={styles.parentCreateMealText}>
-                <Text style={styles.header}>
-                  {isEdit
-                    ? Strings.createMeal_editMeal
-                    : Strings.createMeal_createMeal}
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {Strings.createMeal_basicInfo}
                 </Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    ref && typeof ref !== "function" && ref.current?.close()
+                <Text style={styles.label}>{Strings.createMeal_mealName}</Text>
+                <CustomTextInput
+                  placeholder={Strings.createMeal_mealName_placeholder}
+                  value={values.name}
+                  onChangeText={(text) => {
+                    setFieldValue(NAME_KEY, text);
+                    if (touched.name && errors.name) {
+                      setTouched({ ...touched, name: false });
+                    }
+                  }}
+                  error={
+                    touched.name && typeof errors.name === "string"
+                      ? errors.name
+                      : undefined
                   }
+                />
+
+                <Text style={styles.label}>
+                  {Strings.createMeal_mealDescription}
+                </Text>
+                <CustomTextInput
+                  style={{
+                    height: verticalScale(80),
+                    borderRadius: moderateScale(4),
+                    backgroundColor: Colors.greysoft,
+                    paddingHorizontal: horizontalScale(10),
+                    marginBottom: moderateScale(8),
+                  }}
+                  placeholder={Strings.createMeal_mealDescription_placeholder}
+                  multiline={true}
+                  value={values.description}
+                  numberOfLines={4}
+                  onChangeText={(text) => {
+                    setFieldValue(DESCRIPTION_KEY, text);
+                    if (touched.description && errors.description) {
+                      setTouched({ ...touched, description: false });
+                    }
+                  }}
+                  error={
+                    touched.description &&
+                    typeof errors.description === "string"
+                      ? errors.description
+                      : undefined
+                  }
+                />
+
+                <Text style={styles.label}>{Strings.createMeal_imageUrl}</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    gap: moderateScale(8),
+                  }}
                 >
-                  <Image
-                    source={closeIcon}
-                    style={{
-                      width: verticalScale(24),
-                      height: verticalScale(24),
-                    }}
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <BottomSheetScrollView
-                contentContainerStyle={{
-                  paddingTop: moderateScale(10),
-                  paddingHorizontal: moderateScale(20),
-                  paddingBottom: verticalScale(30),
-                }}
-                keyboardShouldPersistTaps="handled"
-              >
-                <View style={styles.card}>
-                  <Text style={styles.sectionTitle}>
-                    {Strings.createMeal_basicInfo}
-                  </Text>
-                  <Text style={styles.label}>
-                    {Strings.createMeal_mealName}
-                  </Text>
-                  <CustomTextInput
-                    placeholder={Strings.createMeal_mealName_placeholder}
-                    value={values.name}
-                    onChangeText={(text) => {
-                      setFieldValue(NAME_KEY, text);
-                      if (touched.name && errors.name) {
-                        setTouched({ ...touched, name: false });
-                      }
-                    }}
-                    error={touched.name && errors.name}
-                  />
-
-                  <Text style={styles.label}>
-                    {Strings.createMeal_mealDescription}
-                  </Text>
-                  <CustomTextInput
-                    style={{
-                      height: verticalScale(80),
-                      borderRadius: moderateScale(4),
-                      backgroundColor: Colors.greysoft,
-                      paddingHorizontal: horizontalScale(10),
-                      marginBottom: moderateScale(8),
-                    }}
-                    placeholder={Strings.createMeal_mealDescription_placeholder}
-                    multiline={true}
-                    value={values.description}
-                    numberOfLines={4}
-                    onChangeText={(text) => {
-                      setFieldValue(DESCRIPTION_KEY, text);
-                      if (touched.description && errors.description) {
-                        setTouched({ ...touched, description: false });
-                      }
-                    }}
-                    error={touched.description && errors.description}
-                  />
-
-                  <Text style={styles.label}>
-                    {Strings.createMeal_imageUrl}
-                  </Text>
                   <View
                     style={{
                       flexDirection: "row",
-                      alignItems: "flex-start",
+                      alignItems: "center",
                       gap: moderateScale(8),
                     }}
                   >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: moderateScale(8),
-                      }}
+                    <View style={{ flex: 1 }}>
+                      <CustomTextInput
+                        style={{ marginBottom: 0 }}
+                        placeholder={Strings.createMeal_imageUrl_placeholder}
+                        value={values.imageUrl}
+                        onChangeText={(text) =>
+                          setFieldValue(IMAGEURL_KEY, text)
+                        }
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={styles.uploadButton}
+                      onPress={() => handleUpload(setFieldValue)}
                     >
-                      <View style={{ flex: 1 }}>
-                        <CustomTextInput
-                          style={{ marginBottom: 0 }}
-                          placeholder={Strings.createMeal_imageUrl_placeholder}
-                          value={values.imageUrl}
-                          onChangeText={(text) =>
-                            setFieldValue(IMAGEURL_KEY, text)
-                          }
-                        />
-                      </View>
-                      <TouchableOpacity
-                        style={styles.uploadButton}
-                        onPress={() => handleUpload(setFieldValue)}
-                      >
-                        <Text style={styles.uploadButtonText}>
-                          {isEdit
-                            ? Strings.createMeal_remove
-                            : Strings.createMeal_upload}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                      <Text style={styles.uploadButtonText}>
+                        {isEdit
+                          ? Strings.createMeal_remove
+                          : Strings.createMeal_upload}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
+                </View>
 
-                  <View style={styles.row}>
-                    <View style={styles.rowItem}>
-                      <Text style={styles.label}>
-                        {Strings.createMeal_prepTime}
-                      </Text>
+                <View style={styles.row}>
+                  <View style={styles.rowItem}>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_prepTime}
+                    </Text>
 
-                      <CustomStepper
-                        value={values.prepTime}
-                        onIncrement={() => {
-                          const index = prepTimeOptions.indexOf(
-                            values.prepTime,
-                          );
-                          if (index < prepTimeOptions.length - 1) {
-                            setFieldValue(
-                              PREPTIME_KEY,
-                              prepTimeOptions[index + 1],
-                            );
-                          }
-                        }}
-                        onDecrement={() => {
-                          const index = prepTimeOptions.indexOf(
-                            values.prepTime,
-                          );
-                          if (index > 0) {
-                            setFieldValue(
-                              PREPTIME_KEY,
-                              prepTimeOptions[index - 1],
-                            );
-                          }
-                        }}
-                        showUp={true}
-                        showDown={true}
-                      />
-                    </View>
-                    <View style={styles.rowItem}>
-                      <Text style={styles.label}>
-                        {Strings.createMeal_servings}
-                      </Text>
-                      <CustomStepper
-                        value={values.servings}
-                        onIncrement={() =>
+                    <CustomStepper
+                      value={values.prepTime as any}
+                      onIncrement={() => {
+                        const index = prepTimeOptions.indexOf(values.prepTime);
+                        if (index < prepTimeOptions.length - 1) {
                           setFieldValue(
-                            SERVINGS_KEY,
-                            String(Number(values.servings) + 1),
-                          )
+                            PREPTIME_KEY,
+                            prepTimeOptions[index + 1],
+                          );
                         }
-                        onDecrement={() =>
+                      }}
+                      onDecrement={() => {
+                        const index = prepTimeOptions.indexOf(values.prepTime);
+                        if (index > 0) {
                           setFieldValue(
-                            SERVINGS_KEY,
-                            String(Math.max(1, Number(values.servings) - 1)),
-                          )
+                            PREPTIME_KEY,
+                            prepTimeOptions[index - 1],
+                          );
                         }
-                      />
-                    </View>
+                      }}
+                      showUp={true}
+                      showDown={true}
+                    />
                   </View>
+                  <View style={styles.rowItem}>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_servings}
+                    </Text>
+                    <CustomStepper
+                      value={values.servings as any}
+                      onIncrement={() =>
+                        setFieldValue(
+                          SERVINGS_KEY,
+                          String(Number(values.servings) + 1),
+                        )
+                      }
+                      onDecrement={() =>
+                        setFieldValue(
+                          SERVINGS_KEY,
+                          String(Math.max(1, Number(values.servings) - 1)),
+                        )
+                      }
+                    />
+                  </View>
+                </View>
 
-                  <View style={styles.row}>
-                    <View style={styles.rowItem}>
-                      <Text style={styles.label}>
-                        {Strings.createMeal_difficulty}
-                      </Text>
-                      <CustomDropdown
-                        value={values.difficulty}
-                        options={[
+                <View style={styles.row}>
+                  <View style={styles.rowItem}>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_difficulty}
+                    </Text>
+                    <CustomDropdown
+                      value={values.difficulty}
+                      options={
+                        [
                           Strings.testMealPlan_easy,
                           Strings.testMealPlan_medium,
                           Strings.filterModal_challenging,
                           Strings.testMealPlan_hard,
-                        ]}
-                        onSelect={(val) => setFieldValue(DIFFICULTY_KEY, val)}
-                        icon={IconDown}
-                      />
-                    </View>
-                    <View style={styles.rowItem}>
-                      <Text style={styles.label}>
-                        {Strings.createMeal_category}
-                      </Text>
-                      <CustomDropdown
-                        value={values.category}
-                        options={[
+                        ] as any
+                      }
+                      onSelect={(val) => setFieldValue(DIFFICULTY_KEY, val)}
+                      icon={IconDown}
+                    />
+                  </View>
+                  <View style={styles.rowItem}>
+                    <Text style={styles.label}>
+                      {Strings.createMeal_category}
+                    </Text>
+                    <CustomDropdown
+                      value={values.category}
+                      options={
+                        [
                           Strings.plans_breakfast,
                           Strings.plans_lunch,
                           Strings.plans_dinner,
-                        ]}
-                        onSelect={(val) => setFieldValue(CATEGORY_KEY, val)}
-                        icon={IconDown}
-                      />
-                    </View>
+                        ] as any
+                      }
+                      onSelect={(val) => setFieldValue(CATEGORY_KEY, val)}
+                      icon={IconDown}
+                    />
                   </View>
                 </View>
+              </View>
 
-                <View style={styles.card}>
-                  <Text style={styles.sectionTitle}>
-                    {Strings.createMeal_ingredients}
-                  </Text>
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {Strings.createMeal_ingredients}
+                </Text>
 
-                  <FlatList
-                    data={values.ingredients}
-                    keyExtractor={(_, index) => index.toString()}
-                    scrollEnabled={false}
-                    renderItem={renderIngredientItem(
-                      values.ingredients,
-                      setFieldValue,
-                      errors,
-                      touched,
-                      setTouched,
-                    )}
-                  />
-                  {touched.ingredients &&
-                    errors.ingredients &&
-                    typeof errors.ingredients === "string" && (
-                      <Text style={styles.errorText}>{errors.ingredients}</Text>
-                    )}
+                <AddKrogerIngredient
+                  visible={showKrogerIngredientModal}
+                  onClose={() => setShowKrogerIngredientModal(false)}
+                  store={krogerStatus?.selectedStore || null}
+                  onChangeStore={() => {
+                    setShowKrogerIngredientModal(false);
+                    pushNavigation(APP_ROUTES.KROGER_SIGNUP, {
+                      source: "profile",
+                    });
+                  }}
+                  onSelect={(selection: IngredientSelection) => {
+                    const meta = selection.meta;
 
-                  <TouchableOpacity
-                    style={styles.addIngredient}
-                    onPress={() => {
-                      const firstCategory =
-                        ingredientCategories.length > 0
-                          ? ingredientCategories[0]
-                          : null;
-                      const unitOptions = getUnitsForCategory(firstCategory);
-
+                    if (!meta) {
                       setFieldValue(INGREDIENTS_KEY, [
                         ...values.ingredients,
-                        {
-                          ingredientName: "",
-                          count: "0",
-                          unit: unitOptions[0] ?? "",
-                          categoryId: firstCategory?.id ?? "",
-                          categoryName: firstCategory?.title ?? "",
-                          // category: firstCategory ?? "",
-                        },
+                        buildDefaultIngredient(selection.ingredientName),
                       ]);
+
                       if (touched.ingredients && errors.ingredients) {
-                        setTouched({ ...touched, ingredients: false });
+                        setTouched({ ...touched, ingredients: false } as any);
                       }
-                    }}
-                  >
-                    <IconPlus
-                      width={verticalScale(21)}
-                      height={verticalScale(21)}
-                      color={Colors.primary}
-                    />
-                    <Text style={styles.plusicon}>+</Text>
-                    <Text style={styles.addIngredientText}>
-                      {Strings.createMeal_addIngredient}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
-                <View style={styles.card}>
-                  <Text style={styles.sectionTitle}>
-                    {Strings.createMeal_instruction}
-                  </Text>
-
-                  <FlatList
-                    data={values.steps}
-                    keyExtractor={(_, index) => index.toString()}
-                    scrollEnabled={false}
-                    renderItem={renderInstructionItem(
-                      values.steps,
-                      setFieldValue,
-                    )}
-                  />
-                  <TouchableOpacity
-                    style={styles.addIngredient}
-                    onPress={() =>
-                      setFieldValue(STEPS_KEY, [...values.steps, { text: "" }])
+                      setShowKrogerIngredientModal(false);
+                      return;
                     }
-                  >
-                    <Text style={styles.plusicon}>+</Text>
-                    <Text style={styles.addIngredientText}>
-                      {Strings.createMeal_addStep}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
-                <SpaceBetweenButtons
-                  containerStyle={styles.parentOfConfirmButton}
-                  left={
-                    <ThemeNormalButton
-                      title={
-                        isEdit
-                          ? Strings.createMeal_discard
-                          : Strings.createMeal_cancel
-                      }
-                      // backgroundColor={Colors.white}
-                      textStyle={
-                        isEdit ? styles.editCancelButton : styles.cancelButton
-                      }
-                      onPress={() => ref?.current?.close()}
-                    />
-                  }
-                  right={
-                    <ThemeGradientButton
-                      title={
-                        isEdit
-                          ? Strings.createMeal_updateMeal
-                          : Strings.createMeal_confirm
-                      }
-                      gradientStartColor={Colors._667D4C}
-                      gradientEndColor={Colors._9DAF89}
-                      gradientStart={{ x: 0, y: 0 }}
-                      gradientEnd={{ x: 1, y: 0 }}
-                      rightChild={
-                        isEdit ? (
-                          <Image
-                            source={iconMeal}
-                            style={{
-                              width: verticalScale(21),
-                              height: verticalScale(21),
-                              tintColor: Colors.white,
-                            }}
-                            resizeMode="contain"
-                          />
-                        ) : null
-                      }
-                      textStyle={styles.confirmButton}
-                      onPress={async () => {
-                        const formErrors = await validateForm();
+                    const matchedCategory = findMatchingCategory(meta);
+                    const baseUnitOptions = (matchedCategory?.unit ||
+                      []) as string[];
+                    const unitOptions = mergeUnitOptions(
+                      baseUnitOptions,
+                      meta?.parsedUnit || "",
+                    );
+                    const selectedUnit = findPreferredUnit(
+                      unitOptions,
+                      meta?.parsedUnit || "",
+                    );
+                    const defaultCount =
+                      meta?.parsedQuantity && meta.parsedQuantity > 0
+                        ? String(meta.parsedQuantity)
+                        : "0";
 
-                        if (Object.keys(formErrors).length > 0) {
-                          // Mark all fields as touched to show validation errors
-                          const ingredientsTouched = values.ingredients.map(
-                            () => ({
-                              name: true,
-                              count: true,
-                              unit: true,
-                              category: true,
-                            }),
-                          );
+                    setFieldValue(INGREDIENTS_KEY, [
+                      ...values.ingredients,
+                      {
+                        ingredientId:
+                          meta?.upc || meta?.productId || generateFirebaseId(),
+                        ingredientName: selection.ingredientName,
+                        count: defaultCount,
+                        unit: selectedUnit,
+                        categoryId: matchedCategory?.id ?? "",
+                        categoryName:
+                          meta?.displayCategory ||
+                          meta?.category ||
+                          matchedCategory?.title ||
+                          "",
+                        categoryUnits: unitOptions,
+                        allowCountSelection: Boolean(meta?.parsedQuantity),
+                        isKroger: true,
+                        krogerIngredientId: meta?.productId || "",
+                        krogerMeta: meta,
+                      },
+                    ]);
 
-                          const stepsTouched = values.steps.map(() => true);
+                    if (touched.ingredients && errors.ingredients) {
+                      setTouched({ ...touched, ingredients: false } as any);
+                    }
 
-                          setTouched(
-                            {
-                              name: true,
-                              description: true,
-                              imageUrl: true,
-                              prepTime: true,
-                              servings: true,
-                              difficulty: true,
-                              category: true,
-                              ingredients: ingredientsTouched,
-                              steps: stepsTouched,
-                            },
-                            false,
-                          ); // false means don't validate, just set touched
-
-                          return;
-                        }
-                        handleSubmit();
-                      }}
-                    />
-                  }
+                    setShowKrogerIngredientModal(false);
+                  }}
                 />
-                <View style={styles.emptybottom}></View>
-              </BottomSheetScrollView>
-            </BottomSheet>
-          </>
-        )
+
+                <FlatList
+                  data={values.ingredients}
+                  keyExtractor={(_, index) => index.toString()}
+                  scrollEnabled={false}
+                  renderItem={renderIngredientItem(
+                    values.ingredients,
+                    setFieldValue,
+                    errors,
+                    touched,
+                    setTouched,
+                  )}
+                />
+                {touched.ingredients &&
+                  errors.ingredients &&
+                  typeof errors.ingredients === "string" && (
+                    <Text style={styles.errorText}>{errors.ingredients}</Text>
+                  )}
+
+                <TouchableOpacity
+                  style={styles.addIngredient}
+                  onPress={handleOpenKrogerPicker}
+                  disabled={isPreparingKroger}
+                >
+                  <IconPlus
+                    width={verticalScale(21)}
+                    height={verticalScale(21)}
+                    color={Colors.primary}
+                  />
+                  <Text style={styles.plusicon}>+</Text>
+                  <Text style={styles.addIngredientText}>
+                    {isPreparingKroger
+                      ? "Loading Kroger..."
+                      : Strings.createMeal_addIngredient}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  {Strings.createMeal_instruction}
+                </Text>
+
+                <FlatList
+                  data={values.steps}
+                  keyExtractor={(_, index) => index.toString()}
+                  scrollEnabled={false}
+                  renderItem={renderInstructionItem(
+                    values.steps,
+                    setFieldValue,
+                  )}
+                />
+                <TouchableOpacity
+                  style={styles.addIngredient}
+                  onPress={() =>
+                    setFieldValue(STEPS_KEY, [...values.steps, { text: "" }])
+                  }
+                >
+                  <Text style={styles.plusicon}>+</Text>
+                  <Text style={styles.addIngredientText}>
+                    {Strings.createMeal_addStep}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <SpaceBetweenButtons
+                containerStyle={styles.parentOfConfirmButton}
+                left={
+                  <ThemeNormalButton
+                    title={
+                      isEdit
+                        ? Strings.createMeal_discard
+                        : Strings.createMeal_cancel
+                    }
+                    textStyle={
+                      isEdit ? styles.editCancelButton : styles.cancelButton
+                    }
+                    onPress={closeSheet}
+                  />
+                }
+                right={
+                  <ThemeGradientButton
+                    title={
+                      isEdit
+                        ? Strings.createMeal_updateMeal
+                        : Strings.createMeal_confirm
+                    }
+                    gradientStartColor={Colors._667D4C}
+                    gradientEndColor={Colors._9DAF89}
+                    gradientStart={{ x: 0, y: 0 }}
+                    gradientEnd={{ x: 1, y: 0 }}
+                    rightChild={
+                      isEdit ? (
+                        <Image
+                          source={iconMeal}
+                          style={{
+                            width: verticalScale(21),
+                            height: verticalScale(21),
+                            tintColor: Colors.white,
+                          }}
+                          resizeMode="contain"
+                        />
+                      ) : null
+                    }
+                    textStyle={styles.confirmButton}
+                    onPress={async () => {
+                      const formErrors = await validateForm();
+
+                      if (Object.keys(formErrors).length > 0) {
+                        // Mark all fields as touched to show validation errors
+                        const ingredientsTouched = values.ingredients.map(
+                          () => ({
+                            name: true,
+                            count: true,
+                            unit: true,
+                            category: true,
+                          }),
+                        );
+
+                        const stepsTouched = values.steps.map(() => true);
+
+                        setTouched(
+                          {
+                            name: true,
+                            description: true,
+                            imageUrl: true,
+                            prepTime: true,
+                            servings: true,
+                            difficulty: true,
+                            category: true,
+                            ingredients: ingredientsTouched,
+                            steps: stepsTouched,
+                          } as any,
+                          false,
+                        ); // false means don't validate, just set touched
+
+                        return;
+                      }
+                      handleSubmit();
+                    }}
+                  />
+                }
+              />
+              <View style={styles.emptybottom}></View>
+            </BottomSheetScrollView>
+          </BottomSheet>
+        </>
       )}
     </Formik>
   );

@@ -1,6 +1,6 @@
-import { useAppDispatch } from '@/reduxStore/hooks';
-import { registerAsync } from '@/reduxStore/slices/authSlice';
-import * as yup from 'yup';
+import { useAppDispatch } from "@/reduxStore/hooks";
+import { registerAsync } from "@/reduxStore/slices/authSlice";
+import * as yup from "yup";
 
 export interface SignupFormValues {
   name: string;
@@ -20,10 +20,8 @@ export class SignupViewModel {
       .required("Confirm password is required"),
   });
 
-
   validateFieldZipSchema = yup.object({
     zip: yup.string().required("Zip is required"),
-   
   });
 
   dispatch = useAppDispatch();
@@ -60,32 +58,34 @@ export class SignupViewModel {
 
   // Field validation is handled by Formik
 
-
   async handleSignup(
     values: SignupFormValues,
     onSuccess?: (payload: any) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
   ): Promise<void> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
-      const resultAction = await this.dispatch(registerAsync({
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-        name: values.name,
-      }));
+      const resultAction = await this.dispatch(
+        registerAsync({
+          email: values.email.trim().toLowerCase(),
+          password: values.password,
+          name: values.name,
+        }),
+      );
       if (registerAsync.fulfilled.match(resultAction)) {
         onSuccess?.(resultAction.payload);
       } else {
         onError?.(resultAction.payload as string);
       }
     } catch (error: any) {
-      onError?.(error.message || 'Validation error');
+      onError?.(error.message || "Validation error");
     }
   }
 
-
-
-  async validateField(fieldName: string, value: string): Promise<string | undefined> {
+  async validateField(
+    fieldName: string,
+    value: string,
+  ): Promise<string | undefined> {
     try {
       const fieldSchema = yup.reach(this.validationSchema, fieldName);
       await (fieldSchema as any).validate(value);
@@ -94,7 +94,7 @@ export class SignupViewModel {
       if (error instanceof yup.ValidationError) {
         return error.message;
       }
-      return 'Invalid input';
+      return "Invalid input";
     }
   }
 }

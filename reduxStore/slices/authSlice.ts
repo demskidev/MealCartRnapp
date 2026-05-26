@@ -25,7 +25,7 @@ import {
   REGISTER,
   UPDATE_USER,
 } from "../actionTypes";
-import { MEAL_IMAGE_FOLDER, USER_IMAGE_FOLDER, USERS_COLLECTION } from "../appKeys";
+import { USER_IMAGE_FOLDER, USERS_COLLECTION } from "../appKeys";
 // Utility to map Firebase Auth error codes to user-friendly messages
 function getFirebaseAuthErrorMessage(error: any): string {
   switch (error.code) {
@@ -124,7 +124,6 @@ export const loadUserByUidAsync = createAsyncThunk(
   },
 );
 
-
 const addUserImage = async (imageUrl: string) => {
   try {
     const uploadedImageUrl = await uploadImageToFirebase(
@@ -146,7 +145,11 @@ export const updateUserAsync = createAsyncThunk(
   ) => {
     try {
       // If there's a new image to upload, handle it
-      if (userData.image && typeof userData.image === "string" && userData.image.startsWith("file")) {
+      if (
+        userData.image &&
+        typeof userData.image === "string" &&
+        userData.image.startsWith("file")
+      ) {
         const uploadedImageUrl = await addUserImage(userData.image);
         userData.image = uploadedImageUrl;
       }

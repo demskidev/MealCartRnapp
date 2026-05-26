@@ -1,17 +1,23 @@
 import { hideLoader, showLoader } from "@/components/Loader";
 import MealDetail from "@/components/MealDetail";
+import { MEALS_COLLECTION } from "@/reduxStore/appKeys";
+import { enrichMealsWithIngredients } from "@/reduxStore/slices/mealsSlice";
+import { updateDocument } from "@/services/firestore";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function MealDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { meals, updateMealData, fetchMeals } = useMealsViewModel();
+  const { meals, fetchMeals } = useMealsViewModel();
 
   const mealId = params.mealId as string;
   const hasUpdatedViewTime = useRef(false);
-  const hasCheckedMealNotFound = useRef(false); // Prevent multiple alerts
+  const hasCheckedMealNotFound = useRef(false);
+  const hasFetchedIngredients = useRef(false);
+
+  const [enrichedMeal, setEnrichedMeal] = useState<any>(null);
 
   // Get meal from Redux state
   const meal = useMemo(() => {
@@ -24,7 +30,7 @@ export default function MealDetailScreen() {
       showLoader();
       fetchMeals(
         () => {},
-        () => {}
+        () => {},
       );
     }
   }, []);
@@ -32,61 +38,35 @@ export default function MealDetailScreen() {
   // Update lastViewedAt when meal is found
   useEffect(() => {
     if (!meal || hasUpdatedViewTime.current) return;
-
     hasUpdatedViewTime.current = true;
+    updateDocument(MEALS_COLLECTION, meal.id, {
+      lastViewedAt: new Date(),
+    }).catch(() => {});
+  }, [meal?.id]);
 
-    const cleanedIngredients = meal.ingredients?.map((ing) => ({
-      ingredientId: ing.ingredientId,
-      categoryId: ing.categoryId,
-    }));
+  // Fetch & enrich ingredients from mealIngredients subcollection
+  useEffect(() => {
+    if (!meal || hasFetchedIngredients.current) return;
+    hasFetchedIngredients.current = true;
+    showLoader();
 
-    updateMealData(
-      {
-        mealData: {
-          id: meal.id,
-          name: meal.name,
-          description: meal.description,
-          imageUrl: meal.imageUrl,
-          prepTime: meal.prepTime,
-          servings: meal.servings,
-          difficulty: meal.difficulty,
-          category: meal.category,
-          ingredients: cleanedIngredients,
-          steps: meal.steps,
-          lastViewedAt: new Date(),
-          uid: meal.uid,
-        },
-        updateWithIngredients: false,
-      },
-      () => {},
-      () => {}
-    );
+    enrichMealsWithIngredients([meal])
+      .then((enriched) => setEnrichedMeal(enriched[0]))
+      .catch(() => setEnrichedMeal(meal))
+      .finally(() => hideLoader());
   }, [meal?.id]);
 
   // Handle meal not found
   useEffect(() => {
     if (!meal && meals.length > 0 && !hasCheckedMealNotFound.current) {
       hasCheckedMealNotFound.current = true;
-      // Alert.alert(
-      //   "Meal Not Found",
-      //   "This meal could not be found or has been deleted.",
-      //   [
-      //     {
-      //       text: "OK",
-      //       onPress: () => router.back(),
-      //     },
-      //   ],
-      //   { cancelable: false }
-      // );
-    } else if (meal) {
       hideLoader();
     }
-  }, [meal, meals.length, router]);
+  }, [meal, meals.length]);
 
-  // Show loader only while fetching initial meals or meal not found yet
-  if (!meal) {
+  if (!enrichedMeal) {
     return null;
   }
 
-  return <MealDetail meal={meal!} onBack={() => router.back()} />;
+  return <MealDetail meal={enrichedMeal} onBack={() => router.back()} />;
 }

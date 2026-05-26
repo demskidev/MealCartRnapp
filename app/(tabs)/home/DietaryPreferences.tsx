@@ -3,23 +3,23 @@ import { CheckBox, FilledCheckBox } from "@/assets/svg";
 import BaseButton from "@/components/BaseButton";
 import Loader, { hideLoader, showLoader } from "@/components/Loader";
 import {
-    horizontalScale,
-    moderateScale,
-    verticalScale,
+  horizontalScale,
+  moderateScale,
+  verticalScale,
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { showErrorToast, showSuccessToast, showToast } from "@/utils/Toast";
+import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 

@@ -79,8 +79,7 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
       // CRITICAL: Add delay to ensure OAuth session is fully cleaned up
       // This prevents the "OAuth redirect sent after session completed" error
       await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (clearError) {
-    }
+    } catch (clearError) {}
 
     const response = await GoogleSignin.signIn();
 
