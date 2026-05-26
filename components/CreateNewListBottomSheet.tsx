@@ -107,11 +107,19 @@ const CreateNewListBottomSheet = forwardRef<
         if (!acc[category]) {
           acc[category] = [];
         }
+        const count = ingredient.count || "";
+        const unit = ingredient.unit || "";
+        const mealName = ingredient.mealName || "";
+        const amountParts: string[] = [];
+        if (Number(count) > 0) amountParts.push(String(count));
+        if (unit) amountParts.push(unit);
+        let amount = amountParts.join(" ");
+        if (mealName) amount += ` (${mealName})`;
         acc[category].push({
           id: ingredient.ingredientId || ingredient.ingredientName,
           category: ingredient.categoryName,
           name: ingredient.ingredientName,
-          amount: ingredient.selectedUnit || ingredient.unit,
+          amount: amount || unit,
         });
         return acc;
       },
@@ -304,9 +312,13 @@ const CreateNewListBottomSheet = forwardRef<
                 style={styles.checkboxIcon}
               />
             )}
-            <View>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.amount}>{item.amount}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name} numberOfLines={2}>
+                {item.name}
+              </Text>
+              <Text style={styles.amount} numberOfLines={2}>
+                {item.amount}
+              </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -357,11 +369,16 @@ const CreateNewListBottomSheet = forwardRef<
 
         const mappedIngredients = selectedIngredients.map((ingredient) => ({
           ingredientId: ingredient.ingredientId,
+          ingredientName: ingredient.ingredientName || "",
           categoryId: ingredient.categoryId,
+          categoryName: ingredient.categoryName || "",
           mealId: ingredient.mealId || "",
+          mealName: ingredient.mealName || "",
           unit: ingredient.selectedUnit || ingredient.unit,
           count: ingredient.count || 1,
           acquired: ingredient.acquired || false,
+          isKroger: ingredient.isKroger || false,
+          krogerIngredientId: ingredient.krogerIngredientId || "",
         }));
 
         const shoppingListData = {
@@ -425,6 +442,12 @@ const CreateNewListBottomSheet = forwardRef<
         index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose={!shouldStartTour}
+        onChange={(index) => {
+          if (index === -1) {
+            resetState();
+            if (onClose) onClose();
+          }
+        }}
         keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
         topInset={0}
@@ -542,7 +565,10 @@ const CreateNewListBottomSheet = forwardRef<
               textColor={Colors.error}
               showElevation={false}
               textStyle={styles.discardText}
-              onPress={() => bottomSheetRef.current?.close()}
+              onPress={() => {
+                resetState();
+                bottomSheetRef.current?.close();
+              }}
             />
             <BaseButton
               title={Strings.createList_saveShoppingList}
@@ -570,6 +596,11 @@ const CreateNewListBottomSheet = forwardRef<
           onClose={() => setIsAddItemVisible(false)}
           onMealSelect={(ingredients) => {
             setReceivedIngredients(ingredients);
+            setSelectedItems(
+              ingredients.map(
+                (ing: any) => ing.ingredientId || ing.ingredientName,
+              ),
+            );
             setIsAddItemVisible(false);
           }}
         />

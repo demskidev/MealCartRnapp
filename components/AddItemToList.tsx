@@ -11,7 +11,7 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -160,7 +160,16 @@ const AddItemToList = ({
       return;
     }
 
-    const selectedMealObjects = meals.filter((meal) =>
+    // Look in both Redux meals and search-filtered meals
+    const combinedMeals = [...meals, ...filteredMeals];
+    const seenIds = new Set<string>();
+    const uniqueMeals = combinedMeals.filter((meal) => {
+      if (seenIds.has(meal.id)) return false;
+      seenIds.add(meal.id);
+      return true;
+    });
+
+    const selectedMealObjects = uniqueMeals.filter((meal) =>
       selectedMeals.includes(meal.id),
     );
 
@@ -189,59 +198,56 @@ const AddItemToList = ({
 
     setDynamicIngredients(allIngredientNames);
     setFullIngredientsData(allFullIngredients);
-  }, [selectedMeals, meals]);
+  }, [selectedMeals, meals, filteredMeals]);
 
   // Removed initialization of itemWeights - let them be undefined by default
   // so that ingredient's default unit can be used
 
-  // Update suggestions when dynamic ingredients change (when meals are selected/deselected)
+  // Helper: get names already picked (pending or added)
+  const excludedNames = useMemo(() => {
+    const names = new Set<string>();
+    pendingItems.forEach((i) => names.add(i.value));
+    manualList.forEach((i) => names.add(i.value));
+    return names;
+  }, [pendingItems, manualList]);
+
+  // Build filtered suggestions whenever inputs change
   useEffect(() => {
-    // If search bar is empty, input is focused, and we have ingredients, update suggestions
-    if (!searchText.trim() && isInputFocused && dynamicIngredients.length > 0) {
-      setSuggestions(dynamicIngredients);
-    }
-  }, [dynamicIngredients, isInputFocused]);
+    // Show suggestions when meals are selected (dynamicIngredients populated)
+    // OR when the input is focused / has search text
+    const hasMealIngredients = dynamicIngredients.length > 0;
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-
-    if (!text.trim()) {
-      // Show all ingredients when input is empty but focused
-      setSuggestions(dynamicIngredients);
+    if (!hasMealIngredients && !isInputFocused && !searchText.trim()) {
+      setSuggestions([]);
       return;
     }
 
-    const filtered = dynamicIngredients.filter((item) =>
-      item.toLowerCase().includes(text.toLowerCase()),
-    );
+    let pool = dynamicIngredients.filter((name) => !excludedNames.has(name));
 
-    setSuggestions(filtered);
+    if (searchText.trim()) {
+      const lower = searchText.toLowerCase();
+      pool = pool.filter((name) => name.toLowerCase().includes(lower));
+    }
+
+    setSuggestions(pool);
+  }, [dynamicIngredients, searchText, isInputFocused, excludedNames]);
+
+  const handleSearch = (text: string) => {
+    setSearchText(text);
   };
 
   const handleInputFocus = () => {
     setIsInputFocused(true);
-    if (dynamicIngredients.length > 0) {
-      setSuggestions(dynamicIngredients);
-    } else {
-      setSuggestions([]);
-    }
   };
 
   const handleSelectSuggestion = (value: string) => {
-    if (
-      pendingItems.some((i) => i.value === value) ||
-      manualList.some((i) => i.value === value)
-    ) {
-      setSearchText("");
-      setIsInputFocused(false);
+    if (excludedNames.has(value)) {
       return;
     }
 
     const newItem = { id: Date.now().toString(), value };
-
     setPendingItems((prev) => [...prev, newItem]);
     setSearchText("");
-    setIsInputFocused(false);
   };
 
   const handleAddPendingItem = (item: { id: string; value: string }) => {
@@ -282,40 +288,51 @@ const AddItemToList = ({
   };
 
   const handleGenerateList = () => {
-    // Collect all ingredients with their selected units
-    const ingredientsWithUnits = fullIngredientsData.map((ingredient) => {
-      const ingredientName = ingredient.ingredientName;
-      const categoryUnits = ingredient.categoryUnits || [
-        "100grm",
-        "200grm",
-        "1kg",
-      ];
-      const defaultUnit = ingredient.unit || "100grm";
+    // Only send ingredients that the user explicitly added via the "Add" button
+    const addedNames = manualList.map((item) => item.value);
+    const addedIngredients = fullIngredientsData.filter((ingredient) =>
+      addedNames.includes(ingredient.ingredientName),
+    );
 
-      // Normalize the unit strings by removing spaces for comparison
-      const normalizedDefaultUnit = defaultUnit
-        .replace(/\s+/g, "")
-        .toLowerCase();
-      const defaultUnitIndex = categoryUnits.findIndex(
-        (unit) =>
-          unit.replace(/\s+/g, "").toLowerCase() === normalizedDefaultUnit,
-      );
+    const ingredientsList = addedIngredients.map((ingredient) => {
+      const ingredientName = ingredient.ingredientName || "";
+      const isKroger = ingredient.isKroger || false;
 
-      // Get the selected weight index or use default
-      const weightIndex =
-        itemWeights[ingredientName] !== undefined
-          ? itemWeights[ingredientName]
-          : defaultUnitIndex >= 0
-            ? defaultUnitIndex
-            : 0;
+      // For Kroger: always use ingredient's own unit
+      // For non-Kroger: use user-selected unit from stepper
+      let selectedUnit = ingredient.unit || "";
+      if (!isKroger) {
+        const categoryUnits = ingredient.categoryUnits || [];
+        const defaultUnit = ingredient.unit || "";
+        const normalizedDefault = defaultUnit.replace(/\s+/g, "").toLowerCase();
+        const defaultIndex = categoryUnits.findIndex(
+          (u: string) =>
+            u.replace(/\s+/g, "").toLowerCase() === normalizedDefault,
+        );
+        const weightIndex =
+          itemWeights[ingredientName] !== undefined
+            ? itemWeights[ingredientName]
+            : defaultIndex >= 0
+              ? defaultIndex
+              : 0;
+        selectedUnit = categoryUnits[weightIndex] || defaultUnit;
+      }
 
       return {
-        ...ingredient,
-        selectedUnit: categoryUnits[weightIndex] || defaultUnit,
+        ingredientId: ingredient.ingredientId || "",
+        ingredientName: ingredientName,
+        categoryName: ingredient.categoryName || "",
+        categoryId: ingredient.categoryId || "",
+        unit: selectedUnit,
+        count: ingredient.count || "0",
+        mealId: ingredient.mealId || "",
+        mealName: ingredient.mealName || "",
+        isKroger,
+        krogerIngredientId: ingredient.krogerIngredientId || "",
       };
     });
 
-    onMealSelect?.(ingredientsWithUnits);
+    onMealSelect?.(ingredientsList);
     onClose();
   };
 
@@ -409,6 +426,7 @@ const AddItemToList = ({
                   showsVerticalScrollIndicator={false}
                   keyExtractor={(item) => item.id}
                   renderItem={renderMealItem}
+                  keyboardShouldPersistTaps="handled"
                   contentContainerStyle={styles.mealsListContent}
                   ItemSeparatorComponent={() => (
                     <View style={styles.mealSeparator} />
@@ -436,55 +454,42 @@ const AddItemToList = ({
                   onFocus={handleInputFocus}
                 />
 
-                {suggestions.length > 0 && isInputFocused && (
+                {suggestions.length > 0 && (
                   <FlatList
                     data={suggestions}
                     keyExtractor={(item) => item}
+                    keyboardShouldPersistTaps="handled"
                     style={styles.suggestionsListStyle}
-                    extraData={[pendingItems, manualList, itemWeights]} // Add this too
+                    extraData={[pendingItems, manualList, itemWeights]}
                     renderItem={({ item }) => {
-                      // Find the ingredient data for this item
                       const ingredientData = fullIngredientsData.find(
                         (ing) => ing.ingredientName === item,
                       );
-                      const categoryUnits = ingredientData?.categoryUnits || [
-                        "100grm",
-                        "200grm",
-                        "1kg",
-                      ];
-                      const defaultUnit = ingredientData?.unit || "100grm";
+                      const isKroger = ingredientData?.isKroger || false;
+                      const unit = ingredientData?.unit || "";
+                      const count = ingredientData?.count || "0";
+                      const categoryUnits = ingredientData?.categoryUnits || [];
 
-                      // Normalize the unit strings by removing spaces for comparison
-                      const normalizedDefaultUnit = defaultUnit
+                      // For non-Kroger: calculate stepper index
+                      const normalizedDefault = unit
                         .replace(/\s+/g, "")
                         .toLowerCase();
-                      const defaultUnitIndex = categoryUnits.findIndex(
-                        (unit) =>
-                          unit.replace(/\s+/g, "").toLowerCase() ===
-                          normalizedDefaultUnit,
+                      const defaultIndex = categoryUnits.findIndex(
+                        (u: string) =>
+                          u.replace(/\s+/g, "").toLowerCase() ===
+                          normalizedDefault,
                       );
-
-                      // Get current index or find index of default unit
-                      // Check if itemWeights[item] is undefined to use default unit index
                       const currentIndex =
                         itemWeights[item] !== undefined
                           ? itemWeights[item]
-                          : defaultUnitIndex >= 0
-                            ? defaultUnitIndex
+                          : defaultIndex >= 0
+                            ? defaultIndex
                             : 0;
                       const safeIndex = currentIndex >= 0 ? currentIndex : 0;
 
                       return (
                         <View>
                           <View style={styles.suggestionItemContainer}>
-                            {/* <TouchableOpacity
-                              activeOpacity={0.7}
-                              onPress={() => handleSelectSuggestion(item)}
-                              style={styles.suggestionTouchable}
-                            >
-                              <Text style={styles.suggestionText}>{item}</Text>
-                            </TouchableOpacity> */}
-
                             <TouchableOpacity
                               onPress={() => {
                                 handleSelectSuggestion(item);
@@ -494,33 +499,40 @@ const AddItemToList = ({
                               <Text style={styles.suggestionText}>{item}</Text>
                             </TouchableOpacity>
 
-                            <View style={styles.rowItem}>
-                              <CustomStepper
-                                value={categoryUnits[safeIndex]}
-                                onIncrement={() => {
-                                  setItemWeights((prev) => {
-                                    const current = prev[item] ?? safeIndex;
-                                    return {
-                                      ...prev,
-                                      [item]: Math.min(
-                                        current + 1,
-                                        categoryUnits.length - 1,
-                                      ),
-                                    };
-                                  });
-                                }}
-                                onDecrement={() => {
-                                  setItemWeights((prev) => {
-                                    const current = prev[item] ?? safeIndex;
-                                    return {
-                                      ...prev,
-                                      [item]: Math.max(current - 1, 0),
-                                    };
-                                  });
-                                }}
-                                containerStyle={styles.stepperContainer}
-                              />
-                            </View>
+                            {isKroger ? (
+                              <Text style={styles.suggestionText}>
+                                {Number(count) > 0 && `${count} `}
+                                {unit}
+                              </Text>
+                            ) : (
+                              <View style={styles.rowItem}>
+                                <CustomStepper
+                                  value={categoryUnits[safeIndex] || unit}
+                                  onIncrement={() => {
+                                    setItemWeights((prev) => {
+                                      const current = prev[item] ?? safeIndex;
+                                      return {
+                                        ...prev,
+                                        [item]: Math.min(
+                                          current + 1,
+                                          categoryUnits.length - 1,
+                                        ),
+                                      };
+                                    });
+                                  }}
+                                  onDecrement={() => {
+                                    setItemWeights((prev) => {
+                                      const current = prev[item] ?? safeIndex;
+                                      return {
+                                        ...prev,
+                                        [item]: Math.max(current - 1, 0),
+                                      };
+                                    });
+                                  }}
+                                  containerStyle={styles.stepperContainer}
+                                />
+                              </View>
+                            )}
                           </View>
 
                           <View style={styles.dividerRowList} />
@@ -534,6 +546,7 @@ const AddItemToList = ({
                   data={[...pendingItems, ...manualList]}
                   extraData={[pendingItems, manualList]}
                   keyExtractor={(item) => item.id}
+                  keyboardShouldPersistTaps="handled"
                   style={styles.manualListStyle}
                   showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => {

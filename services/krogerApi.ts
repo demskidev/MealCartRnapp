@@ -14,6 +14,7 @@ type KrogerProxyParams = {
   method?: string;
   query?: Record<string, string | number | boolean | null | undefined>;
   body?: unknown;
+  authMode?: "app" | "user";
 };
 
 const createAuthSessionCallable = httpsCallable<
@@ -45,6 +46,11 @@ const krogerProxyCallable = httpsCallable<KrogerProxyParams, unknown>(
   functions,
   "krogerProxy",
 );
+
+const getKrogerUserTokenCallable = httpsCallable<
+  void,
+  { accessToken: string; expiresAt: string; scope: string }
+>(functions, "getKrogerUserToken");
 
 type CachedAppToken = {
   accessToken: string;
@@ -235,11 +241,38 @@ export async function fetchKrogerProductById(
 }
 
 export async function addItemsToKrogerCart(items: unknown[]) {
-  return callKrogerApi({
-    path: "/v1/cart/add",
+  await ensureSignedIn();
+
+  // Get the user's OAuth token from the cloud function
+  const tokenResult = await getKrogerUserTokenCallable();
+  const { accessToken } = tokenResult.data;
+
+  // Call Kroger directly from the client to avoid CDN blocking cloud function IPs
+  const response = await fetch("https://api-ce.kroger.com/v1/cart/add", {
     method: "PUT",
-    body: {
-      items,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({ items }),
   });
+
+  const text = await response.text();
+  let payload: unknown;
+
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    payload = { raw: text };
+  }
+
+  if (!response.ok) {
+    const err: any = new Error(`Kroger cart API failed (${response.status})`);
+    err.status = response.status;
+    err.details = payload;
+    throw err;
+  }
+
+  return payload;
 }

@@ -397,25 +397,25 @@ const CreateMealBottomSheet = forwardRef<
       setIsPreparingKroger(true);
       const status = await loadKrogerStatus();
 
-      if (!status?.connected) {
-        showToast(
-          "info",
-          Strings.profile_krogerConnectAccount,
-          Strings.profile_krogerDisconnectedSubtitle,
-        );
-        pushNavigation(APP_ROUTES.KROGER_SIGNUP, { source: "profile" });
-        return;
-      }
+      // if (!status?.connected) {
+      //   showToast(
+      //     "info",
+      //     Strings.profile_krogerConnectAccount,
+      //     Strings.profile_krogerDisconnectedSubtitle,
+      //   );
+      //   pushNavigation(APP_ROUTES.KROGER_SIGNUP, { source: "profile" });
+      //   return;
+      // }
 
-      if (!status?.selectedStore) {
-        showToast(
-          "info",
-          Strings.profile_krogerSelectStore,
-          Strings.profile_krogerNoStore,
-        );
-        pushNavigation(APP_ROUTES.KROGER_SIGNUP, { source: "profile" });
-        return;
-      }
+      // if (!status?.selectedStore) {
+      //   showToast(
+      //     "info",
+      //     Strings.profile_krogerSelectStore,
+      //     Strings.profile_krogerNoStore,
+      //   );
+      //   pushNavigation(APP_ROUTES.KROGER_SIGNUP, { source: "profile" });
+      //   return;
+      // }
 
       setShowKrogerIngredientModal(true);
     } catch (error: any) {
@@ -444,7 +444,9 @@ const CreateMealBottomSheet = forwardRef<
         item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
         item?.unit?.toLowerCase().includes(Strings.units.cup);
       const shouldShowCount =
-        isVolumeUnit || Boolean(item?.allowCountSelection);
+        isVolumeUnit ||
+        Boolean(item?.allowCountSelection) ||
+        Boolean(item?.isKroger);
 
       // Get units - use categoryUnits if available (edit mode), otherwise get from ingredientCategories
       const unitOptions =
@@ -1350,6 +1352,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     marginTop: moderateScale(8),
     marginBottom: moderateScale(4),
+
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.primary,
   },

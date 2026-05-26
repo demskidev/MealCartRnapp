@@ -4,11 +4,12 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const logger = require("firebase-functions/logger");
 const { defineSecret } = require("firebase-functions/params");
-const { HttpsError, onCall, onRequest } = require("firebase-functions/v2/https");
 const {
-  FIREBASE_FUNCTIONS_REGION,
-  FIREBASE_PROJECT_ID,
-} = require("./config");
+  HttpsError,
+  onCall,
+  onRequest,
+} = require("firebase-functions/v2/https");
+const { FIREBASE_FUNCTIONS_REGION, FIREBASE_PROJECT_ID } = require("./config");
 const { callKrogerApi } = require("./krogerApi");
 const {
   completeAuthSession,
@@ -169,7 +170,48 @@ exports.getKrogerAppToken = onCall(
       };
     } catch (error) {
       logger.error("getKrogerAppToken failed", error);
-      throw new HttpsError("internal", error.message || "Unable to get Kroger app token");
+      throw new HttpsError(
+        "internal",
+        error.message || "Unable to get Kroger app token",
+      );
+    }
+  },
+);
+
+exports.getKrogerUserToken = onCall(
+  {
+    region: FIREBASE_FUNCTIONS_REGION,
+    secrets: [krogerClientId, krogerClientSecret],
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "You must be signed in.");
+    }
+
+    try {
+      const tokenData = await ensureFreshUserToken({
+        db,
+        uid: request.auth.uid,
+        clientId: krogerClientId.value(),
+        clientSecret: krogerClientSecret.value(),
+      });
+
+      return {
+        accessToken: tokenData.accessToken,
+        expiresAt: tokenData.expiresAt,
+        scope: tokenData.scope || "",
+      };
+    } catch (error) {
+      logger.error("getKrogerUserToken failed", error);
+
+      if (error.code === "not-connected" || error.code === "reauth-required") {
+        throw new HttpsError("unauthenticated", error.message);
+      }
+
+      throw new HttpsError(
+        "internal",
+        error.message || "Unable to get Kroger user token",
+      );
     }
   },
 );
@@ -187,10 +229,20 @@ exports.krogerProxy = onCall(
     const { path, method, query, body } = request.data || {};
 
     if (typeof path !== "string" || !path.startsWith("/")) {
-      throw new HttpsError("invalid-argument", "A valid Kroger API path is required.");
+      throw new HttpsError(
+        "invalid-argument",
+        "A valid Kroger API path is required.",
+      );
     }
 
     try {
+      const tokenRecord = await getUserTokenRecord(db, request.auth.uid);
+      logger.info("krogerProxy token info", {
+        scope: tokenRecord?.scope || "none",
+        connected: tokenRecord?.connected || false,
+        expiresAt: tokenRecord?.expiresAt || "unknown",
+      });
+
       const result = await callKrogerApi({
         db,
         uid: request.auth.uid,
@@ -203,9 +255,16 @@ exports.krogerProxy = onCall(
       });
 
       if (!result.ok) {
+        logger.error("krogerProxy Kroger API error", {
+          status: result.status,
+          path,
+          method,
+          payload: result.payload,
+        });
+
         throw new HttpsError(
           result.status === 401 ? "unauthenticated" : "failed-precondition",
-          result.payload?.message || "Kroger API request failed",
+          result.payload?.message || `Kroger API error ${result.status}`,
           {
             status: result.status,
             payload: result.payload,
@@ -215,7 +274,11 @@ exports.krogerProxy = onCall(
 
       return result.payload;
     } catch (error) {
-      logger.error("krogerProxy failed", error);
+      logger.error("krogerProxy failed", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+      });
 
       if (error instanceof HttpsError) {
         throw error;
@@ -235,8 +298,10 @@ exports.krogerOAuthCallback = onRequest(
     secrets: [krogerClientId, krogerClientSecret],
   },
   async (request, response) => {
-    const state = typeof request.query.state === "string" ? request.query.state : "";
-    const code = typeof request.query.code === "string" ? request.query.code : "";
+    const state =
+      typeof request.query.state === "string" ? request.query.state : "";
+    const code =
+      typeof request.query.code === "string" ? request.query.code : "";
     const oauthError =
       typeof request.query.error === "string" ? request.query.error : "";
     const errorDescription =

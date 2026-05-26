@@ -15,7 +15,7 @@ export default function MealDetailScreen() {
   const mealId = params.mealId as string;
   const hasUpdatedViewTime = useRef(false);
   const hasCheckedMealNotFound = useRef(false);
-  const hasFetchedIngredients = useRef(false);
+  const lastEnrichedMealRef = useRef<any>(null);
 
   const [enrichedMeal, setEnrichedMeal] = useState<any>(null);
 
@@ -24,7 +24,6 @@ export default function MealDetailScreen() {
     return meals.find((m) => m.id === mealId);
   }, [meals, mealId]);
 
-  // Fetch meals if not already loaded
   useEffect(() => {
     if (meals.length === 0) {
       showLoader();
@@ -35,7 +34,6 @@ export default function MealDetailScreen() {
     }
   }, []);
 
-  // Update lastViewedAt when meal is found
   useEffect(() => {
     if (!meal || hasUpdatedViewTime.current) return;
     hasUpdatedViewTime.current = true;
@@ -44,19 +42,19 @@ export default function MealDetailScreen() {
     }).catch(() => {});
   }, [meal?.id]);
 
-  // Fetch & enrich ingredients from mealIngredients subcollection
+  // Fetch & enrich ingredients — re-runs when Redux meal updates (e.g. after edit)
   useEffect(() => {
-    if (!meal || hasFetchedIngredients.current) return;
-    hasFetchedIngredients.current = true;
+    if (!meal) return;
+    if (lastEnrichedMealRef.current === meal) return;
+    lastEnrichedMealRef.current = meal;
     showLoader();
 
     enrichMealsWithIngredients([meal])
       .then((enriched) => setEnrichedMeal(enriched[0]))
       .catch(() => setEnrichedMeal(meal))
       .finally(() => hideLoader());
-  }, [meal?.id]);
+  }, [meal]);
 
-  // Handle meal not found
   useEffect(() => {
     if (!meal && meals.length > 0 && !hasCheckedMealNotFound.current) {
       hasCheckedMealNotFound.current = true;

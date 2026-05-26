@@ -1,5 +1,5 @@
 import { deleteicon, iconback, iconedit } from "@/assets/images";
-import { CheckBox, FilledCheckBox } from "@/assets/svg";
+import { CheckBox, FilledCheckBox, KrogerIcon } from "@/assets/svg";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import CreateNewListBottomSheet, {
   CreateNewListBottomSheetRef,
@@ -15,11 +15,14 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { useAppSelector } from "@/reduxStore/hooks";
+import { addItemsToKrogerCart } from "@/services/krogerApi";
 import { backNavigation } from "@/utils/Navigation";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -29,6 +32,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourGuideZone } from "rn-tourguide";
+
+enum KrogerModality {
+  DELIVERY = "DELIVERY",
+  PICKUP = "PICKUP",
+}
 
 export default function TestPlanShopping() {
   const [checked, setChecked] = useState<string[]>([]);
@@ -40,6 +48,10 @@ export default function TestPlanShopping() {
   const [selectedList, setSelectedList] = useState<any>(null);
   const [removeList, setRemoveList] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [krogerModality, setKrogerModality] = useState<KrogerModality | null>(
+    null,
+  );
+  const [sendingToKroger, setSendingToKroger] = useState(false);
 
   const {
     fetchListById,
@@ -51,7 +63,6 @@ export default function TestPlanShopping() {
   // Check if this is tour mode
   const isTourMode = listId === "tour-dummy-list" && shouldStartTour;
 
-  // Create dummy list for tour
   const dummyTourList = useMemo(
     () => ({
       id: "tour-dummy-list",
@@ -135,74 +146,19 @@ export default function TestPlanShopping() {
 
   const allIngredients = selectedList?.ingredients || selectedList?.items || [];
 
-  // const toggleCheck = (id: string) => {
-  //   setChecked((prev) =>
-  //     prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-  //   );
-  // };
-
   const acquiredCount = allIngredients.filter(
     (ing: any) => ing.acquired,
   ).length;
 
   const toggleCheck = (id: string, ingredient: any, index: number) => {
-    setChecked((prev) => {
-      const isNowChecked = !prev.includes(id);
-      // Update local checked state
-      const newChecked = isNowChecked
-        ? [...prev, id]
-        : prev.filter((i) => i !== id);
+    // Prevent unchecking acquired Kroger items (sent to cart)
+    if (ingredient.isKroger && ingredient.acquired && checked.includes(id)) {
+      return;
+    }
 
-      const mappedIngredients = allIngredients.map(
-        (ingredient: any, idx: number) => ({
-          ingredientId: ingredient.ingredientId,
-          categoryId: ingredient.categoryId,
-          mealId: ingredient.mealId || "",
-          unit: ingredient.selectedUnit || ingredient.unit,
-          count: ingredient.count || 1,
-          acquired: idx === index ? isNowChecked : ingredient.acquired || false,
-        }),
-      );
-
-      // Prepare updated ingredients array
-      const updatedIngredients = mappedIngredients.map(
-        (ing: any, idx: number) => {
-          if (idx === index) {
-            // Add or update the acquired key
-            return { ...ing, acquired: isNowChecked };
-          }
-          return ing;
-        },
-      );
-
-      setSelectedList((prevList: any) => {
-        if (!prevList) return prevList;
-        const updatedIngredients = prevList.ingredients.map(
-          (ing: any, idx: number) =>
-            idx === index ? { ...ing, acquired: isNowChecked } : ing,
-        );
-        return { ...prevList, ingredients: updatedIngredients };
-      });
-
-      // Prepare updated list object
-      const updatedList = {
-        ...selectedList,
-        ingredients: updatedIngredients,
-      };
-
-      // Call update API (pass id and updated data)
-      if (selectedList?.id) {
-        updateShoppingListData(
-          { id: selectedList.id, ...updatedList },
-          () => {},
-          (error: any) => {
-            alert("Error updating ingredient status: " + error);
-          },
-        );
-      }
-
-      return newChecked;
-    });
+    setChecked((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
   };
 
   const handleDeleteList = () => {
@@ -223,6 +179,104 @@ export default function TestPlanShopping() {
     }
 
     return;
+  };
+
+  const hasKrogerItems = allIngredients.some(
+    (ing: any) => ing.isKroger && ing.krogerIngredientId,
+  );
+
+  const handleSendToKrogerCart = async () => {
+    if (!krogerModality) {
+      Alert.alert(Strings.testPlanShopping_krogerSelectModality);
+      return;
+    }
+
+    const krogerItems = allIngredients
+      .filter((ing: any) => ing.isKroger && ing.krogerIngredientId)
+      .map((ing: any) => ({
+        quantity: Number(ing.count) || 1,
+        upc: ing.krogerIngredientId,
+        modality: krogerModality,
+      }));
+
+    if (krogerItems.length === 0) {
+      Alert.alert(Strings.testPlanShopping_krogerNoItems);
+      return;
+    }
+
+    setSendingToKroger(true);
+    try {
+      await addItemsToKrogerCart(krogerItems);
+
+      // Mark all Kroger items as acquired locally and in Firebase
+      const updatedIngredients = allIngredients.map((ing: any) => {
+        const isKrogerItem = ing.isKroger && ing.krogerIngredientId;
+        return {
+          ingredientId: ing.ingredientId,
+          ingredientName: ing.ingredientName || "",
+          categoryId: ing.categoryId,
+          categoryName: ing.categoryName || "",
+          mealId: ing.mealId || "",
+          mealName: ing.mealName || "",
+          unit: ing.selectedUnit || ing.unit,
+          count: ing.count || 1,
+          acquired: isKrogerItem ? true : ing.acquired || false,
+          isKroger: ing.isKroger || false,
+          krogerIngredientId: ing.krogerIngredientId || "",
+        };
+      });
+
+      // Update local state
+      setSelectedList((prevList: any) => {
+        if (!prevList) return prevList;
+        return { ...prevList, ingredients: updatedIngredients };
+      });
+
+      // Update checked state for Kroger items
+      const krogerCheckedIds = allIngredients
+        .map((ing: any, idx: number) =>
+          ing.isKroger && ing.krogerIngredientId
+            ? `${ing.ingredientId}-${ing.mealId}-${idx}`
+            : null,
+        )
+        .filter(Boolean) as string[];
+      setChecked((prev) => [...new Set([...prev, ...krogerCheckedIds])]);
+
+      // Save to Firebase
+      if (selectedList?.id) {
+        updateShoppingListData(
+          {
+            id: selectedList.id,
+            ...selectedList,
+            ingredients: updatedIngredients,
+          },
+          () => {},
+          (error: any) => {
+            alert(Strings.testPlanShopping_errorUpdating + error);
+          },
+        );
+      }
+
+      Alert.alert(
+        Strings.testPlanShopping_krogerSuccess,
+        Strings.testPlanShopping_krogerSuccessMessage,
+      );
+    } catch (error: any) {
+      const status = error?.details?.status || error?.customData?.status;
+      const krogerPayload =
+        error?.details?.payload || error?.customData?.payload;
+      let detail =
+        error?.message || Strings.testPlanShopping_krogerErrorMessage;
+      if (status) {
+        detail += `\n\nHTTP ${status}`;
+      }
+      if (krogerPayload) {
+        detail += `\n${JSON.stringify(krogerPayload)}`;
+      }
+      Alert.alert(Strings.testPlanShopping_krogerError, detail);
+    } finally {
+      setSendingToKroger(false);
+    }
   };
 
   const renderIngredientItem = ({
@@ -271,11 +325,16 @@ export default function TestPlanShopping() {
                 style={styles.checkboxIcon}
               />
             )}
-            <View>
-              <Text style={styles.name}>
-                {item.ingredientName || "Unknown Ingredient"}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name} numberOfLines={2}>
+                {item.ingredientName ||
+                  Strings.testPlanShopping_unknownIngredient}
               </Text>
-              <Text style={styles.amount}>{item.unit || "No unit"}</Text>
+              <Text style={styles.amount} numberOfLines={2}>
+                {Number(item.count) > 0 ? `${item.count} ` : ""}
+                {item.unit || Strings.testPlanShopping_noUnit}
+                {item.mealName ? ` (${item.mealName})` : ""}
+              </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -329,8 +388,16 @@ export default function TestPlanShopping() {
             </View>
           </View>
           <Text style={styles.planSubTitle}>
-            {allIngredients.length}{" "}
-            {allIngredients.length === 1 ? "meal" : "meals"}
+            {
+              new Set(
+                allIngredients.map((ing: any) => ing.mealId).filter(Boolean),
+              ).size
+            }{" "}
+            {new Set(
+              allIngredients.map((ing: any) => ing.mealId).filter(Boolean),
+            ).size === 1
+              ? Strings.testPlanShopping_meal
+              : Strings.testPlanShopping_meals}
           </Text>
 
           {/* <ProgressBar
@@ -355,6 +422,94 @@ export default function TestPlanShopping() {
             renderItem={renderIngredientItem}
             scrollEnabled={true}
             contentContainerStyle={{ paddingBottom: verticalScale(20) }}
+            ListFooterComponent={
+              hasKrogerItems ? (
+                <View style={styles.krogerCartSection}>
+                  <Text style={styles.krogerCartLabel}>
+                    {Strings.testPlanShopping_krogerChooseModality}
+                  </Text>
+                  <View style={styles.krogerModalityRow}>
+                    <TouchableOpacity
+                      style={styles.krogerModalityOption}
+                      onPress={() =>
+                        setKrogerModality((prev) =>
+                          prev === KrogerModality.DELIVERY
+                            ? null
+                            : KrogerModality.DELIVERY,
+                        )
+                      }
+                    >
+                      {krogerModality === KrogerModality.DELIVERY ? (
+                        <FilledCheckBox
+                          width={verticalScale(22)}
+                          height={verticalScale(22)}
+                          color={Colors.tertiary}
+                        />
+                      ) : (
+                        <CheckBox
+                          width={verticalScale(22)}
+                          height={verticalScale(22)}
+                          color={Colors.tertiary}
+                        />
+                      )}
+                      <Text style={styles.krogerModalityText}>
+                        {Strings.testPlanShopping_krogerDelivery}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.krogerModalityOption}
+                      onPress={() =>
+                        setKrogerModality((prev) =>
+                          prev === KrogerModality.PICKUP
+                            ? null
+                            : KrogerModality.PICKUP,
+                        )
+                      }
+                    >
+                      {krogerModality === KrogerModality.PICKUP ? (
+                        <FilledCheckBox
+                          width={verticalScale(22)}
+                          height={verticalScale(22)}
+                          color={Colors.tertiary}
+                        />
+                      ) : (
+                        <CheckBox
+                          width={verticalScale(22)}
+                          height={verticalScale(22)}
+                          color={Colors.tertiary}
+                        />
+                      )}
+                      <Text style={styles.krogerModalityText}>
+                        {Strings.testPlanShopping_krogerPickup}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.krogerCartButton]}
+                    disabled={!krogerModality || sendingToKroger}
+                    onPress={handleSendToKrogerCart}
+                  >
+                    {sendingToKroger ? (
+                      <ActivityIndicator color={Colors.primary} />
+                    ) : (
+                      <View style={styles.krogerCartButtonContent}>
+                        <Text style={styles.krogerCartButtonText}>
+                          {Strings.testPlanShopping_krogerSendToCart}
+                        </Text>
+
+                        <KrogerIcon
+                          width={horizontalScale(51)}
+                          height={verticalScale(29)}
+                        />
+                        <Text style={styles.krogerCartButtonText}>
+                          {Strings.testPlanShopping_krogerCart}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ) : null
+            }
           />
         </TourGuideZone>
       </TourGuideZone>
@@ -523,5 +678,61 @@ const styles = StyleSheet.create({
   },
   checkboxIcon: {
     marginRight: horizontalScale(10),
+  },
+  krogerCartSection: {
+    marginTop: verticalScale(10),
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: horizontalScale(10),
+    alignContent: "center",
+    alignItems: "center",
+  },
+  krogerCartLabel: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(15),
+    color: Colors.tertiary,
+    marginBottom: verticalScale(12),
+  },
+  krogerModalityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: verticalScale(16),
+    gap: horizontalScale(24),
+  },
+  krogerModalityOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: horizontalScale(8),
+  },
+  krogerModalityText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(14),
+    color: Colors.primary,
+  },
+  krogerCartButton: {
+    backgroundColor: "#9FB6D091",
+    borderRadius: moderateScale(10),
+    paddingVertical: verticalScale(10),
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    width: "100%",
+    overflow: "hidden",
+  },
+  krogerCartButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: horizontalScale(8),
+  },
+  krogerCartButtonText: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(16),
+    color: Colors._004A9B,
+  },
+  krogerLogoInline: {
+    width: horizontalScale(60),
+    height: verticalScale(20),
   },
 });

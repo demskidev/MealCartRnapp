@@ -35,6 +35,9 @@ type KrogerLocationsResponse = {
   data?: any[];
 };
 
+/** Persists across OAuth redirect within the same app session. */
+let persistedSource: string | null = null;
+
 const KrogerSignupScreen = () => {
   const [startedConnecting, setStartedConnecting] = useState(false);
   const [showStoreModal, setShowStoreModal] = useState(false);
@@ -47,7 +50,12 @@ const KrogerSignupScreen = () => {
   const navigation = useNavigation();
   const params = useLocalSearchParams();
   const signupViewModel = new SignupViewModel();
-  const openedFromProfile = params.source === "profile";
+
+ 
+  if (typeof params.source === "string" && params.source) {
+    persistedSource = params.source;
+  }
+  const openedFromProfile = persistedSource === "profile";
 
   useEffect(() => {
     const loadConnectionStatus = async () => {
@@ -108,6 +116,7 @@ const KrogerSignupScreen = () => {
   }, [params.message, params.status]);
 
   const handleSkip = () => {
+    persistedSource = null;
     if (openedFromProfile) {
       navigation.goBack();
       return;
@@ -192,6 +201,7 @@ const KrogerSignupScreen = () => {
 
   const handleMainButtonPress = () => {
     if (selectedStore) {
+      persistedSource = null;
       if (navigation.canGoBack() && openedFromProfile) {
         navigation.goBack();
       } else {
