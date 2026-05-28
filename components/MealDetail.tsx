@@ -5,6 +5,7 @@ import {
   icon_edit,
   mealfoodH,
 } from "@/assets/images";
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   addDotAtEnd,
   horizontalScale,
@@ -15,10 +16,10 @@ import { Strings } from "@/constants/Strings";
 import { Colors } from "@/constants/Theme";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily, fontSize } from "@/utils/Fonts";
+import { pushNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
-import BottomSheet from "@gorhom/bottom-sheet";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Dimensions,
   Image,
@@ -30,7 +31,6 @@ import {
   View,
 } from "react-native";
 import ConfirmationModal from "./ConfirmationModal";
-import CreateMealBottomSheet from "./CreateMealBottomSheet";
 import { hideLoader, showLoader } from "./Loader";
 import SendToShoppingList from "./SendShoppingList";
 import SpaceBetweenButtons from "./SpaceBetweenButtons";
@@ -46,11 +46,13 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSendShoppingList, setShowSendShoppingList] = useState(false);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const { deleteTheMeal } = useMealsViewModel();
 
   const handleEditPress = () => {
-    bottomSheetRef.current?.expand();
+    pushNavigation(APP_ROUTES.CREATE_MEAL, {
+      mode: "edit",
+      mealId: meal.id,
+    });
   };
 
   const handleDeleteMeal = async () => {
@@ -214,11 +216,6 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
         confirmText={Strings.mealDetail_delete}
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteMeal}
-      />
-      <CreateMealBottomSheet
-        ref={bottomSheetRef}
-        isEdit={true}
-        mealData={meal}
       />
       <SendToShoppingList
         visible={showSendShoppingList}

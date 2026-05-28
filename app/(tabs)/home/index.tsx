@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { foodimage, mealcartLogo, mealfoodH, userDummy } from "@/assets/images";
 import { IconPlus, MealsLogo } from "@/assets/svg";
-import CreateMealBottomSheet from "@/components/CreateMealBottomSheet";
 import MealDetail from "@/components/MealDetail";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { Strings } from "@/constants/Strings";
@@ -25,7 +24,6 @@ import { useAppSelector } from "@/reduxStore/hooks";
 import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
-import BottomSheet from "@gorhom/bottom-sheet";
 import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
@@ -58,7 +56,6 @@ const SWIPE_THRESHOLD = 30; // Minimum swipe distance to trigger hide
 const GREETING_SECTION_HEIGHT = verticalScale(100);
 
 const HomeScreen: React.FC = () => {
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const [showAll, setShowAll] = useState(false);
   const router = useRouter();
@@ -353,7 +350,7 @@ const HomeScreen: React.FC = () => {
   );
 
   const goNext = () => {
-    bottomSheetRef.current?.snapToIndex(0);
+    pushNavigation(APP_ROUTES.CREATE_MEAL, { mode: "create" });
   };
 
   const navigateToMealDetail = (meal: Meal) => {
@@ -576,7 +573,6 @@ const HomeScreen: React.FC = () => {
 
                     <View
                       style={{
-                        flexDirection: "row",
                         flexWrap: "wrap",
                         justifyContent: "space-between",
                         marginVertical: verticalScale(8),
@@ -603,7 +599,6 @@ const HomeScreen: React.FC = () => {
                   </View>
                 )}
               </ScrollView>
-              <CreateMealBottomSheet ref={bottomSheetRef} />
             </View>
           </PanGestureHandler>
         </GestureHandlerRootView>

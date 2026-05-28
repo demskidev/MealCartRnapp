@@ -22,6 +22,7 @@ export const APP_ROUTES = {
   DietaryPreferences: "/(tabs)/home/DietaryPreferences",
   MealPlanSettings: "/(tabs)/home/MealPlanSettings",
   PasswordReset: "/(tabs)/home/PasswordReset",
+  CREATE_MEAL: "/appscreens/CreateMealScreen",
   TestMealPlan: "/appscreens/TestMealPlan",
   TestPlanShopping: "/appscreens/TestPlanShopping",
 };

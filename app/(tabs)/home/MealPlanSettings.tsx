@@ -6,6 +6,7 @@ import {
   tikicon,
 } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
+import { KeyboardAwareScrollView } from "@/components/KeyboardAwareScrollView";
 import Loader from "@/components/Loader";
 import {
   horizontalScale,
@@ -274,104 +275,106 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
       <Text style={styles.customizeText}>
         {Strings.mealPlanSettings_customize}
       </Text>
+      <KeyboardAwareScrollView>
+        <FlatList
+          data={combinedMeals}
+          keyExtractor={(_, idx) => idx.toString()}
+          scrollEnabled={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
+            />
+          }
+          renderItem={({ item, index }) => {
+            const userIndex = index - fixedMeals.length;
 
-      <FlatList
-        data={combinedMeals}
-        keyExtractor={(_, idx) => idx.toString()}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
-          />
-        }
-        renderItem={({ item, index }) => {
-          const userIndex = index - fixedMeals.length;
-
-          return (
-            <View style={styles.inputRow}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    !item.isEditing && styles.inputWithIcon,
-                  ]}
-                  value={item.label}
-                  editable={item.editable && item.isEditing}
-                  selectTextOnFocus={item.isEditing}
-                  placeholder={
-                    item.editable
-                      ? Strings.mealPlanSettings_addEveningSnacks
-                      : ""
-                  }
-                  placeholderTextColor={Colors.tertiary}
-                  onChangeText={(text) => {
-                    if (item.editable && item.isEditing) {
-                      handleChangeType(text, userIndex);
+            return (
+              <View style={styles.inputRow}>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      !item.isEditing && styles.inputWithIcon,
+                    ]}
+                    value={item.label}
+                    editable={item.editable && item.isEditing}
+                    selectTextOnFocus={item.isEditing}
+                    placeholder={
+                      item.editable
+                        ? Strings.mealPlanSettings_addEveningSnacks
+                        : ""
                     }
-                  }}
-                />
+                    placeholderTextColor={Colors.tertiary}
+                    onChangeText={(text) => {
+                      if (item.editable && item.isEditing) {
+                        handleChangeType(text, userIndex);
+                      }
+                    }}
+                  />
+
+                  {item.editable && !item.isEditing && (
+                    <TouchableOpacity
+                      onPress={() => handleEditType(userIndex)}
+                      style={styles.editIcon}
+                    >
+                      <Image source={icon_edit} style={styles.editImage} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {item.editable && item.isEditing && (
+                  <TouchableOpacity
+                    onPress={() => handleSaveType(userIndex)}
+                    style={styles.deleteBtn}
+                  >
+                    <Image source={tikicon} style={styles.tikIcon} />
+                  </TouchableOpacity>
+                )}
 
                 {item.editable && !item.isEditing && (
                   <TouchableOpacity
-                    onPress={() => handleEditType(userIndex)}
-                    style={styles.editIcon}
+                    onPress={() => handleDeleteMealPlan(item.id)}
+                    style={styles.deleteBtn}
                   >
-                    <Image source={icon_edit} style={styles.editImage} />
+                    <Image source={deleteicon} style={styles.deleteIcon} />
                   </TouchableOpacity>
                 )}
               </View>
+            );
+          }}
+          ListFooterComponent={
+            <>
+              <TouchableOpacity style={styles.addMeal} onPress={handleAddType}>
+                <Text style={styles.addMoreText}>
+                  {isLimitReached
+                    ? Strings.mealPlanSettings_limitReached
+                    : Strings.mealPlanSettings_addMoreType}
+                </Text>
+                {isLimitReached ? null : (
+                  <Image
+                    source={plusblackicon}
+                    style={styles.plusBlackIcon}
+                    resizeMode="contain"
+                  />
+                )}
+              </TouchableOpacity>
 
-              {item.editable && item.isEditing && (
-                <TouchableOpacity
-                  onPress={() => handleSaveType(userIndex)}
-                  style={styles.deleteBtn}
-                >
-                  <Image source={tikicon} style={styles.tikIcon} />
-                </TouchableOpacity>
-              )}
-
-              {item.editable && !item.isEditing && (
-                <TouchableOpacity
-                  onPress={() => handleDeleteMealPlan(item.id)}
-                  style={styles.deleteBtn}
-                >
-                  <Image source={deleteicon} style={styles.deleteIcon} />
-                </TouchableOpacity>
-              )}
-            </View>
-          );
-        }}
-        ListFooterComponent={
-          <>
-            <TouchableOpacity style={styles.addMeal} onPress={handleAddType}>
-              <Text style={styles.addMoreText}>
-                {isLimitReached
-                  ? Strings.mealPlanSettings_limitReached
-                  : Strings.mealPlanSettings_addMoreType}
-              </Text>
-              {isLimitReached ? null : (
-                <Image
-                  source={plusblackicon}
-                  style={styles.plusBlackIcon}
-                  resizeMode="contain"
-                />
-              )}
-            </TouchableOpacity>
-
-            <BaseButton
-              title={Strings.mealPlanSettings_save}
-              gradientButton={true}
-              textStyle={styles.savePreference}
-              width={width * 0.92}
-              onPress={handleSaveAll}
-              disabled={profileLoading}
-            />
-          </>
-        }
-        contentContainerStyle={styles.flatListContent}
-      />
+              <BaseButton
+                title={Strings.mealPlanSettings_save}
+                gradientButton={true}
+                textStyle={styles.savePreference}
+                width={width * 0.92}
+                onPress={handleSaveAll}
+                disabled={profileLoading}
+              />
+            </>
+          }
+          contentContainerStyle={styles.flatListContent}
+        />
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

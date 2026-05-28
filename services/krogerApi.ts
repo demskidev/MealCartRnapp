@@ -240,6 +240,39 @@ export async function fetchKrogerProductById(
   });
 }
 
+export async function getKrogerCart() {
+  await ensureSignedIn();
+
+  const tokenResult = await getKrogerUserTokenCallable();
+  const { accessToken } = tokenResult.data;
+
+  const response = await fetch("https://api-ce.kroger.com/v1/cart", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+  });
+
+  const text = await response.text();
+  let payload: unknown;
+
+  try {
+    payload = text ? JSON.parse(text) : {};
+  } catch {
+    payload = { raw: text };
+  }
+
+  if (!response.ok) {
+    const err: any = new Error(`Kroger cart read failed (${response.status})`);
+    err.status = response.status;
+    err.details = payload;
+    throw err;
+  }
+
+  return payload;
+}
+
 export async function addItemsToKrogerCart(items: unknown[]) {
   await ensureSignedIn();
 

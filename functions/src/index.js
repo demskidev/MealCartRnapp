@@ -29,6 +29,33 @@ const db = getFirestore();
 const krogerClientId = defineSecret("KROGER_CLIENT_ID");
 const krogerClientSecret = defineSecret("KROGER_CLIENT_SECRET");
 
+function respondWithAppRedirect(response, redirectUrl) {
+  const escapedHref = String(redirectUrl)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  response.set("Cache-Control", "no-store");
+  response.status(200).send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Returning to Meal Cart…</title>
+  </head>
+  <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; padding: 24px; line-height: 1.4;">
+    <p>Returning to Meal Cart…</p>
+    <p>If the app does not open automatically, tap below:</p>
+    <p><a href="${escapedHref}">Open Meal Cart</a></p>
+    <script>
+      window.location.replace(${JSON.stringify(redirectUrl)});
+    </script>
+  </body>
+</html>`);
+}
+
 logger.info("Initializing Kroger functions", {
   projectId: FIREBASE_PROJECT_ID,
   region: FIREBASE_FUNCTIONS_REGION,
@@ -316,7 +343,7 @@ exports.krogerOAuthCallback = onRequest(
           state,
           message: errorDescription || oauthError,
         });
-        response.redirect(302, redirectUrl);
+        respondWithAppRedirect(response, redirectUrl);
         return;
       }
 
@@ -332,7 +359,7 @@ exports.krogerOAuthCallback = onRequest(
         clientSecret: krogerClientSecret.value(),
       });
 
-      response.redirect(302, result.redirectUrl);
+      respondWithAppRedirect(response, result.redirectUrl);
     } catch (error) {
       logger.error("krogerOAuthCallback failed", error);
       const redirectUrl = await failAuthSession({
@@ -340,7 +367,7 @@ exports.krogerOAuthCallback = onRequest(
         state,
         message: error.message || "Kroger sign-in failed",
       });
-      response.redirect(302, redirectUrl);
+      respondWithAppRedirect(response, redirectUrl);
     }
   },
 );

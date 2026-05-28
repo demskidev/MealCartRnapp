@@ -7,9 +7,9 @@ import {
 } from "@/assets/images";
 
 import { SearchIcon } from "@/assets/svg";
-import CreateMealBottomSheet from "@/components/CreateMealBottomSheet";
 import FilterModal from "@/components/FilterModal";
 import { hideLoader, showLoader } from "@/components/Loader";
+import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
   horizontalScale,
   isAndroid,
@@ -21,10 +21,10 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily } from "@/utils/Fonts";
+import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
-import BottomSheet from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -48,7 +48,6 @@ const MealsScreen: React.FC = () => {
   const [search, setSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const itemWidth = (width - horizontalScale(50)) / 2;
-  const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [isMyMeals, setIsMyMeals] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -420,7 +419,9 @@ const MealsScreen: React.FC = () => {
           </View>
 
           <TouchableOpacity
-            onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+            onPress={() =>
+              pushNavigation(APP_ROUTES.CREATE_MEAL, { mode: "create" })
+            }
           >
             <Image
               source={gradientclose}
@@ -645,7 +646,6 @@ const MealsScreen: React.FC = () => {
           }}
         />
       </View>
-      <CreateMealBottomSheet ref={bottomSheetRef} />
     </SafeAreaView>
   );
 };
@@ -655,7 +655,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     paddingHorizontal: horizontalScale(20),
-    paddingBottom: verticalScale(15),
   },
 
   title: {

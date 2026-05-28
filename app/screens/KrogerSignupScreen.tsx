@@ -2,6 +2,7 @@ import { BackIcon, KrogerIcon } from "@/assets/svg";
 import BaseTextInput from "@/components/BaseTextInput";
 import Divider from "@/components/Divider";
 import Header from "@/components/Header";
+import { KeyboardAwareScrollView } from "@/components/KeyboardAwareScrollView";
 import KrogerSelectedStoreCard from "@/components/KrogerSelectedStoreCard";
 import SelectKrogerStore from "@/components/SelectKrogerStore";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
@@ -51,7 +52,6 @@ const KrogerSignupScreen = () => {
   const params = useLocalSearchParams();
   const signupViewModel = new SignupViewModel();
 
- 
   if (typeof params.source === "string" && params.source) {
     persistedSource = params.source;
   }
@@ -224,14 +224,34 @@ const KrogerSignupScreen = () => {
             ? Strings.search
             : Strings.connectToKroger;
 
-  const handleBackPress = () => {
+  const handleBackPress = async () => {
     if (selectedStore) {
       setSelectedStore(null);
-    } else if (startedConnecting) {
-      setStartedConnecting(false);
-    } else {
-      navigation.goBack();
+      return;
     }
+
+    if (startedConnecting) {
+      try {
+        const status = await getKrogerConnectionStatus();
+        const connected = Boolean(status.connected);
+
+        if (connected) {
+          persistedSource = null;
+
+          if (navigation.canGoBack() && openedFromProfile) {
+            navigation.goBack();
+          } else {
+            pushNavigation(APP_ROUTES.HOME);
+          }
+          return;
+        }
+      } catch (error) {}
+
+      setStartedConnecting(false);
+      return;
+    }
+
+    navigation.goBack();
   };
 
   const desc = selectedStore
@@ -251,8 +271,11 @@ const KrogerSignupScreen = () => {
       style={styles.safeArea}
       edges={["top", "left", "right", "bottom"]}
     >
-      <BackIcon style={styles.backIcon} onPress={handleBackPress} />
-      <View style={styles.container}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.container}
+      >
+        <BackIcon style={styles.backIcon} onPress={handleBackPress} />
+
         <Header title={title} />
         <View style={styles.logoContainer}>
           <KrogerIcon />
@@ -329,7 +352,7 @@ const KrogerSignupScreen = () => {
             </Pressable>
           </>
         )}
-      </View>
+      </KeyboardAwareScrollView>
       <SelectKrogerStore
         visible={showStoreModal}
         onClose={() => setShowStoreModal(false)}
@@ -343,17 +366,19 @@ const KrogerSignupScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    justifyContent: "center",
+    // justifyContent: "center",
     backgroundColor: Colors.background,
   },
   container: {
+    flex: 1,
+    justifyContent: "center",
     paddingHorizontal: moderateScale(20),
     gap: verticalScale(30),
   },
   backIcon: {
     flex: 1,
     position: "absolute",
-    top: verticalScale(70),
+    top: verticalScale(30),
     left: moderateScale(20),
   },
   dividerStyle: {
@@ -380,7 +405,8 @@ const styles = StyleSheet.create({
   },
   connectButton: {
     // marginTop: verticalScale(10),
-    // width: "100%",
+    // width: "100%",'
+    flex: 0,
   },
   dividerRow: {
     flexDirection: "row",
