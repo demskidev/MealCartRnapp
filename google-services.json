@@ -7,12 +7,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:107165390600:android:359e7590045873b305febd",
+        "mobilesdk_app_id": "1:107165390600:android:49c72691b58601b005febd",
         "android_client_info": {
-          "package_name": "com.jbehl23.mealcart"
+          "package_name": "com.app.mealcart"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "107165390600-ksoiqh4av3f1aatgsvo6u6k85o5bdafa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.mealcart",
+            "certificate_hash": "fa87b9eb2a48a9ce1f163d39bd6d181c820da515"
+          }
+        },
         {
           "client_id": "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
           "client_type": 3
@@ -29,6 +37,57 @@
             {
               "client_id": "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "107165390600-e31of6j9h2quqaskdv923ouupj4mfg8t.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mealcart"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:107165390600:android:359e7590045873b305febd",
+        "android_client_info": {
+          "package_name": "com.jbehl23.mealcart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "107165390600-4bojpqfdcqli41jdj9uq8bu9kffir45l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jbehl23.mealcart",
+            "certificate_hash": "5f78e46084c8be8d8a64bb46b4b22559070dabcb"
+          }
+        },
+        {
+          "client_id": "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6Qw45l4waAeliD3ijELDX8KPMkIjcELU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "107165390600-e31of6j9h2quqaskdv923ouupj4mfg8t.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mealcart"
+              }
             }
           ]
         }

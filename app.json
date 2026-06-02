@@ -13,7 +13,7 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "supportsTablet": true,
-      "bundleIdentifier": "com.jbehl23.mealcart",
+      "bundleIdentifier": "com.app.mealcart",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -29,7 +29,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.jbehl23.mealcart"
+      "package": "com.app.mealcart"
     },
     "web": {
       "output": "static",
@@ -54,7 +54,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.107165390600-sni5oc9le9cnucc89mqv7e51eq0undge"
+          "iosUrlScheme": "com.googleusercontent.apps.107165390600-nmgglhb1s0gglvqmcln8kehr21cgpi5o"
         }
       ],
       "expo-apple-authentication"

@@ -19,7 +19,7 @@ import { getDocumentById, setDocumentById } from "./firestore";
 const WEB_CLIENT_ID =
   "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com";
 const IOS_CLIENT_ID =
-  "107165390600-sni5oc9le9cnucc89mqv7e51eq0undge.apps.googleusercontent.com";
+  "107165390600-nmgglhb1s0gglvqmcln8kehr21cgpi5o.apps.googleusercontent.com";
 
 GoogleSignin.configure({
   webClientId: WEB_CLIENT_ID,

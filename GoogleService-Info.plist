@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>107165390600-sni5oc9le9cnucc89mqv7e51eq0undge.apps.googleusercontent.com</string>
+	<string>107165390600-nmgglhb1s0gglvqmcln8kehr21cgpi5o.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.107165390600-sni5oc9le9cnucc89mqv7e51eq0undge</string>
+	<string>com.googleusercontent.apps.107165390600-nmgglhb1s0gglvqmcln8kehr21cgpi5o</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>107165390600-4bojpqfdcqli41jdj9uq8bu9kffir45l.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyDu9j4QV-qn-iYECzr7lbtuX_gTs7ctelo</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.jbehl23.mealcart</string>
+	<string>com.app.mealcart</string>
 	<key>PROJECT_ID</key>
 	<string>mealcart-5d62b</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:107165390600:ios:33e8bbca443c443c05febd</string>
+	<string>1:107165390600:ios:91de49b9ebcb4fcb05febd</string>
 </dict>
 </plist>
