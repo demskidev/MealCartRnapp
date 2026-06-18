@@ -3,6 +3,8 @@ import { waitForAuthInitialized } from "@/services/waitForAuth";
 import * as WebBrowser from "expo-web-browser";
 import { httpsCallable } from "firebase/functions";
 
+const KROGER_API_BASE_URL = "https://api.kroger.com";
+
 type KrogerAuthSession = any;
 
 type KrogerConnectionStatus = any;
@@ -160,7 +162,7 @@ async function callKrogerReadApi<T = unknown>({
   scope?: string;
 }) {
   const token = await getKrogerAppToken(scope);
-  const url = new URL(`https://api-ce.kroger.com${path}`);
+  const url = new URL(`${KROGER_API_BASE_URL}${path}`);
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -246,7 +248,7 @@ export async function getKrogerCart() {
   const tokenResult = await getKrogerUserTokenCallable();
   const { accessToken } = tokenResult.data;
 
-  const response = await fetch("https://api-ce.kroger.com/v1/cart", {
+  const response = await fetch(`${KROGER_API_BASE_URL}/v1/cart`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -278,10 +280,13 @@ export async function addItemsToKrogerCart(items: unknown[]) {
 
   // Get the user's OAuth token from the cloud function
   const tokenResult = await getKrogerUserTokenCallable();
-  const { accessToken } = tokenResult.data;
+  const { accessToken, scope } = tokenResult.data;
+
+  console.log("[Kroger cart] token scope:", scope);
+  console.log("[Kroger cart] sending items:", JSON.stringify({ items }));
 
   // Call Kroger directly from the client to avoid CDN blocking cloud function IPs
-  const response = await fetch("https://api-ce.kroger.com/v1/cart/add", {
+  const response = await fetch(`${KROGER_API_BASE_URL}/v1/cart/add`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -290,6 +295,8 @@ export async function addItemsToKrogerCart(items: unknown[]) {
     },
     body: JSON.stringify({ items }),
   });
+
+  console.log("[Kroger cart] add response status:", response.status);
 
   const text = await response.text();
   let payload: unknown;

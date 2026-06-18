@@ -2,7 +2,7 @@
 
 const FIREBASE_PROJECT_ID = "mealcart-5d62b";
 const FIREBASE_FUNCTIONS_REGION = "us-central1";
-const KROGER_API_BASE_URL = "https://api-ce.kroger.com";
+const KROGER_API_BASE_URL = "https://api.kroger.com";
 const KROGER_REDIRECT_URI = `https://${FIREBASE_PROJECT_ID}.web.app/kroger/callback`;
 const KROGER_APP_DEEP_LINK = "mealcartrnmain://screens/KrogerSignupScreen";
 const KROGER_SESSION_COLLECTION = "krogerAuthSessions";
