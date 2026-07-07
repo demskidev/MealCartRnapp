@@ -3,6 +3,7 @@ import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Colors } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { FontFamily } from "@/utils/Fonts";
+import { resetAndNavigate } from "@/utils/Navigation";
 import { LinearGradient } from "expo-linear-gradient";
 import { usePathname, useRouter } from "expo-router";
 import React from "react";
@@ -244,9 +245,10 @@ const TourTooltip: React.FC<TooltipProps> = ({
     handleStop?.();
     hideLoader();
 
-    // Navigate to home after skipping tour
+    // Reset the stack to Home so any tour screen (e.g. TestPlanShopping) and
+    // its open bottom sheet are fully dismissed instead of lingering on top.
     if (pathname !== APP_ROUTES.HOME) {
-      router.push(APP_ROUTES.HOME as any);
+      resetAndNavigate(APP_ROUTES.HOME);
     }
   };
 
@@ -255,8 +257,9 @@ const TourTooltip: React.FC<TooltipProps> = ({
     await completeTour();
     handleStop?.();
     hideLoader();
-    // Navigate to home after completing tour
-    router.push(APP_ROUTES.HOME as any);
+    // Reset the stack to Home so any tour screen (e.g. TestPlanShopping) and
+    // its open bottom sheet are fully dismissed instead of lingering on top.
+    resetAndNavigate(APP_ROUTES.HOME);
   };
 
   const handleBackOrNavigate = () => {

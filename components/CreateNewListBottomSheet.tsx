@@ -257,6 +257,22 @@ const CreateNewListBottomSheet = forwardRef<
       }
     }, [shouldStartTour, isCreateListBottomSheetOpen, isTourOpen]);
 
+    // When the tour ends (or is skipped), forcibly tear down any sheet/modal
+    // that the tour left open. Otherwise the 100% sheet + backdrop stays
+    // mounted and swallows every touch, which reads as a frozen screen
+    // (especially on tablets/iPads under the New Architecture).
+    const wasTourActive = useRef(shouldStartTour);
+    useEffect(() => {
+      if (wasTourActive.current && !shouldStartTour) {
+        setIsAddItemVisible(false);
+        setIsTourOpen(false);
+        setIsCreateListBottomSheetOpen(false);
+        resetState();
+        bottomSheetRef.current?.close();
+      }
+      wasTourActive.current = shouldStartTour;
+    }, [shouldStartTour]);
+
     const data = [
       { id: "1", category: "Category", name: "Spaghetti", amount: "400 grams" },
       {
