@@ -29,7 +29,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         onPress={() => setOpen(!open)}
         activeOpacity={0.8}
       >
-        <Text style={styles.text}>{value?.title ?? value}</Text>
+        <Text style={styles.text} numberOfLines={1}>
+          {value?.title ?? value}
+        </Text>
 
         {icon &&
           React.createElement(icon, {
@@ -69,6 +71,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   text: {
+    flex: 1,
+    marginRight: moderateScale(6),
     fontSize: moderateScale(12),
     color: Colors.tertiary,
     fontFamily: FontFamilies.ROBOTO_REGULAR,
@@ -76,6 +80,7 @@ const styles = StyleSheet.create({
   icon: {
     width: moderateScale(20),
     height: moderateScale(20),
+    flexShrink: 0,
   },
   optionContainer: {
     marginTop: verticalScale(6),

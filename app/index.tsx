@@ -12,9 +12,8 @@ export default function IndexScreen() {
     if (isAuthenticated) {
       replaceNavigation(APP_ROUTES.HOME as any);
     }
-  }, [isAuthenticated]); // Add dependencies
+  }, [isAuthenticated]); 
 
-  // Show loader while checking tour status
 
   if (!isAuthenticated) {
     return <WelcomeScreen />;

@@ -257,10 +257,6 @@ const CreateNewListBottomSheet = forwardRef<
       }
     }, [shouldStartTour, isCreateListBottomSheetOpen, isTourOpen]);
 
-    // When the tour ends (or is skipped), forcibly tear down any sheet/modal
-    // that the tour left open. Otherwise the 100% sheet + backdrop stays
-    // mounted and swallows every touch, which reads as a frozen screen
-    // (especially on tablets/iPads under the New Architecture).
     const wasTourActive = useRef(shouldStartTour);
     useEffect(() => {
       if (wasTourActive.current && !shouldStartTour) {
@@ -610,12 +606,19 @@ const CreateNewListBottomSheet = forwardRef<
         <AddItemToList
           visible={isAddItemVisible}
           onClose={() => setIsAddItemVisible(false)}
-          onMealSelect={(ingredients) => {
-            setReceivedIngredients(ingredients);
-            setSelectedItems(
-              ingredients.map(
-                (ing: any) => ing.ingredientId || ing.ingredientName,
-              ),
+          onMealSelect={(newIngredients: any[]) => {
+            const keyOf = (ing: any) =>
+              ing.ingredientId || ing.ingredientName;
+
+            setReceivedIngredients((prev) => {
+              const existingKeys = new Set(prev.map(keyOf));
+              const toAdd = newIngredients.filter(
+                (ing) => !existingKeys.has(keyOf(ing)),
+              );
+              return [...prev, ...toAdd];
+            });
+            setSelectedItems((prev) =>
+              Array.from(new Set([...prev, ...newIngredients.map(keyOf)])),
             );
             setIsAddItemVisible(false);
           }}

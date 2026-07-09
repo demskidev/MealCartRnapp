@@ -320,7 +320,9 @@ const CreateMealBottomSheet = ({
     // If category is an object with id
     if (typeof category === "object" && category.id) {
       const found = ingredientCategories.find((cat) => cat.id === category.id);
-      return found && Array.isArray(found.unit) ? found.unit : [];
+      if (found && Array.isArray(found.unit)) return found.unit;
+      if (Array.isArray(category.unit)) return category.unit;
+      return [];
     }
 
     // If category is a string (id)
@@ -518,6 +520,21 @@ const CreateMealBottomSheet = ({
         item?.category ||
         "";
 
+      const categoryInList = ingredientCategories.some(
+        (cat) => cat.title === resolvedCategoryName,
+      );
+      const categoryOptions =
+        resolvedCategoryName && !categoryInList
+          ? [
+              {
+                id: `custom:${item?.categoryId || resolvedCategoryName}`,
+                title: resolvedCategoryName,
+                unit: unitOptions,
+              },
+              ...ingredientCategories,
+            ]
+          : ingredientCategories;
+
       return (
         <View>
           <Text style={styles.label}>{Strings.createMeal_ingredientName}</Text>
@@ -618,7 +635,7 @@ const CreateMealBottomSheet = ({
 
               <CustomDropdown
                 value={resolvedCategoryName as any}
-                options={ingredientCategories as any}
+                options={categoryOptions as any}
                 onSelect={(category: any) => {
                   const updated = [...ingredients];
                   const newUnitOptions = getUnitsForCategory(category);
@@ -1171,18 +1188,15 @@ const CreateMealBottomSheet = ({
                         const matchedCategory = findMatchingCategory(meta);
                         const baseUnitOptions = (matchedCategory?.unit ||
                           []) as string[];
+                        const krogerUnit = meta?.size || meta?.parsedUnit || "";
                         const unitOptions = mergeUnitOptions(
                           baseUnitOptions,
-                          meta?.parsedUnit || "",
+                          krogerUnit,
                         );
                         const selectedUnit = findPreferredUnit(
                           unitOptions,
-                          meta?.parsedUnit || "",
+                          krogerUnit,
                         );
-                        const defaultCount =
-                          meta?.parsedQuantity && meta.parsedQuantity > 0
-                            ? String(meta.parsedQuantity)
-                            : "0";
 
                         setFieldValue(INGREDIENTS_KEY, [
                           ...values.ingredients,
@@ -1192,8 +1206,8 @@ const CreateMealBottomSheet = ({
                               meta?.productId ||
                               generateFirebaseId(),
                             ingredientName: selection.ingredientName,
-                            count: defaultCount,
-                            unit: selectedUnit,
+                            count: "1",
+                            unit: meta?.size || selectedUnit,
                             categoryId: matchedCategory?.id ?? "",
                             categoryName:
                               meta?.displayCategory ||
@@ -1201,7 +1215,7 @@ const CreateMealBottomSheet = ({
                               matchedCategory?.title ||
                               "",
                             categoryUnits: unitOptions,
-                            allowCountSelection: Boolean(meta?.parsedQuantity),
+                            allowCountSelection: true,
                             isKroger: true,
                             krogerIngredientId: meta?.productId || "",
                             krogerMeta: meta,

@@ -259,6 +259,22 @@ export const setSubcollectionDocument = async (
   return { id: docId, ...data };
 };
 
+export const deleteSubcollectionDocument = async (
+  parentCollection: string,
+  parentDocId: string,
+  subcollectionName: string,
+  docId: string,
+) => {
+  const docRef = doc(
+    db,
+    parentCollection,
+    parentDocId,
+    subcollectionName,
+    docId,
+  );
+  await deleteDoc(docRef);
+};
+
 export const getAllDocumentsWithPagination = async (
   collectionName: string,
   options?: {

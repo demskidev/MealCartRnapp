@@ -123,8 +123,6 @@ export const TourStepProvider: React.FC<{ children: React.ReactNode }> = ({
       cleanupTourData();
     }
 
-    // Make sure the create-list sheet flag is cleared so it can't auto-reopen
-    // and block the screen after the tour finishes.
     setIsCreateListBottomSheetOpen(false);
 
     // Update user in Firebase and Redux

@@ -40,19 +40,12 @@ export default function Loader() {
     };
   }, []);
 
-  // Safety net: the loader must never be able to block the screen forever.
-  // If something forgets to call hideLoader() (or a request hangs), auto-hide.
   React.useEffect(() => {
     if (!visible) return;
     const timer = setTimeout(() => setVisible(false), 15000);
     return () => clearTimeout(timer);
   }, [visible]);
 
-  // IMPORTANT: control the Modal with the `visible` prop instead of
-  // conditionally rendering it. Unmounting a native <Modal> to hide it can
-  // leave an orphaned, invisible overlay that still swallows touches on
-  // iOS/iPad (especially under the New Architecture) — which reads as a
-  // frozen screen.
   return (
     <Modal
       transparent

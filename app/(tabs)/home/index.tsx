@@ -57,7 +57,6 @@ const GREETING_SECTION_HEIGHT = verticalScale(100);
 
 const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
-  const [showAll, setShowAll] = useState(false);
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
   const { enrichedActivePlan, fetchActivePlan } = usePlanViewModel();
@@ -83,7 +82,6 @@ const HomeScreen: React.FC = () => {
   const mealCardImageOpacity = useRef(new Animated.Value(1)).current;
   const [isMealCardImageVisible, setIsMealCardImageVisible] = useState(true);
 
-  // Tour guide hooks
   const {
     shouldStartTour,
     isLoading: tourLoading,
@@ -563,7 +561,7 @@ const HomeScreen: React.FC = () => {
                       </Text>
                       <TouchableOpacity
                         activeOpacity={0.7}
-                        onPress={() => setShowAll(!showAll)}
+                        onPress={() => pushNavigation(APP_ROUTES.MEALS)}
                       >
                         <Text style={styles.viewText}>
                           {Strings.home_viewAllRecent}

@@ -276,9 +276,9 @@ export default function CreateMealPlan({}) {
   }, [dispatch, planName]);
 
   function renderDayCard({ item, index }: { item: any; index: number }) {
-    const formattedDate = `${item.date.getDate()}/${
+    const formattedDate = `${
       item.date.getMonth() + 1
-    }/${item.date.getFullYear()}`;
+    }/${item.date.getDate()}/${item.date.getFullYear()}`;
 
     const content = (
       <View style={styles.daySection}>

@@ -2,6 +2,7 @@ import { MEALS_COLLECTION } from "@/reduxStore/appKeys";
 import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import {
   deleteMeal,
+  enrichMealsWithIngredients,
   fetchAllMeals,
   fetchRecentMeals,
   fetchUserMeals,
@@ -91,7 +92,8 @@ export const useMealsViewModel = () => {
     try {
       const meal = await getDocumentById(MEALS_COLLECTION, mealId);
       if (meal) {
-        onSuccess?.(meal);
+        const [enriched] = await enrichMealsWithIngredients([meal]);
+        onSuccess?.(enriched || meal);
       } else {
         onError?.("Meal not found");
       }

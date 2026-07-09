@@ -7,7 +7,6 @@ import {
 } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import { KeyboardAwareScrollView } from "@/components/KeyboardAwareScrollView";
-import Loader from "@/components/Loader";
 import {
   horizontalScale,
   moderateScale,
@@ -15,10 +14,16 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import {
+  showErrorToast,
+  showInfoToast,
+  showSuccessToast,
+} from "@/utils/Toast";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -41,7 +46,6 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
     mealPlans,
     fetchMealPlans,
     addMealPlans,
-    profileLoading,
     deleteMealPlan,
     updateMealPlans,
   } = useProfileViewModel();
@@ -62,6 +66,9 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
 
   const [addMore, setAddMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMealPlans();
@@ -81,7 +88,6 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         isModified: false,
       }));
 
-    // sorting fixed meals as in order of Breakfast, Lunch, Dinner
     const mealOrder = [
       Strings.plans_breakfast,
       Strings.plans_lunch,
@@ -103,20 +109,32 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
     if (mealPlans && mealPlans.length > 0) {
       processMealPlans(mealPlans);
     } else {
+      setIsLoadingPlans(true);
       fetchMealPlans(
         (data) => {
           processMealPlans(data);
+          setIsLoadingPlans(false);
         },
-        () => {},
+        () => {
+          setIsLoadingPlans(false);
+        },
       );
     }
   };
 
   const handleDeleteMealPlan = (mealPlanId: string) => {
+    if (deletingId) return;
+    setDeletingId(mealPlanId);
     deleteMealPlan(
       mealPlanId,
-      () => {},
-      () => {},
+      () => {
+        setDeletingId(null);
+        showSuccessToast(Strings.mealPlanSettings_deleteSuccess);
+      },
+      () => {
+        setDeletingId(null);
+        showErrorToast(Strings.mealPlanSettings_deleteError);
+      },
     );
   };
 
@@ -161,11 +179,9 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
 
     updated[idx].isEditing = false;
 
-    // If it has an ID, it's an existing plan being modified
     if (mealToConfirm.id && mealToConfirm.id !== "") {
       updated[idx].isModified = true;
     } else {
-      // New meal plan - mark as new
       updated[idx].isNew = true;
     }
 
@@ -179,53 +195,61 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
   };
 
   const handleSaveAll = () => {
-    // Get all NEW meal plans that haven't been saved to Firebase yet
     const newPlans = mealTypes
       .filter((type) => type.isNew && type.label.trim() !== "")
       .map((type) => type.label.trim());
 
-    // Get all MODIFIED meal plans that need to be updated
     const modifiedPlans = mealTypes.filter(
       (type) => type.isModified && type.id && type.label.trim() !== "",
     );
 
     if (newPlans.length === 0 && modifiedPlans.length === 0) {
-      alert(Strings.mealPlanSettings_noNewPlans);
+      showInfoToast(Strings.mealPlanSettings_noNewPlans);
       return;
     }
 
     let completedOperations = 0;
-    // Both new plans and modified plans are sent as batch operations (1 API call each)
+    let hasError = false;
     const totalOperations =
       (newPlans.length > 0 ? 1 : 0) + (modifiedPlans.length > 0 ? 1 : 0);
+
+    setIsSaving(true);
 
     const checkCompletion = () => {
       completedOperations++;
       if (completedOperations === totalOperations) {
-        // Reset modified flags
-        const updated = mealTypes.map((type) => ({
-          ...type,
-          isNew: false,
-          isModified: false,
-        }));
-        setMealTypes(updated);
+        setIsSaving(false);
+
+        // Reset new/modified flags
+        setMealTypes((prev) =>
+          prev.map((type) => ({
+            ...type,
+            isNew: false,
+            isModified: false,
+          })),
+        );
+
+        if (hasError) {
+          showErrorToast(Strings.mealPlanSettings_saveError);
+        } else {
+          showSuccessToast(Strings.mealPlanSettings_saveSuccess);
+        }
       }
     };
 
-    // Save all new meal plans in one batch
     if (newPlans.length > 0) {
       addMealPlans(
         newPlans,
-        (data) => {
+        () => {
           checkCompletion();
         },
-        (error) => {
+        () => {
+          hasError = true;
           checkCompletion();
         },
       );
     }
 
-    // Update all modified meal plans in one batch
     if (modifiedPlans.length > 0) {
       updateMealPlans(
         modifiedPlans.map((plan) => ({
@@ -235,7 +259,8 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
         () => {
           checkCompletion();
         },
-        (error) => {
+        () => {
+          hasError = true;
           checkCompletion();
         },
       );
@@ -259,8 +284,6 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {profileLoading && !refreshing && <Loader />}
-
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()}>
           <Image
@@ -275,6 +298,11 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
       <Text style={styles.customizeText}>
         {Strings.mealPlanSettings_customize}
       </Text>
+      {isLoadingPlans ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      ) : (
       <KeyboardAwareScrollView>
         <FlatList
           data={combinedMeals}
@@ -338,8 +366,17 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
                   <TouchableOpacity
                     onPress={() => handleDeleteMealPlan(item.id)}
                     style={styles.deleteBtn}
+                    disabled={deletingId === item.id}
                   >
-                    <Image source={deleteicon} style={styles.deleteIcon} />
+                    {deletingId === item.id ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={Colors.primary}
+                        style={styles.deleteIcon}
+                      />
+                    ) : (
+                      <Image source={deleteicon} style={styles.deleteIcon} />
+                    )}
                   </TouchableOpacity>
                 )}
               </View>
@@ -368,13 +405,15 @@ export default function MealPlanSettings({ navigation }: { navigation: any }) {
                 textStyle={styles.savePreference}
                 width={width * 0.92}
                 onPress={handleSaveAll}
-                disabled={profileLoading}
+                loading={isSaving}
+                disabled={isSaving}
               />
             </>
           }
           contentContainerStyle={styles.flatListContent}
         />
       </KeyboardAwareScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -495,5 +534,11 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 32,
+  },
+  loaderContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: verticalScale(60),
   },
 });

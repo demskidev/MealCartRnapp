@@ -46,6 +46,7 @@ const { width } = Dimensions.get("window");
 const MealsScreen: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const itemWidth = (width - horizontalScale(50)) / 2;
 
@@ -82,9 +83,19 @@ const MealsScreen: React.FC = () => {
   const FILTERED_PAGE_SIZE = 10;
 
   const hasActiveFilters =
-    filters.category || filters.difficulty || filters.prepTime || search;
+    filters.category ||
+    filters.difficulty ||
+    filters.prepTime ||
+    debouncedSearch;
 
   const displayMeals = hasActiveFilters ? filteredMeals : normalMeals;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -129,16 +140,14 @@ const MealsScreen: React.FC = () => {
       setFilteredIsEndReached(false);
       loadFilteredMeals(true);
     }
-  }, [filters, search]);
+  }, [filters, debouncedSearch]);
 
   useEffect(() => {
     if (!hasActiveFilters && meals.length > 0) {
-      // Sync normalMeals with all Redux meals (includes newly added meals)
       setNormalMeals(meals);
       if (meals.length > 0) {
         setNormalLastDoc(meals[meals.length - 1]);
       }
-      // Don't mark as end reached if we have Redux meals
       setNormalIsEndReached(false);
     }
   }, [meals, hasActiveFilters]);
@@ -217,7 +226,7 @@ const MealsScreen: React.FC = () => {
         category: filters.category,
         difficulty: filters.difficulty,
         prepTime: filters.prepTime,
-        searchText: search,
+        searchText: debouncedSearch,
         limit: FILTERED_PAGE_SIZE,
         startAfter: isInitial ? null : filteredLastDoc,
       },
@@ -279,7 +288,6 @@ const MealsScreen: React.FC = () => {
     setRefreshing(true);
 
     if (hasActiveFilters) {
-      // Refresh filtered meals
       setFilteredMeals([]);
       setFilteredLastDoc(null);
       setFilteredIsEndReached(false);
@@ -289,7 +297,7 @@ const MealsScreen: React.FC = () => {
           category: filters.category,
           difficulty: filters.difficulty,
           prepTime: filters.prepTime,
-          searchText: search,
+          searchText: debouncedSearch,
           limit: FILTERED_PAGE_SIZE,
           startAfter: null,
         },
@@ -308,7 +316,6 @@ const MealsScreen: React.FC = () => {
         },
       );
     } else {
-      // Refresh normal meals and recent meals
       setNormalMeals([]);
       setNormalLastDoc(null);
       setNormalIsEndReached(false);
@@ -570,6 +577,7 @@ const MealsScreen: React.FC = () => {
                     prepTime: null,
                   });
                   setSearch("");
+                  setDebouncedSearch("");
                 }}
               >
                 <Text

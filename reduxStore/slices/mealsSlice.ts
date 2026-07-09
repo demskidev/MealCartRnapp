@@ -4,6 +4,7 @@ import {
   addDocument,
   compoundQueryDocuments,
   deleteDocument,
+  deleteSubcollectionDocument,
   getAllDocumentsWithPagination,
   getDocumentById,
   getSubcollectionDocuments,
@@ -153,7 +154,8 @@ const addMealToDb = async (mealData: any) => {
       ingredientsForSubcollection,
     );
 
-    return meal;
+    const enrichedMeals = await enrichMealsWithIngredients([meal]);
+    return enrichedMeals[0];
   } catch (error) {
     throw error;
   }
@@ -520,6 +522,29 @@ const updateMealIngredientsSubcollection = async (
         createdAt: new Date(),
       });
     }
+
+    const newIngredientIds = new Set(
+      ingredients
+        .filter((ing) => ing.ingredientId)
+        .map((ing) => ing.ingredientId),
+    );
+    const existingIngredients = await getSubcollectionDocuments(
+      MEAL_INGREDIENTS_COLLECTION,
+      mealId,
+      INGREDIENTS_KEY,
+    );
+    await Promise.all(
+      existingIngredients
+        .filter((existing: any) => !newIngredientIds.has(existing.id))
+        .map((stale: any) =>
+          deleteSubcollectionDocument(
+            MEAL_INGREDIENTS_COLLECTION,
+            mealId,
+            INGREDIENTS_KEY,
+            stale.id,
+          ),
+        ),
+    );
 
     for (const ing of ingredients) {
       if (ing.ingredientId) {

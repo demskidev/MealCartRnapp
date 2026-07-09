@@ -7,7 +7,13 @@ import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 /**
  * BaseButton Component
@@ -43,6 +49,7 @@ interface BaseButtonProps {
   leftChild?: React.ReactNode;
   onPress?: () => void;
   disabled?: boolean;
+  loading?: boolean;
   textStyle?: any;
   showPressedShadow?: boolean;
   textStyleText?: any;
@@ -66,19 +73,21 @@ const BaseButton = React.memo(
     onPress,
     textStyle,
     disabled = false,
+    loading = false,
     showPressedShadow,
     textStyleText,
     buttonGradient,
   }: BaseButtonProps) => {
     const [pressed, setPressed] = useState(false);
+    const isDisabled = disabled || loading;
     return (
       <TouchableOpacity
         style={[
           styles.container,
-          { width: width || "100%", opacity: disabled ? 0.5 : 1 },
+          { width: width || "100%", opacity: isDisabled ? 0.5 : 1 },
         ]}
         onPress={onPress}
-        disabled={disabled}
+        disabled={isDisabled}
       >
         <View
           style={[
@@ -105,20 +114,26 @@ const BaseButton = React.memo(
                   { backgroundColor: "transparent" },
                   buttonGradient,
                 ]}
-                disabled={disabled}
+                disabled={isDisabled}
               >
-                {leftChild && leftChild}
-                <Text
-                  style={[
-                    styles.text,
-                    textColor && { color: textColor },
-                    textStyle,
-                  ]}
-                >
-                  {title}
-                </Text>
+                {loading ? (
+                  <ActivityIndicator color={textColor || Colors.white} />
+                ) : (
+                  <>
+                    {leftChild && leftChild}
+                    <Text
+                      style={[
+                        styles.text,
+                        textColor && { color: textColor },
+                        textStyle,
+                      ]}
+                    >
+                      {title}
+                    </Text>
 
-                {rightChild && rightChild}
+                    {rightChild && rightChild}
+                  </>
+                )}
               </TouchableOpacity>
             </LinearGradient>
           ) : (
@@ -131,20 +146,26 @@ const BaseButton = React.memo(
 
                 // textStyle,
               ]}
-              disabled={disabled}
+              disabled={isDisabled}
             >
-              {leftChild && leftChild}
-              <Text
-                style={[
-                  styles.text,
-                  textColor && { color: textColor },
-                  textStyleText,
-                ]}
-              >
-                {" "}
-                {title}{" "}
-              </Text>
-              {rightChild && rightChild}
+              {loading ? (
+                <ActivityIndicator color={textColor || Colors.primary} />
+              ) : (
+                <>
+                  {leftChild && leftChild}
+                  <Text
+                    style={[
+                      styles.text,
+                      textColor && { color: textColor },
+                      textStyleText,
+                    ]}
+                  >
+                    {" "}
+                    {title}{" "}
+                  </Text>
+                  {rightChild && rightChild}
+                </>
+              )}
             </TouchableOpacity>
           )}
         </View>

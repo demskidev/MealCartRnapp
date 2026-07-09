@@ -245,8 +245,6 @@ const TourTooltip: React.FC<TooltipProps> = ({
     handleStop?.();
     hideLoader();
 
-    // Reset the stack to Home so any tour screen (e.g. TestPlanShopping) and
-    // its open bottom sheet are fully dismissed instead of lingering on top.
     if (pathname !== APP_ROUTES.HOME) {
       resetAndNavigate(APP_ROUTES.HOME);
     }
@@ -257,8 +255,6 @@ const TourTooltip: React.FC<TooltipProps> = ({
     await completeTour();
     handleStop?.();
     hideLoader();
-    // Reset the stack to Home so any tour screen (e.g. TestPlanShopping) and
-    // its open bottom sheet are fully dismissed instead of lingering on top.
     resetAndNavigate(APP_ROUTES.HOME);
   };
 
