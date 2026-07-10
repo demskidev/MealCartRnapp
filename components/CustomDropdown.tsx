@@ -1,14 +1,24 @@
 import { moderateScale, verticalScale } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 
 interface CustomDropdownProps {
-  value: string;
-  options: [];
-  onSelect: (option: string) => void;
+  value: any;
+  options: any[];
+  onSelect: (option: any) => void;
   icon?: any;
 }
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
   value,
   options,
@@ -23,7 +33,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   };
 
   return (
-    <View>
+    <View style={open ? styles.wrapperOpen : undefined}>
       <TouchableOpacity
         style={styles.dropdown}
         onPress={() => setOpen(!open)}
@@ -42,23 +52,36 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
       </TouchableOpacity>
 
       {open && (
-        <View style={styles.optionContainer}>
-          {options.map((option) => (
-            <TouchableOpacity
-              key={option?.id ?? option}
-              style={styles.option}
-              onPress={() => handleSelect(option)}
-            >
-              <Text style={styles.optionText}>{option?.title ?? option}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <>
+          {/* Full-screen backdrop so tapping outside closes the dropdown. */}
+          <TouchableWithoutFeedback onPress={() => setOpen(false)}>
+            <View style={styles.backdrop} />
+          </TouchableWithoutFeedback>
+
+          <View style={styles.optionContainer}>
+            {options.map((option) => (
+              <TouchableOpacity
+                key={option?.id ?? option}
+                style={styles.option}
+                onPress={() => handleSelect(option)}
+              >
+                <Text style={styles.optionText}>{option?.title ?? option}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
       )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  // Raise the dropdown (and its backdrop/options) above sibling fields
+  // while open, without affecting normal layout when closed.
+  wrapperOpen: {
+    zIndex: 10,
+    elevation: 10,
+  },
   dropdown: {
     flexDirection: "row",
     alignItems: "center",
@@ -82,8 +105,14 @@ const styles = StyleSheet.create({
     height: moderateScale(20),
     flexShrink: 0,
   },
+  backdrop: {
+    position: "absolute",
+    top: -SCREEN_HEIGHT,
+    bottom: -SCREEN_HEIGHT,
+    left: -SCREEN_WIDTH,
+    right: -SCREEN_WIDTH,
+  },
   optionContainer: {
-    marginTop: verticalScale(6),
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,
     borderRadius: moderateScale(8),

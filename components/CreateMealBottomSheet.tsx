@@ -36,6 +36,7 @@ import { pushNavigation } from "@/utils/Navigation";
 import { showToast } from "@/utils/Toast";
 import { createMealValidationSchema } from "@/utils/validators/MealValidators";
 import { useCreateMealViewModel } from "@/viewmodels/CreateMealViewModel";
+import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
 import { Formik } from "formik";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -80,6 +81,11 @@ type MealIngredientForm = {
   krogerMeta?: KrogerProductMeta | null;
   isKroger?: boolean;
   krogerIngredientId?: string;
+  // The ingredient's original Kroger category/unit, kept so they remain
+  // selectable after switching categories — including in edit mode, where
+  // krogerMeta is not available.
+  krogerCategoryName?: string;
+  krogerUnit?: string;
 };
 
 type MealStepForm = {
@@ -112,6 +118,22 @@ const CreateMealBottomSheet = ({
   const user = useAppSelector((state) => state.auth.user);
   const { ingredientCategories, loading, error, addMealData, updateMealData } =
     useCreateMealViewModel();
+  const { mealPlans, fetchMealPlans } = useProfileViewModel();
+
+  useEffect(() => {
+    fetchMealPlans();
+  }, []);
+
+  const mealPlanNames = useMemo(() => {
+    const sorted = [...mealPlans].sort((a, b) => {
+      const aTime = a.createdAt?.seconds || 0;
+      const bTime = b.createdAt?.seconds || 0;
+      return aTime - bTime;
+    });
+    return sorted.length > 0
+      ? sorted.map((plan) => plan.name)
+      : [Strings.plans_breakfast, Strings.plans_lunch, Strings.plans_dinner];
+  }, [mealPlans]);
 
   const snapPoints = useMemo(() => ["100%"], []);
   const { width } = Dimensions.get("window");
@@ -227,6 +249,9 @@ const CreateMealBottomSheet = ({
               categoryUnits: ing.categoryUnits || [ing.unit].filter(Boolean),
               isKroger: true,
               krogerIngredientId: ing.krogerIngredientId || "",
+              krogerCategoryName:
+                ing.krogerCategoryName || ing.categoryName || ing.category || "",
+              krogerUnit: ing.krogerUnit || ing.unit || "",
             };
           }
 
@@ -505,11 +530,37 @@ const CreateMealBottomSheet = ({
         Boolean(item?.allowCountSelection) ||
         Boolean(item?.isKroger);
 
+      // A Kroger ingredient carries its own category/unit. Read them from the
+      // stable krogerCategoryName/krogerUnit fields (populated in both add and
+      // edit mode), falling back to krogerMeta for freshly-added items, so they
+      // stay selectable even after switching to a different category/unit.
+      const krogerCategoryName = item?.isKroger
+        ? item?.krogerCategoryName ||
+          item?.krogerMeta?.displayCategory ||
+          item?.krogerMeta?.category ||
+          ""
+        : "";
+      const krogerUnit = item?.isKroger
+        ? item?.krogerUnit ||
+          item?.krogerMeta?.size ||
+          item?.krogerMeta?.parsedUnit ||
+          ""
+        : "";
+
       // Get units - use categoryUnits if available (edit mode), otherwise get from ingredientCategories
-      const unitOptions =
+      const baseUnitOptions =
         item?.categoryUnits && Array.isArray(item.categoryUnits)
           ? item.categoryUnits
           : getUnitsForCategory(item?.category || item?.categoryId);
+
+      // Always keep the ingredient's Kroger unit in the list.
+      const unitOptions =
+        krogerUnit &&
+        !baseUnitOptions.some(
+          (unit) => normalizeValue(unit) === normalizeValue(krogerUnit),
+        )
+          ? [krogerUnit, ...baseUnitOptions]
+          : baseUnitOptions;
 
       // Resolve category display name for non-Kroger ingredients
       const resolvedCategoryName =
@@ -523,17 +574,36 @@ const CreateMealBottomSheet = ({
       const categoryInList = ingredientCategories.some(
         (cat) => cat.title === resolvedCategoryName,
       );
-      const categoryOptions =
-        resolvedCategoryName && !categoryInList
-          ? [
-              {
-                id: `custom:${item?.categoryId || resolvedCategoryName}`,
-                title: resolvedCategoryName,
-                unit: unitOptions,
-              },
-              ...ingredientCategories,
-            ]
-          : ingredientCategories;
+
+      const extraCategoryOptions: any[] = [];
+
+      // Keep the currently-selected category visible if it isn't a standard one.
+      if (resolvedCategoryName && !categoryInList) {
+        extraCategoryOptions.push({
+          id: `custom:${item?.categoryId || resolvedCategoryName}`,
+          title: resolvedCategoryName,
+          unit: unitOptions,
+        });
+      }
+
+      // Keep the ingredient's original Kroger category permanently available,
+      // even after switching to a different category.
+      if (
+        krogerCategoryName &&
+        krogerCategoryName !== resolvedCategoryName &&
+        !ingredientCategories.some((cat) => cat.title === krogerCategoryName)
+      ) {
+        extraCategoryOptions.push({
+          id: `kroger:${krogerCategoryName}`,
+          title: krogerCategoryName,
+          unit: [krogerUnit].filter(Boolean),
+        });
+      }
+
+      const categoryOptions = [
+        ...extraCategoryOptions,
+        ...ingredientCategories,
+      ];
 
       return (
         <View>
@@ -645,7 +715,6 @@ const CreateMealBottomSheet = ({
                     categoryId: category.id,
                     categoryName: category.title,
                     categoryUnits: category.unit,
-                    count: "0",
                   };
                   setFieldValue(INGREDIENTS_KEY, updated);
                 }}
@@ -757,6 +826,12 @@ const CreateMealBottomSheet = ({
         const countValue = parseInt(ing.count || "0", 10);
         if (ing.krogerMeta || ing.isKroger || ing.krogerIngredientId) {
           // Kroger ingredient: save everything as text
+          const krogerCategoryName =
+            ing.krogerCategoryName ||
+            ing.categoryName ||
+            (typeof ing.category === "string" ? ing.category : "") ||
+            ing.krogerMeta?.displayCategory ||
+            "";
           const ingredient: any = {
             ingredientId: ing.ingredientId || generateFirebaseId(),
             name: ing.ingredientName,
@@ -771,6 +846,11 @@ const CreateMealBottomSheet = ({
               (typeof ing.category === "string" ? ing.category : "") ||
               ing.krogerMeta?.displayCategory ||
               "",
+            // Persist the original Kroger category/unit so they remain
+            // selectable when the meal is edited later.
+            krogerCategoryName,
+            krogerUnit:
+              ing.krogerUnit || ing.krogerMeta?.size || ing.unit || "",
           };
           return ingredient;
         }
@@ -1136,13 +1216,7 @@ const CreateMealBottomSheet = ({
                         </Text>
                         <CustomDropdown
                           value={values.category}
-                          options={
-                            [
-                              Strings.plans_breakfast,
-                              Strings.plans_lunch,
-                              Strings.plans_dinner,
-                            ] as any
-                          }
+                          options={mealPlanNames as any}
                           onSelect={(val) => setFieldValue(CATEGORY_KEY, val)}
                           icon={IconDown}
                         />
@@ -1219,6 +1293,12 @@ const CreateMealBottomSheet = ({
                             isKroger: true,
                             krogerIngredientId: meta?.productId || "",
                             krogerMeta: meta,
+                            krogerCategoryName:
+                              meta?.displayCategory ||
+                              meta?.category ||
+                              matchedCategory?.title ||
+                              "",
+                            krogerUnit: krogerUnit || meta?.size || "",
                           },
                         ]);
 

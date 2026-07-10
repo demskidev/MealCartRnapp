@@ -26,6 +26,7 @@ import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -220,7 +221,9 @@ const MealsScreen: React.FC = () => {
 
     setFilteredIsLoadingMore(true);
 
-    showLoader();
+    // NOTE: intentionally NOT using the global blocking Loader modal here.
+    // Presenting it while the FilterModal is still dismissing wedges the screen
+    // (a native modal present/dismiss race). Loading is shown inline instead.
     searchMealsCombined(
       {
         category: filters.category,
@@ -237,23 +240,22 @@ const MealsScreen: React.FC = () => {
 
         if (isInitial) {
           setFilteredMeals(data);
-        } else {
+        } else if (data.length > 0) {
           setFilteredMeals((prev) => {
             const existingIds = new Set(prev.map((meal: Meal) => meal.id));
             const newMeals = data.filter(
               (meal: Meal) => !existingIds.has(meal.id),
             );
-            return [...prev, ...newMeals];
+            // Avoid creating a new array reference when nothing was added.
+            return newMeals.length > 0 ? [...prev, ...newMeals] : prev;
           });
         }
         if (data.length > 0) {
           setFilteredLastDoc(data[data.length - 1]);
         }
         setFilteredIsLoadingMore(false);
-        hideLoader();
       },
       (error) => {
-        hideLoader();
         setFilteredIsLoadingMore(false);
       },
     );
@@ -279,9 +281,20 @@ const MealsScreen: React.FC = () => {
   };
 
   const handleFilteredEndReached = () => {
-    if (!filteredIsEndReached && !loading && !filteredIsLoadingMore) {
-      loadFilteredMeals(false);
+    // Never paginate when there is no loaded page / cursor yet. Without this,
+    // an empty result set makes FlatList fire onEndReached repeatedly (its
+    // content is shorter than the viewport), which loops loadFilteredMeals and
+    // freezes the screen behind the loader.
+    if (
+      filteredMeals.length === 0 ||
+      !filteredLastDoc ||
+      filteredIsEndReached ||
+      loading ||
+      filteredIsLoadingMore
+    ) {
+      return;
     }
+    loadFilteredMeals(false);
   };
 
   const onRefresh = async () => {
@@ -622,9 +635,15 @@ const MealsScreen: React.FC = () => {
                 />
               }
               ListEmptyComponent={
-                <Text style={styles.emptyText}>
-                  {Strings.meals_recentMealsFound}
-                </Text>
+                filteredIsLoadingMore ? (
+                  <View style={{ paddingVertical: verticalScale(40) }}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                  </View>
+                ) : (
+                  <Text style={styles.emptyText}>
+                    {Strings.meals_recentMealsFound}
+                  </Text>
+                )
               }
               ListFooterComponent={
                 hasActiveFilters &&

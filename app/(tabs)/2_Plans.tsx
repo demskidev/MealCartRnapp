@@ -506,7 +506,11 @@ const PlansScreen: React.FC = () => {
                       );
                     }
                     return (
-                      <View style={styles.mealRow}>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.mealRow}
+                      >
                         {todayDay.mealSlots.map((slot, idx) => {
                           // Check if this is tour dummy data
                           const isTourDummy =
@@ -533,7 +537,7 @@ const PlansScreen: React.FC = () => {
                             </View>
                           );
                         })}
-                      </View>
+                      </ScrollView>
                     );
                   })()}
               </View>
@@ -688,9 +692,8 @@ const styles = StyleSheet.create({
   },
   mealRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: width * 0.9,
+    alignItems: "flex-start",
+    paddingRight: horizontalScale(4),
   },
   mealLabelTop: {
     fontSize: moderateScale(12),
@@ -936,7 +939,8 @@ const styles = StyleSheet.create({
     marginRight: horizontalScale(-11),
   },
   mealColumn: {
-    flex: 1,
+    width: width * 0.28,
+    marginRight: horizontalScale(12),
   },
   createListIcon: {
     width: moderateScale(18),

@@ -157,6 +157,8 @@ export const Strings = {
   meals_myMeals: "My Meals",
   meals_browseMeals: "Browse Meals",
   meals_searchPlaceholder: "Search your meals...",
+  updateProfile_imageUploadFailed:
+    "Image upload failed. Please try again.",
   updateProfileModal_title: "Update Profile",
   updateProfileModal_subtitle:
     "You can set your meals servings for all your new meals.",

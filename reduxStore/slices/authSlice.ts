@@ -144,14 +144,27 @@ export const updateUserAsync = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      // If there's a new image to upload, handle it
+      // If there's a new image to upload, handle it. The picker hands us a
+      // local file:// URI; upload it to Storage and replace it with the
+      // remote https URL so it survives cache clears / reinstalls.
       if (
-        userData.image &&
-        typeof userData.image === "string" &&
-        userData.image.startsWith("file")
+        userData.imageUrl &&
+        typeof userData.imageUrl === "string" &&
+        userData.imageUrl.startsWith("file")
       ) {
-        const uploadedImageUrl = await addUserImage(userData.image);
-        userData.image = uploadedImageUrl;
+        const uploadedImageUrl = await addUserImage(userData.imageUrl);
+
+        // Never persist a local file:// URI. If the upload didn't return a
+        // usable remote URL, fail loudly instead of saving a broken reference.
+        if (
+          !uploadedImageUrl ||
+          typeof uploadedImageUrl !== "string" ||
+          !uploadedImageUrl.startsWith("http")
+        ) {
+          return rejectWithValue(Strings.updateProfile_imageUploadFailed);
+        }
+
+        userData.imageUrl = uploadedImageUrl;
       }
       // Update user data in Firestore and return the updated data
       const updatedUser = await updateDocument(
