@@ -76,8 +76,6 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Raise the dropdown (and its backdrop/options) above sibling fields
-  // while open, without affecting normal layout when closed.
   wrapperOpen: {
     zIndex: 10,
     elevation: 10,
@@ -112,6 +110,7 @@ const styles = StyleSheet.create({
     left: -SCREEN_WIDTH,
     right: -SCREEN_WIDTH,
   },
+
   optionContainer: {
     borderWidth: moderateScale(1),
     borderColor: Colors.borderColor,

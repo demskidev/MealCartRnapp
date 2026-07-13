@@ -2,65 +2,73 @@ import { hideLoader, showLoader } from "@/components/Loader";
 import MealDetail from "@/components/MealDetail";
 import { MEALS_COLLECTION } from "@/reduxStore/appKeys";
 import { enrichMealsWithIngredients } from "@/reduxStore/slices/mealsSlice";
-import { updateDocument } from "@/services/firestore";
+import { getDocumentById, updateDocument } from "@/services/firestore";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export default function MealDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { meals, fetchMeals } = useMealsViewModel();
+  const { meals } = useMealsViewModel();
 
   const mealId = params.mealId as string;
   const hasUpdatedViewTime = useRef(false);
-  const hasCheckedMealNotFound = useRef(false);
-  const lastEnrichedMealRef = useRef<any>(null);
 
   const [enrichedMeal, setEnrichedMeal] = useState<any>(null);
 
-  // Get meal from Redux state
-  const meal = useMemo(() => {
+  // Prefer the meal already in Redux (e.g. the meals list). Meals coming from
+  // an active plan ("Your next meal") are not stored there, so we fall back to
+  // fetching by id below.
+  const reduxMeal = useMemo(() => {
     return meals.find((m) => m.id === mealId);
   }, [meals, mealId]);
 
-  useEffect(() => {
-    if (meals.length === 0) {
-      showLoader();
-      fetchMeals(
-        () => {},
-        () => {},
-      );
-    }
-  }, []);
+  // Load & enrich the meal. Prefers the Redux copy (so edits to meals in the
+  // list reflect immediately) and falls back to fetching by id when the meal
+  // isn't in Redux — e.g. meals coming from an active plan ("Your next meal"),
+  // which would otherwise render a blank screen. Runs on focus so returning
+  // from the edit screen always shows fresh data, even for a plan meal that
+  // was never added to Redux.
+  useFocusEffect(
+    useCallback(() => {
+      if (!mealId) return;
+      let cancelled = false;
 
+      const load = async () => {
+        showLoader();
+        try {
+          const source =
+            reduxMeal ?? (await getDocumentById(MEALS_COLLECTION, mealId));
+          if (!source) {
+            if (!cancelled) setEnrichedMeal(null);
+            return;
+          }
+          const [enriched] = await enrichMealsWithIngredients([source]);
+          if (!cancelled) setEnrichedMeal(enriched || source);
+        } catch {
+          if (!cancelled && reduxMeal) setEnrichedMeal(reduxMeal);
+        } finally {
+          hideLoader();
+        }
+      };
+
+      load();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [mealId, reduxMeal]),
+  );
+
+  // Record last-viewed time once we have a meal.
   useEffect(() => {
-    if (!meal || hasUpdatedViewTime.current) return;
+    if (!enrichedMeal || hasUpdatedViewTime.current) return;
     hasUpdatedViewTime.current = true;
-    updateDocument(MEALS_COLLECTION, meal.id, {
+    updateDocument(MEALS_COLLECTION, enrichedMeal.id, {
       lastViewedAt: new Date(),
     }).catch(() => {});
-  }, [meal?.id]);
-
-  // Fetch & enrich ingredients — re-runs when Redux meal updates (e.g. after edit)
-  useEffect(() => {
-    if (!meal) return;
-    if (lastEnrichedMealRef.current === meal) return;
-    lastEnrichedMealRef.current = meal;
-    showLoader();
-
-    enrichMealsWithIngredients([meal])
-      .then((enriched) => setEnrichedMeal(enriched[0]))
-      .catch(() => setEnrichedMeal(meal))
-      .finally(() => hideLoader());
-  }, [meal]);
-
-  useEffect(() => {
-    if (!meal && meals.length > 0 && !hasCheckedMealNotFound.current) {
-      hasCheckedMealNotFound.current = true;
-      hideLoader();
-    }
-  }, [meal, meals.length]);
+  }, [enrichedMeal?.id]);
 
   if (!enrichedMeal) {
     return null;

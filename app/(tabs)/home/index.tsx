@@ -282,23 +282,42 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  const getTodayMeals = () => {
+  const parsePlanDate = (d: any): Date | null => {
+    if (!d) return null;
+    if (typeof d === "string") return new Date(d);
+    if (d.toDate) return d.toDate();
+    if (d.seconds) return new Date(d.seconds * 1000);
+    return new Date(d);
+  };
+
+  const isSameCalendarDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const getTodayMeals = (): Meal[] => {
     if (!activePlan || !activePlan.days) return [];
 
-    // Collect all meals from all days in plan order
-    const allUpcomingMeals: Meal[] = [];
+    const now = new Date();
 
-    activePlan.days.forEach((day) => {
-      if (day.mealSlots) {
-        day.mealSlots.forEach((slot) => {
-          if (slot.meal) {
-            allUpcomingMeals.push(slot.meal);
-          }
-        });
-      }
+    // Only the day from the active plan that matches today's calendar date.
+    const todayDay = activePlan.days.find((day) => {
+      const date = parsePlanDate(day.date);
+      return date ? isSameCalendarDay(date, now) : false;
     });
 
-    return allUpcomingMeals;
+    if (!todayDay || !todayDay.mealSlots) return [];
+
+    // Order the day's meals by their slot time (e.g. breakfast → lunch →
+    // dinner), which is captured by each meal plan's createdAt order.
+    return [...todayDay.mealSlots]
+      .filter((slot) => slot.meal)
+      .sort(
+        (a, b) =>
+          (a.mealPlan?.createdAt?.seconds ?? 0) -
+          (b.mealPlan?.createdAt?.seconds ?? 0),
+      )
+      .map((slot) => slot.meal as Meal);
   };
 
   const todayMeals = getTodayMeals();

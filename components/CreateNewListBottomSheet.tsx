@@ -379,19 +379,39 @@ const CreateNewListBottomSheet = forwardRef<
           return;
         }
 
-        const mappedIngredients = selectedIngredients.map((ingredient) => ({
-          ingredientId: ingredient.ingredientId,
-          ingredientName: ingredient.ingredientName || "",
-          categoryId: ingredient.categoryId,
-          categoryName: ingredient.categoryName || "",
-          mealId: ingredient.mealId || "",
-          mealName: ingredient.mealName || "",
-          unit: ingredient.selectedUnit || ingredient.unit,
-          count: ingredient.count || 1,
-          acquired: ingredient.acquired || false,
-          isKroger: ingredient.isKroger || false,
-          krogerIngredientId: ingredient.krogerIngredientId || "",
-        }));
+        if (!user?.id) {
+          alert("You must be signed in to save a shopping list");
+          return;
+        }
+
+        const mappedIngredients = selectedIngredients.map((ingredient) => {
+          const isKroger = ingredient.isKroger || false;
+          // Kroger items use their own Kroger unit; normal items use the
+          // user-selected unit.
+          const unit = isKroger
+            ? ingredient.krogerUnit ||
+              ingredient.selectedUnit ||
+              ingredient.unit ||
+              ""
+            : ingredient.selectedUnit || ingredient.unit || "";
+
+          return {
+            ingredientId: ingredient.ingredientId || "",
+            ingredientName: ingredient.ingredientName || "",
+            categoryId: ingredient.categoryId || "",
+            categoryName: ingredient.categoryName || "",
+            mealId: ingredient.mealId || "",
+            mealName: ingredient.mealName || "",
+            unit,
+            count: ingredient.count || 1,
+            acquired: ingredient.acquired || false,
+            isKroger,
+            krogerIngredientId: ingredient.krogerIngredientId || "",
+            krogerCategoryName:
+              ingredient.krogerCategoryName || ingredient.categoryName || "",
+            krogerUnit: ingredient.krogerUnit || ingredient.unit || "",
+          };
+        });
 
         const shoppingListData = {
           listName: listName.trim(),
