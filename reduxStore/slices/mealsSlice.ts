@@ -20,15 +20,18 @@ import {
   ADD_MEAL,
   DELETE_MEAL,
   FETCH_ALL_MEALS,
+  FETCH_GLOBAL_MEALS,
   FETCH_MEALS,
   FETCH_RECENT_MEALS,
   FILTER_N_SEARCH_MEALS,
   MEALS_SLICE,
+  SEARCH_GLOBAL_MEALS,
   UPDATE_MEAL,
 } from "../actionTypes";
 import {
   INGREDIENTS_CATEGORY_COLLECTION,
   INGREDIENTS_KEY,
+  IS_GLOBAL_KEY,
   MEAL_IMAGE_FOLDER,
   MEAL_INGREDIENTS_COLLECTION,
   MEALS_COLLECTION,
@@ -58,12 +61,14 @@ export interface Meal {
   lastViewedAt?: Date;
   ingredients?: MealIngredient[];
   uid: string;
+  isGlobal?: boolean;
   // Add other fields as needed
 }
 
 export interface MealsState {
   meals: Meal[];
   allMeals: Meal[];
+  globalMeals: Meal[];
   recentMeals: Meal[];
   loading: boolean;
   error: any;
@@ -72,6 +77,7 @@ export interface MealsState {
 const initialState: MealsState = {
   meals: [],
   allMeals: [],
+  globalMeals: [],
   recentMeals: [],
   loading: false,
   error: null,
@@ -163,8 +169,12 @@ const addMealToDb = async (mealData: any) => {
 
 const deleteMealFromDb = async (mealId: string) => {
   try {
-    await deleteDocument(MEALS_COLLECTION, mealId);
+    // Delete the mealIngredients doc FIRST: its security rule authorizes the
+    // write by reading the parent meal (get(meals/{mealId})). If we delete the
+    // meal first, that get() returns null and the rule denies the write with
+    // "Missing or insufficient permissions".
     await deleteDocument(MEAL_INGREDIENTS_COLLECTION, mealId);
+    await deleteDocument(MEALS_COLLECTION, mealId);
   } catch (error) {
     throw error;
   }
@@ -379,6 +389,110 @@ export const fetchAllMeals = createAsyncThunk(
         MEALS_COLLECTION,
         options,
       );
+
+      const enrichedMeals = await enrichMealsWithIngredients(meals);
+
+      return enrichedMeals;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  },
+);
+
+// Fetch global meals (isGlobal == true), shared across all users.
+export const fetchGlobalMeals = createAsyncThunk(
+  FETCH_GLOBAL_MEALS,
+  async (
+    { limit = 10, startAfter = null }: { limit?: number; startAfter?: any },
+    { rejectWithValue },
+  ) => {
+    try {
+      const options: any = {
+        limit,
+        orderBy: "createdAt",
+        orderDirection: "desc",
+      };
+      if (startAfter) options.startAfter = startAfter;
+
+      const meals = await queryDocuments(
+        MEALS_COLLECTION,
+        IS_GLOBAL_KEY,
+        "==",
+        true,
+        options,
+      );
+
+      const enrichedMeals = await enrichMealsWithIngredients(meals);
+
+      return enrichedMeals;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  },
+);
+
+// Search/filter global meals (isGlobal == true) — mirrors searchMeals but
+// scoped to the shared global set instead of a single user's meals.
+export const searchGlobalMeals = createAsyncThunk(
+  SEARCH_GLOBAL_MEALS,
+  async (
+    {
+      category = null,
+      difficulty = null,
+      prepTime = null,
+      searchText = "",
+      limit = 10,
+      startAfter = null,
+    }: {
+      category?: string | null;
+      difficulty?: string | null;
+      prepTime?: string | null;
+      searchText?: string;
+      limit?: number;
+      startAfter?: any;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const filters: any[] = [{ field: IS_GLOBAL_KEY, op: "==", value: true }];
+      if (category) {
+        filters.push({ field: "category", op: "==", value: category });
+      }
+      if (difficulty) {
+        filters.push({ field: "difficulty", op: "==", value: difficulty });
+      }
+      if (searchText && searchText.trim()) {
+        filters.push({
+          field: "nameCharacters",
+          op: "array-contains",
+          value: searchText.trim().toLowerCase(),
+        });
+      }
+      const options: any = {
+        limit,
+        orderBy: "createdAt",
+        orderDirection: "desc",
+      };
+      if (startAfter) options.startAfter = startAfter;
+
+      let meals = await compoundQueryDocuments(
+        MEALS_COLLECTION,
+        filters,
+        options,
+      );
+
+      if (prepTime) {
+        meals = meals.filter((meal: any) => {
+          const prep = meal.prepTime || "";
+          const minutes = parseInt(prep.match(/\d+/)?.[0] || "0");
+          if (prepTime === "< 5 Mins") return minutes < 5;
+          if (prepTime === "5 - 10 Mins") return minutes >= 5 && minutes <= 10;
+          if (prepTime === "10 - 15 Mins")
+            return minutes >= 10 && minutes <= 15;
+          if (prepTime === "> 15 Mins") return minutes > 15;
+          return true;
+        });
+      }
 
       const enrichedMeals = await enrichMealsWithIngredients(meals);
 
@@ -683,8 +797,13 @@ const mealsSlice = createSlice({
       .addCase(addMeal.fulfilled, (state, action) => {
         state.loading = false;
         const newMeal = action.payload;
-        state.meals.push(newMeal);
         state.allMeals.push(newMeal);
+        // A global meal belongs to the shared list, not the creator's "my meals".
+        if (newMeal?.isGlobal) {
+          state.globalMeals.unshift(newMeal);
+        } else {
+          state.meals.push(newMeal);
+        }
       })
       .addCase(addMeal.rejected, (state, action) => {
         state.loading = false;
@@ -729,6 +848,36 @@ const mealsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchGlobalMeals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchGlobalMeals.fulfilled, (state, action) => {
+        state.loading = false;
+        const fetchedMeals = action.payload;
+
+        const existingIds = new Set(state.globalMeals.map((meal) => meal.id));
+        const newMeals = fetchedMeals.filter(
+          (meal) => !existingIds.has(meal.id),
+        );
+
+        state.globalMeals = [...state.globalMeals, ...newMeals] as Meal[];
+      })
+      .addCase(fetchGlobalMeals.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(searchGlobalMeals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchGlobalMeals.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(searchGlobalMeals.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(updateMeal.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -753,6 +902,14 @@ const mealsSlice = createSlice({
         if (allMealsIndex !== -1) {
           state.allMeals[allMealsIndex] = updatedMeal;
         }
+
+        // Update in globalMeals array
+        const globalMealsIndex = state.globalMeals.findIndex(
+          (meal) => meal.id === updatedMeal.id,
+        );
+        if (globalMealsIndex !== -1) {
+          state.globalMeals[globalMealsIndex] = updatedMeal;
+        }
       })
       .addCase(updateMeal.rejected, (state, action) => {
         state.loading = false;
@@ -767,6 +924,9 @@ const mealsSlice = createSlice({
         const deletedMealId = action.payload;
         state.meals = state.meals.filter((meal) => meal.id !== deletedMealId);
         state.allMeals = state.allMeals.filter(
+          (meal) => meal.id !== deletedMealId,
+        );
+        state.globalMeals = state.globalMeals.filter(
           (meal) => meal.id !== deletedMealId,
         );
         state.recentMeals = state.recentMeals.filter(

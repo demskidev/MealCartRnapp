@@ -1,0 +1,157 @@
+rules_version = '2';
+
+// MealCart Firestore security rules.
+//
+// Ownership model:
+//  - meals:            `uid` field identifies the owner. Global/official meals
+//                      use uid == "global" and isGlobal == true, and are
+//                      readable by every signed-in user (so they can be browsed
+//                      and referenced from any user's plans / shopping lists).
+//  - mealIngredients:  subcollection data for a meal. Readable by any signed-in
+//                      user (needed to enrich global meals); writable only by
+//                      the parent meal's owner (or for global meals).
+//  - plans/shoppingList: `uid`-owned, private to the owner.
+//  - mealPlan:         `uid`-owned, plus shared defaults where uid == "".
+//  - users:            document id == the user's uid.
+//  - ingredientCategory / ingredients / dietryPreferences: shared reference
+//                      data — read-only for clients, seeded via the console.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Admin allowlist. Add the emails allowed to manage official/global meals.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email in [
+        'developingsofts@demskigroupdev.com'
+      ];
+    }
+
+    // Who may create/modify a GLOBAL (official) meal.
+    // NOTE: the "Add Meal to Firebase" button is currently shown to every user,
+    // so this is open to any signed-in user for now. To lock it down to admins,
+    // change the body to `return isAdmin();` (and gate the Home button too).
+    function canWriteGlobalMeal() {
+      return isSignedIn();
+      // return isAdmin();   // <-- switch to this to restrict to admins
+    }
+
+    // Does the parent meal still exist? Used to allow cleanup of orphaned
+    // mealIngredients (whose meal was already deleted) without erroring on a
+    // null get().
+    function mealExists(mealId) {
+      return exists(/databases/$(database)/documents/meals/$(mealId));
+    }
+    // The owner uid stored on the meal referenced by a mealIngredients doc.
+    function mealOwnerUid(mealId) {
+      return get(/databases/$(database)/documents/meals/$(mealId)).data.uid;
+    }
+    function mealIsGlobal(mealId) {
+      return get(/databases/$(database)/documents/meals/$(mealId)).data.isGlobal == true;
+    }
+    function canModifyMealData(mealId) {
+      return isSignedIn() &&
+        // Orphan cleanup: if the parent meal is gone there is no ownership to
+        // check, so allow a signed-in user to clear the leftover ingredient
+        // data. Checked FIRST so the get()s below are only evaluated when the
+        // meal actually exists (a get() on a missing doc would error the rule).
+        (!mealExists(mealId) ||
+         mealOwnerUid(mealId) == request.auth.uid ||
+         (mealIsGlobal(mealId) && canWriteGlobalMeal()));
+    }
+
+    // ---- meals ------------------------------------------------------------
+    match /meals/{mealId} {
+      // Any signed-in user can read official/global meals; owners read theirs.
+      allow read: if isSignedIn() &&
+        (resource.data.isGlobal == true ||
+         resource.data.uid == request.auth.uid);
+
+      // Create: your own meal, or a global meal (subject to canWriteGlobalMeal).
+      allow create: if isSignedIn() &&
+        ((request.resource.data.uid == request.auth.uid &&
+          request.resource.data.isGlobal != true) ||
+         (request.resource.data.isGlobal == true && canWriteGlobalMeal()));
+
+      // Update: your own meal, or a global meal (subject to the rule).
+      allow update: if isSignedIn() &&
+        ((resource.data.uid == request.auth.uid &&
+          resource.data.isGlobal != true) ||
+         (resource.data.isGlobal == true && canWriteGlobalMeal()));
+
+      // Delete: same ownership check, plus a null-resource allowance so that
+      // re-deleting an already-removed meal (left over from a previously
+      // failed delete) is an idempotent no-op instead of a permission error.
+      allow delete: if isSignedIn() &&
+        (resource == null ||
+         (resource.data.uid == request.auth.uid &&
+          resource.data.isGlobal != true) ||
+         (resource.data.isGlobal == true && canWriteGlobalMeal()));
+    }
+
+    // ---- mealIngredients (+ ingredients subcollection) --------------------
+    match /mealIngredients/{mealId} {
+      // Readable by any signed-in user so global meals can be enriched anywhere.
+      allow read: if isSignedIn();
+      allow write: if canModifyMealData(mealId);
+
+      match /ingredients/{ingredientId} {
+        allow read: if isSignedIn();
+        allow write: if canModifyMealData(mealId);
+      }
+    }
+
+    // ---- plans (private per user) -----------------------------------------
+    match /plans/{planId} {
+      allow read, update, delete: if isSignedIn() &&
+        resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid;
+    }
+
+    // ---- shopping lists (private per user) --------------------------------
+    match /shoppingList/{listId} {
+      allow read, update, delete: if isSignedIn() &&
+        resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid;
+    }
+
+    // ---- mealPlan (per-user, plus shared defaults with uid == "") ---------
+    match /mealPlan/{mealPlanId} {
+      allow read: if isSignedIn() &&
+        (resource.data.uid == request.auth.uid || resource.data.uid == '');
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn() &&
+        resource.data.uid == request.auth.uid;
+    }
+
+    // ---- users (document id == uid) ---------------------------------------
+    match /users/{userId} {
+      allow read, write: if isUser(userId);
+    }
+
+    // ---- shared reference data (read-only for clients) --------------------
+    match /ingredientCategory/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /ingredients/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /dietryPreferences/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -16,6 +16,8 @@ export const UPDATE_MEAL = 'meals/updateMeal';
 export const DELETE_MEAL = 'meals/deleteMeal';
 export const FETCH_MEALS = 'meals/fetchMeals';
 export const FETCH_ALL_MEALS = 'meals/fetchAllMeals';
+export const FETCH_GLOBAL_MEALS = 'meals/fetchGlobalMeals';
+export const SEARCH_GLOBAL_MEALS = 'meals/searchGlobalMeals';
 
 export const UPDATE_USER = 'auth/updateUser';
 export const CHANGE_PASSWORD = 'auth/changePassword';

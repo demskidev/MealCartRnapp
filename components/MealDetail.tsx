@@ -23,13 +23,13 @@ import { useState } from "react";
 import {
   Dimensions,
   Image,
-  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import AppImage from "./AppImage";
 import ConfirmationModal from "./ConfirmationModal";
 import { hideLoader, showLoader } from "./Loader";
 import SendToShoppingList from "./SendShoppingList";
@@ -51,6 +51,17 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
   const handleEditPress = () => {
     pushNavigation(APP_ROUTES.CREATE_MEAL, {
       mode: "edit",
+      mealId: meal.id,
+    });
+  };
+
+  // Global meals are shared/official and owned by no single user. Rather than
+  // editing the shared record, a user "copies" it: the bottom sheet opens
+  // pre-filled with this meal's details, and saving creates a brand-new meal
+  // owned by the user. The original global meal is left untouched.
+  const handleCopyPress = () => {
+    pushNavigation(APP_ROUTES.CREATE_MEAL, {
+      mode: "copy",
       mealId: meal.id,
     });
   };
@@ -79,10 +90,16 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.headerImageContainer}>
-        <ImageBackground
-          source={meal.imageUrl ? { uri: meal.imageUrl } : mealfoodH}
-          style={{ height: verticalScale(300), width: "100%" }}
-        >
+        <View style={{ height: verticalScale(300), width: "100%" }}>
+          {/* Background image with its own inline loader (shown while a remote
+              image loads); the header content is layered on top. */}
+          <AppImage
+            source={meal.imageUrl ? { uri: meal.imageUrl } : mealfoodH}
+            resizeMode="cover"
+            loaderColor={Colors.white}
+            loaderSize="large"
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.topRow}>
             <TouchableOpacity onPress={onBack} style={styles.backButton}>
               <Image
@@ -123,7 +140,7 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
               </TouchableOpacity>
             </View>
           </View>
-        </ImageBackground>
+        </View>
       </View>
 
       <ScrollView
@@ -134,36 +151,53 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
           <Text style={styles.description}>{meal.description || ""}</Text>
         )}
 
-        <SpaceBetweenButtons
-          containerStyle={styles.buttonRow}
-          left={
+        {meal.isGlobal ? (
+          <View style={styles.buttonRow}>
             <ThemeGradientButton
-              title={Strings.mealDetail_edit}
+              title={Strings.mealDetail_copyToMyMeals}
               textStyle={{ color: Colors.white }}
-              // textStyle={styles.editButton}
               rightChild={
                 <Image
-                  source={icon_edit}
+                  source={addtomeallist}
                   style={styles.editImage}
                   resizeMode="contain"
                 />
               }
-              onPress={handleEditPress}
+              onPress={handleCopyPress}
             />
-          }
-          right={
-            <ThemeGradientButton
-              title={Strings.mealDetail_delete}
-              gradientStartColor={Colors._A62A2A}
-              gradientEndColor={Colors._FD4B4B}
-              gradientStart={{ x: 0, y: 0 }}
-              gradientEnd={{ x: 1, y: 0 }}
-              textStyle={{ color: Colors.white }}
-              // textStyle={styles.deleteButton}
-              onPress={() => setShowDeleteModal(true)}
-            />
-          }
-        />
+          </View>
+        ) : (
+          <SpaceBetweenButtons
+            containerStyle={styles.buttonRow}
+            left={
+              <ThemeGradientButton
+                title={Strings.mealDetail_edit}
+                textStyle={{ color: Colors.white }}
+                // textStyle={styles.editButton}
+                rightChild={
+                  <Image
+                    source={icon_edit}
+                    style={styles.editImage}
+                    resizeMode="contain"
+                  />
+                }
+                onPress={handleEditPress}
+              />
+            }
+            right={
+              <ThemeGradientButton
+                title={Strings.mealDetail_delete}
+                gradientStartColor={Colors._A62A2A}
+                gradientEndColor={Colors._FD4B4B}
+                gradientStart={{ x: 0, y: 0 }}
+                gradientEnd={{ x: 1, y: 0 }}
+                textStyle={{ color: Colors.white }}
+                // textStyle={styles.deleteButton}
+                onPress={() => setShowDeleteModal(true)}
+              />
+            }
+          />
+        )}
 
         {meal.ingredients && meal.ingredients.length > 0 && (
           <View>

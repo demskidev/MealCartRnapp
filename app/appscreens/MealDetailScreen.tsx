@@ -61,9 +61,13 @@ export default function MealDetailScreen() {
     }, [mealId, reduxMeal]),
   );
 
-  // Record last-viewed time once we have a meal.
+  // Record last-viewed time once we have a meal. Skip global meals: they are
+  // shared (uid "global") and never surface in a user's recent meals (which
+  // filter by uid), so writing lastViewedAt would only cause needless shared
+  // writes / permission errors.
   useEffect(() => {
-    if (!enrichedMeal || hasUpdatedViewTime.current) return;
+    if (!enrichedMeal || enrichedMeal.isGlobal || hasUpdatedViewTime.current)
+      return;
     hasUpdatedViewTime.current = true;
     updateDocument(MEALS_COLLECTION, enrichedMeal.id, {
       lastViewedAt: new Date(),

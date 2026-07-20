@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { foodimage, mealcartLogo, mealfoodH, userDummy } from "@/assets/images";
 import { IconPlus, MealsLogo } from "@/assets/svg";
+import AppImage from "@/components/AppImage";
 import MealDetail from "@/components/MealDetail";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { Strings } from "@/constants/Strings";
@@ -54,6 +55,10 @@ const { width } = Dimensions.get("window");
 
 const SWIPE_THRESHOLD = 30; // Minimum swipe distance to trigger hide
 const GREETING_SECTION_HEIGHT = verticalScale(100);
+
+// Feature flag for the "Add Meal to Firebase" (add global meal) button. Hidden
+// for now — flip to `true` when we again need to add more global/official meals.
+const SHOW_ADD_GLOBAL_MEAL = false;
 
 const HomeScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
@@ -332,7 +337,7 @@ const HomeScreen: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        <Image
+        <AppImage
           source={
             item.imageUrl && item.imageUrl !== "string"
               ? { uri: item.imageUrl }
@@ -370,6 +375,10 @@ const HomeScreen: React.FC = () => {
     pushNavigation(APP_ROUTES.CREATE_MEAL, { mode: "create" });
   };
 
+  const goToAddGlobalMeal = () => {
+    pushNavigation(APP_ROUTES.CREATE_MEAL, { mode: "global" });
+  };
+
   const navigateToMealDetail = (meal: Meal) => {
     router.push({
       pathname: "/appscreens/MealDetailScreen",
@@ -379,16 +388,10 @@ const HomeScreen: React.FC = () => {
 
   const renderMealCard = ({ item, index }: { item: Meal; index: number }) => (
     <Pressable
-      style={[
-        styles.mealCardContainer,
-        {
-          width: itemWidth,
-          marginRight: index % 2 === 0 ? horizontalScale(14) : 0,
-        },
-      ]}
+      style={[styles.mealCardContainer, { width: itemWidth }]}
       onPress={() => navigateToMealDetail(item)}
     >
-      <Image
+      <AppImage
         source={item.imageUrl ? { uri: item.imageUrl } : foodimage}
         resizeMode="cover"
         style={styles.mealCardMiniImage}
@@ -572,6 +575,23 @@ const HomeScreen: React.FC = () => {
                   }
                 />
 
+                {SHOW_ADD_GLOBAL_MEAL && (
+                  <View style={styles.addGlobalMealWrapper}>
+                    <ThemeGradientButton
+                      title={Strings.home_addMealToFirebase}
+                      textStyle={styles.createMeal}
+                      onPress={goToAddGlobalMeal}
+                      containerStyle={styles.createMealButton}
+                      rightChild={
+                        <IconPlus
+                          width={verticalScale(21)}
+                          height={verticalScale(21)}
+                        />
+                      }
+                    />
+                  </View>
+                )}
+
                 {mealData && mealData.length > 0 ? (
                   <View style={styles.recentMealsContent}>
                     <View style={styles.parentOfRecentMeal}>
@@ -590,6 +610,7 @@ const HomeScreen: React.FC = () => {
 
                     <View
                       style={{
+                        flexDirection: "row",
                         flexWrap: "wrap",
                         justifyContent: "space-between",
                         marginVertical: verticalScale(8),
@@ -789,6 +810,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: horizontalScale(18),
     marginVertical: verticalScale(25),
+  },
+  addGlobalMealWrapper: {
+    paddingHorizontal: horizontalScale(18),
+    marginTop: verticalScale(-10),
+    marginBottom: verticalScale(15),
   },
   mealcartLogoParent: {
     flexDirection: "row",

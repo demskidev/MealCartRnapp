@@ -6,6 +6,10 @@ export const INGREDIENTS_CATEGORY_COLLECTION = 'ingredientCategory';
 export const MEAL_INGREDIENTS_COLLECTION = 'mealIngredients';
 export const INGREDIENTS_COLLECTION = 'ingredients';
 export const MEALS_COLLECTION = 'meals';
+// Sentinel uid assigned to global meals so they never match a real user's
+// "my meals" query (uid == userId), while still living in MEALS_COLLECTION.
+export const GLOBAL_MEALS_UID = 'global';
+export const IS_GLOBAL_KEY = 'isGlobal';
 export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';
 export const DIETARY_PREFERENCES_COLLECTION = 'dietryPreferences';

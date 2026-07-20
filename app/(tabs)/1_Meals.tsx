@@ -7,6 +7,7 @@ import {
 } from "@/assets/images";
 
 import { SearchIcon } from "@/assets/svg";
+import AppImage from "@/components/AppImage";
 import FilterModal from "@/components/FilterModal";
 import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
@@ -65,6 +66,8 @@ const MealsScreen: React.FC = () => {
     fetchMeals,
     searchMealsCombined,
     fetchTheRecentMeals,
+    fetchGlobalMealsData,
+    searchGlobalMealsCombined,
     loading,
     error,
     meals,
@@ -83,13 +86,48 @@ const MealsScreen: React.FC = () => {
   const [filteredIsLoadingMore, setFilteredIsLoadingMore] = useState(false);
   const FILTERED_PAGE_SIZE = 10;
 
+  // Browse Meals = global meals + the user's own meals, merged. Firestore can't
+  // OR "isGlobal == true" with "uid == me" in one query, so we page each source
+  // with its own cursor and merge/dedupe/sort on the client.
+  const [browseMeals, setBrowseMeals] = useState<Meal[]>([]);
+  const [browseGlobalCursor, setBrowseGlobalCursor] = useState<any>(null);
+  const [browseUserCursor, setBrowseUserCursor] = useState<any>(null);
+  const [browseGlobalEnd, setBrowseGlobalEnd] = useState(false);
+  const [browseUserEnd, setBrowseUserEnd] = useState(false);
+  const [browseIsLoadingMore, setBrowseIsLoadingMore] = useState(false);
+  const BROWSE_PAGE_SIZE = 10;
+
   const hasActiveFilters =
     filters.category ||
     filters.difficulty ||
     filters.prepTime ||
     debouncedSearch;
 
-  const displayMeals = hasActiveFilters ? filteredMeals : normalMeals;
+  const getCreatedAtMs = (meal: any): number => {
+    const c = meal?.createdAt;
+    if (!c) return 0;
+    if (typeof c.seconds === "number") return c.seconds * 1000;
+    if (c instanceof Date) return c.getTime();
+    if (typeof c.toDate === "function") return c.toDate().getTime();
+    const t = new Date(c).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  };
+
+  const mergeDedupeSort = (base: Meal[], incoming: Meal[]): Meal[] => {
+    const byId = new Map<string, Meal>();
+    [...base, ...incoming].forEach((meal) => {
+      if (meal && meal.id) byId.set(meal.id, meal);
+    });
+    return Array.from(byId.values()).sort(
+      (a, b) => getCreatedAtMs(b) - getCreatedAtMs(a),
+    );
+  };
+
+  const displayMeals = !isMyMeals
+    ? browseMeals
+    : hasActiveFilters
+      ? filteredMeals
+      : normalMeals;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -108,7 +146,8 @@ const MealsScreen: React.FC = () => {
               if (data.length < NORMAL_PAGE_SIZE) {
                 setNormalIsEndReached(true);
               }
-              setNormalMeals(data);
+              // Display comes from the derived effect above (Redux store);
+              // here we only advance the pagination cursor.
               if (data.length > 0) {
                 setNormalLastDoc(data[data.length - 1]);
               }
@@ -135,23 +174,35 @@ const MealsScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (hasActiveFilters) {
+    if (isMyMeals && hasActiveFilters) {
       setFilteredMeals([]);
       setFilteredLastDoc(null);
       setFilteredIsEndReached(false);
       loadFilteredMeals(true);
     }
-  }, [filters, debouncedSearch]);
+  }, [filters, debouncedSearch, isMyMeals]);
 
+  // (Re)load the Browse Meals list whenever browse is active or its
+  // filters/search change.
   useEffect(() => {
-    if (!hasActiveFilters && meals.length > 0) {
-      setNormalMeals(meals);
-      if (meals.length > 0) {
-        setNormalLastDoc(meals[meals.length - 1]);
-      }
-      setNormalIsEndReached(false);
+    if (!isMyMeals) {
+      loadBrowseMeals(true);
     }
-  }, [meals, hasActiveFilters]);
+  }, [isMyMeals, filters, debouncedSearch]);
+
+  // "Your Meals" must show ONLY the signed-in user's own meals — never global/
+  // official meals. (Global meals live in a separate list, but legacy data can
+  // tag a global meal with a real uid, so we filter defensively here.) Derive
+  // the list straight from the Redux store as the single source of truth: it
+  // then updates consistently on fetch, create, edit and delete, instead of
+  // flip-flopping between the paginated fetch result and the accumulated store
+  // (the previous cause of the "2 then 3 on refresh" inconsistency).
+  useEffect(() => {
+    const owned = meals
+      .filter((meal) => !meal.isGlobal)
+      .sort((a, b) => getCreatedAtMs(b) - getCreatedAtMs(a));
+    setNormalMeals(owned);
+  }, [meals]);
 
   const loadInitialMeals = async () => {
     setNormalMeals([]);
@@ -193,14 +244,9 @@ const MealsScreen: React.FC = () => {
           setNormalIsEndReached(true);
         }
 
-        setNormalMeals((prev) => {
-          const existingIds = new Set(prev.map((meal: Meal) => meal.id));
-          const newMeals = data.filter(
-            (meal: Meal) => !existingIds.has(meal.id),
-          );
-          return [...prev, ...newMeals];
-        });
-
+        // The fetched page is appended to the Redux store by the thunk; the
+        // derived effect above turns that into the displayed list. Here we only
+        // advance the pagination cursor.
         if (data.length > 0) {
           setNormalLastDoc(data[data.length - 1]);
         }
@@ -261,6 +307,107 @@ const MealsScreen: React.FC = () => {
     );
   };
 
+  // Load a page of Browse meals: one page from global + one page from the
+  // user's own meals, in parallel, then merge into the combined list.
+  const loadBrowseMeals = async (isInitial: boolean = false) => {
+    if (!isInitial && browseIsLoadingMore) return;
+
+    const globalDone = isInitial ? false : browseGlobalEnd;
+    const userDone = isInitial ? false : browseUserEnd;
+    if (!isInitial && globalDone && userDone) return;
+
+    const globalCursor = isInitial ? null : browseGlobalCursor;
+    const userCursor = isInitial ? null : browseUserCursor;
+
+    setBrowseIsLoadingMore(true);
+
+    const commonFilters = {
+      category: filters.category,
+      difficulty: filters.difficulty,
+      prepTime: filters.prepTime,
+      searchText: debouncedSearch,
+      limit: BROWSE_PAGE_SIZE,
+    };
+
+    const globalPromise = globalDone
+      ? Promise.resolve<Meal[]>([])
+      : new Promise<Meal[]>((resolve) => {
+          if (hasActiveFilters) {
+            searchGlobalMealsCombined(
+              { ...commonFilters, startAfter: globalCursor },
+              (data) => resolve(data as Meal[]),
+              () => resolve([]),
+            );
+          } else {
+            fetchGlobalMealsData(
+              (data) => resolve(data as Meal[]),
+              () => resolve([]),
+              BROWSE_PAGE_SIZE,
+              globalCursor,
+            );
+          }
+        });
+
+    const userPromise = userDone
+      ? Promise.resolve<Meal[]>([])
+      : new Promise<Meal[]>((resolve) => {
+          if (hasActiveFilters) {
+            searchMealsCombined(
+              { ...commonFilters, startAfter: userCursor },
+              (data) => resolve(data as Meal[]),
+              () => resolve([]),
+            );
+          } else {
+            fetchMeals(
+              (data) => resolve(data as Meal[]),
+              () => resolve([]),
+              BROWSE_PAGE_SIZE,
+              userCursor,
+            );
+          }
+        });
+
+    const [globalData, userData] = await Promise.all([
+      globalPromise,
+      userPromise,
+    ]);
+
+    if (!globalDone) {
+      if (globalData.length < BROWSE_PAGE_SIZE) setBrowseGlobalEnd(true);
+      if (globalData.length > 0) {
+        setBrowseGlobalCursor(globalData[globalData.length - 1]);
+      }
+    }
+    if (!userDone) {
+      if (userData.length < BROWSE_PAGE_SIZE) setBrowseUserEnd(true);
+      if (userData.length > 0) {
+        setBrowseUserCursor(userData[userData.length - 1]);
+      }
+    }
+
+    setBrowseMeals((prev) =>
+      mergeDedupeSort(isInitial ? [] : prev, [...globalData, ...userData]),
+    );
+
+    if (isInitial) {
+      setBrowseGlobalEnd(globalData.length < BROWSE_PAGE_SIZE);
+      setBrowseUserEnd(userData.length < BROWSE_PAGE_SIZE);
+    }
+
+    setBrowseIsLoadingMore(false);
+  };
+
+  const handleBrowseEndReached = () => {
+    if (
+      browseMeals.length === 0 ||
+      browseIsLoadingMore ||
+      (browseGlobalEnd && browseUserEnd)
+    ) {
+      return;
+    }
+    loadBrowseMeals(false);
+  };
+
   const handleScrollViewScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
@@ -300,6 +447,12 @@ const MealsScreen: React.FC = () => {
   const onRefresh = async () => {
     setRefreshing(true);
 
+    if (!isMyMeals) {
+      await loadBrowseMeals(true);
+      setRefreshing(false);
+      return;
+    }
+
     if (hasActiveFilters) {
       setFilteredMeals([]);
       setFilteredLastDoc(null);
@@ -329,7 +482,6 @@ const MealsScreen: React.FC = () => {
         },
       );
     } else {
-      setNormalMeals([]);
       setNormalLastDoc(null);
       setNormalIsEndReached(false);
 
@@ -338,7 +490,7 @@ const MealsScreen: React.FC = () => {
           if (data.length < NORMAL_PAGE_SIZE) {
             setNormalIsEndReached(true);
           }
-          setNormalMeals(data);
+          // Display is derived from the Redux store; only advance the cursor.
           if (data.length > 0) {
             setNormalLastDoc(data[data.length - 1]);
           }
@@ -376,7 +528,7 @@ const MealsScreen: React.FC = () => {
         });
       }}
     >
-      <Image
+      <AppImage
         source={item.imageUrl ? { uri: item.imageUrl } : foodimage}
         resizeMode="cover"
         style={{
@@ -624,7 +776,9 @@ const MealsScreen: React.FC = () => {
               }}
               contentContainerStyle={{ paddingBottom: 160 }}
               showsVerticalScrollIndicator={false}
-              onEndReached={handleFilteredEndReached}
+              onEndReached={
+                !isMyMeals ? handleBrowseEndReached : handleFilteredEndReached
+              }
               onEndReachedThreshold={0.5}
               refreshControl={
                 <RefreshControl
@@ -635,7 +789,7 @@ const MealsScreen: React.FC = () => {
                 />
               }
               ListEmptyComponent={
-                filteredIsLoadingMore ? (
+                (!isMyMeals ? browseIsLoadingMore : filteredIsLoadingMore) ? (
                   <View style={{ paddingVertical: verticalScale(40) }}>
                     <ActivityIndicator size="large" color={Colors.primary} />
                   </View>

@@ -24,6 +24,7 @@ import {
   SERVINGS_KEY,
   STEPS_KEY,
 } from "@/reduxStore/appKeys";
+import { GLOBAL_MEALS_UID } from "@/reduxStore/appKeys";
 import { useAppSelector } from "@/reduxStore/hooks";
 import { fontSize } from "@/utils/Fonts";
 // import { getUnitOptions } from "@/utils/unitOptions";
@@ -107,14 +108,24 @@ type MealFormValues = {
 
 interface CreateMealBottomSheetProps {
   isEdit?: boolean;
+  isGlobal?: boolean;
+  // Copy mode: the sheet is pre-filled from an existing (global) meal, the user
+  // may edit any detail, and saving creates a brand-new meal owned by the user.
+  // The source meal is left untouched.
+  isCopy?: boolean;
   mealData?: any;
   onClose?: () => void;
 }
 const CreateMealBottomSheet = ({
   isEdit = false,
+  isGlobal = false,
+  isCopy = false,
   mealData,
   onClose,
 }: CreateMealBottomSheetProps) => {
+  // Copy prefills from mealData exactly like edit; the difference is only in
+  // what happens on submit (create-new vs update) and the labels.
+  const prefillFromMeal = (isEdit || isCopy) && mealData;
   const user = useAppSelector((state) => state.auth.user);
   const { ingredientCategories, loading, error, addMealData, updateMealData } =
     useCreateMealViewModel();
@@ -225,7 +236,7 @@ const CreateMealBottomSheet = ({
   }, []);
 
   const initialValues = useMemo<MealFormValues>(() => {
-    if (isEdit && mealData) {
+    if (prefillFromMeal) {
       return {
         id: mealData.id || "",
         name: mealData.name || "",
@@ -277,11 +288,11 @@ const CreateMealBottomSheet = ({
       ingredients: [],
       steps: [{ text: "" }],
     };
-  }, [isEdit, mealData, krogerRefreshedMap]);
+  }, [isEdit, isCopy, mealData, krogerRefreshedMap]);
 
-  // Fetch fresh Kroger product data for Kroger ingredients in edit mode
+  // Fetch fresh Kroger product data for Kroger ingredients in edit/copy mode
   useEffect(() => {
-    if (!isEdit || !mealData?.ingredients) return;
+    if ((!isEdit && !isCopy) || !mealData?.ingredients) return;
 
     const krogerIngredients = (mealData.ingredients || []).filter(
       (ing: any) => ing.isKroger && ing.krogerIngredientId,
@@ -333,31 +344,7 @@ const CreateMealBottomSheet = ({
         // Silently fail — saved text values will be used
       }
     })();
-  }, [isEdit, mealData]);
-
-  // Helper to get units for a given category (object or id)
-  // Helper to get units for a given category (object or id)
-  const getUnitsForCategory = (
-    category?: string | IngredientCategory | null,
-  ): string[] => {
-    if (!category) return [];
-
-    // If category is an object with id
-    if (typeof category === "object" && category.id) {
-      const found = ingredientCategories.find((cat) => cat.id === category.id);
-      if (found && Array.isArray(found.unit)) return found.unit;
-      if (Array.isArray(category.unit)) return category.unit;
-      return [];
-    }
-
-    // If category is a string (id)
-    if (typeof category === "string") {
-      const found = ingredientCategories.find((cat) => cat.id === category);
-      return found && Array.isArray(found.unit) ? found.unit : [];
-    }
-
-    return [];
-  };
+  }, [isEdit, isCopy, mealData]);
 
   const normalizeValue = (value = "") =>
     String(value)
@@ -461,16 +448,20 @@ const CreateMealBottomSheet = ({
   const buildDefaultIngredient = (ingredientName = "") => {
     const firstCategory =
       ingredientCategories.length > 0 ? ingredientCategories[0] : null;
-    const unitOptions = getUnitsForCategory(firstCategory);
+    // A manually typed ingredient is just a name, so it isn't tied to a
+    // specific type. Offer the global unit + count list instead of forcing the
+    // first category's units.
+    const unitOptions = Strings.globalUnitOptions;
 
     return {
       ingredientId: generateFirebaseId(),
       ingredientName,
-      count: "0",
+      count: Strings.defaultCount,
       unit: unitOptions[0] ?? "",
       categoryId: firstCategory?.id ?? "",
       categoryName: firstCategory?.title ?? "",
-      categoryUnits: firstCategory?.unit ?? [],
+      categoryUnits: unitOptions,
+      allowCountSelection: true,
     };
   };
 
@@ -520,15 +511,8 @@ const CreateMealBottomSheet = ({
       setTouched: (touched: any) => void,
     ) =>
     ({ item, index }: { item: MealIngredientForm; index: number }) => {
-      // Check if the current unit is tablespoon (or similar volume measurements)
-      const isVolumeUnit =
-        item?.unit?.toLowerCase().includes(Strings.units.tablespoon) ||
-        item?.unit?.toLowerCase().includes(Strings.units.teaspoon) ||
-        item?.unit?.toLowerCase().includes(Strings.units.cup);
-      const shouldShowCount =
-        isVolumeUnit ||
-        Boolean(item?.allowCountSelection) ||
-        Boolean(item?.isKroger);
+      // The count field is always shown for every ingredient.
+      const shouldShowCount = true;
 
       // A Kroger ingredient carries its own category/unit. Read them from the
       // stable krogerCategoryName/krogerUnit fields (populated in both add and
@@ -547,11 +531,10 @@ const CreateMealBottomSheet = ({
           ""
         : "";
 
-      // Get units - use categoryUnits if available (edit mode), otherwise get from ingredientCategories
-      const baseUnitOptions =
-        item?.categoryUnits && Array.isArray(item.categoryUnits)
-          ? item.categoryUnits
-          : getUnitsForCategory(item?.category || item?.categoryId);
+      // Units are ALWAYS the global list — the selected category never changes
+      // them. A Kroger ingredient additionally keeps its own parsed unit
+      // (prepended just below) for as long as the meal exists.
+      const baseUnitOptions = Strings.globalUnitOptions;
 
       // Always keep the ingredient's Kroger unit in the list.
       const unitOptions =
@@ -708,13 +691,12 @@ const CreateMealBottomSheet = ({
                 options={categoryOptions as any}
                 onSelect={(category: any) => {
                   const updated = [...ingredients];
-                  const newUnitOptions = getUnitsForCategory(category);
+                  // Category is classification only — it must not change the
+                  // unit or the available (global) unit options.
                   updated[index] = {
                     ...updated[index],
-                    unit: newUnitOptions[0] ?? "",
                     categoryId: category.id,
                     categoryName: category.title,
-                    categoryUnits: category.unit,
                   };
                   setFieldValue(INGREDIENTS_KEY, updated);
                 }}
@@ -790,7 +772,7 @@ const CreateMealBottomSheet = ({
             />
           </View>
 
-          {isEdit ? (
+          {isEdit || isCopy ? (
             <TouchableOpacity
               onPress={() => {
                 const updated = steps.filter(
@@ -892,8 +874,22 @@ const CreateMealBottomSheet = ({
       .map((step: MealStepForm) => step.text?.trim())
       .filter((text: string | undefined) => text && text.length > 0);
 
+    // A global meal is a shared/official meal, not owned by any single user.
+    // We tag it with the sentinel GLOBAL_MEALS_UID + isGlobal so it (a) never
+    // appears in anyone's "My Meals" (uid == user) and (b) surfaces in Browse
+    // Meals for everyone. Any user can then reference it by id from their own
+    // plans / shopping lists. For a normal meal, uid is the real owner; on edit
+    // we preserve whatever the meal already was (mealData is the prop here).
+    const editingGlobal = isEditMode && Boolean(mealData?.isGlobal);
+    const treatAsGlobal = isGlobal || editingGlobal;
+    const mealUid = treatAsGlobal
+      ? GLOBAL_MEALS_UID
+      : isEditMode
+        ? mealData?.uid || user?.id
+        : user?.id;
+
     // Build meal data
-    const mealData: any = {
+    const mealPayload: any = {
       name: values.name.trim(),
       description: values.description,
       imageUrl: values.imageUrl,
@@ -902,12 +898,13 @@ const CreateMealBottomSheet = ({
       difficulty: values.difficulty,
       category: values.category,
       ingredients: validIngredients,
-      uid: user?.id,
+      uid: mealUid,
+      isGlobal: treatAsGlobal,
     };
 
     // Add id for edit mode
     if (isEditMode) {
-      mealData.id = values.id;
+      mealPayload.id = values.id;
     } else {
       // Add nameCharacters for create mode
       const nameCharacters = [];
@@ -915,15 +912,15 @@ const CreateMealBottomSheet = ({
       for (let i = 1; i <= name.length; i++) {
         nameCharacters.push(name.substring(0, i).toLowerCase());
       }
-      mealData.nameCharacters = nameCharacters;
+      mealPayload.nameCharacters = nameCharacters;
     }
 
     // Only add steps if there are valid steps
     if (mappedSteps.length > 0) {
-      mealData.steps = mappedSteps;
+      mealPayload.steps = mappedSteps;
     }
 
-    return { mealData, validIngredients, mappedIngredients };
+    return { mealData: mealPayload, validIngredients, mappedIngredients };
   };
 
   const handleCreateMeal = async (values: MealFormValues) => {
@@ -953,6 +950,39 @@ const CreateMealBottomSheet = ({
       );
     } catch (error) {
       alert(Strings.error_creating_meal + error);
+    }
+  };
+
+  // Copy = create a brand-new meal from the (possibly edited) prefilled values.
+  // prepareMealData(values, false) runs the create path, so uid becomes the
+  // current user and isGlobal is false — the source global meal is untouched.
+  const handleCopyMeal = async (values: MealFormValues) => {
+    try {
+      const { mealData, validIngredients, mappedIngredients } = prepareMealData(
+        values,
+        false,
+      );
+
+      if (validIngredients.length !== mappedIngredients.length) {
+        alert("Please select a category for all ingredients");
+        return;
+      }
+
+      showLoader();
+      addMealData(
+        mealData,
+        () => {
+          hideLoader();
+          alert(Strings.meal_copied);
+          closeSheet();
+        },
+        (error) => {
+          hideLoader();
+          alert(Strings.error_copying_meal + error);
+        },
+      );
+    } catch (error) {
+      alert(Strings.error_copying_meal + error);
     }
   };
 
@@ -991,11 +1021,13 @@ const CreateMealBottomSheet = ({
 
   return (
     <Formik
-      key={isEdit && mealData ? JSON.stringify(mealData) : "create"}
+      key={prefillFromMeal ? JSON.stringify(mealData) : "create"}
       enableReinitialize={true}
       initialValues={initialValues}
       validationSchema={createMealValidationSchema}
-      onSubmit={isEdit ? handleEditMeal : handleCreateMeal}
+      onSubmit={
+        isEdit ? handleEditMeal : isCopy ? handleCopyMeal : handleCreateMeal
+      }
       validateOnChange={true}
       validateOnBlur={true}
     >
@@ -1019,7 +1051,11 @@ const CreateMealBottomSheet = ({
                   <Text style={styles.header}>
                     {isEdit
                       ? Strings.createMeal_editMeal
-                      : Strings.createMeal_createMeal}
+                      : isCopy
+                        ? Strings.createMeal_copyMealTitle
+                        : isGlobal
+                          ? Strings.createMeal_addGlobalMeal
+                          : Strings.createMeal_createMeal}
                   </Text>
                   <TouchableOpacity onPress={closeSheet}>
                     <Image
@@ -1402,14 +1438,16 @@ const CreateMealBottomSheet = ({
                         title={
                           isEdit
                             ? Strings.createMeal_updateMeal
-                            : Strings.createMeal_confirm
+                            : isCopy
+                              ? Strings.createMeal_copyMeal
+                              : Strings.createMeal_confirm
                         }
                         gradientStartColor={Colors._667D4C}
                         gradientEndColor={Colors._9DAF89}
                         gradientStart={{ x: 0, y: 0 }}
                         gradientEnd={{ x: 1, y: 0 }}
                         rightChild={
-                          isEdit ? (
+                          isEdit || isCopy ? (
                             <Image
                               source={iconMeal}
                               style={{

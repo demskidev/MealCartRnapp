@@ -5,6 +5,7 @@ import {
   Profileimage,
 } from "@/assets/images";
 import { KrogerIcon } from "@/assets/svg";
+import AppImage from "@/components/AppImage";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import DefaultServingsModal from "@/components/DefaultServingsModal";
 import Divider from "@/components/Divider";
@@ -40,6 +41,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -286,7 +288,7 @@ export default function ProfileScreen() {
       <View style={styles.avatarContainer}>
         <TouchableOpacity onPress={() => setShowModal(true)}>
           <View style={styles.imageParentStyle}>
-            <Image
+            <AppImage
               source={user?.imageUrl ? { uri: user.imageUrl } : Profileimage}
               style={styles.profileImage}
               resizeMode="cover"
@@ -470,8 +472,15 @@ export default function ProfileScreen() {
 
         <Text style={styles.sectionHeader}>{Strings.profile_appSettings}</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowTitle}>{Strings.profile_helpSupport}</Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() =>
+              Linking.openURL(
+                "https://sites.google.com/mealcartapps.com/mealcartapps/privacy-policy",
+              ).catch(() => showErrorToast(Strings.error_unableToOpenLink))
+            }
+          >
+            <Text style={styles.rowTitle}>{Strings.profile_privacyPolicy}</Text>
             <Image
               source={forwardicon}
               style={styles.forwardIcon}
@@ -479,8 +488,17 @@ export default function ProfileScreen() {
             />
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowTitle}>{Strings.profile_aboutLegal}</Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() =>
+              Linking.openURL(
+                "https://sites.google.com/mealcartapps.com/mealcartapps/terms-of-service",
+              ).catch(() => showErrorToast(Strings.error_unableToOpenLink))
+            }
+          >
+            <Text style={styles.rowTitle}>
+              {Strings.profile_termsOfService}
+            </Text>
             <Image
               source={forwardicon}
               style={styles.forwardIcon}

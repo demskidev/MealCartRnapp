@@ -4,8 +4,10 @@ import {
   deleteMeal,
   enrichMealsWithIngredients,
   fetchAllMeals,
+  fetchGlobalMeals,
   fetchRecentMeals,
   fetchUserMeals,
+  searchGlobalMeals,
   searchMeals,
   updateMeal,
 } from "@/reduxStore/slices/mealsSlice";
@@ -15,6 +17,7 @@ export const useMealsViewModel = () => {
   const dispatch = useAppDispatch();
   const meals = useAppSelector((state) => state.meal.meals);
   const allMeals = useAppSelector((state) => state.meal.allMeals);
+  const globalMeals = useAppSelector((state) => state.meal.globalMeals);
   const recentMeals = useAppSelector((state) => state.meal.recentMeals);
 
   const loading = useAppSelector((state) => state.meal.loading);
@@ -150,9 +153,53 @@ export const useMealsViewModel = () => {
     }
   };
 
+  const fetchGlobalMealsData = async (
+    onSuccess?: (payload: any) => void,
+    onError?: (error: string) => void,
+    limit: number = 10,
+    startAfter: any = null,
+  ) => {
+    const resultAction = await dispatch(fetchGlobalMeals({ limit, startAfter }));
+    if (fetchGlobalMeals.fulfilled.match(resultAction)) {
+      onSuccess?.(resultAction.payload);
+    } else {
+      onError?.(resultAction.payload as string);
+    }
+  };
+
+  const searchGlobalMealsCombined = async (
+    filters: {
+      category?: string | null;
+      difficulty?: string | null;
+      prepTime?: string | null;
+      searchText?: string;
+      limit?: number;
+      startAfter?: any;
+    },
+    onSuccess?: (meals: any[]) => void,
+    onError?: (error: string) => void,
+  ) => {
+    const resultAction = await dispatch(
+      searchGlobalMeals({
+        category: filters.category,
+        difficulty: filters.difficulty,
+        prepTime: filters.prepTime,
+        searchText: filters.searchText,
+        limit: filters.limit ?? 10,
+        startAfter: filters.startAfter ?? null,
+      }),
+    );
+    if (searchGlobalMeals.fulfilled.match(resultAction)) {
+      onSuccess?.(resultAction.payload);
+    } else {
+      onError?.(resultAction.payload as string);
+    }
+  };
+
   return {
     meals,
     allMeals,
+    globalMeals,
     recentMeals,
     loading,
     error,
@@ -163,5 +210,8 @@ export const useMealsViewModel = () => {
     fetchTheRecentMeals,
     updateMealData,
     fetchAllMeals,
+    fetchAllMealsData,
+    fetchGlobalMealsData,
+    searchGlobalMealsCombined,
   };
 };

@@ -22,6 +22,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import AppImage from "./AppImage";
 import ImagePickerModal from "./ImagePickerModal";
 import { hideLoader, showLoader } from "./Loader";
 import SpaceBetweenButtons from "./SpaceBetweenButtons";
@@ -118,7 +119,7 @@ export default function UpdateProfileModal({
           </Text>
 
           <View style={styles.avatarRow}>
-            <Image
+            <AppImage
               source={
                 imageUri
                   ? { uri: imageUri }
