@@ -343,8 +343,8 @@ export default function TestPlanShopping() {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <TourGuideZone zone={18} shape="rectangle" borderRadius={8}>
-        <TourGuideZone zone={17} shape="rectangle" borderRadius={8}>
+      <TourGuideZone zone={18} shape="rectangle" borderRadius={8} style={{ flex: 1 }}>
+        <TourGuideZone zone={17} shape="rectangle" borderRadius={8} style={{ flex: 1 }}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.back()}>
               <Image
@@ -415,6 +415,7 @@ export default function TestPlanShopping() {
           />
 
           <FlatList
+            style={{ flex: 1 }}
             data={allIngredients}
             keyExtractor={(item, index) =>
               `${item.ingredientId}-${item.mealId}-${index}`

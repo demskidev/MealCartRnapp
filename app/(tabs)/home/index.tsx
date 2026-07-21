@@ -36,7 +36,6 @@ import {
   NativeSyntheticEvent,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -45,6 +44,7 @@ import {
 import {
   GestureHandlerRootView,
   PanGestureHandler,
+  ScrollView,
   State,
 } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -61,7 +61,8 @@ const GREETING_SECTION_HEIGHT = verticalScale(100);
 const SHOW_ADD_GLOBAL_MEAL = false;
 
 const HomeScreen: React.FC = () => {
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
+  const panRef = useRef<any>(null);
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
   const { enrichedActivePlan, fetchActivePlan } = usePlanViewModel();
@@ -159,9 +160,9 @@ const HomeScreen: React.FC = () => {
       setIsMealCardImageVisible(true);
     }
 
-    showLoader();
+    // Pull-to-refresh shows its own RefreshControl spinner; don't also fire
+    // the global blocking loader modal (it would mask the pull spinner).
     await fetchMealsAndPlan();
-    hideLoader();
 
     setRefreshing(false);
   };
@@ -419,6 +420,8 @@ const HomeScreen: React.FC = () => {
       ) : (
         <GestureHandlerRootView style={{ flex: 1 }}>
           <PanGestureHandler
+            ref={panRef}
+            simultaneousHandlers={scrollViewRef}
             onHandlerStateChange={onHandlerStateChange}
             activeOffsetY={[-10, 10]}
           >
@@ -529,6 +532,7 @@ const HomeScreen: React.FC = () => {
               </LinearGradient>
               <ScrollView
                 ref={scrollViewRef}
+                simultaneousHandlers={panRef}
                 showsVerticalScrollIndicator={false}
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
