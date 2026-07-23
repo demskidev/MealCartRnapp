@@ -86,14 +86,11 @@ const MealsScreen: React.FC = () => {
   const [filteredIsLoadingMore, setFilteredIsLoadingMore] = useState(false);
   const FILTERED_PAGE_SIZE = 10;
 
-  // Browse Meals = global meals + the user's own meals, merged. Firestore can't
-  // OR "isGlobal == true" with "uid == me" in one query, so we page each source
-  // with its own cursor and merge/dedupe/sort on the client.
+  // Browse Meals = global/official meals ONLY (never the user's own meals).
+  // Paged with a single global cursor; dedupe/sort on the client.
   const [browseMeals, setBrowseMeals] = useState<Meal[]>([]);
   const [browseGlobalCursor, setBrowseGlobalCursor] = useState<any>(null);
-  const [browseUserCursor, setBrowseUserCursor] = useState<any>(null);
   const [browseGlobalEnd, setBrowseGlobalEnd] = useState(false);
-  const [browseUserEnd, setBrowseUserEnd] = useState(false);
   const [browseIsLoadingMore, setBrowseIsLoadingMore] = useState(false);
   const BROWSE_PAGE_SIZE = 10;
 
@@ -307,17 +304,13 @@ const MealsScreen: React.FC = () => {
     );
   };
 
-  // Load a page of Browse meals: one page from global + one page from the
-  // user's own meals, in parallel, then merge into the combined list.
+  // Load a page of Browse meals — global/official meals ONLY. (Previously this
+  // also merged in the user's own meals; the client requires this list to show
+  // global meals and nothing else.)
   const loadBrowseMeals = async (isInitial: boolean = false) => {
-    if (!isInitial && browseIsLoadingMore) return;
-
-    const globalDone = isInitial ? false : browseGlobalEnd;
-    const userDone = isInitial ? false : browseUserEnd;
-    if (!isInitial && globalDone && userDone) return;
+    if (!isInitial && (browseIsLoadingMore || browseGlobalEnd)) return;
 
     const globalCursor = isInitial ? null : browseGlobalCursor;
-    const userCursor = isInitial ? null : browseUserCursor;
 
     setBrowseIsLoadingMore(true);
 
@@ -329,80 +322,35 @@ const MealsScreen: React.FC = () => {
       limit: BROWSE_PAGE_SIZE,
     };
 
-    const globalPromise = globalDone
-      ? Promise.resolve<Meal[]>([])
-      : new Promise<Meal[]>((resolve) => {
-          if (hasActiveFilters) {
-            searchGlobalMealsCombined(
-              { ...commonFilters, startAfter: globalCursor },
-              (data) => resolve(data as Meal[]),
-              () => resolve([]),
-            );
-          } else {
-            fetchGlobalMealsData(
-              (data) => resolve(data as Meal[]),
-              () => resolve([]),
-              BROWSE_PAGE_SIZE,
-              globalCursor,
-            );
-          }
-        });
-
-    const userPromise = userDone
-      ? Promise.resolve<Meal[]>([])
-      : new Promise<Meal[]>((resolve) => {
-          if (hasActiveFilters) {
-            searchMealsCombined(
-              { ...commonFilters, startAfter: userCursor },
-              (data) => resolve(data as Meal[]),
-              () => resolve([]),
-            );
-          } else {
-            fetchMeals(
-              (data) => resolve(data as Meal[]),
-              () => resolve([]),
-              BROWSE_PAGE_SIZE,
-              userCursor,
-            );
-          }
-        });
-
-    const [globalData, userData] = await Promise.all([
-      globalPromise,
-      userPromise,
-    ]);
-
-    if (!globalDone) {
-      if (globalData.length < BROWSE_PAGE_SIZE) setBrowseGlobalEnd(true);
-      if (globalData.length > 0) {
-        setBrowseGlobalCursor(globalData[globalData.length - 1]);
+    const globalData = await new Promise<Meal[]>((resolve) => {
+      if (hasActiveFilters) {
+        searchGlobalMealsCombined(
+          { ...commonFilters, startAfter: globalCursor },
+          (data) => resolve(data as Meal[]),
+          () => resolve([]),
+        );
+      } else {
+        fetchGlobalMealsData(
+          (data) => resolve(data as Meal[]),
+          () => resolve([]),
+          BROWSE_PAGE_SIZE,
+          globalCursor,
+        );
       }
-    }
-    if (!userDone) {
-      if (userData.length < BROWSE_PAGE_SIZE) setBrowseUserEnd(true);
-      if (userData.length > 0) {
-        setBrowseUserCursor(userData[userData.length - 1]);
-      }
+    });
+
+    if (globalData.length < BROWSE_PAGE_SIZE) setBrowseGlobalEnd(true);
+    if (globalData.length > 0) {
+      setBrowseGlobalCursor(globalData[globalData.length - 1]);
     }
 
-    setBrowseMeals((prev) =>
-      mergeDedupeSort(isInitial ? [] : prev, [...globalData, ...userData]),
-    );
-
-    if (isInitial) {
-      setBrowseGlobalEnd(globalData.length < BROWSE_PAGE_SIZE);
-      setBrowseUserEnd(userData.length < BROWSE_PAGE_SIZE);
-    }
+    setBrowseMeals((prev) => mergeDedupeSort(isInitial ? [] : prev, globalData));
 
     setBrowseIsLoadingMore(false);
   };
 
   const handleBrowseEndReached = () => {
-    if (
-      browseMeals.length === 0 ||
-      browseIsLoadingMore ||
-      (browseGlobalEnd && browseUserEnd)
-    ) {
+    if (browseMeals.length === 0 || browseIsLoadingMore || browseGlobalEnd) {
       return;
     }
     loadBrowseMeals(false);
