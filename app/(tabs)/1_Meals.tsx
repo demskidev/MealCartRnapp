@@ -20,6 +20,7 @@ import {
 import { Filters } from "@/constants/interfaces";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { GLOBAL_MEALS_UID } from "@/reduxStore/appKeys";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
 import { FontFamily } from "@/utils/Fonts";
 import { pushNavigation } from "@/utils/Navigation";
@@ -339,12 +340,24 @@ const MealsScreen: React.FC = () => {
       }
     });
 
+    // Advance the cursor / end flag on the RAW page so pagination stays correct
+    // even when some rows are filtered out below.
     if (globalData.length < BROWSE_PAGE_SIZE) setBrowseGlobalEnd(true);
     if (globalData.length > 0) {
       setBrowseGlobalCursor(globalData[globalData.length - 1]);
     }
 
-    setBrowseMeals((prev) => mergeDedupeSort(isInitial ? [] : prev, globalData));
+    // Belt-and-suspenders: the query already filters isGlobal == true, but a
+    // canonical official meal is also uid == "global". Drop any legacy doc that
+    // is tagged global yet still carries a real user's uid, so ONLY official
+    // meals appear in Browse.
+    const officialMeals = globalData.filter(
+      (meal) => meal.uid === GLOBAL_MEALS_UID,
+    );
+
+    setBrowseMeals((prev) =>
+      mergeDedupeSort(isInitial ? [] : prev, officialMeals),
+    );
 
     setBrowseIsLoadingMore(false);
   };
