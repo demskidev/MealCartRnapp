@@ -144,6 +144,17 @@ export default function TestPlanShopping() {
     (ing: any) => ing.acquired,
   ).length;
 
+  const allItemIds = allIngredients.map(
+    (ing: any, index: number) => `${ing.ingredientId}-${ing.mealId}-${index}`,
+  );
+  const isAllSelected =
+    allItemIds.length > 0 &&
+    allItemIds.every((id: string) => checked.includes(id));
+
+  const toggleSelectAll = () => {
+    setChecked(isAllSelected ? [] : allItemIds);
+  };
+
   const toggleCheck = (id: string, ingredient: any, index: number) => {
     // Any item can be toggled — including ones already sent to the Kroger cart.
     // (Previously acquired Kroger items were locked, which left the whole screen
@@ -431,6 +442,35 @@ export default function TestPlanShopping() {
             containerStyle={styles.progressbar}
           />
 
+          {allIngredients.length > 0 && (
+            <TouchableOpacity
+              style={styles.selectAllRow}
+              onPress={toggleSelectAll}
+              activeOpacity={0.7}
+            >
+              {isAllSelected ? (
+                <FilledCheckBox
+                  width={verticalScale(20)}
+                  height={verticalScale(20)}
+                  color={Colors.tertiary}
+                  style={styles.checkboxIcon}
+                />
+              ) : (
+                <CheckBox
+                  width={verticalScale(20)}
+                  height={verticalScale(20)}
+                  color={Colors.tertiary}
+                  style={styles.checkboxIcon}
+                />
+              )}
+              <Text style={styles.selectAllText}>
+                {isAllSelected
+                  ? Strings.testPlanShopping_unselectAll
+                  : Strings.testPlanShopping_selectAll}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <FlatList
             style={{ flex: 1 }}
             data={allIngredients}
@@ -674,6 +714,16 @@ const styles = StyleSheet.create({
   },
   progressbar: {
     marginVertical: verticalScale(20),
+  },
+  selectAllRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: verticalScale(12),
+  },
+  selectAllText: {
+    fontFamily: FontFamilies.ROBOTO_SEMI_BOLD,
+    fontSize: moderateScale(13),
+    color: Colors.tertiary,
   },
   backIcon: {
     width: moderateScale(24),

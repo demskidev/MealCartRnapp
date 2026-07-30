@@ -395,6 +395,8 @@ export const Strings = {
   testPlanShopping_unknownIngredient: "Unknown Ingredient",
   testPlanShopping_noUnit: "No unit",
   testPlanShopping_errorUpdating: "Error updating ingredient status: ",
+  testPlanShopping_selectAll: "Select All",
+  testPlanShopping_unselectAll: "Unselect All",
   introScreen_title: "Welcome to MealCart",
   introScreen_description: "All your meal planning, simplified in one place.",
   newPassword_description:
