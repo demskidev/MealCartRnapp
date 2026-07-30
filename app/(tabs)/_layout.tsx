@@ -120,7 +120,7 @@ export default function TabLayout() {
               getTabIcon(focused, "lists", color),
           }}
         />
-      </Tabs>{" "}
+      </Tabs>
     </View>
   );
 }

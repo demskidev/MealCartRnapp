@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     paddingVertical: moderateScale(0),
+    
   },
 });
 

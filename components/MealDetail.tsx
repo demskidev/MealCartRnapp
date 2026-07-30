@@ -126,7 +126,7 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
               </Text>
             </View>
             <View style={styles.parentOfAddList}>
-              <Image
+              {/* <Image
                 source={addtomeallist}
                 style={styles.imageMeallist}
                 resizeMode="contain"
@@ -137,7 +137,7 @@ const MealDetail = ({ meal, onBack }: MealDetailProps) => {
                   style={styles.imageaddToList}
                   resizeMode="contain"
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
         </View>

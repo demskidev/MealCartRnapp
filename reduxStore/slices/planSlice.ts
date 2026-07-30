@@ -57,16 +57,51 @@ const initialState: PlansState = {
   error: null,
 };
 
+// --- Active-plan selection helpers ----------------------------------------
+// A user may now have several plans in the STARTED state at once (e.g. so they
+// can pull a shopping list for an upcoming plan a few days early). The Home
+// screen still surfaces a single plan, so `activePlan` is the STARTED plan that
+// covers *today* — not simply the first one that happens to be started.
+const toJsDate = (value: any): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string") return new Date(value);
+  if (typeof value.toDate === "function") return value.toDate();
+  if (value.seconds != null) return new Date(value.seconds * 1000);
+  return new Date(value);
+};
+
+const isSameCalendarDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+// True when one of the plan's days falls on today's calendar date.
+const planCoversToday = (plan: any): boolean => {
+  if (!plan?.days?.length) return false;
+  const now = new Date();
+  return plan.days.some((day: any) => {
+    const date = toJsDate(day.date);
+    return date ? isSameCalendarDay(date, now) : false;
+  });
+};
+
+// The plan Home shows as "active": the STARTED plan whose schedule includes
+// today. Returns null when no started plan is current, so Home shows nothing
+// until an upcoming plan's start date actually arrives.
+const pickActivePlanForToday = (plans: any): Plan | null => {
+  if (!Array.isArray(plans)) return null;
+  const started = plans.filter((p) => p?.status === MealStatus.STARTED);
+  return (started.find(planCoversToday) as Plan) || null;
+};
+
 // Fetch Active Plan
 export const fetchActivePlanAsync = createAsyncThunk(
   FETCH_ACTIVE_PLAN,
   async (uid: string, { rejectWithValue }) => {
     try {
       const plans = await queryDocuments(PLANS_COLLECTION, "uid", "==", uid);
-      const activePlan = Array.isArray(plans)
-        ? plans.find((plan: any) => plan.status === MealStatus.STARTED)
-        : null;
-      return activePlan || null;
+      return pickActivePlanForToday(plans);
     } catch (error: any) {
       return rejectWithValue(error.message || Strings.error_fetching_plans);
     }
@@ -258,10 +293,8 @@ const plansSlice = createSlice({
       .addCase(addPlanAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.plans.push(action.payload);
-        // If the new plan is started, set as activePlan
-        if (action.payload.status === "STARTED") {
-          state.activePlan = action.payload;
-        }
+        // Recompute which STARTED plan is current for today
+        state.activePlan = pickActivePlanForToday(state.plans);
       })
       .addCase(addPlanAsync.rejected, (state, action) => {
         state.loading = false;
@@ -275,11 +308,8 @@ const plansSlice = createSlice({
       .addCase(fetchPlansAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.plans = action.payload as Plan[];
-        // Update activePlan as well
-        const active = (action.payload as Plan[]).find(
-          (plan) => plan.status === MealStatus.STARTED,
-        );
-        state.activePlan = active || null;
+        // Surface the STARTED plan that covers today (if any)
+        state.activePlan = pickActivePlanForToday(action.payload);
       })
       .addCase(fetchPlansAsync.rejected, (state, action) => {
         state.loading = false;
@@ -309,16 +339,8 @@ const plansSlice = createSlice({
         if (index !== -1) {
           state.plans[index] = action.payload;
         }
-        // Update activePlan if status changed
-        if (action.payload.status === MealStatus.STARTED) {
-          state.activePlan = action.payload;
-        } else if (
-          state.activePlan &&
-          state.activePlan.id === action.payload.id
-        ) {
-          // If the updated plan was the active one but is no longer started, clear activePlan
-          state.activePlan = null;
-        }
+        // Recompute which STARTED plan is current for today
+        state.activePlan = pickActivePlanForToday(state.plans);
       })
       .addCase(updatePlanAsync.rejected, (state, action) => {
         state.loading = false;
@@ -332,10 +354,8 @@ const plansSlice = createSlice({
       .addCase(deletePlanAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.plans = state.plans.filter((p) => p.id !== action.payload);
-        // If the deleted plan was the active one, clear activePlan
-        if (state.activePlan && state.activePlan.id === action.payload) {
-          state.activePlan = null;
-        }
+        // Recompute the active (today's) plan after deletion
+        state.activePlan = pickActivePlanForToday(state.plans);
       })
       .addCase(deletePlanAsync.rejected, (state, action) => {
         state.loading = false;

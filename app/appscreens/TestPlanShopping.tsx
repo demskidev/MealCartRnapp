@@ -124,16 +124,10 @@ export default function TestPlanShopping() {
           (data) => {
             hideLoader();
             setSelectedList(data);
-            const checkedIds = (data?.ingredients || []).reduce(
-              (arr: string[], ing: any, idx: number) => {
-                if (ing.acquired) {
-                  arr.push(`${ing.ingredientId}-${ing.mealId}-${idx}`);
-                }
-                return arr;
-              },
-              [],
-            );
-            setChecked(checkedIds);
+            // Always open with nothing selected — the user picks what to buy /
+            // send each time. What was previously sent is still reflected by the
+            // separate "acquired" progress bar (not by the checkboxes).
+            setChecked([]);
           },
           (error) => {
             hideLoader();
@@ -151,11 +145,9 @@ export default function TestPlanShopping() {
   ).length;
 
   const toggleCheck = (id: string, ingredient: any, index: number) => {
-    // Prevent unchecking acquired Kroger items (sent to cart)
-    if (ingredient.isKroger && ingredient.acquired && checked.includes(id)) {
-      return;
-    }
-
+    // Any item can be toggled — including ones already sent to the Kroger cart.
+    // (Previously acquired Kroger items were locked, which left the whole screen
+    // unusable once items had been sent.)
     setChecked((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
@@ -191,8 +183,24 @@ export default function TestPlanShopping() {
       return;
     }
 
+    // Only send the Kroger items the user actually selected (checked).
+    const isSelectedKroger = (ing: any, idx: number) => {
+      const id = `${ing.ingredientId}-${ing.mealId}-${idx}`;
+      return ing.isKroger && ing.krogerIngredientId && checked.includes(id);
+    };
+
+    const sentIds = new Set(
+      allIngredients
+        .map((ing: any, idx: number) =>
+          isSelectedKroger(ing, idx)
+            ? `${ing.ingredientId}-${ing.mealId}-${idx}`
+            : null,
+        )
+        .filter(Boolean) as string[],
+    );
+
     const krogerItems = allIngredients
-      .filter((ing: any) => ing.isKroger && ing.krogerIngredientId)
+      .filter((ing: any, idx: number) => isSelectedKroger(ing, idx))
       .map((ing: any) => ({
         quantity: Number(ing.count) || 1,
         upc: ing.krogerIngredientId,
@@ -208,9 +216,10 @@ export default function TestPlanShopping() {
     try {
       await addItemsToKrogerCart(krogerItems);
 
-      // Mark all Kroger items as acquired locally and in Firebase
-      const updatedIngredients = allIngredients.map((ing: any) => {
-        const isKrogerItem = ing.isKroger && ing.krogerIngredientId;
+      // Mark only the sent (selected) items as acquired, locally and in Firebase
+      const updatedIngredients = allIngredients.map((ing: any, idx: number) => {
+        const id = `${ing.ingredientId}-${ing.mealId}-${idx}`;
+        const wasSent = sentIds.has(id);
         return {
           ingredientId: ing.ingredientId,
           ingredientName: ing.ingredientName || "",
@@ -220,7 +229,7 @@ export default function TestPlanShopping() {
           mealName: ing.mealName || "",
           unit: ing.selectedUnit || ing.unit,
           count: ing.count || 1,
-          acquired: isKrogerItem ? true : ing.acquired || false,
+          acquired: wasSent ? true : ing.acquired || false,
           isKroger: ing.isKroger || false,
           krogerIngredientId: ing.krogerIngredientId || "",
         };
@@ -232,15 +241,8 @@ export default function TestPlanShopping() {
         return { ...prevList, ingredients: updatedIngredients };
       });
 
-      // Update checked state for Kroger items
-      const krogerCheckedIds = allIngredients
-        .map((ing: any, idx: number) =>
-          ing.isKroger && ing.krogerIngredientId
-            ? `${ing.ingredientId}-${ing.mealId}-${idx}`
-            : null,
-        )
-        .filter(Boolean) as string[];
-      setChecked((prev) => [...new Set([...prev, ...krogerCheckedIds])]);
+      // Keep only the sent items checked
+      setChecked((prev) => [...new Set([...prev, ...sentIds])]);
 
       // Save to Firebase
       if (selectedList?.id) {
@@ -343,8 +345,23 @@ export default function TestPlanShopping() {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <TourGuideZone zone={18} shape="rectangle" borderRadius={8} style={{ flex: 1 }}>
-        <TourGuideZone zone={17} shape="rectangle" borderRadius={8} style={{ flex: 1 }}>
+      {/* tooltipBelowZone: these zones fill the screen (the list needs flex: 1),
+          so place their tooltips below the content and let the on-screen clamp
+          settle them in the empty area beneath the list, as in the design. */}
+      <TourGuideZone
+        zone={18}
+        shape="rectangle"
+        borderRadius={8}
+        style={{ flex: 1 }}
+        tooltipBelowZone
+      >
+        <TourGuideZone
+          zone={17}
+          shape="rectangle"
+          borderRadius={8}
+          style={{ flex: 1 }}
+          tooltipBelowZone
+        >
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={() => router.back()}>
               <Image

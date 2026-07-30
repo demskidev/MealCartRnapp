@@ -564,7 +564,14 @@ const CreateNewListBottomSheet = forwardRef<
             </View>
           </TourGuideZone>
           <View style={styles.card}>
-            <TourGuideZone zone={16} shape="rectangle" borderRadius={8}>
+            {/* tooltipBelowZone: put the "Check And Save" tooltip directly under
+                the items card, as in the design. */}
+            <TourGuideZone
+              zone={16}
+              shape="rectangle"
+              borderRadius={8}
+              tooltipBelowZone
+            >
               <TourGuideZone zone={15} shape="rectangle" borderRadius={8}>
                 <Text style={styles.sectionTitle}>
                   {Strings.createList_items}

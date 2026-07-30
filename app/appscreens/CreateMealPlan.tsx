@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   },
   mealBox: {
     width: width * 0.24,
-    height: moderateScale(38),
+    minHeight: moderateScale(38),
     borderRadius: moderateScale(4),
     borderWidth: moderateScale(1),
     borderColor: Colors.tertiary,
@@ -864,6 +864,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(4),
   },
   selectedMealName: {
+    flexShrink: 1,
     fontSize: moderateScale(10),
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     color: Colors.primary,

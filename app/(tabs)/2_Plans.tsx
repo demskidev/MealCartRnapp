@@ -51,7 +51,7 @@ const shoppingLists = [
   },
 ];
 const PlansScreen: React.FC = () => {
-  const [pausePlan, setPausePlan] = useState(false);
+  const [pausePlan, setPausePlan] = useState<any>(null);
   const [layoutReady, setLayoutReady] = useState(false);
   const [zoneReady, setZoneReady] = useState(false);
   const [generatedList, setGeneratedList] = useState<any>();
@@ -86,8 +86,10 @@ const PlansScreen: React.FC = () => {
     );
   };
 
-  const activePlan = useMemo(
-    () => filteredPlans.find((plan) => plan.status === MealStatus.STARTED),
+  // A user can now have several plans started at once (e.g. to shop for an
+  // upcoming plan early), so we render every STARTED plan as an active card.
+  const activePlans = useMemo(
+    () => filteredPlans.filter((plan) => plan.status === MealStatus.STARTED),
     [filteredPlans],
   );
 
@@ -187,19 +189,6 @@ const PlansScreen: React.FC = () => {
       return;
     }
 
-    if (status === MealStatus.STARTED) {
-      const start = toDateObject(plan.startDate);
-      const now = new Date();
-      if (start && start > now) {
-        alert("You cannot start an upcoming plan.");
-        return;
-      }
-      if (activePlan && activePlan.id !== plan.id) {
-        alert("Only one plan can be active at a time.");
-        return;
-      }
-    }
-
     showLoader();
 
     updatePlan(
@@ -290,6 +279,165 @@ const PlansScreen: React.FC = () => {
     } finally {
       hideLoader();
     }
+  };
+
+  const renderActivePlan = (plan: any, index: number) => {
+    // Tour zones are unique, so only wrap the first active card with them.
+    const isFirst = index === 0;
+    const wrapZone = (zone: number, node: React.ReactNode) =>
+      isFirst ? (
+        <TourGuideZone
+          zone={zone}
+          shape="rectangle"
+          borderRadius={zone === 12 ? 5 : 16}
+        >
+          {node}
+        </TourGuideZone>
+      ) : (
+        node
+      );
+
+    const card = (
+      <View style={styles.activeCard}>
+        <View style={styles.activeBadge}>
+          <Image
+            source={activeImage}
+            resizeMode="contain"
+            style={styles.activeImage}
+          />
+        </View>
+        <Text style={styles.planTitle}>{plan.planName}</Text>
+        <Text style={styles.planSubTitle}>
+          {(() => {
+            if (plan && plan.days && plan.days.length > 0) {
+              const today = new Date();
+              const isSameDay = (a: Date, b: Date) =>
+                a.getFullYear() === b.getFullYear() &&
+                a.getMonth() === b.getMonth() &&
+                a.getDate() === b.getDate();
+
+              let currentDayIndex = plan.days.findIndex((day: any) => {
+                const dayDate = toDateObject(day.date);
+                return dayDate && isSameDay(dayDate, today);
+              });
+
+              // If today is not found, show 0
+              currentDayIndex =
+                currentDayIndex === -1 ? 0 : currentDayIndex + 1;
+
+              return `Day ${currentDayIndex} of ${plan.days.length}`;
+            }
+            return "";
+          })()}
+        </Text>
+        <View style={styles.mealBox}>
+          <Text style={styles.mealBoxTitle}>{Strings.plans_todaysMeal}</Text>
+          {plan &&
+            plan.days &&
+            plan.days.length > 0 &&
+            (() => {
+              // Find today's date in plan.days
+              const today = new Date();
+              const isSameDay = (a: Date, b: Date) =>
+                a.getFullYear() === b.getFullYear() &&
+                a.getMonth() === b.getMonth() &&
+                a.getDate() === b.getDate();
+
+              const findDay = () => {
+                for (const day of plan.days) {
+                  if (day.date) {
+                    const dayDate = toDateObject(day.date);
+                    if (dayDate && isSameDay(dayDate, today)) {
+                      return day;
+                    }
+                  }
+                }
+                return null;
+              };
+              const todayDay = findDay();
+              if (
+                !todayDay ||
+                !todayDay.mealSlots ||
+                todayDay.mealSlots.length === 0
+              ) {
+                return (
+                  <Text style={styles.mealValue}>
+                    {Strings.plans_notPlanned}
+                  </Text>
+                );
+              }
+              return (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.mealRow}
+                >
+                  {todayDay.mealSlots.map((slot: any, idx: number) => {
+                    // Check if this is tour dummy data
+                    const isTourDummy =
+                      slot.mealPlanId === "dummy-meal-plan-id" ||
+                      slot.mealId === "tour-dummy-meal";
+
+                    const mealPlanName = isTourDummy
+                      ? "Breakfast"
+                      : slot.mealPlan?.name || `Meal ${idx + 1}`;
+
+                    const mealName = isTourDummy
+                      ? "Omlette"
+                      : slot.meal?.name || Strings.plans_notPlanned;
+
+                    return (
+                      <View key={slot.mealPlanId} style={styles.mealColumn}>
+                        <Text style={styles.mealLabelTop}>{mealPlanName}</Text>
+                        <Text style={styles.mealValue}>{mealName}</Text>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+              );
+            })()}
+        </View>
+        <View style={styles.footer}>
+          {wrapZone(
+            11,
+            <BaseButton
+              title={Strings.plans_getShoppingList}
+              gradientButton={true}
+              textColor={Colors.background}
+              width={width * 0.53}
+              textStyle={styles.createButtonText}
+              rightChild={
+                <Image
+                  source={createlist}
+                  resizeMode="contain"
+                  style={styles.createListIcon}
+                />
+              }
+              onPress={() => handleGenerateShoppingList(plan)}
+            />,
+          )}
+          <ThemeNormalButton
+            title={Strings.plans_viewPlan}
+            textColor={Colors.background}
+            containerStyle={styles.confirmButton}
+            textStyle={styles.confirmButtonText}
+            showElevation={false}
+            onPress={() => viewPlan(plan.id)}
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.pauseButton}
+          onPress={() => setPausePlan(plan)}
+        >
+          {wrapZone(
+            12,
+            <Text style={styles.pauseText}>{Strings.plans_pausePlan}</Text>,
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+
+    return <View key={plan.id}>{wrapZone(10, card)}</View>;
   };
 
   const renderShoppingList = ({
@@ -418,7 +566,7 @@ const PlansScreen: React.FC = () => {
             </View>
           </TourGuideZone>
         </View>
-        {!activePlan ? (
+        {activePlans.length === 0 ? (
           <>
             <View style={styles.noActivePlan}>
               <Text style={styles.noActiveText}>
@@ -428,158 +576,7 @@ const PlansScreen: React.FC = () => {
             <View style={styles.dividerRowSpaced} />
           </>
         ) : (
-          <TourGuideZone zone={10} shape="rectangle" borderRadius={16}>
-            <View style={styles.activeCard}>
-              <View style={styles.activeBadge}>
-                <Image
-                  source={activeImage}
-                  resizeMode="contain"
-                  style={styles.activeImage}
-                />
-              </View>
-              <Text style={styles.planTitle}>{activePlan.planName}</Text>
-              <Text style={styles.planSubTitle}>
-                {(() => {
-                  if (
-                    activePlan &&
-                    activePlan.days &&
-                    activePlan.days.length > 0
-                  ) {
-                    const today = new Date();
-                    const isSameDay = (a: Date, b: Date) =>
-                      a.getFullYear() === b.getFullYear() &&
-                      a.getMonth() === b.getMonth() &&
-                      a.getDate() === b.getDate();
-
-                    let currentDayIndex = activePlan.days.findIndex(
-                      (day: any) => {
-                        const dayDate = toDateObject(day.date);
-                        return dayDate && isSameDay(dayDate, today);
-                      },
-                    );
-
-                    // If today is not found, show 0
-                    currentDayIndex =
-                      currentDayIndex === -1 ? 0 : currentDayIndex + 1;
-
-                    return `Day ${currentDayIndex} of ${activePlan.days.length}`;
-                  }
-                  return "";
-                })()}
-              </Text>{" "}
-              <View style={styles.mealBox}>
-                <Text style={styles.mealBoxTitle}>
-                  {Strings.plans_todaysMeal}
-                </Text>
-                {activePlan &&
-                  activePlan.days &&
-                  activePlan.days.length > 0 &&
-                  (() => {
-                    // Find today's date in activePlan.days
-                    const today = new Date();
-                    const isSameDay = (a: Date, b: Date) =>
-                      a.getFullYear() === b.getFullYear() &&
-                      a.getMonth() === b.getMonth() &&
-                      a.getDate() === b.getDate();
-
-                    const findDay = () => {
-                      for (const day of activePlan.days) {
-                        if (day.date) {
-                          const dayDate = toDateObject(day.date);
-                          if (dayDate && isSameDay(dayDate, today)) {
-                            return day;
-                          }
-                        }
-                      }
-                      return null;
-                    };
-                    const todayDay = findDay();
-                    if (
-                      !todayDay ||
-                      !todayDay.mealSlots ||
-                      todayDay.mealSlots.length === 0
-                    ) {
-                      return (
-                        <Text style={styles.mealValue}>
-                          {Strings.plans_notPlanned}
-                        </Text>
-                      );
-                    }
-                    return (
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.mealRow}
-                      >
-                        {todayDay.mealSlots.map((slot, idx) => {
-                          // Check if this is tour dummy data
-                          const isTourDummy =
-                            slot.mealPlanId === "dummy-meal-plan-id" ||
-                            slot.mealId === "tour-dummy-meal";
-
-                          const mealPlanName = isTourDummy
-                            ? "Breakfast"
-                            : slot.mealPlan?.name || `Meal ${idx + 1}`;
-
-                          const mealName = isTourDummy
-                            ? "Omlette"
-                            : slot.meal?.name || Strings.plans_notPlanned;
-
-                          return (
-                            <View
-                              key={slot.mealPlanId}
-                              style={styles.mealColumn}
-                            >
-                              <Text style={styles.mealLabelTop}>
-                                {mealPlanName}
-                              </Text>
-                              <Text style={styles.mealValue}>{mealName}</Text>
-                            </View>
-                          );
-                        })}
-                      </ScrollView>
-                    );
-                  })()}
-              </View>
-              <View style={styles.footer}>
-                <TourGuideZone zone={11} shape="rectangle" borderRadius={16}>
-                  <BaseButton
-                    title={Strings.plans_getShoppingList}
-                    gradientButton={true}
-                    textColor={Colors.background}
-                    width={width * 0.53}
-                    textStyle={styles.createButtonText}
-                    rightChild={
-                      <Image
-                        source={createlist}
-                        resizeMode="contain"
-                        style={styles.createListIcon}
-                      />
-                    }
-                    onPress={() => handleGenerateShoppingList(activePlan)}
-                  />
-                </TourGuideZone>
-                <ThemeNormalButton
-                  title={Strings.plans_viewPlan}
-                  textColor={Colors.background}
-                  containerStyle={styles.confirmButton}
-                  textStyle={styles.confirmButtonText}
-                  showElevation={false}
-                  onPress={() => viewPlan(activePlan.id)}
-                />
-              </View>
-              <TouchableOpacity
-                style={styles.pauseButton}
-                onPress={() => setPausePlan(true)}
-              >
-                <TourGuideZone zone={12} shape="rectangle" borderRadius={5}>
-                  <Text style={styles.pauseText}>
-                    {Strings.plans_pausePlan}
-                  </Text>
-                </TourGuideZone>
-              </TouchableOpacity>
-            </View>
-          </TourGuideZone>
+          activePlans.map((plan, index) => renderActivePlan(plan, index))
         )}
         {otherPlans && otherPlans.length > 0 && (
           <View>
@@ -598,16 +595,16 @@ const PlansScreen: React.FC = () => {
       </ScrollView>
 
       <ConfirmationModal
-        visible={pausePlan}
+        visible={!!pausePlan}
         title={Strings.plans_pauseMealPlan}
         description={Strings.plans_pauseDescription}
         cancelText={Strings.plans_cancel}
         confirmText={Strings.plans_pause}
-        onCancel={() => setPausePlan(false)}
+        onCancel={() => setPausePlan(null)}
         onConfirm={() => {
-          if (activePlan) {
-            updateThePlan(activePlan, MealStatus.PAUSED);
-            setPausePlan(false);
+          if (pausePlan) {
+            updateThePlan(pausePlan, MealStatus.PAUSED);
+            setPausePlan(null);
           }
         }}
       />

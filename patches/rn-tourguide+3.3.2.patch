@@ -1,3 +1,88 @@
+diff --git a/node_modules/rn-tourguide/lib/components/Modal.js b/node_modules/rn-tourguide/lib/components/Modal.js
+index a296031..6598447 100644
+--- a/node_modules/rn-tourguide/lib/components/Modal.js
++++ b/node_modules/rn-tourguide/lib/components/Modal.js
+@@ -3,6 +3,8 @@ import { Animated, Easing, Platform, StatusBar, StyleSheet, View, } from 'react-
+ import styles, { MARGIN } from './style';
+ import { SvgMask } from './SvgMask';
+ import { Tooltip } from './Tooltip';
++// Used only until the tooltip has been measured once via onLayout.
++const TOOLTIP_HEIGHT_FALLBACK = 135;
+ export class Modal extends React.Component {
+     constructor(props) {
+         super(props);
+@@ -23,10 +25,20 @@ export class Modal extends React.Component {
+             size: undefined,
+             position: undefined,
+             currentStep: undefined,
++            tooltipHeight: TOOLTIP_HEIGHT_FALLBACK,
+         };
+         this.handleLayoutChange = ({ nativeEvent: { layout } }) => {
+             this.layout = layout;
+         };
++        // Measure the real rendered tooltip height so positioning does not rely on
++        // a hardcoded guess. Stored passively (no re-animation) and consumed by the
++        // next _animateMove call, which also clamps the tooltip on-screen.
++        this.handleTooltipLayout = ({ nativeEvent: { layout } }) => {
++            if (layout.height > 0 &&
++                Math.abs(layout.height - this.state.tooltipHeight) > 1) {
++                this.setState({ tooltipHeight: layout.height });
++            }
++        };
+         this.handleNext = () => {
+             this.props.next();
+         };
+@@ -112,12 +124,35 @@ export class Modal extends React.Component {
+             tooltip.maxWidth = layout.width - tooltip.left - MARGIN;
+         }
+         const duration = this.props.animationDuration + 200;
+-        const toValue = verticalPosition === 'bottom'
+-            ? tooltip.top
+-            : obj.top -
+-                MARGIN -
+-                135 -
+-                (((_a = this.props.currentStep) === null || _a === void 0 ? void 0 : _a.tooltipBottomOffset) || 0);
++        const step = this.props.currentStep;
++        // A step can opt out of the measured-height + on-screen clamping below via
++        // `legacyTooltipPosition` and keep this library's original placement.
++        const useLegacyPosition = !!(step && step.legacyTooltipPosition);
++        // Use the measured tooltip height instead of a hardcoded 135, otherwise a
++        // taller tooltip is drawn far higher than the space reserved for it.
++        const tooltipHeight = useLegacyPosition
++            ? TOOLTIP_HEIGHT_FALLBACK
++            : this.state.tooltipHeight || TOOLTIP_HEIGHT_FALLBACK;
++        // `tooltipBelowZone` always places the tooltip directly beneath its zone,
++        // overriding the above/below heuristic. The clamp below then keeps it
++        // on-screen, so a very tall zone lands at the lowest visible position
++        // instead of being thrown above the viewport.
++        const rawToValue = step && step.tooltipBelowZone
++            ? obj.top + obj.height + MARGIN
++            : verticalPosition === 'bottom'
++                ? tooltip.top
++                : obj.top -
++                    MARGIN -
++                    tooltipHeight -
++                    ((step && step.tooltipBottomOffset) || 0);
++        // Clamp so the tooltip is always fully on-screen. Without this, a zone near
++        // the top of the screen (or a full-screen zone, where the 'top' branch is
++        // chosen) yields a negative offset and the tooltip renders above the
++        // viewport - unreadable, with its buttons out of reach.
++        const maxToValue = Math.max(layout.height - tooltipHeight - MARGIN, MARGIN);
++        const toValue = useLegacyPosition
++            ? rawToValue
++            : Math.min(Math.max(rawToValue, MARGIN), maxToValue);
+         const translateAnim = Animated.timing(this.state.tooltipTranslateY, {
+             toValue,
+             duration,
+@@ -175,7 +210,7 @@ export class Modal extends React.Component {
+             return null;
+         }
+         const { opacity } = this.state;
+-        return (React.createElement(Animated.View, { pointerEvents: 'box-none', key: 'tooltip', style: [
++        return (React.createElement(Animated.View, { pointerEvents: 'box-none', key: 'tooltip', onLayout: this.handleTooltipLayout, style: [
+                 styles.tooltip,
+                 this.props.tooltipStyle,
+                 {
 diff --git a/node_modules/rn-tourguide/lib/components/SvgMask.js b/node_modules/rn-tourguide/lib/components/SvgMask.js
 index ffb2cb7..846775e 100644
 --- a/node_modules/rn-tourguide/lib/components/SvgMask.js
@@ -12,3 +97,38 @@ index ffb2cb7..846775e 100644
      componentDidUpdate(prevProps) {
          if (prevProps.position !== this.props.position ||
              prevProps.size !== this.props.size) {
+diff --git a/node_modules/rn-tourguide/lib/components/TourGuideZone.d.ts b/node_modules/rn-tourguide/lib/components/TourGuideZone.d.ts
+index 1706325..979de26 100644
+--- a/node_modules/rn-tourguide/lib/components/TourGuideZone.d.ts
++++ b/node_modules/rn-tourguide/lib/components/TourGuideZone.d.ts
+@@ -14,5 +14,7 @@ export interface TourGuideZoneProps {
+     keepTooltipPosition?: boolean;
+     tooltipBottomOffset?: number;
+     borderRadiusObject?: BorderRadiusObject;
++    legacyTooltipPosition?: boolean;
++    tooltipBelowZone?: boolean;
+ }
+-export declare const TourGuideZone: ({ isTourGuide, tourKey, zone, children, shape, text, maskOffset, borderRadius, style, keepTooltipPosition, tooltipBottomOffset, borderRadiusObject, }: TourGuideZoneProps) => JSX.Element;
++export declare const TourGuideZone: ({ isTourGuide, tourKey, zone, children, shape, text, maskOffset, borderRadius, style, keepTooltipPosition, tooltipBottomOffset, borderRadiusObject, legacyTooltipPosition, tooltipBelowZone, }: TourGuideZoneProps) => JSX.Element;
+diff --git a/node_modules/rn-tourguide/lib/components/TourGuideZone.js b/node_modules/rn-tourguide/lib/components/TourGuideZone.js
+index f80ffc1..f2001c4 100644
+--- a/node_modules/rn-tourguide/lib/components/TourGuideZone.js
++++ b/node_modules/rn-tourguide/lib/components/TourGuideZone.js
+@@ -1,7 +1,7 @@
+ import * as React from 'react';
+ import { Step } from './Step';
+ import { Wrapper } from './Wrapper';
+-export const TourGuideZone = ({ isTourGuide = true, tourKey = '_default', zone, children, shape, text, maskOffset, borderRadius, style, keepTooltipPosition, tooltipBottomOffset, borderRadiusObject, }) => {
++export const TourGuideZone = ({ isTourGuide = true, tourKey = '_default', zone, children, shape, text, maskOffset, borderRadius, style, keepTooltipPosition, tooltipBottomOffset, borderRadiusObject, legacyTooltipPosition, tooltipBelowZone, }) => {
+     if (!isTourGuide) {
+         return React.createElement(React.Fragment, null, children);
+     }
+@@ -13,6 +13,8 @@ export const TourGuideZone = ({ isTourGuide = true, tourKey = '_default', zone,
+             keepTooltipPosition,
+             tooltipBottomOffset,
+             borderRadiusObject,
++            legacyTooltipPosition,
++            tooltipBelowZone,
+         } },
+         React.createElement(Wrapper, { ...{ style } }, children)));
+ };
