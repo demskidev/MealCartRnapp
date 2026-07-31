@@ -5,10 +5,13 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Dimensions,
+    Keyboard,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     StyleSheet,
     Text,
     TouchableWithoutFeedback,
@@ -34,6 +37,20 @@ const DefaultServingsModal: React.FC<DefaultServingsModalProps> = ({
   const [selected, setSelected] = useState("1");
   const servingsOptions = ["1", "2", "3", "4", "5", "6"];
   const [servings, setServings] = useState(1);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true),
+    );
+    const hide = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   return (
     <Modal
@@ -42,8 +59,18 @@ const DefaultServingsModal: React.FC<DefaultServingsModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <TouchableWithoutFeedback onPress={onClose}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <TouchableWithoutFeedback
+          onPress={() => {
+            // While the servings field is being edited, an outside tap should
+            // dismiss the keyboard rather than throw the edit away.
+            if (keyboardVisible) Keyboard.dismiss();
+            else onClose();
+          }}
+        >
           <View style={StyleSheet.absoluteFillObject} />
         </TouchableWithoutFeedback>
         <View style={styles.modalContainer}>
@@ -56,6 +83,11 @@ const DefaultServingsModal: React.FC<DefaultServingsModalProps> = ({
             <Text style={styles.label}>{Strings.defaultServings_label}</Text>
             <CustomStepper
               value={servings}
+              editable
+              min={1}
+              max={99}
+              accessibilityLabel={Strings.defaultServings_label}
+              onChangeValue={setServings}
               onIncrement={() => setServings((s) => s + 1)}
               onDecrement={() => setServings((s) => Math.max(1, s - 1))}
             />
@@ -89,7 +121,7 @@ const DefaultServingsModal: React.FC<DefaultServingsModalProps> = ({
             />
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

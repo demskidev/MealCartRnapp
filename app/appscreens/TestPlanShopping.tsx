@@ -19,7 +19,7 @@ import { addItemsToKrogerCart } from "@/services/krogerApi";
 import { backNavigation } from "@/utils/Navigation";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -112,6 +112,85 @@ export default function TestPlanShopping() {
     [user?.id],
   );
 
+  // The checkbox id is positional, but the persisted flag lives on the
+  // ingredient itself — see idsOfSelected/toStoredIngredient below.
+  const itemIdFor = (ing: any, index: number) =>
+    `${ing.ingredientId}-${ing.mealId}-${index}`;
+
+  const idsOfSelected = (items: any[]) =>
+    items.reduce((ids: string[], ing: any, idx: number) => {
+      if (ing.selected) ids.push(itemIdFor(ing, idx));
+      return ids;
+    }, []);
+
+  // The stored shape for a shopping-list ingredient. Enrichment adds fields
+  // (categoryUnits, …) that are re-derived on read, so they are not written
+  // back; `acquired` and `selected` are the two flags that must survive.
+  const toStoredIngredient = (
+    ing: any,
+    flags: { acquired: boolean; selected: boolean },
+  ) => ({
+    ingredientId: ing.ingredientId,
+    ingredientName: ing.ingredientName || "",
+    categoryId: ing.categoryId,
+    categoryName: ing.categoryName || "",
+    mealId: ing.mealId || "",
+    mealName: ing.mealName || "",
+    unit: ing.selectedUnit || ing.unit,
+    count: ing.count || 1,
+    acquired: flags.acquired,
+    selected: flags.selected,
+    isKroger: ing.isKroger || false,
+    krogerIngredientId: ing.krogerIngredientId || "",
+  });
+
+  // Refs so the blur handler writes the latest values instead of whatever was
+  // captured when the focus effect was created.
+  const checkedRef = useRef<string[]>([]);
+  const selectedListRef = useRef<any>(null);
+  const selectionDirtyRef = useRef(false);
+  const listDeletedRef = useRef(false);
+
+  useEffect(() => {
+    checkedRef.current = checked;
+  }, [checked]);
+
+  useEffect(() => {
+    selectedListRef.current = selectedList;
+  }, [selectedList]);
+
+  const selectItems = (next: string[] | ((prev: string[]) => string[])) => {
+    selectionDirtyRef.current = true;
+    setChecked(next);
+  };
+
+  const persistSelection = () => {
+    if (isTourMode || !selectionDirtyRef.current || listDeletedRef.current) {
+      return;
+    }
+    const list = selectedListRef.current;
+    if (!list?.id) return;
+
+    const items = list.ingredients || list.items || [];
+    const checkedNow = checkedRef.current;
+    const updated = items.map((ing: any, idx: number) =>
+      toStoredIngredient(ing, {
+        acquired: ing.acquired || false,
+        selected: checkedNow.includes(itemIdFor(ing, idx)),
+      }),
+    );
+
+    selectionDirtyRef.current = false;
+    updateShoppingListData(
+      { ...list, id: list.id, ingredients: updated },
+      () => {},
+      () => {
+        // Non-fatal: the user keeps their on-screen selection either way.
+        selectionDirtyRef.current = true;
+      },
+    );
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       if (isTourMode) {
@@ -124,10 +203,13 @@ export default function TestPlanShopping() {
           (data) => {
             hideLoader();
             setSelectedList(data);
-            // Always open with nothing selected — the user picks what to buy /
-            // send each time. What was previously sent is still reflected by the
-            // separate "acquired" progress bar (not by the checkboxes).
-            setChecked([]);
+            // Restore what the user had ticked last time. Selection lives on
+            // each ingredient (`selected`), not on the composite id, so it
+            // survives the list being reordered or edited. It is distinct from
+            // `acquired`, which records what was already sent to Kroger and
+            // drives the progress bar.
+            setChecked(idsOfSelected(data?.ingredients || data?.items || []));
+            selectionDirtyRef.current = false;
           },
           (error) => {
             hideLoader();
@@ -135,31 +217,44 @@ export default function TestPlanShopping() {
           },
         );
       }
+
+      // Leaving the screen: flush the selection so it is still there on return.
+      return () => {
+        persistSelection();
+      };
     }, [listId, isTourMode, dummyTourList]),
   );
 
   const allIngredients = selectedList?.ingredients || selectedList?.items || [];
 
-  const acquiredCount = allIngredients.filter(
+  // The progress bar tracks Kroger purchasing only: how many of the list's
+  // Kroger items have been sent to the cart. Non-Kroger items can never be
+  // acquired, so counting them in the denominator would peg the bar below 100%
+  // forever.
+  const krogerIngredients = allIngredients.filter(
+    (ing: any) => ing.isKroger && ing.krogerIngredientId,
+  );
+  const acquiredCount = krogerIngredients.filter(
     (ing: any) => ing.acquired,
   ).length;
+  const krogerTotal = krogerIngredients.length;
 
-  const allItemIds = allIngredients.map(
-    (ing: any, index: number) => `${ing.ingredientId}-${ing.mealId}-${index}`,
+  const allItemIds = allIngredients.map((ing: any, index: number) =>
+    itemIdFor(ing, index),
   );
   const isAllSelected =
     allItemIds.length > 0 &&
     allItemIds.every((id: string) => checked.includes(id));
 
   const toggleSelectAll = () => {
-    setChecked(isAllSelected ? [] : allItemIds);
+    selectItems(isAllSelected ? [] : allItemIds);
   };
 
   const toggleCheck = (id: string, ingredient: any, index: number) => {
     // Any item can be toggled — including ones already sent to the Kroger cart.
     // (Previously acquired Kroger items were locked, which left the whole screen
     // unusable once items had been sent.)
-    setChecked((prev) =>
+    selectItems((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
@@ -171,6 +266,9 @@ export default function TestPlanShopping() {
         listId as string,
         () => {
           setRemoving(false);
+          // Stops the blur flush from writing the selection back onto a list
+          // that no longer exists.
+          listDeletedRef.current = true;
           alert(Strings.shoppingList_deleted);
           backNavigation();
         },
@@ -184,9 +282,7 @@ export default function TestPlanShopping() {
     return;
   };
 
-  const hasKrogerItems = allIngredients.some(
-    (ing: any) => ing.isKroger && ing.krogerIngredientId,
-  );
+  const hasKrogerItems = krogerTotal > 0;
 
   const handleSendToKrogerCart = async () => {
     if (!krogerModality) {
@@ -195,17 +291,15 @@ export default function TestPlanShopping() {
     }
 
     // Only send the Kroger items the user actually selected (checked).
-    const isSelectedKroger = (ing: any, idx: number) => {
-      const id = `${ing.ingredientId}-${ing.mealId}-${idx}`;
-      return ing.isKroger && ing.krogerIngredientId && checked.includes(id);
-    };
+    const isSelectedKroger = (ing: any, idx: number) =>
+      ing.isKroger &&
+      ing.krogerIngredientId &&
+      checked.includes(itemIdFor(ing, idx));
 
     const sentIds = new Set(
       allIngredients
         .map((ing: any, idx: number) =>
-          isSelectedKroger(ing, idx)
-            ? `${ing.ingredientId}-${ing.mealId}-${idx}`
-            : null,
+          isSelectedKroger(ing, idx) ? itemIdFor(ing, idx) : null,
         )
         .filter(Boolean) as string[],
     );
@@ -227,23 +321,16 @@ export default function TestPlanShopping() {
     try {
       await addItemsToKrogerCart(krogerItems);
 
-      // Mark only the sent (selected) items as acquired, locally and in Firebase
+      // Mark only the sent (selected) items as acquired, locally and in
+      // Firebase. Everything else keeps the flags it already had — an unchecked
+      // item is neither sent nor marked acquired.
+      const nextChecked = [...new Set([...checked, ...sentIds])];
       const updatedIngredients = allIngredients.map((ing: any, idx: number) => {
-        const id = `${ing.ingredientId}-${ing.mealId}-${idx}`;
-        const wasSent = sentIds.has(id);
-        return {
-          ingredientId: ing.ingredientId,
-          ingredientName: ing.ingredientName || "",
-          categoryId: ing.categoryId,
-          categoryName: ing.categoryName || "",
-          mealId: ing.mealId || "",
-          mealName: ing.mealName || "",
-          unit: ing.selectedUnit || ing.unit,
-          count: ing.count || 1,
-          acquired: wasSent ? true : ing.acquired || false,
-          isKroger: ing.isKroger || false,
-          krogerIngredientId: ing.krogerIngredientId || "",
-        };
+        const id = itemIdFor(ing, idx);
+        return toStoredIngredient(ing, {
+          acquired: sentIds.has(id) ? true : ing.acquired || false,
+          selected: nextChecked.includes(id),
+        });
       });
 
       // Update local state
@@ -252,19 +339,21 @@ export default function TestPlanShopping() {
         return { ...prevList, ingredients: updatedIngredients };
       });
 
-      // Keep only the sent items checked
-      setChecked((prev) => [...new Set([...prev, ...sentIds])]);
+      // The sent items stay ticked; nothing else gets ticked on the user's behalf.
+      setChecked(nextChecked);
 
       // Save to Firebase
       if (selectedList?.id) {
+        selectionDirtyRef.current = false;
         updateShoppingListData(
           {
-            id: selectedList.id,
             ...selectedList,
+            id: selectedList.id,
             ingredients: updatedIngredients,
           },
           () => {},
           (error: any) => {
+            selectionDirtyRef.current = true;
             alert(Strings.testPlanShopping_errorUpdating + error);
           },
         );
@@ -435,12 +524,14 @@ export default function TestPlanShopping() {
             containerStyle={styles.progressbar}
           /> */}
 
-          <ProgressBar
-            progress={acquiredCount / (allIngredients.length || 1)}
-            label={Strings.testPlanShopping_progress}
-            progressText={`${acquiredCount} / ${allIngredients.length}`}
-            containerStyle={styles.progressbar}
-          />
+          {hasKrogerItems && (
+            <ProgressBar
+              progress={acquiredCount / krogerTotal}
+              label={Strings.testPlanShopping_progress}
+              progressText={`${acquiredCount} / ${krogerTotal}`}
+              containerStyle={styles.progressbar}
+            />
+          )}
 
           {allIngredients.length > 0 && (
             <TouchableOpacity
@@ -596,6 +687,14 @@ export default function TestPlanShopping() {
               (data) => {
                 hideLoader();
                 setSelectedList(data);
+                // Editing the list can add, remove or reorder items, which
+                // shifts every positional checkbox id. Rebuild the selection
+                // from the stored flags instead of keeping stale ids that now
+                // point at different ingredients.
+                setChecked(
+                  idsOfSelected(data?.ingredients || data?.items || []),
+                );
+                selectionDirtyRef.current = false;
               },
               (error) => {
                 hideLoader();

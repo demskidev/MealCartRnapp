@@ -405,6 +405,9 @@ const CreateNewListBottomSheet = forwardRef<
             unit,
             count: ingredient.count || 1,
             acquired: ingredient.acquired || false,
+            // Carried through so editing a list doesn't wipe the checkboxes
+            // the user ticked on the shopping screen.
+            selected: ingredient.selected || false,
             isKroger,
             krogerIngredientId: ingredient.krogerIngredientId || "",
             krogerCategoryName:

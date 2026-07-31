@@ -72,6 +72,7 @@ export const Strings = {
   createMeal_upload: "Upload",
   createMeal_remove: "Remove",
   createMeal_prepTime: "Prep Time (min)",
+  createMeal_minsSuffix: "Mins",
   createMeal_servings: "Servings",
   createMeal_difficulty: "Difficulty",
   createMeal_category: "Category",

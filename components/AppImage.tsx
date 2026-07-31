@@ -1,5 +1,5 @@
 import { Colors } from "@/constants/Theme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -20,14 +20,25 @@ type AppImageProps = Omit<ImageProps, "source"> & {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-// True only for remote (http) images — those are the ones with a real load
-// delay. Bundled/local assets render immediately, so we never spin for them.
-const isRemoteSource = (source: ImageSourcePropType) =>
-  typeof source === "object" &&
-  source !== null &&
-  !Array.isArray(source) &&
-  typeof (source as any).uri === "string" &&
-  (source as any).uri.length > 0;
+const LOAD_TIMEOUT_MS = 10000;
+
+// Returns the uri only for real remote (http/https) images — those are the ones
+// with an actual load delay. Bundled assets render immediately, and a junk uri
+// (the literal "string" some records carry, a bare filename, a stale file://
+// path) never loads at all and may never fire onError either, so none of them
+// may start the spinner.
+const remoteUri = (source: ImageSourcePropType) => {
+  if (
+    typeof source !== "object" ||
+    source === null ||
+    Array.isArray(source) ||
+    typeof (source as any).uri !== "string"
+  ) {
+    return null;
+  }
+  const uri = (source as any).uri.trim();
+  return /^https?:\/\//i.test(uri) ? uri : null;
+};
 
 /**
  * Drop-in replacement for <Image> that shows an inline ActivityIndicator over
@@ -46,8 +57,24 @@ const AppImage = ({
   onError,
   ...rest
 }: AppImageProps) => {
-  const remote = isRemoteSource(source);
-  const [loading, setLoading] = useState(remote);
+  const uri = remoteUri(source);
+  // Track which uri finished rather than a bare boolean: the same component
+  // instance gets reused for a different item as a list recycles cells, and a
+  // stale `loading = true` would leave the spinner on top of the placeholder
+  // of an item that has no image at all. Deriving it means a non-remote source
+  // is never "loading", whatever the previous item was doing.
+  const [settledUri, setSettledUri] = useState<string | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const loading = uri !== null && settledUri !== uri && !timedOut;
+
+  // A dead or unreachable https url can hang without ever calling onError, so
+  // give up on the spinner rather than leave it turning forever.
+  useEffect(() => {
+    setTimedOut(false);
+    if (uri === null || settledUri === uri) return;
+    const timer = setTimeout(() => setTimedOut(true), LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [uri, settledUri]);
 
   return (
     <View style={[styles.container, style, containerStyle]}>
@@ -56,15 +83,14 @@ const AppImage = ({
         source={source}
         style={styles.image}
         onLoadStart={() => {
-          if (remote) setLoading(true);
           onLoadStart?.();
         }}
         onLoadEnd={() => {
-          setLoading(false);
+          setSettledUri(uri);
           onLoadEnd?.();
         }}
         onError={(e) => {
-          setLoading(false);
+          setSettledUri(uri);
           onError?.(e);
         }}
       />

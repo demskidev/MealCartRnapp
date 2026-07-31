@@ -63,6 +63,13 @@ import SpaceBetweenButtons from "./SpaceBetweenButtons";
 import ThemeGradientButton from "./ThemeGradientButton";
 import ThemeNormalButton from "./ThemeNormalButton";
 
+// prepTime is stored as a display string ("30 Mins"); the numeric field edits
+// just the number and writes the same shape back.
+const parsePrepMinutes = (prepTime?: string) => {
+  const minutes = parseInt(String(prepTime || "").match(/\d+/)?.[0] || "", 10);
+  return Number.isNaN(minutes) ? 5 : minutes;
+};
+
 type IngredientCategory = {
   id: string;
   title: string;
@@ -148,21 +155,6 @@ const CreateMealBottomSheet = ({
 
   const snapPoints = useMemo(() => ["100%"], []);
   const { width } = Dimensions.get("window");
-
-  const prepTimeOptions = [
-    Strings._5_mins,
-    Strings._10_mins,
-    Strings._15_mins,
-    Strings._20_mins,
-    Strings._25_mins,
-    Strings._30_mins,
-    Strings._35_mins,
-    Strings._40_mins,
-    Strings._45_mins,
-    Strings._50_mins,
-    Strings._55_mins,
-    Strings._60_mins,
-  ];
 
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
   const [showKrogerIngredientModal, setShowKrogerIngredientModal] =
@@ -631,19 +623,15 @@ const CreateMealBottomSheet = ({
 
                 <CustomStepper
                   value={(item?.count || "0") as any}
-                  onIncrement={() => {
+                  editable
+                  min={0}
+                  max={999}
+                  accessibilityLabel={Strings.createMeal_count}
+                  onChangeValue={(next) => {
                     const updated = [...ingredients];
                     updated[index] = {
                       ...updated[index],
-                      count: String(Number(item?.count || 0) + 1),
-                    };
-                    setFieldValue(INGREDIENTS_KEY, updated);
-                  }}
-                  onDecrement={() => {
-                    const updated = [...ingredients];
-                    updated[index] = {
-                      ...updated[index],
-                      count: String(Math.max(1, Number(item?.count || 1) - 1)),
+                      count: String(next),
                     };
                     setFieldValue(INGREDIENTS_KEY, updated);
                   }}
@@ -1178,31 +1166,22 @@ const CreateMealBottomSheet = ({
                         </Text>
 
                         <CustomStepper
-                          value={values.prepTime as any}
-                          onIncrement={() => {
-                            const index = prepTimeOptions.indexOf(
-                              values.prepTime,
-                            );
-                            if (index < prepTimeOptions.length - 1) {
-                              setFieldValue(
-                                PREPTIME_KEY,
-                                prepTimeOptions[index + 1],
-                              );
-                            }
-                          }}
-                          onDecrement={() => {
-                            const index = prepTimeOptions.indexOf(
-                              values.prepTime,
-                            );
-                            if (index > 0) {
-                              setFieldValue(
-                                PREPTIME_KEY,
-                                prepTimeOptions[index - 1],
-                              );
-                            }
-                          }}
-                          showUp={true}
-                          showDown={true}
+                          value={parsePrepMinutes(values.prepTime)}
+                          editable
+                          min={1}
+                          max={480}
+                          step={5}
+                          suffix={Strings.createMeal_minsSuffix}
+                          accessibilityLabel={Strings.createMeal_prepTime}
+                          // Stored as the display string ("30 Mins") — the
+                          // meal list and the prep-time filter both read that
+                          // shape, so keep writing it.
+                          onChangeValue={(minutes) =>
+                            setFieldValue(
+                              PREPTIME_KEY,
+                              `${minutes} ${Strings.createMeal_minsSuffix}`,
+                            )
+                          }
                         />
                       </View>
                       <View style={styles.rowItem}>
@@ -1211,17 +1190,12 @@ const CreateMealBottomSheet = ({
                         </Text>
                         <CustomStepper
                           value={values.servings as any}
-                          onIncrement={() =>
-                            setFieldValue(
-                              SERVINGS_KEY,
-                              String(Number(values.servings) + 1),
-                            )
-                          }
-                          onDecrement={() =>
-                            setFieldValue(
-                              SERVINGS_KEY,
-                              String(Math.max(1, Number(values.servings) - 1)),
-                            )
+                          editable
+                          min={1}
+                          max={99}
+                          accessibilityLabel={Strings.createMeal_servings}
+                          onChangeValue={(next) =>
+                            setFieldValue(SERVINGS_KEY, String(next))
                           }
                         />
                       </View>
