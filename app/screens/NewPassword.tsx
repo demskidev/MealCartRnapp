@@ -120,6 +120,7 @@ const NewPasswordScreen = () => {
                       handleNewPassword(values);
                     }}
                     disabled={isLoading}
+                    loading={isLoading}
                   />
                 </View>
               )}

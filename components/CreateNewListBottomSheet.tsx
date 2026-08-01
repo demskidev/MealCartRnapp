@@ -9,6 +9,7 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { useTourStep } from "@/context/TourStepContext";
 import { useAppSelector } from "@/reduxStore/hooks";
+import { formatSlashDate } from "@/utils/DateFormat";
 import { useShoppingListViewModel } from "@/viewmodels/ShoppingListViewModel";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -195,10 +196,6 @@ const CreateNewListBottomSheet = forwardRef<
         bottomSheetRef.current?.close();
       },
     }));
-
-    const formatDisplayDate = (date: Date) => {
-      return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    };
 
     useEffect(() => {
       const addDummyData = () => {
@@ -405,9 +402,11 @@ const CreateNewListBottomSheet = forwardRef<
             unit,
             count: ingredient.count || 1,
             acquired: ingredient.acquired || false,
-            // Carried through so editing a list doesn't wipe the checkboxes
-            // the user ticked on the shopping screen.
-            selected: ingredient.selected || false,
+            // Carried through so editing a list doesn't wipe the boxes the user
+            // unticked on the shopping screen. The stored flag is the negative
+            // one (see `idsOfSelected` in TestPlanShopping): a new list — and any
+            // ingredient added to an existing one — opens checked.
+            deselected: ingredient.deselected || false,
             isKroger,
             krogerIngredientId: ingredient.krogerIngredientId || "",
             krogerCategoryName:
@@ -536,8 +535,8 @@ const CreateNewListBottomSheet = forwardRef<
               >
                 <View style={styles.inputWithIcon}>
                   <CustomTextInput
-                    placeholder={formatDisplayDate(startDate)}
-                    value={formatDisplayDate(startDate)}
+                    placeholder={formatSlashDate(startDate)}
+                    value={formatSlashDate(startDate)}
                     editable={false}
                     placeholderTextColor={Colors.secondaryText}
                     pointerEvents="none"

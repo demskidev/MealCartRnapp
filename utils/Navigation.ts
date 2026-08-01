@@ -1,5 +1,61 @@
 import { APP_ROUTES } from "@/constants/AppRoutes";
+import {
+  CommonActions,
+  type NavigationContainerRef,
+} from "@react-navigation/native";
 import { router } from "expo-router";
+
+let rootNavigationRef: NavigationContainerRef<any> | null = null;
+
+/**
+ * Registered once from `app/_layout.tsx`.
+ *
+ * expo-router's imperative `router` has no "throw away the history" primitive —
+ * `dismissAll()` pops to the *first* route of the root stack, which here is
+ * `app/index.tsx` (the pre-auth entry route), not the home screen. Clearing
+ * history properly needs the navigation container ref.
+ */
+export const setRootNavigationRef = (
+  ref: NavigationContainerRef<any> | null,
+) => {
+  rootNavigationRef = ref;
+};
+
+/**
+ * Drop every root-stack entry below the focused one, leaving the focused route
+ * (and its nested state) untouched.
+ *
+ * The reset payload reuses the live root state, so it keeps `stale: false` and
+ * every existing route/navigator key — React Navigation therefore trims the
+ * history without remounting the screen we are staying on.
+ */
+const clearRootHistory = () => {
+  const ref = rootNavigationRef;
+
+  if (!ref?.isReady()) {
+    return;
+  }
+
+  const rootState = ref.getRootState();
+
+  if (rootState?.type !== "stack" || rootState.routes.length < 2) {
+    return;
+  }
+
+  const focusedRoute = rootState.routes[rootState.index];
+
+  if (!focusedRoute) {
+    return;
+  }
+
+  ref.dispatch(
+    CommonActions.reset({
+      ...rootState,
+      index: 0,
+      routes: [focusedRoute],
+    }),
+  );
+};
 
 /**
  * Handle back navigation with fallback
@@ -41,11 +97,24 @@ export const replaceNavigation = (
   router.replace(screen as any);
 };
 
+/**
+ * Go to `screen` and leave nothing behind it.
+ *
+ * Do NOT go back to `router.dismissAll()` here. `dismissAll` pops the root stack
+ * to `app/index.tsx`, and expo-router resolves the `replace` that follows
+ * against the *pre-pop* navigation state — so the replace targets a navigator
+ * that no longer exists and is silently dropped, stranding the user on the
+ * pre-auth entry route. That is what made "skip Kroger store → skip tour" (the
+ * only flow that still had the whole sign-up stack underneath it) look like a
+ * spontaneous logout.
+ *
+ * Trimming the history first is safe in either order: React Navigation applies
+ * the reset before the queued replace, and the reset preserves navigator keys,
+ * so the replace still lands on a live target.
+ */
 export const resetAndNavigate = (
   screen: (typeof APP_ROUTES)[keyof typeof APP_ROUTES]
 ) => {
-  if (router.canGoBack()) {
-    router.dismissAll();
-  }
+  clearRootHistory();
   router.replace(screen as any);
 };

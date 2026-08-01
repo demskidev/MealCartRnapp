@@ -4,8 +4,14 @@ import { moderateScale } from "@/constants/Constants";
 import { FontProvider } from "@/context/FontContext";
 import { TourStepProvider } from "@/context/TourStepContext";
 import RootNavigator from "@/navigation/RootNavigator";
+import { setRootNavigationRef } from "@/utils/Navigation";
 import { toastConfig } from "@/utils/ToastConfig";
-import { useRouter, useSegments } from "expo-router";
+import {
+  useNavigationContainerRef,
+  useRouter,
+  useSegments,
+} from "expo-router";
+import { useEffect } from "react";
 import { Platform, StatusBar } from "react-native";
 import "react-native-gesture-handler";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -18,6 +24,13 @@ import { store } from "../reduxStore/store";
 const RootLayout = () => {
   const router = useRouter();
   const segments = useSegments();
+  const navigationRef = useNavigationContainerRef();
+
+  // `resetAndNavigate` needs the container ref to clear the navigation history.
+  useEffect(() => {
+    setRootNavigationRef(navigationRef);
+  }, [navigationRef]);
+
   const keyboardProviderProps =
     Platform.OS === "android"
       ? {

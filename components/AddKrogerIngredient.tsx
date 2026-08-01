@@ -1,5 +1,6 @@
 import { CheckBox, FilledCheckBox, KrogerIcon, SearchIcon } from "@/assets/svg";
 import Divider from "@/components/Divider";
+import InputTapArea from "@/components/InputTapArea";
 import KrogerSelectedStoreCard from "@/components/KrogerSelectedStoreCard";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
 import ThemeNormalButton from "@/components/ThemeNormalButton";
@@ -13,7 +14,7 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { searchKrogerProducts } from "@/services/krogerApi";
 import { fontSize } from "@/utils/Fonts";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -205,6 +206,7 @@ const AddKrogerIngredient = ({
     null,
   );
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<TextInput>(null);
   const [products, setProducts] = useState<KrogerProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -384,13 +386,14 @@ const AddKrogerIngredient = ({
             />
           ) : null}
 
-          <View style={styles.searchBox}>
+          <InputTapArea style={styles.searchBox} inputRef={searchInputRef}>
             <SearchIcon
               width={verticalScale(22)}
               height={verticalScale(22)}
               color={Colors.tertiary}
             />
             <TextInput
+              ref={searchInputRef}
               style={styles.searchInput}
               placeholder={Strings.addKrogerIngredient_searchPlaceholder}
               placeholderTextColor={Colors.tertiary}
@@ -399,7 +402,7 @@ const AddKrogerIngredient = ({
               onChangeText={setSearch}
               onSubmitEditing={handleSearchSubmit}
             />
-          </View>
+          </InputTapArea>
 
           <Divider showText={false} style={styles.divider} />
 

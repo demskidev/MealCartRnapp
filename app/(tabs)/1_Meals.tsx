@@ -9,6 +9,8 @@ import {
 import { SearchIcon } from "@/assets/svg";
 import AppImage from "@/components/AppImage";
 import FilterModal from "@/components/FilterModal";
+import InputTapArea from "@/components/InputTapArea";
+import PaginationLoader from "@/components/PaginationLoader";
 import { hideLoader, showLoader } from "@/components/Loader";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import {
@@ -26,7 +28,7 @@ import { FontFamily } from "@/utils/Fonts";
 import { pushNavigation } from "@/utils/Navigation";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -49,6 +51,7 @@ const { width } = Dimensions.get("window");
 const MealsScreen: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<TextInput>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const itemWidth = (width - horizontalScale(50)) / 2;
@@ -79,7 +82,7 @@ const MealsScreen: React.FC = () => {
   const [normalLastDoc, setNormalLastDoc] = useState<any>(null);
   const [normalIsEndReached, setNormalIsEndReached] = useState(false);
   const [normalIsLoadingMore, setNormalIsLoadingMore] = useState(false);
-  const NORMAL_PAGE_SIZE = 2;
+  const NORMAL_PAGE_SIZE = 10;
 
   const [filteredMeals, setFilteredMeals] = useState<Meal[]>([]);
   const [filteredLastDoc, setFilteredLastDoc] = useState<any>(null);
@@ -569,20 +572,21 @@ const MealsScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.parentSearchBox}>
-          <View style={styles.searchBox}>
+          <InputTapArea style={styles.searchBox} inputRef={searchInputRef}>
             <SearchIcon
               width={verticalScale(22)}
               height={verticalScale(22)}
               color={Colors.tertiary}
             />
             <TextInput
+              ref={searchInputRef}
               style={styles.searchInput}
               placeholder={Strings.meals_searchPlaceholder}
               placeholderTextColor={Colors.tertiary}
               value={search}
               onChangeText={setSearch}
             />
-          </View>
+          </InputTapArea>
           <TouchableOpacity onPress={() => setFilterModalVisible(true)}>
             <Image
               source={filtericon}
@@ -671,9 +675,7 @@ const MealsScreen: React.FC = () => {
                 )}
 
                 {normalIsLoadingMore && normalMeals.length > 0 && (
-                  <View style={{ paddingVertical: verticalScale(20) }}>
-                    {/* <Loader visible={true} /> */}
-                  </View>
+                  <PaginationLoader />
                 )}
               </View>
             )}
@@ -761,12 +763,13 @@ const MealsScreen: React.FC = () => {
                 )
               }
               ListFooterComponent={
-                hasActiveFilters &&
-                filteredIsLoadingMore &&
-                filteredMeals.length > 0 ? (
-                  <></>
-                ) : // <Loader visible={true} />
-                null
+                (
+                  !isMyMeals
+                    ? browseIsLoadingMore && browseMeals.length > 0
+                    : filteredIsLoadingMore && filteredMeals.length > 0
+                ) ? (
+                  <PaginationLoader />
+                ) : null
               }
             />
           </View>

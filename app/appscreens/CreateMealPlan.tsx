@@ -26,6 +26,7 @@ import {
   DayData,
   removeTourPlan,
 } from "@/reduxStore/slices/planSlice";
+import { formatSlashDate } from "@/utils/DateFormat";
 import { backNavigation } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { EnrichedPlan, usePlanViewModel } from "@/viewmodels/PlanViewModel";
@@ -112,10 +113,6 @@ export default function CreateMealPlan({}) {
       } catch (error) {}
     }
   }, [planParam, mealPlans]);
-
-  const formatDisplayDate = (date: Date) => {
-    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-  };
 
   const getDayName = (dayIndex: number) => {
     const dayNames = [
@@ -276,9 +273,7 @@ export default function CreateMealPlan({}) {
   }, [dispatch, planName]);
 
   function renderDayCard({ item, index }: { item: any; index: number }) {
-    const formattedDate = `${
-      item.date.getMonth() + 1
-    }/${item.date.getDate()}/${item.date.getFullYear()}`;
+    const formattedDate = formatSlashDate(item.date);
 
     const content = (
       <View style={styles.daySection}>
@@ -587,7 +582,7 @@ export default function CreateMealPlan({}) {
       <View style={styles.inputRow}>
         <TextInput
           style={styles.dateInput}
-          value={formatDisplayDate(startDate)}
+          value={formatSlashDate(startDate)}
           editable={false}
         />
         <TouchableOpacity onPress={() => setShowDatePicker(true)}>

@@ -26,6 +26,7 @@ import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -52,6 +53,7 @@ const shoppingLists = [
 ];
 const PlansScreen: React.FC = () => {
   const [pausePlan, setPausePlan] = useState<any>(null);
+  const [pausing, setPausing] = useState(false);
   const [layoutReady, setLayoutReady] = useState(false);
   const [zoneReady, setZoneReady] = useState(false);
   const [generatedList, setGeneratedList] = useState<any>();
@@ -61,7 +63,15 @@ const PlansScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const { start, stop } = useTourGuideController();
   const { shouldStartTour, setTriggerStartPlan } = useTourStep();
-  const { enrichedPlans, fetchPlans, updatePlan } = usePlanViewModel();
+  const {
+    enrichedPlans,
+    fetchPlans,
+    updatePlan,
+    // `plans.loading || enriching` — true while a plan write is in flight and
+    // while the resulting meal data is being resolved. Surfaced below so a slow
+    // pause/resume never looks like nothing is happening.
+    loading: isPlanDataBusy,
+  } = usePlanViewModel();
   const filteredPlans = enrichedPlans;
 
   useEffect(() => {
@@ -177,7 +187,18 @@ const PlansScreen: React.FC = () => {
     return total;
   };
 
-  const updateThePlan = (plan: any, status: string) => {
+  /**
+   * `useGlobalLoader: false` is for callers that are already inside a native
+   * `Modal` (the pause confirmation). `Loader` is itself a `Modal`, and iOS
+   * cannot present one modal while dismissing another — doing both in the same
+   * commit leaves an orphaned modal window that swallows every touch, i.e. a
+   * frozen screen. Those callers show progress inside their own modal instead.
+   */
+  const updateThePlan = async (
+    plan: any,
+    status: string,
+    { useGlobalLoader = true }: { useGlobalLoader?: boolean } = {},
+  ) => {
     if (shouldStartTour) {
       dispatch(
         updatePlanLocally({
@@ -189,23 +210,47 @@ const PlansScreen: React.FC = () => {
       return;
     }
 
-    showLoader();
+    if (useGlobalLoader) {
+      showLoader();
+    }
 
-    updatePlan(
+    await updatePlan(
       {
         id: plan.id,
         status: status,
       },
       () => {
-        hideLoader();
+        if (useGlobalLoader) {
+          hideLoader();
+        }
         showSuccessToast(Strings.plan_updated_successfully);
         // loadPlans()
       },
       (error) => {
-        hideLoader();
+        if (useGlobalLoader) {
+          hideLoader();
+        }
         showErrorToast(error || Strings.error_updating_plan);
       },
     );
+  };
+
+  const handleConfirmPause = async () => {
+    if (!pausePlan || pausing) {
+      return;
+    }
+
+    setPausing(true);
+    try {
+      await updateThePlan(pausePlan, MealStatus.PAUSED, {
+        useGlobalLoader: false,
+      });
+    } finally {
+      setPausing(false);
+      // Close only once the work is done, so the confirmation modal is the only
+      // modal transitioning at any moment.
+      setPausePlan(null);
+    }
   };
 
   const viewPlan = (planId: string) => {
@@ -566,6 +611,18 @@ const PlansScreen: React.FC = () => {
             </View>
           </TourGuideZone>
         </View>
+
+        {/* Pause/resume writes the plan and then re-resolves its meals; show that
+            it is working rather than leaving the cards looking untouched. Not the
+            global Loader — that is a blocking modal, and pausing runs from inside
+            the confirmation modal. */}
+        {isPlanDataBusy && !refreshing && (
+          <View style={styles.busyRow}>
+            <ActivityIndicator size="small" color={Colors.primary} />
+            <Text style={styles.busyText}>{Strings.plans_updating}</Text>
+          </View>
+        )}
+
         {activePlans.length === 0 ? (
           <>
             <View style={styles.noActivePlan}>
@@ -599,14 +656,14 @@ const PlansScreen: React.FC = () => {
         title={Strings.plans_pauseMealPlan}
         description={Strings.plans_pauseDescription}
         cancelText={Strings.plans_cancel}
-        confirmText={Strings.plans_pause}
-        onCancel={() => setPausePlan(null)}
-        onConfirm={() => {
-          if (pausePlan) {
-            updateThePlan(pausePlan, MealStatus.PAUSED);
+        confirmText={pausing ? Strings.plans_pausing : Strings.plans_pause}
+        isRemoving={pausing}
+        onCancel={() => {
+          if (!pausing) {
             setPausePlan(null);
           }
         }}
+        onConfirm={handleConfirmPause}
       />
       <CreateNewListBottomSheet
         ref={createNewListRef}
@@ -727,6 +784,18 @@ const styles = StyleSheet.create({
 
   secondaryBtnText: {
     fontSize: 16,
+  },
+  busyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: horizontalScale(8),
+    paddingVertical: verticalScale(8),
+  },
+  busyText: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.tertiary,
   },
   pauseText: {
     fontSize: moderateScale(14),

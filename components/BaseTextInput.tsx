@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import InputTapArea from "./InputTapArea";
 
 /**
  * BaseTextInput Component
@@ -75,7 +76,27 @@ const BaseTextInput = React.memo(
     ) => {
       const [showPassword, setShowPassword] = React.useState(secureTextEntry);
 
-      const isFocused = React.useRef(false);
+      // State, not a ref: the border colour is read during render, so a ref
+      // mutation would never repaint the field.
+      const [isFocused, setIsFocused] = React.useState(false);
+
+      // The box around the input is padded, so its padding has to focus the
+      // input too (see InputTapArea). That needs a ref of our own, merged with
+      // whatever the caller passed — BaseOTPField drives focus between digits.
+      const inputRef = React.useRef<TextInput | null>(null);
+      // Stable identity so focusing (which now re-renders, for the border) does
+      // not detach and reattach the caller's ref on every keystroke.
+      const setInputRef = React.useCallback(
+        (node: TextInput | null) => {
+          inputRef.current = node;
+          if (typeof ref === "function") {
+            ref(node);
+          } else if (ref) {
+            ref.current = node;
+          }
+        },
+        [ref],
+      );
 
       const toggleShowPassword = () => {
         setShowPassword(!showPassword);
@@ -83,11 +104,12 @@ const BaseTextInput = React.memo(
 
       return (
         <View style={styles.mainContainer}>
-          <View
+          <InputTapArea
+            inputRef={inputRef}
             style={[
               styles.container,
               {
-                borderColor: isFocused.current
+                borderColor: isFocused
                   ? Colors.secondaryButtonBackground
                   : Colors.borderColor,
                 width: width || "100%",
@@ -95,7 +117,7 @@ const BaseTextInput = React.memo(
             ]}
           >
             <TextInput
-              ref={ref}
+              ref={setInputRef}
               style={[styles.textInput, { textAlign, color: Colors.primary }]}
               value={value ?? ""}
               onChangeText={onChangeText}
@@ -103,9 +125,9 @@ const BaseTextInput = React.memo(
               placeholderTextColor={Colors.tertiary}
               secureTextEntry={showPassword}
               keyboardType={keyboardType}
-              onFocus={() => (isFocused.current = true)}
+              onFocus={() => setIsFocused(true)}
               onBlur={() => {
-                isFocused.current = false;
+                setIsFocused(false);
                 onBlur?.();
               }}
               onKeyPress={onKeyPress}
@@ -120,7 +142,7 @@ const BaseTextInput = React.memo(
                 {rightIcon}
               </TouchableOpacity>
             )}
-          </View>
+          </InputTapArea>
 
           {error && <Text style={styles.errorMsg}>{error}</Text>}
         </View>

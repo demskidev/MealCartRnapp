@@ -11,6 +11,7 @@ import {
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { Plan } from "@/reduxStore/slices/planSlice";
+import { formatSlashDate } from "@/utils/DateFormat";
 import { pushNavigation } from "@/utils/Navigation";
 import { usePlanViewModel } from "@/viewmodels/PlanViewModel";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -79,14 +80,6 @@ export default function TestMealPlan({}) {
     }
   };
 
-  const formatDate = (date: any) => {
-    if (!date) return "";
-    const d = date.toDate ? date.toDate() : new Date(date);
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
   if (loading || !planData) {
     return null;
   }
@@ -111,7 +104,7 @@ export default function TestMealPlan({}) {
           </Text>
           <Text style={styles.planSubTitle}>
             {planData?.startDate
-              ? `Started on ${formatDate(planData.startDate)}`
+              ? `Started on ${formatSlashDate(planData.startDate)}`
               : Strings.testMealPlan_startedOn}
           </Text>
         </View>

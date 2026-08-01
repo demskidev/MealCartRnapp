@@ -10,7 +10,7 @@ import {
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { fontSize } from "@/utils/Fonts";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,6 +23,7 @@ import {
   View,
 } from "react-native";
 import Divider from "./Divider";
+import InputTapArea from "./InputTapArea";
 import ThemeNormalButton from "./ThemeNormalButton";
 
 interface SelectKrogerStoreProps {
@@ -48,6 +49,7 @@ const SelectKrogerStore = ({
 }: SelectKrogerStoreProps) => {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<TextInput>(null);
 
   const handleSelectStore = () => {
     const store = stores.find(
@@ -149,8 +151,9 @@ const SelectKrogerStore = ({
           <Text style={styles.headerSubtitle}>
             {Strings.selectKrogerStore_subtitle}
           </Text>
-          <View style={styles.searchBox}>
+          <InputTapArea style={styles.searchBox} inputRef={searchInputRef}>
             <TextInput
+              ref={searchInputRef}
               style={styles.searchInput}
               placeholder={Strings.search_store}
               placeholderTextColor={Colors.tertiary}
@@ -176,7 +179,7 @@ const SelectKrogerStore = ({
                 />
               )}
             </TouchableOpacity>
-          </View>
+          </InputTapArea>
           <Divider showText={false} style={styles.divider} />
           {isSearching ? (
             <View style={styles.loadingContainer}>

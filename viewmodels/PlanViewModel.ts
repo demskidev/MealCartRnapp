@@ -11,7 +11,7 @@ import {
 
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useProfileViewModel } from "@/viewmodels/ProfileViewModel";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Define types for enriched meal slot, day, and plan
 export type EnrichedMealSlot = {
@@ -51,6 +51,26 @@ export const usePlanViewModel = () => {
 
   const [enrichedActivePlan, setEnrichedActivePlan] =
     useState<EnrichedPlan | null>(null);
+
+  // Enrichment resolves every meal slot into its meal + mealPlan document, one
+  // Firestore read each. Without a cache that is redone in full every time the
+  // `plans` array changes identity — including for a pause/resume, which only
+  // flips `status` and cannot possibly have changed any meal. For a few week-long
+  // plans that is ~100 reads and a visible multi-second stall after the
+  // confirmation popup closes.
+  //
+  // These caches make a status change cost zero reads (everything is already
+  // resolved from the load that populated the screen), and they also dedupe meals
+  // shared between plans on the first pass. They are per-hook-instance and are
+  // cleared by `fetchPlans`, so entering the screen and pull-to-refresh still get
+  // fresh documents — only in-place updates reuse them.
+  const mealCache = useRef(new Map<string, any>());
+  const mealPlanCache = useRef(new Map<string, any>());
+
+  const clearEnrichmentCache = () => {
+    mealCache.current.clear();
+    mealPlanCache.current.clear();
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -105,39 +125,49 @@ export const usePlanViewModel = () => {
     };
   };
 
-  const fetchMealsMap = async (
-    mealIds: string[],
+  /**
+   * Resolves ids to documents, reading through `cache`. A miss is fetched once
+   * and remembered; a hit costs nothing. `null` results are cached too, so a
+   * deleted meal doesn't get re-requested on every pass.
+   */
+  const fetchThroughCache = async (
+    ids: string[],
+    cache: Map<string, any>,
+    fetchOne: (
+      id: string,
+      onSuccess: (doc: any) => void,
+      onError: () => void,
+    ) => void,
   ): Promise<Record<string, any>> => {
-    const mealPromises = mealIds.map(
-      (id: string) =>
-        new Promise<[string, any]>((resolve) =>
-          getMealById(
-            id,
-            (meal) => resolve([id, meal]),
-            () => resolve([id, null]),
+    const missing = ids.filter((id) => !cache.has(id));
+
+    await Promise.all(
+      missing.map(
+        (id) =>
+          new Promise<void>((resolve) =>
+            fetchOne(
+              id,
+              (doc) => {
+                cache.set(id, doc ?? null);
+                resolve();
+              },
+              () => {
+                cache.set(id, null);
+                resolve();
+              },
+            ),
           ),
-        ),
+      ),
     );
-    const mealResults = await Promise.all(mealPromises);
-    return Object.fromEntries(mealResults);
+
+    return Object.fromEntries(ids.map((id) => [id, cache.get(id) ?? null]));
   };
 
-  const fetchMealPlansMap = async (
-    mealPlanIds: string[],
-  ): Promise<Record<string, any>> => {
-    const mealPlanPromises = mealPlanIds.map(
-      (id: string) =>
-        new Promise<[string, any]>((resolve) =>
-          getMealPlanById(
-            id,
-            (mealPlan) => resolve([id, mealPlan]),
-            () => resolve([id, null]),
-          ),
-        ),
-    );
-    const mealPlanResults = await Promise.all(mealPlanPromises);
-    return Object.fromEntries(mealPlanResults);
-  };
+  const fetchMealsMap = (mealIds: string[]) =>
+    fetchThroughCache(mealIds, mealCache.current, getMealById);
+
+  const fetchMealPlansMap = (mealPlanIds: string[]) =>
+    fetchThroughCache(mealPlanIds, mealPlanCache.current, getMealPlanById);
 
   const enrichPlan = async (plan: EnrichedPlan): Promise<EnrichedPlan> => {
     const { mealIds, mealPlanIds } = collectMealAndPlanIds(plan);
@@ -161,11 +191,20 @@ export const usePlanViewModel = () => {
     const enrich = async () => {
       setEnriching(true);
       const all = await Promise.all(plans.map((plan) => enrichPlan(plan)));
-      if (!cancelled) setEnrichedPlans(all);
-      setEnriching(false);
+      // Both guarded: a superseded run must not clear the flag while the run
+      // that replaced it is still going, or the busy indicator flickers off.
+      if (!cancelled) {
+        setEnrichedPlans(all);
+        setEnriching(false);
+      }
     };
-    if (plans && plans.length > 0) enrich();
-    else setEnrichedPlans([]);
+    if (plans && plans.length > 0) {
+      enrich();
+    } else {
+      setEnrichedPlans([]);
+      // Nothing to enrich — clear the flag a cancelled run may have left set.
+      setEnriching(false);
+    }
     return () => {
       cancelled = true;
     };
@@ -236,6 +275,9 @@ export const usePlanViewModel = () => {
       onError?.("User not found");
       return;
     }
+    // An explicit (re)load is the point at which the user expects fresh meal
+    // data — e.g. after editing a meal — so drop the enrichment caches here.
+    clearEnrichmentCache();
     const resultAction = await dispatch(fetchPlansAsync(userId));
     if (fetchPlansAsync.fulfilled.match(resultAction)) {
       onSuccess?.(resultAction.payload);

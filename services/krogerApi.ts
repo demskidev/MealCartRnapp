@@ -1,5 +1,6 @@
 import { auth, functions } from "@/services/firebase";
 import { waitForAuthInitialized } from "@/services/waitForAuth";
+import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { httpsCallable } from "firebase/functions";
 
@@ -79,12 +80,64 @@ async function createKrogerAuthSession(scope?: string) {
   return result.data;
 }
 
+const KROGER_REDIRECT_URL = "mealcartrnmain://screens/KrogerSignupScreen";
+
+export type KrogerConnectOutcome =
+  /** User backed out of the Kroger web flow. */
+  | { outcome: "cancelled" }
+  /** Kroger redirected back reporting success — verify with the status call. */
+  | { outcome: "returned" }
+  /** Kroger (or our callback function) reported a failure. */
+  | { outcome: "failed"; message?: string }
+  /** Session ended without a readable redirect; re-check the status. */
+  | { outcome: "unknown" };
+
+/**
+ * Reads the `?status=`/`?message=` our Hosting callback appends to the deep link
+ * out of the auth-session result.
+ *
+ * This has to come from the returned url, not from router params: on iOS
+ * `openAuthSessionAsync` uses ASWebAuthenticationSession, which intercepts the
+ * `mealcartrnmain://` callback itself, so the redirect never reaches expo-router
+ * and no `status` param is ever delivered to the screen.
+ */
+const readAuthSessionRedirect = (
+  result: WebBrowser.WebBrowserAuthSessionResult,
+): KrogerConnectOutcome => {
+  if (result.type === "cancel" || result.type === "dismiss") {
+    return { outcome: "cancelled" };
+  }
+
+  const url = "url" in result && typeof result.url === "string" ? result.url : "";
+
+  if (!url) {
+    return { outcome: "unknown" };
+  }
+
+  const { queryParams } = Linking.parse(url);
+  const status = typeof queryParams?.status === "string" ? queryParams.status : "";
+  const message =
+    typeof queryParams?.message === "string" ? queryParams.message : undefined;
+
+  if (status === "success") {
+    return { outcome: "returned" };
+  }
+
+  if (status === "error") {
+    return { outcome: "failed", message };
+  }
+
+  return { outcome: "unknown" };
+};
+
 export async function connectKrogerAccount(scope?: string) {
   const session = await createKrogerAuthSession(scope);
-  return WebBrowser.openAuthSessionAsync(
+  const result = await WebBrowser.openAuthSessionAsync(
     session.authorizeUrl,
-    "mealcartrnmain://screens/KrogerSignupScreen",
+    KROGER_REDIRECT_URL,
   );
+
+  return readAuthSessionRedirect(result);
 }
 
 export async function getKrogerConnectionStatus() {

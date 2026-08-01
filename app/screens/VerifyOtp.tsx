@@ -101,6 +101,7 @@ const VerifyOTPScreen = () => {
                       handleOTPVerification(values);
                     }}
                     disabled={isLoading}
+                    loading={isLoading}
                   />
                 </View>
               )}

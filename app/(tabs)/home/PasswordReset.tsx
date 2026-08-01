@@ -78,6 +78,7 @@ export default function PasswordReset({  }) {
                 textStyle={styles.savePreference}
                 width={width * 0.92}
                 onPress={handleUpdatePassword}
+                loading={loading}
             />
 
 

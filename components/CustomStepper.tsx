@@ -5,7 +5,7 @@ import {
   verticalScale,
 } from "@/constants/Constants";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleProp,
   StyleSheet,
@@ -15,6 +15,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import InputTapArea from "./InputTapArea";
 
 interface CustomStepperProps {
   value: number | string;
@@ -63,6 +64,9 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
   // blur so a stray "0" or a cleared field can't be saved.
   const [draft, setDraft] = useState(() => digitsOnly(String(value ?? "")));
   const [isFocused, setIsFocused] = useState(false);
+  // The number is narrow but its row is 42pt tall — the whole cell has to be
+  // tappable, not just the digits.
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (!isFocused) setDraft(digitsOnly(String(value ?? "")));
@@ -146,8 +150,9 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
         </Text>
       </TouchableOpacity>
 
-      <View style={styles.inputWrapper}>
+      <InputTapArea style={styles.inputWrapper} inputRef={inputRef}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           value={draft}
           onChangeText={(text) => {
@@ -174,7 +179,7 @@ const CustomStepper: React.FC<CustomStepperProps> = ({
           placeholderTextColor={Colors.tertiary}
         />
         {!!suffix && <Text style={styles.suffix}>{suffix}</Text>}
-      </View>
+      </InputTapArea>
 
       <TouchableOpacity
         onPress={() => step(1)}

@@ -140,6 +140,7 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
                       handleResetPassword(values);
                     }}
                     disabled={isLoading}
+                    loading={isLoading}
                   />
                 </View>
               )}

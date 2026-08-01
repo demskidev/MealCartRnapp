@@ -10,6 +10,7 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
+import { toDate } from "@/utils/DateFormat";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -28,6 +29,7 @@ import {
 } from "react-native";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
+import PaginationLoader from "./PaginationLoader";
 import ThemeGradientButton from "./ThemeGradientButton";
 import ThemeNormalButton from "./ThemeNormalButton";
 
@@ -74,6 +76,10 @@ const AddItemToList = ({
   const { meals, loading, fetchMeals, searchMealsCombined } =
     useMealsViewModel();
   const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
+  const [mealsCursor, setMealsCursor] = useState<any>(null);
+  const [mealsEndReached, setMealsEndReached] = useState(false);
+  const [isLoadingMoreMeals, setIsLoadingMoreMeals] = useState(false);
+  const MEALS_PAGE_SIZE = 10;
   const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
   const [dynamicIngredients, setDynamicIngredients] = useState<string[]>([]);
   const [fullIngredientsData, setFullIngredientsData] = useState<any[]>([]);
@@ -104,22 +110,72 @@ const AddItemToList = ({
     }
   }, [visible]);
 
+  // Load the first page every time the picker opens.
+  //
+  // This used to fetch only `if (meals.length === 0)` and only 3 rows. Because
+  // `meals` is a Redux accumulator shared with the Meals tab, whatever that tab
+  // happened to have loaded became the entire set of meals offered here — so a
+  // meal you had just created showed up while older ones didn't, and the list
+  // never grew. Always fetching page 1 (and paginating below) makes this list
+  // reflect the user's meals instead of another screen's fetch history.
   useEffect(() => {
-    // Only fetch if meals array is empty
-    if (visible && meals.length === 0) {
-      setIsLoading(true);
-      fetchMeals(
-        (data) => {
-          setIsLoading(false);
-        },
-        (error) => {
-          setIsLoading(false);
-        },
-        3,
-        null,
-      );
-    }
+    if (!visible) return;
+
+    setMealsCursor(null);
+    setMealsEndReached(false);
+    setIsLoading(true);
+    fetchMeals(
+      (data) => {
+        if (data.length < MEALS_PAGE_SIZE) setMealsEndReached(true);
+        if (data.length > 0) setMealsCursor(data[data.length - 1]);
+        setIsLoading(false);
+      },
+      (error) => {
+        setIsLoading(false);
+      },
+      MEALS_PAGE_SIZE,
+      null,
+    );
   }, [visible]);
+
+  // `meals` is appended page-by-page and newly created meals are pushed onto the
+  // end, so the store order is fetch order. Sort explicitly, newest first, to
+  // match how the Meals tab presents the same data.
+  const mealOptions = search.trim()
+    ? filteredMeals
+    : [...meals].sort(
+        (a: any, b: any) =>
+          (toDate(b?.createdAt)?.getTime() ?? 0) -
+          (toDate(a?.createdAt)?.getTime() ?? 0),
+      );
+
+  const loadMoreMeals = () => {
+    // `search` swaps the list over to `filteredMeals`, which is its own
+    // (unpaginated) result set — don't advance the store cursor from there.
+    if (
+      search.trim() ||
+      mealsEndReached ||
+      isLoading ||
+      isLoadingMoreMeals ||
+      !mealsCursor
+    ) {
+      return;
+    }
+
+    setIsLoadingMoreMeals(true);
+    fetchMeals(
+      (data) => {
+        if (data.length < MEALS_PAGE_SIZE) setMealsEndReached(true);
+        if (data.length > 0) setMealsCursor(data[data.length - 1]);
+        setIsLoadingMoreMeals(false);
+      },
+      (error) => {
+        setIsLoadingMoreMeals(false);
+      },
+      MEALS_PAGE_SIZE,
+      mealsCursor,
+    );
+  };
 
   // Filter meals based on search
   useEffect(() => {
@@ -422,7 +478,7 @@ const AddItemToList = ({
             <TouchableWithoutFeedback>
               <View>
                 <FlatList
-                  data={search.trim() ? filteredMeals : meals}
+                  data={mealOptions}
                   showsVerticalScrollIndicator={false}
                   keyExtractor={(item) => item.id}
                   renderItem={renderMealItem}
@@ -432,6 +488,11 @@ const AddItemToList = ({
                     <View style={styles.mealSeparator} />
                   )}
                   style={styles.mealsListStyle}
+                  onEndReached={loadMoreMeals}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={
+                    isLoadingMoreMeals ? <PaginationLoader /> : null
+                  }
                 />
               </View>
             </TouchableWithoutFeedback>

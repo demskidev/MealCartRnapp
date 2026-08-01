@@ -1,6 +1,7 @@
 import { iconback, profileiconclose } from "@/assets/images";
 import BaseButton from "@/components/BaseButton";
 import GradientText from "@/components/GradientText";
+import InputTapArea from "@/components/InputTapArea";
 import { hideLoader, showLoader } from "@/components/Loader";
 import {
   horizontalScale,
@@ -119,7 +120,7 @@ export default function AllergiesIntolerance() {
         <Text style={styles.backText}>{Strings.allergies_title}</Text>
       </View>
       <View style={styles.card}>
-        <View style={styles.tagInputContainer}>
+        <InputTapArea style={styles.tagInputContainer} inputRef={inputRef}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -162,7 +163,7 @@ export default function AllergiesIntolerance() {
               autoCapitalize="words"
             />
           </ScrollView>
-        </View>
+        </InputTapArea>
         <Text style={styles.inputHint}>{Strings.allergies_placeholder}</Text>
       </View>
 

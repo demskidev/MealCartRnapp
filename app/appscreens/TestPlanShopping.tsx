@@ -117,15 +117,26 @@ export default function TestPlanShopping() {
   const itemIdFor = (ing: any, index: number) =>
     `${ing.ingredientId}-${ing.mealId}-${index}`;
 
+  // Selection defaults to ON: a list opens fully checked so the user only has to
+  // *un*check what they already have at home.
+  //
+  // That is why the persisted flag is the negative one. A positive `selected`
+  // flag can't express this — it is written as `false` for every item at list
+  // creation, so "nobody has touched this list yet" and "the user unchecked
+  // everything" look identical, and every existing list would open empty. With
+  // `deselected`, absence means checked, so untouched lists (including every list
+  // already in Firestore) and items added later both arrive selected.
   const idsOfSelected = (items: any[]) =>
     items.reduce((ids: string[], ing: any, idx: number) => {
-      if (ing.selected) ids.push(itemIdFor(ing, idx));
+      if (!ing.deselected) ids.push(itemIdFor(ing, idx));
       return ids;
     }, []);
 
   // The stored shape for a shopping-list ingredient. Enrichment adds fields
   // (categoryUnits, …) that are re-derived on read, so they are not written
-  // back; `acquired` and `selected` are the two flags that must survive.
+  // back; `acquired` and `deselected` are the two flags that must survive.
+  // Writing the whole array also drops the legacy `selected` field from lists
+  // created before selection defaulted to on.
   const toStoredIngredient = (
     ing: any,
     flags: { acquired: boolean; selected: boolean },
@@ -139,7 +150,7 @@ export default function TestPlanShopping() {
     unit: ing.selectedUnit || ing.unit,
     count: ing.count || 1,
     acquired: flags.acquired,
-    selected: flags.selected,
+    deselected: !flags.selected,
     isKroger: ing.isKroger || false,
     krogerIngredientId: ing.krogerIngredientId || "",
   });
@@ -195,7 +206,9 @@ export default function TestPlanShopping() {
     React.useCallback(() => {
       if (isTourMode) {
         setSelectedList(dummyTourList);
-        setChecked([]);
+        // Same default as a real list, so the tour demonstrates what the screen
+        // actually does.
+        setChecked(idsOfSelected(dummyTourList.items));
       } else if (listId) {
         showLoader();
         fetchListById(
@@ -203,11 +216,11 @@ export default function TestPlanShopping() {
           (data) => {
             hideLoader();
             setSelectedList(data);
-            // Restore what the user had ticked last time. Selection lives on
-            // each ingredient (`selected`), not on the composite id, so it
-            // survives the list being reordered or edited. It is distinct from
-            // `acquired`, which records what was already sent to Kroger and
-            // drives the progress bar.
+            // Everything is checked unless the user unchecked it last time. The
+            // flag lives on each ingredient (`deselected`), not on the composite
+            // id, so it survives the list being reordered or edited. It is
+            // distinct from `acquired`, which records what was already sent to
+            // Kroger and drives the progress bar.
             setChecked(idsOfSelected(data?.ingredients || data?.items || []));
             selectionDirtyRef.current = false;
           },

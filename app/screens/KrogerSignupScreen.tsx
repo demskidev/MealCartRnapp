@@ -22,13 +22,13 @@ import {
   searchKrogerStores,
 } from "@/services/krogerApi";
 import { fontSize } from "@/utils/Fonts";
-import { pushNavigation } from "@/utils/Navigation";
+import { resetAndNavigate } from "@/utils/Navigation";
 import { showToast } from "@/utils/Toast";
 import { SignupViewModel } from "@/viewmodels/SignupViewModel";
 import { useNavigation } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -48,6 +48,8 @@ const KrogerSignupScreen = () => {
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  /** True while `handleConnect` owns the OAuth round-trip. */
+  const isHandlingConnect = useRef(false);
   const navigation = useNavigation();
   const params = useLocalSearchParams();
   const signupViewModel = new SignupViewModel();
@@ -79,6 +81,14 @@ const KrogerSignupScreen = () => {
     const message = typeof params.message === "string" ? params.message : "";
 
     if (!status) {
+      return;
+    }
+
+    // On Android the callback deep link reaches expo-router *as well as* the
+    // auth session, so this would double-toast a connect that `handleConnect` is
+    // already resolving. This path is only needed when the deep link arrives
+    // without a live auth session (app killed mid-OAuth and cold-started).
+    if (isHandlingConnect.current) {
       return;
     }
 
@@ -122,7 +132,7 @@ const KrogerSignupScreen = () => {
       return;
     }
 
-    pushNavigation(APP_ROUTES.HOME);
+    resetAndNavigate(APP_ROUTES.HOME);
   };
 
   const refreshConnectionStatus = async () => {
@@ -137,22 +147,52 @@ const KrogerSignupScreen = () => {
 
   const handleConnect = async () => {
     try {
+      isHandlingConnect.current = true;
       setIsConnecting(true);
 
+      // Resolve the outcome from the auth session itself. On iOS the
+      // `mealcartrnmain://` callback is swallowed by ASWebAuthenticationSession,
+      // so the `params.status` effect below never fires and waiting on it would
+      // leave the button stuck on "Connecting..." forever.
       const result = await connectKrogerAccount();
 
-      if (result.type === "cancel" || result.type === "dismiss") {
-        setIsConnecting(false);
+      if (result.outcome === "cancelled") {
         showToast("info", "Kroger sign-in was cancelled.");
         return;
       }
+
+      if (result.outcome === "failed") {
+        showToast(
+          "error",
+          "Kroger sign-in failed.",
+          result.message || "Please try again.",
+        );
+        return;
+      }
+
+      // "returned" and "unknown" both need the server to confirm — the redirect
+      // saying success is not proof the tokens were stored.
+      const connected = await refreshConnectionStatus();
+
+      if (connected) {
+        showToast("success", "Kroger account connected.");
+        return;
+      }
+
+      showToast(
+        "error",
+        "Kroger sign-in did not complete.",
+        "Please try again.",
+      );
     } catch (error: any) {
-      setIsConnecting(false);
       showToast(
         "error",
         "Unable to connect Kroger.",
         error?.message || "Please try again.",
       );
+    } finally {
+      isHandlingConnect.current = false;
+      setIsConnecting(false);
     }
   };
 
@@ -205,7 +245,7 @@ const KrogerSignupScreen = () => {
       if (navigation.canGoBack() && openedFromProfile) {
         navigation.goBack();
       } else {
-        pushNavigation(APP_ROUTES.HOME);
+        resetAndNavigate(APP_ROUTES.HOME);
       }
     } else {
       handleConnect();
@@ -241,7 +281,7 @@ const KrogerSignupScreen = () => {
           if (navigation.canGoBack() && openedFromProfile) {
             navigation.goBack();
           } else {
-            pushNavigation(APP_ROUTES.HOME);
+            resetAndNavigate(APP_ROUTES.HOME);
           }
           return;
         }

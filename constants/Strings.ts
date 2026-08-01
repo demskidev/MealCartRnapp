@@ -159,6 +159,8 @@ export const Strings = {
     "You can always resume the meal plan whenever you like to.",
   plans_cancel: "Cancel",
   plans_pause: "Pause",
+  plans_pausing: "Pausing...",
+  plans_updating: "Updating your plans...",
   meals_myMeals: "My Meals",
   meals_browseMeals: "Browse Meals",
   meals_searchPlaceholder: "Search your meals...",
