@@ -134,6 +134,9 @@ export const Strings = {
   allergies_save: "Save Allergies",
   lists_shoppingLists: "Shopping Lists",
   lists_created: "Created:",
+  // The card counts `ingredients`, not meals — see 3_Lists.tsx.
+  lists_item: "item",
+  lists_items: "items",
   lists_markDone: "Mark Done",
   lists_viewList: "View List",
   plans_mealPlans: "Meal Plans",
