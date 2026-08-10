@@ -1,18 +1,40 @@
 import { CreateAccount, ForwardIcon, SplashIcon } from "@/assets/svg";
+import { hideLoader, showLoader } from "@/components/Loader";
 import ThemeGradientButton from "@/components/ThemeGradientButton";
 import ThemeNormalButton from "@/components/ThemeNormalButton";
 import { APP_ROUTES } from "@/constants/AppRoutes";
 import { moderateScale } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
+import { useAppDispatch } from "@/reduxStore/hooks";
+import { continueAsGuestAsync } from "@/reduxStore/slices/authSlice";
 import { fontSize } from "@/utils/Fonts";
+import { resetAndNavigate } from "@/utils/Navigation";
+import { showErrorToast } from "@/utils/Toast";
 import { router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const WelcomeScreen = () => {
+  const dispatch = useAppDispatch();
+
   const navigate = (screen: (typeof APP_ROUTES)[keyof typeof APP_ROUTES]) => {
     router.push(screen as any);
+  };
+
+  // Apple guideline 5.1.1(v): meals, plans and lists aren't account based, so
+  // they have to be reachable without registering. This starts an anonymous
+  // Firebase session and drops straight into the app.
+  const handleContinueAsGuest = async () => {
+    showLoader();
+    const resultAction = await dispatch(continueAsGuestAsync());
+    hideLoader();
+
+    if (continueAsGuestAsync.fulfilled.match(resultAction)) {
+      resetAndNavigate(APP_ROUTES.HOME);
+    } else {
+      showErrorToast((resultAction.payload as string) || Strings.guest_failed);
+    }
   };
 
   return (
@@ -41,6 +63,16 @@ const WelcomeScreen = () => {
           onPress={() => navigate(APP_ROUTES.SIGNIN)}
           textStyle={styles.loginButton}
         />
+
+        <TouchableOpacity
+          onPress={handleContinueAsGuest}
+          hitSlop={moderateScale(10)}
+          style={styles.guestButton}
+        >
+          <Text style={styles.guestButtonText}>
+            {Strings.guest_continueAsGuest}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -80,7 +112,17 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     paddingVertical: moderateScale(0),
-    
+
+  },
+  guestButton: {
+    alignSelf: "center",
+    paddingVertical: moderateScale(12),
+  },
+  guestButtonText: {
+    color: Colors.primary,
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: fontSize(15),
+    textDecorationLine: "underline",
   },
 });
 

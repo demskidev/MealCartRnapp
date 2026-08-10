@@ -215,6 +215,30 @@ export const Strings = {
   description:
     "Your smart meal planning assistant. Save recipes, plan weeks, and shop instantly.",
   createAccount: "Create Account",
+
+  // Guest mode ("Continue as Guest"). Browsing meals and building plans / lists
+  // must work without an account — see the anonymous-auth notes in authSlice.
+  guest_continueAsGuest: "Continue as Guest",
+  guest_failed: "Couldn't start a guest session. Please try again.",
+  guest_signInUnavailable:
+    "Guest access isn't available right now. Please create an account or log in.",
+  guest_accountExists:
+    "An account already exists for these details. Please log in instead — anything you saved as a guest stays on this device.",
+  guest_badgeLabel: "Browsing as Guest",
+  guest_createAccountCta: "Create an account",
+  guest_accountSectionTitle: "Your Account",
+  guest_accountSectionSubtitle:
+    "You're browsing as a guest. Your meals, plans and lists are saved on this device only. Create a free account to sync them across your devices and keep them if you reinstall.",
+  guest_krogerSubtitle:
+    "Connecting a Kroger account needs a Meal Cart account. Create one to send your shopping list straight to your Kroger cart.",
+  guest_profileLocked:
+    "Create an account to set up a profile, add a photo and manage your password.",
+  guest_exitGuest: "Exit guest mode",
+  guest_exitTitle: "Exit guest mode?",
+  guest_exitDescription:
+    "Your guest session is tied to this device. Signing out permanently removes the meals, plans and lists you saved as a guest. Create an account first if you want to keep them.",
+  guest_exitConfirm: "Exit anyway",
+
   imagePickerModal_selectImage: "Select Image",
   imagePickerModal_takePhoto: "Take Photo",
   imagePickerModal_chooseFromGallery: "Choose from Gallery",

@@ -28,6 +28,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Anonymous ("Continue as Guest") sessions. Guests are real signed-in
+    // users — they own their meals, plans and lists exactly like anyone else —
+    // but they must never be able to edit the shared global catalog.
+    function isAnonymous() {
+      return isSignedIn() &&
+        request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
     // Admin allowlist. Add the emails allowed to manage official/global meals.
     function isAdmin() {
       return isSignedIn() && request.auth.token.email in [
@@ -36,11 +44,14 @@ service cloud.firestore {
     }
 
     // Who may create/modify a GLOBAL (official) meal.
-    // NOTE: the "Add Meal to Firebase" button is currently shown to every user,
-    // so this is open to any signed-in user for now. To lock it down to admins,
-    // change the body to `return isAdmin();` (and gate the Home button too).
+    // NOTE: the "Add Meal to Firebase" button is currently shown to every
+    // registered user, so this is open to any non-anonymous signed-in user for
+    // now. Guests are excluded: an anonymous session is trivially minted, so
+    // allowing it would leave the shared catalog writable by anyone who opens
+    // the app. To lock it down further, change the body to `return isAdmin();`
+    // (and gate the Home button too).
     function canWriteGlobalMeal() {
-      return isSignedIn();
+      return isSignedIn() && !isAnonymous();
       // return isAdmin();   // <-- switch to this to restrict to admins
     }
 

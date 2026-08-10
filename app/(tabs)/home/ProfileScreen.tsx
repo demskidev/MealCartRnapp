@@ -23,7 +23,7 @@ import {
 } from "@/constants/Constants";
 import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
-import { useAppDispatch } from "@/reduxStore/hooks";
+import { useAppDispatch, useAppSelector } from "@/reduxStore/hooks";
 import { deleteAccountAsync } from "@/reduxStore/slices/profileSlice";
 import {
   disconnectKrogerAccount,
@@ -55,6 +55,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [deleteAccount, setDeleteAccount] = useState(false);
+  const [exitGuest, setExitGuest] = useState(false);
   const [disconnectKroger, setDisconnectKroger] = useState(false);
   const [defaultServings, setDefaultServings] = useState(false);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
@@ -65,6 +66,9 @@ export default function ProfileScreen() {
   const [showStoreModal, setShowStoreModal] = useState(false);
   const [krogerStores, setKrogerStores] = useState<any[]>([]);
   const dispatch = useAppDispatch();
+  // Guests reach this screen too (meals / plans / lists are open to them), but
+  // everything that is genuinely account based is swapped for a sign-up CTA.
+  const isGuest = useAppSelector((state) => state.auth.isGuest);
   const {
     user,
     loading,
@@ -87,6 +91,12 @@ export default function ProfileScreen() {
   }, []);
 
   const loadKrogerStatus = async () => {
+    // A guest has no Kroger link to check — skip the callable entirely.
+    if (isGuest) {
+      setKrogerStatus(null);
+      setKrogerLoading(false);
+      return;
+    }
     try {
       setKrogerLoading(true);
       const status = await getKrogerConnectionStatus();
@@ -195,6 +205,13 @@ export default function ProfileScreen() {
     });
   };
 
+  // The auth screens still live under `app/screens/`, and expo-router routes by
+  // file rather than by the <Stack.Screen> list, so this resolves from inside
+  // AppNavigator even though AuthNavigator is the stack that registers it.
+  const handleCreateAccount = () => {
+    pushNavigation(APP_ROUTES.SIGNUP);
+  };
+
   const [isSearchingStores, setIsSearchingStores] = useState(false);
 
   const handleSearchStores = async (zipCode: string) => {
@@ -286,28 +303,58 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
       <View style={styles.avatarContainer}>
-        <TouchableOpacity onPress={() => setShowModal(true)}>
+        <TouchableOpacity
+          onPress={() => setShowModal(true)}
+          disabled={isGuest}
+        >
           <View style={styles.imageParentStyle}>
             <AppImage
               source={user?.imageUrl ? { uri: user.imageUrl } : Profileimage}
               style={styles.profileImage}
               resizeMode="cover"
             />
-            <Image
-              source={iconedit}
-              style={styles.editIconImage}
-              tintColor={Colors.white}
-              resizeMode="cover"
-            />
+            {/* The pencil implies a tap target; a guest has no profile to edit. */}
+            {!isGuest && (
+              <Image
+                source={iconedit}
+                style={styles.editIconImage}
+                tintColor={Colors.white}
+                resizeMode="cover"
+              />
+            )}
           </View>
         </TouchableOpacity>
-        <Text style={styles.name}>{user?.name}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
+        <Text style={styles.name}>
+          {isGuest ? Strings.guest_badgeLabel : user?.name}
+        </Text>
+        <Text style={styles.email}>
+          {isGuest ? Strings.guest_profileLocked : user?.email}
+        </Text>
       </View>
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
+        {isGuest && (
+          <>
+            <Text style={styles.sectionHeader}>
+              {Strings.guest_accountSectionTitle}
+            </Text>
+            <View style={styles.card}>
+              <View style={styles.guestUpgradeBody}>
+                <Text style={styles.guestUpgradeText}>
+                  {Strings.guest_accountSectionSubtitle}
+                </Text>
+                <ThemeGradientButton
+                  title={Strings.guest_createAccountCta}
+                  onPress={handleCreateAccount}
+                  textStyle={{ color: Colors.white }}
+                />
+              </View>
+            </View>
+          </>
+        )}
+
         <Text style={styles.sectionHeader}>
           {Strings.profile_mealCookingPreferences}
         </Text>
@@ -377,7 +424,19 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          {!isKrogerConnected ? (
+          {isGuest ? (
+            <View style={styles.krogerEmptyState}>
+              <Text style={styles.krogerEmptyText}>
+                {Strings.guest_krogerSubtitle}
+              </Text>
+              <ThemeGradientButton
+                title={Strings.guest_createAccountCta}
+                onPress={handleCreateAccount}
+                buttonGradient={styles.krogerPrimaryButton}
+                textStyle={{ color: Colors.white }}
+              />
+            </View>
+          ) : !isKrogerConnected ? (
             <View style={styles.krogerEmptyState}>
               <Text style={styles.krogerEmptyText}>
                 {Strings.profile_krogerDisconnectedSubtitle}
@@ -435,38 +494,52 @@ export default function ProfileScreen() {
           {Strings.profile_accountSecurity}
         </Text>
         <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => pushNavigation(APP_ROUTES.PasswordReset)}
-          >
-            <Text style={styles.rowTitle}>
-              {Strings.profile_changePassword}
-            </Text>
-            <Image
-              source={forwardicon}
-              style={styles.forwardIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => setDeleteAccount(true)}
-          >
-            <Text style={styles.deleteText}>
-              {Strings.profile_deleteAccount}
-            </Text>
-          </TouchableOpacity>
+          {/* A guest has no password to change and no account to delete —
+              showing either would dead-end them in a Firebase error. */}
+          {!isGuest && (
+            <>
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => pushNavigation(APP_ROUTES.PasswordReset)}
+              >
+                <Text style={styles.rowTitle}>
+                  {Strings.profile_changePassword}
+                </Text>
+                <Image
+                  source={forwardicon}
+                  style={styles.forwardIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => setDeleteAccount(true)}
+              >
+                <Text style={styles.deleteText}>
+                  {Strings.profile_deleteAccount}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           <TouchableOpacity
             style={styles.row}
             onPress={async () => {
+              // Signing out of a guest session abandons the anonymous uid, and
+              // with it everything the guest saved — confirm before doing that.
+              if (isGuest) {
+                setExitGuest(true);
+                return;
+              }
               showLoader();
               await performLogout();
               hideLoader();
             }}
           >
-            <Text style={styles.deleteText}>{Strings.profile_logout}</Text>
+            <Text style={styles.deleteText}>
+              {isGuest ? Strings.guest_exitGuest : Strings.profile_logout}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -526,6 +599,20 @@ export default function ProfileScreen() {
         confirmText={Strings.profile_confirmDelete}
         onCancel={() => setDisconnectKroger(false)}
         onConfirm={handleDisconnectKroger}
+      />
+      <ConfirmationModal
+        visible={exitGuest}
+        title={Strings.guest_exitTitle}
+        description={Strings.guest_exitDescription}
+        cancelText={Strings.profile_cancel}
+        confirmText={Strings.guest_exitConfirm}
+        onCancel={() => setExitGuest(false)}
+        onConfirm={async () => {
+          setExitGuest(false);
+          showLoader();
+          await performLogout(APP_ROUTES.WelcomeScreen);
+          hideLoader();
+        }}
       />
       <ConfirmationModal
         visible={deleteAccount}
@@ -693,6 +780,17 @@ const styles = StyleSheet.create({
   krogerEmptyState: {
     gap: verticalScale(12),
     marginHorizontal: horizontalScale(18),
+  },
+  guestUpgradeBody: {
+    gap: verticalScale(12),
+    paddingHorizontal: horizontalScale(18),
+    paddingVertical: verticalScale(16),
+  },
+  guestUpgradeText: {
+    fontSize: moderateScale(13),
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    color: Colors.tertiary,
+    lineHeight: moderateScale(20),
   },
   krogerEmptyText: {
     fontSize: moderateScale(13),

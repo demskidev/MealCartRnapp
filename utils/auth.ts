@@ -22,7 +22,13 @@ const logoutAction = () => ({ type: LOGOUT });
  * @param dispatch - Redux dispatch function
  * @param onSuccess - Optional callback to execute after successful logout
  */
-export const performLogout = async () => {
+export const performLogout = async (
+  // Where to land afterwards. Sign In is right for a normal logout, but a guest
+  // exiting needs the welcome screen — it is the only place that offers
+  // "Continue as Guest", so Sign In would strand them with no way back in
+  // without reinstalling.
+  destination: (typeof APP_ROUTES)[keyof typeof APP_ROUTES] = APP_ROUTES.SIGNIN,
+) => {
   try {
     // Clear Redux state
     // const { persistor, store } = await import("@/reduxStore/store");
@@ -39,12 +45,12 @@ export const performLogout = async () => {
 
     // Navigate to signin screen
     router.dismissAll();
-    replaceNavigation(APP_ROUTES.SIGNIN);
+    replaceNavigation(destination);
 
     //  }
   } catch (error) {
     // Still try to navigate to signin even if purge fails
-    replaceNavigation(APP_ROUTES.SIGNIN);
+    replaceNavigation(destination);
   }
 };
 

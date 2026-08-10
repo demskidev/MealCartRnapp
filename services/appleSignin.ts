@@ -1,9 +1,14 @@
 import { USERS_COLLECTION } from "@/reduxStore/appKeys";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { OAuthProvider, signInWithCredential } from "firebase/auth";
+import { OAuthProvider } from "firebase/auth";
 import { serverTimestamp } from "firebase/firestore";
+import {
+  clearedGuestFields,
+  isGuestProfile,
+  signInOrLinkWithCredential,
+} from "./authLink";
 import { auth } from "./firebase";
-import { getDocumentById, setDocumentById } from "./firestore";
+import { getDocumentById, setDocumentById, updateDocument } from "./firestore";
 
 export interface AppleSignInResult {
   success: boolean;
@@ -49,14 +54,19 @@ export const signInWithApple = async (): Promise<AppleSignInResult> => {
       idToken: identityToken,
     });
 
-    const userCredential = await signInWithCredential(auth, credential);
+    const userCredential = await signInOrLinkWithCredential(credential);
     const firebaseUser = userCredential.user;
 
-    const existingUser = await getDocumentById(
+    // `getDocumentById` is typed as `{ id: string } | null`, so the profile
+    // fields spread in from Firestore aren't visible without widening.
+    const existingUser: any = await getDocumentById(
       USERS_COLLECTION,
       firebaseUser.uid,
     );
-    const isNewUser = !existingUser;
+    // A guest who just linked already has a profile doc, but it still holds the
+    // "Guest" placeholder and the isGuest flag — treat them as a new account.
+    const wasGuest = isGuestProfile(existingUser);
+    const isNewUser = !existingUser || wasGuest;
 
     let displayName = firebaseUser.displayName || "";
     if (fullName?.givenName || fullName?.familyName) {
@@ -64,7 +74,16 @@ export const signInWithApple = async (): Promise<AppleSignInResult> => {
         `${fullName.givenName || ""} ${fullName.familyName || ""}`.trim();
     }
 
-    if (isNewUser) {
+    if (wasGuest) {
+      await updateDocument(USERS_COLLECTION, firebaseUser.uid, {
+        ...clearedGuestFields(
+          existingUser,
+          displayName,
+          email || firebaseUser.email || "",
+        ),
+        provider: "apple",
+      });
+    } else if (isNewUser) {
       const newUserData = {
         email: email || firebaseUser.email || "",
         name: displayName || "Apple User",

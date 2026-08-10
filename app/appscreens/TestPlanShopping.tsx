@@ -43,6 +43,7 @@ export default function TestPlanShopping() {
   const router = useRouter();
   const { listId } = useLocalSearchParams();
   const user = useAppSelector((state) => state.auth.user);
+  const isGuest = useAppSelector((state) => state.auth.isGuest);
   const { shouldStartTour } = useTourStep();
   const createNewListRef = useRef<CreateNewListBottomSheetRef>(null);
   const [selectedList, setSelectedList] = useState<any>(null);
@@ -298,6 +299,13 @@ export default function TestPlanShopping() {
   const hasKrogerItems = krogerTotal > 0;
 
   const handleSendToKrogerCart = async () => {
+    // Sending to a Kroger cart needs a linked Kroger account, which needs a
+    // Meal Cart account. Building the list itself stays open to guests.
+    if (isGuest) {
+      Alert.alert(Strings.guest_krogerSubtitle);
+      return;
+    }
+
     if (!krogerModality) {
       Alert.alert(Strings.testPlanShopping_krogerSelectModality);
       return;

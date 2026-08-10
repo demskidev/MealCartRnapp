@@ -60,7 +60,15 @@
           "iosUrlScheme": "com.googleusercontent.apps.107165390600-nmgglhb1s0gglvqmcln8kehr21cgpi5o"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Meal Cart accesses your photo library only when you choose a picture for one of your own meals or for your profile. For example, when you add \"Chicken Stir Fry\" to your meal list you can pick a saved photo of the dish so it appears on that meal's card.",
+          "cameraPermission": "Meal Cart uses the camera only when you choose to take a picture for one of your own meals or for your profile. For example, you can photograph a dish you just cooked so it appears on that meal's card in your meal list.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

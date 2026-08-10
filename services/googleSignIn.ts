@@ -9,12 +9,16 @@ import {
 import {
   signOut as firebaseSignOut,
   GoogleAuthProvider,
-  signInWithCredential,
 } from "firebase/auth";
 import { serverTimestamp } from "firebase/firestore";
 import { Platform } from "react-native";
+import {
+  clearedGuestFields,
+  isGuestProfile,
+  signInOrLinkWithCredential,
+} from "./authLink";
 import { auth } from "./firebase";
-import { getDocumentById, setDocumentById } from "./firestore";
+import { getDocumentById, setDocumentById, updateDocument } from "./firestore";
 
 const WEB_CLIENT_ID =
   "107165390600-nb7021ovk2s5118vrbdcarj36piilrb5.apps.googleusercontent.com";
@@ -101,17 +105,33 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
     }
 
     const credential = GoogleAuthProvider.credential(idToken);
-    const userCredential = await signInWithCredential(auth, credential);
+    const userCredential = await signInOrLinkWithCredential(credential);
     const firebaseUser = userCredential.user;
 
-    const existingUser = await getDocumentById(
+    // `getDocumentById` is typed as `{ id: string } | null`, so the profile
+    // fields spread in from Firestore aren't visible without widening.
+    const existingUser: any = await getDocumentById(
       USERS_COLLECTION,
       firebaseUser.uid,
     );
 
-    const isNewUser = !existingUser;
+    // A guest who just linked already has a profile doc, so `existingUser` is
+    // truthy — but they're a new *account*, and the doc still holds the "Guest"
+    // placeholder and the isGuest flag.
+    const wasGuest = isGuestProfile(existingUser);
+    const isNewUser = !existingUser || wasGuest;
 
-    if (isNewUser) {
+    if (wasGuest) {
+      await updateDocument(USERS_COLLECTION, firebaseUser.uid, {
+        ...clearedGuestFields(
+          existingUser,
+          firebaseUser.displayName || "",
+          firebaseUser.email || "",
+        ),
+        imageUrl: firebaseUser.photoURL || existingUser?.imageUrl || "",
+        provider: "google",
+      });
+    } else if (isNewUser) {
       const newUserData = {
         email: firebaseUser.email,
         name: firebaseUser.displayName || "",

@@ -10,6 +10,11 @@ export const MEALS_COLLECTION = 'meals';
 // "my meals" query (uid == userId), while still living in MEALS_COLLECTION.
 export const GLOBAL_MEALS_UID = 'global';
 export const IS_GLOBAL_KEY = 'isGlobal';
+// Marks a `users/{uid}` doc that belongs to an anonymous (guest) session, so a
+// guest can browse meals / build plans and lists without registering. Cleared
+// when the guest upgrades to a real account via `linkWithCredential`.
+export const IS_GUEST_KEY = 'isGuest';
+export const GUEST_DISPLAY_NAME = 'Guest';
 export const PLANS_COLLECTION = 'plans';
 export const LISTS_COLLECTION = 'lists';
 export const DIETARY_PREFERENCES_COLLECTION = 'dietryPreferences';

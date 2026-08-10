@@ -10,6 +10,7 @@ export const LOGOUT = 'LOGOUT';
 export const ROOT = 'root';
 export const LOGIN = 'auth/login';
 export const REGISTER = 'auth/register';
+export const CONTINUE_AS_GUEST = 'auth/continueAsGuest';
 export const ING_CAT = 'ingredientCategory/fetchAll'
 export const ADD_MEAL = 'meals/addMeal';
 export const UPDATE_MEAL = 'meals/updateMeal';
