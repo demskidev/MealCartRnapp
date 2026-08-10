@@ -140,7 +140,8 @@ const ListsScreen: React.FC = () => {
           </View>
 
           <Text style={styles.listDate}>
-            {ingredientCount} {ingredientCount === 1 ? "meal" : "meals"}
+            {ingredientCount}{" "}
+            {ingredientCount === 1 ? Strings.lists_item : Strings.lists_items}
           </Text>
         </View>
         <View style={styles.dividerRow} />
