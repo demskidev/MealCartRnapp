@@ -280,6 +280,15 @@ export const Strings = {
   mealsAreSecure:
     "Your meal plans and recipes will be securely synced to your account.",
   userNotRegistered: "User is not registered in the database",
+  // Firebase's email-enumeration protection collapses "no such user" and "wrong
+  // password" into a single `auth/invalid-credential`, so the message has to
+  // cover both — reporting "not registered" for a typo'd password sent users
+  // off to sign-up, where they hit "email already in use" and got stuck.
+  invalidCredentials: "Incorrect email or password. Please try again.",
+  tooManyAttempts:
+    "Too many failed attempts. Please wait a few minutes or reset your password.",
+  googleSignInMisconfigured:
+    "Google Sign-In isn't available for this app version. Please log in with your email and password.",
   signinSuccessful: "Signin successful",
   signupSuccessfully: "Account created successfully!",
   signinFailed: "Signin failed",
@@ -360,6 +369,11 @@ export const Strings = {
     "This action is permanent and cannot be undone. All your meals, plans, and lists will be lost.",
   profile_cancel: "Cancel",
   profile_confirmDelete: "Delete",
+  // `deleteUser` refuses on a session older than a few minutes. Deleting the
+  // profile doc first used to leave the account half-deleted (auth user alive,
+  // profile gone), which locked the user out of both sign-in and sign-up.
+  profile_deleteAccountReauth:
+    "For your security, please log out and log back in, then delete your account again.",
   testMealPlan_backToPlans: "Back to Plans",
   testMealPlan_title: "Test Plan",
   testMealPlan_startedOn: "Started on 27/09/2025",

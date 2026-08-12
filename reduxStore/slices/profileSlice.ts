@@ -5,7 +5,9 @@ import {
   addDocument,
   deleteDocument,
   getAllDocuments,
+  getDocumentById,
   queryDocuments,
+  setDocumentById,
   updateDocument,
 } from "@/services/firestore";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -158,28 +160,58 @@ export const deleteAccountAsync = createAsyncThunk<
   void,
   { rejectValue: string }
 >("profile/deleteAccount", async (_, { rejectWithValue }) => {
+  const user = auth.currentUser;
+
+  if (!user) {
+    return rejectWithValue("No user is currently logged in");
+  }
+
+  const uid = user.uid;
+
+  // The profile doc has to go first: once `deleteUser` succeeds the client is
+  // signed out, and `firestore.rules` only lets `users/{uid}` be deleted by
+  // that same uid — so a delete deferred until afterwards would be denied.
+  //
+  // But `deleteUser` refuses with `auth/requires-recent-login` on a session
+  // older than a few minutes, which is the common case (people delete from
+  // Profile long after signing in). That left the account half-deleted: the
+  // auth user survived with no profile doc, so sign-in reported "not
+  // registered", sign-up reported "email already in use", and a password reset
+  // fixed nothing. Keep a snapshot and put it back if the auth delete fails.
+  let snapshot: any = null;
   try {
-    const user = auth.currentUser;
+    snapshot = await getDocumentById("users", uid);
+  } catch {
+    // A failed read shouldn't block the delete; it only costs us the restore.
+  }
 
-    if (!user) {
-      return rejectWithValue("No user is currently logged in");
-    }
-
-    const uid = user.uid;
-
-    // 🔥 1. Delete user from Firestore
+  try {
     await deleteDoc(doc(db, "users", uid));
-
-    // 🔥 2. Delete user from Firebase Authentication
-    await deleteUser(user);
-
-    // 🔥 3. Sign out
-    await signOut(auth);
-
-    return;
   } catch (error: any) {
     return rejectWithValue(error?.message || "Failed to delete account");
   }
+
+  try {
+    await deleteUser(user);
+  } catch (error: any) {
+    // Roll the profile doc back so the account stays usable.
+    if (snapshot) {
+      const { id, ...profile } = snapshot;
+      try {
+        await setDocumentById("users", uid, profile);
+      } catch {}
+    }
+
+    return rejectWithValue(
+      error?.code === "auth/requires-recent-login"
+        ? Strings.profile_deleteAccountReauth
+        : error?.message || "Failed to delete account",
+    );
+  }
+
+  await signOut(auth);
+
+  return;
 });
 const profileSlice = createSlice({
   name: PROFILE_SLICE,

@@ -1,3 +1,4 @@
+import { Strings } from "@/constants/Strings";
 import { USERS_COLLECTION } from "@/reduxStore/appKeys";
 import {
   GoogleSignin,
@@ -168,6 +169,19 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
           break;
         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
           errorMessage = "Play Services not available or outdated";
+          break;
+        // Android only, and never the user's fault: Google rejected the request
+        // because the signing certificate of the installed build isn't
+        // registered as an Android OAuth client on the Firebase project. A
+        // Play-distributed build is re-signed with Play's app signing key, so
+        // its SHA-1 has to be added in Firebase on top of the upload key's.
+        //
+        // The native module rejects with the raw CommonStatusCodes value ("10")
+        // and a "DEVELOPER_ERROR: Follow troubleshooting instructions at ..."
+        // message — `statusCodes` has no entry for it, so match the code
+        // directly rather than surfacing that URL to the user.
+        case "10":
+          errorMessage = Strings.googleSignInMisconfigured;
           break;
         default:
           errorMessage = error.message || "Failed to sign in with Google";

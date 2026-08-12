@@ -37,11 +37,17 @@ import {
 // Utility to map Firebase Auth error codes to user-friendly messages
 function getFirebaseAuthErrorMessage(error: any): string {
   switch (error.code) {
+    // With email-enumeration protection on (the default for new projects),
+    // Firebase returns `invalid-credential` for BOTH an unknown email and a
+    // wrong password — `wrong-password` / `user-not-found` are effectively
+    // legacy. So this must not claim the account doesn't exist.
     case "auth/invalid-credential":
+    case "auth/wrong-password":
+      return Strings.invalidCredentials;
     case "auth/user-not-found":
       return Strings.userNotRegistered;
-    case "auth/wrong-password":
-      return Strings.signinFailed;
+    case "auth/too-many-requests":
+      return Strings.tooManyAttempts;
     case "auth/invalid-email":
       return Strings.email;
     case "auth/user-disabled":
@@ -79,12 +85,33 @@ export const loginAsync = createAsyncThunk(
         credentials.password,
       );
       if (userCredential?.user) {
-        const userUid = userCredential.user.uid;
+        const authUser = userCredential.user;
+        const userUid = authUser.uid;
 
         const userData = await getDocumentById(USERS_COLLECTION, userUid);
 
+        // The credentials are valid, so the account genuinely exists — a
+        // missing profile doc is our own data being out of sync, not a reason
+        // to refuse the login. It happens when a write failed mid sign-up, or
+        // when a half-completed "Delete Account" removed the doc but left the
+        // auth user behind. Rejecting here bricked the account: sign-in said
+        // "not registered", sign-up said "email already in use", and a password
+        // reset changed nothing. Re-seed the doc instead and let them in.
         if (!userData) {
-          return rejectWithValue(Strings.userNotRegistered);
+          await setDocumentById(USERS_COLLECTION, userUid, {
+            email: authUser.email || credentials.email.trim().toLowerCase(),
+            name: authUser.displayName || "",
+            imageUrl: authUser.photoURL || "",
+            [IS_GUEST_KEY]: false,
+            createdAt: serverTimestamp(),
+            uid: userUid,
+          });
+
+          const restored = await getDocumentById(USERS_COLLECTION, userUid);
+          if (!restored) {
+            return rejectWithValue(Strings.userNotRegistered);
+          }
+          return restored;
         }
 
         return userData;
