@@ -158,6 +158,54 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
   } catch (error: any) {
     let errorMessage = "Failed to sign in with Google";
 
+    // Firebase errors must be handled BEFORE the native switch. `isErrorWithCode`
+    // is only a "has a `code` property" check, so it is true for every
+    // `firebase/auth` error too — which sent them all into the switch below,
+    // out through its `default`, and showed the user the raw
+    // "Firebase: Error (auth/...)." message. It also made the `auth/...`
+    // branches that used to live after this block unreachable.
+    const firebaseCode: string | undefined =
+      typeof error?.code === "string" && error.code.startsWith("auth/")
+        ? error.code
+        : undefined;
+
+    if (firebaseCode) {
+      switch (firebaseCode) {
+        case "auth/account-exists-with-different-credential":
+        case "auth/email-already-in-use":
+        case "auth/credential-already-in-use":
+          return {
+            success: false,
+            error: Strings.appleSignIn_accountExists,
+          };
+        // Should now be unreachable — see signInOrLinkWithCredential.
+        case "auth/provider-already-linked":
+          return { success: false, error: Strings.googleSignIn_failed };
+        case "auth/invalid-credential":
+          return {
+            success: false,
+            error: "Invalid Google credentials. Please try again.",
+          };
+        case "auth/operation-not-allowed":
+        case "auth/admin-restricted-operation":
+          return {
+            success: false,
+            error: Strings.googleSignIn_providerDisabled,
+          };
+        case "auth/network-request-failed":
+          return { success: false, error: Strings.appleSignIn_networkError };
+        case "auth/too-many-requests":
+          return { success: false, error: Strings.tooManyAttempts };
+        case "auth/user-disabled":
+          return { success: false, error: "User account is disabled" };
+        default:
+          return {
+            success: false,
+            error: `${Strings.googleSignIn_failed} (${firebaseCode})`,
+          };
+      }
+    }
+
     // Use type guard from documentation
     if (isErrorWithCode(error)) {
       switch (error.code) {
@@ -184,12 +232,10 @@ export const signInWithGoogle = async (): Promise<GoogleSignInResult> => {
           errorMessage = Strings.googleSignInMisconfigured;
           break;
         default:
-          errorMessage = error.message || "Failed to sign in with Google";
+          errorMessage = error.code
+            ? `${Strings.googleSignIn_failed} (${error.code})`
+            : error.message || Strings.googleSignIn_failed;
       }
-    } else if (error.code === "auth/account-exists-with-different-credential") {
-      errorMessage = "An account already exists with the same email address";
-    } else if (error.code === "auth/invalid-credential") {
-      errorMessage = "Invalid Google credentials. Please try again.";
     } else if (error.message?.includes("OIDExternalUserAgentSession")) {
       errorMessage = "Sign-in session expired. Please try again.";
     }

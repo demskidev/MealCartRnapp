@@ -295,6 +295,28 @@ export const Strings = {
     "Too many failed attempts. Please wait a few minutes or reset your password.",
   googleSignInMisconfigured:
     "Google Sign-In isn't available for this app version. Please log in with your email and password.",
+  // Apple sign-in failure messages. These are deliberately distinct from one
+  // another: the old code funnelled every Apple *and* Firebase error into one
+  // "Failed to sign in with Apple" string, which made the cause unknowable from
+  // a bug report. See the switch in services/appleSignin.ts.
+  appleSignIn_cancelled: "Sign-in was cancelled",
+  appleSignIn_unsupportedDevice:
+    "Apple Sign In isn't available on this device. Please use Google or email sign-in.",
+  appleSignIn_entitlementMissing:
+    "Apple Sign In isn't set up for this app version. Please use Google or email sign-in.",
+  appleSignIn_providerDisabled:
+    "Apple sign-in isn't enabled for Meal Cart yet. Please use Google or email sign-in.",
+  appleSignIn_rejectedCredential:
+    "Apple couldn't verify this sign-in. Please try again, or use Google or email sign-in.",
+  appleSignIn_accountExists:
+    "An account already exists for this email address. Please sign in with the method you used originally.",
+  appleSignIn_noIdentityToken: "No identity token received from Apple",
+  appleSignIn_networkError:
+    "No connection. Check your internet and try again.",
+  appleSignIn_failed: "Couldn't sign in with Apple. Please try again.",
+  googleSignIn_failed: "Couldn't sign in with Google. Please try again.",
+  googleSignIn_providerDisabled:
+    "Google sign-in isn't enabled for Meal Cart yet. Please use email sign-in.",
   signinSuccessful: "Signin successful",
   signupSuccessfully: "Account created successfully!",
   signinFailed: "Signin failed",
