@@ -41,14 +41,11 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
     try {
       const result = await resetPasswordViewModel.handleResetPassword(values);
       if (result.success) {
-        // showToast("success", result.message);
-        // pushNavigation(
-        //   `${APP_ROUTES.VERIFY_OTP}?email=${encodeURIComponent(values.email)}`
-        // );
-
+        // Firebase mails a link to its own hosted reset page — there is no code
+        // to type back in, so this ends the flow and returns to sign-in.
         Alert.alert(
           Strings.resetPassword_checkEmailTitle,
-          Strings.resetPassword_checkEmailMessage,
+          result.message,
           [
             {
               text: Strings.resetPassword_ok,
@@ -128,7 +125,7 @@ const ResetPasswordScreen: React.FC<ResetScreenProps> = ({ navigation }) => {
                   />
 
                   <BaseButton
-                    title={Strings.sendCode}
+                    title={Strings.sendResetLink}
                     gradientButton={true}
                     textColor={Colors.white}
                     onPress={async () => {

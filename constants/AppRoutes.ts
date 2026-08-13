@@ -3,7 +3,9 @@ export const APP_ROUTES = {
   SIGNUP: "/screens/SignUp",
   SIGNIN: "/screens/SignIn",
   RESET_PASSWORD: "/screens/ResetPassword",
-  VERIFY_OTP: "/screens/VerifyOtp",
+  // Only reachable if the reset email is pointed at a custom action URL that
+  // deep-links back into the app — see services/passwordReset.ts. Firebase's
+  // hosted reset page is used today, so nothing navigates here.
   NEW_PASSWORD: "/screens/NewPassword",
   FIRST_SCREEN: "/screens/FirstScreen",
   INTRO_SCREEN: "/screens/IntroScreen",

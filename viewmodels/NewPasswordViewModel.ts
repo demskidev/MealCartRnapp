@@ -1,3 +1,4 @@
+import { completePasswordReset } from "@/services/passwordReset";
 import { newPasswordValidationSchema } from "@/utils/validators/AuthValidators";
 import * as yup from "yup";
 
@@ -11,30 +12,32 @@ export class NewPasswordViewModel {
 
   constructor() {}
 
+  /**
+   * Sets a new password from the `oobCode` in a reset email.
+   *
+   * The `oobCode` is not optional: Firebase has no way to change a signed-out
+   * user's password without it. This previously returned
+   * `{ success: true, message: "Password changed successfully" }` from a `TODO`
+   * stub, so the screen showed a success toast and sent the user to sign in with
+   * a password that had never been saved. Missing code now fails loudly.
+   */
   async handleNewPassword(
     values: NewPasswordFormValues,
+    oobCode: string,
   ): Promise<{ success: boolean; message: string }> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
-
-      // TODO: Call API to set new password
-
-      return {
-        success: true,
-        message: "Password changed successfully",
-      };
     } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        return {
-          success: false,
-          message: error.errors[0] || "Validation failed",
-        };
-      }
       return {
         success: false,
-        message: "Failed to change password",
+        message:
+          error instanceof yup.ValidationError
+            ? error.errors[0] || "Validation failed"
+            : "Validation failed",
       };
     }
+
+    return completePasswordReset(oobCode, values.password);
   }
 
   async validateField(

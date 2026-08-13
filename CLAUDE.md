@@ -29,7 +29,25 @@ npm run deploy            # firebase deploy --only functions,hosting
 - **No test framework is configured** (there is no `test` script). Do not assume Jest/RTL exist. With no tests, `npx tsc --noEmit` is the only automated check — it currently reports **~8 pre-existing** errors (`IntroScreen.tsx`, `AddItemToList.tsx`, `FilterModal.tsx`, `ProgressBar.tsx`, `appleSignin.ts`, `assets/svg/IconUpDown.tsx`), so filter to the files you touched.
 - **`npm run reset-project` is the untouched create-expo-app starter script — it moves `app/` aside and scaffolds a blank one. Never run it.** `README.md` is likewise unmodified boilerplate and describes nothing about this app; ignore it.
 - **React Compiler is on** (`experiments.reactCompiler` in `app.json`). Don't add `useMemo`/`useCallback` purely for memoization, and be aware that mutating values captured in render can behave differently than in an uncompiled build.
-- OTA updates are configured (`expo-updates`, `runtimeVersion.policy: "appVersion"`), so a JS-only change ships to installed builds via EAS Update while native changes need a new build.
+- OTA updates are configured (`expo-updates`, `runtimeVersion.policy: "appVersion"`), so a JS-only change ships to installed builds via EAS Update while native changes need a new build. **But every build made before 2026-08-13 has `channel: null`** (`eas.json` defined no `channel` until then), and `eas update` can only reach a build that carries a channel. So the 1.0.0 builds already in the stores and on testers' devices can *not* be hotfixed — they need a new build and release. Builds made from the current `eas.json` onward are reachable via `eas update --branch <development|preview|production>`. Verify with `eas build:list --json` before promising a JS-only fix can ship OTA.
+
+### Android signing fingerprints & Google Sign-In
+
+Google Sign-In on Android authenticates the *app*, not just the user: Play services checks `(package name, signing certificate SHA-1, OAuth client)` locally and fails with `DEVELOPER_ERROR` (status code `10`, surfaced by the native module as `error.code === "10"`) before any network call. So it is **deterministic per build, never flaky** — an intermittent report means different builds, not a race.
+
+Every certificate that ever signs the app therefore needs its SHA-1 registered on the Firebase Android app `com.app.mealcart` (`1:107165390600:android:49c72691b58601b005febd`). Currently registered:
+
+| SHA-1 | Signs |
+| --- | --- |
+| `a741c507bca1acf510198bac94f7fd0a2a7517c8` | Google Play app signing key — every install from any Play track |
+| `fa87b9eb2a48a9ce1f163d39bd6d181c820da515` | EAS upload keystore — `preview` / `development` APKs |
+| `720246de7f9d5c460fe1c02bd612fde62dc13e1f` | one developer's local `~/.android/debug.keystore` (`expo run:android`) |
+
+- **`.aab`s are re-signed by Google Play**, so the upload key's SHA-1 does *not* cover store installs — the Play app signing key (Play Console → Protected with Play → App signing) is a separate fingerprint and must be added too. This was the cause of production Google Sign-In failing while EAS internal builds worked.
+- **Each developer's debug keystore is unique to their machine**, so `expo run:android` needs that machine's SHA-1 added: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`.
+- Registration is **server-side and takes effect without a rebuild** (the client authenticates with `webClientId`, so `google-services.json` is not consulted for this). `firebase apps:android:sha:create <appId> <sha1>` / `:list` manage it; re-download `google-services.json` afterwards only to keep the repo in sync.
+- The project also contains a stale second Android app for the old package `com.jbehl23.mealcart` (`…android:359e7590045873b305febd`) and a stale second iOS app. Adding fingerprints to the wrong app looks like a fix and changes nothing.
+- **iOS has no certificate binding** — Google Sign-In there keys off the bundle id and the reversed-client-id URL scheme (`iosUrlScheme` in `app.json`, `IOS_CLIENT_ID` in `services/googleSignIn.ts`, `REVERSED_CLIENT_ID` in `GoogleService-Info.plist` — all three must agree). `DEVELOPER_ERROR` is Android-only.
 
 ### Patched dependencies (`patch-package`)
 

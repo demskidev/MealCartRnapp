@@ -1,7 +1,6 @@
+import { sendPasswordReset } from "@/services/passwordReset";
 import { resetPasswordValidationSchema } from "@/utils/validators/AuthValidators";
-import { sendPasswordResetEmail } from "firebase/auth";
 import * as yup from "yup";
-import { auth } from "../services/firebase";
 // import { useDispatch, useSelector } from "react-redux";
 // import { changePasswordAsync } from "@/store/slices/authSlice";
 // import { RootState, AppDispatch } from "@/store";
@@ -44,38 +43,25 @@ export class ResetPasswordViewModel {
   //   }
   // }
 
+  // Firebase error handling and the "don't confirm whether the account exists"
+  // wording both live in the service, so every caller behaves the same way.
+  // This only owns form validation.
   async handleResetPassword(
     values: ResetPasswordFormValues,
   ): Promise<{ success: boolean; message: string }> {
     try {
       await this.validationSchema.validate(values, { abortEarly: false });
-
-      const email = values.email.trim().toLowerCase();
-
-      await sendPasswordResetEmail(auth, email);
-
-      return {
-        success: true,
-        message: "Reset password email sent successfully",
-      };
     } catch (error: any) {
-      let errorMessage = "Failed to send reset password email";
-
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "No user found with this email address";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address format";
-      }
-
-      if (error instanceof yup.ValidationError) {
-        errorMessage = error.errors[0] || "Validation failed";
-      }
-
       return {
         success: false,
-        message: errorMessage,
+        message:
+          error instanceof yup.ValidationError
+            ? error.errors[0] || "Validation failed"
+            : error?.message || "Validation failed",
       };
     }
+
+    return sendPasswordReset(values.email);
   }
 
   async validateField(

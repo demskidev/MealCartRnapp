@@ -94,16 +94,22 @@ export const Strings = {
   confirmationModal_description: "This action cannot be undone.",
   confirmationModal_cancel: "Cancel",
   confirmationModal_confirm: "Confirm",
-  verifyOtp_success: "OTP verified successfully!",
-  verifyOtp_verificationFailed: "Verification Failed",
-  verifyOtp_error: "Error",
-  verifyOtp_unexpectedError: "An unexpected error occurred",
-  verifyOtp_description: "We sent a 6-digit code to {email}",
   resetPassword_description:
-    "Enter your email and we'll send you a code to get back into your account.",
+    "Enter your email and we'll send you a link to set a new password.",
   resetPassword_checkEmailTitle: "Check Your Email",
-  resetPassword_checkEmailMessage:
-    "A password reset link has been sent to your email address.",
+  // Worded so it reveals nothing about whether the address has an account —
+  // see the enumeration note in services/passwordReset.ts.
+  resetPassword_linkSent:
+    "If an account exists for that email, we've sent it a link to set a new password. Check your spam folder if it doesn't arrive within a few minutes.",
+  resetPassword_invalidEmail: "Please enter a valid email address.",
+  resetPassword_networkError:
+    "No connection. Check your internet and try again.",
+  resetPassword_sendFailed:
+    "Couldn't send the reset link. Please try again in a moment.",
+  resetPassword_linkInvalid:
+    "This reset link has expired or has already been used. Please request a new one.",
+  resetPassword_weakPassword:
+    "Please choose a stronger password — at least 8 characters.",
   resetPassword_ok: "OK",
   resetPassword_error: "Error",
   resetPassword_unexpectedError: "An unexpected error occurred",
@@ -266,7 +272,7 @@ export const Strings = {
   next: "Next",
   getStarted: "Get Started",
   resetPassword: "Reset Password",
-  sendCode: "Send Code",
+  sendResetLink: "Send Reset Link",
   rememberPassword: "Remember password?",
   saveAndLogin: "Save & Login",
   setNewPassword: "Set New Password",

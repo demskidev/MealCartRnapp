@@ -69,10 +69,3 @@ export const newPasswordValidationSchema = yup.object().shape({
     .oneOf([yup.ref('password')], 'Passwords must match'),
 });
 
-export const otpValidationSchema = yup.object().shape({
-  otp: yup
-    .string()
-    .required('OTP is required')
-    .length(6, 'OTP must be 6 digits')
-    .matches(/^\d+$/, 'OTP must contain only numbers'),
-});

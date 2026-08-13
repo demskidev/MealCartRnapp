@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "107165390600-4iau47gov8v8as80945slj3n5l0q3ns5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.mealcart",
+            "certificate_hash": "a741c507bca1acf510198bac94f7fd0a2a7517c8"
+          }
+        },
+        {
           "client_id": "107165390600-ksoiqh4av3f1aatgsvo6u6k85o5bdafa.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.app.mealcart",
             "certificate_hash": "fa87b9eb2a48a9ce1f163d39bd6d181c820da515"
+          }
+        },
+        {
+          "client_id": "107165390600-utj12cl1662lbqqe89b3kopmidks9tr4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.mealcart",
+            "certificate_hash": "720246de7f9d5c460fe1c02bd612fde62dc13e1f"
           }
         },
         {

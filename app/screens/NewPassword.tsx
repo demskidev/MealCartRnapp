@@ -11,6 +11,7 @@ import { backNavigation, resetAndNavigate } from "@/utils/Navigation";
 import { showErrorToast, showSuccessToast } from "@/utils/Toast";
 import { NewPasswordFormValues, NewPasswordViewModel } from "@/viewmodels/NewPasswordViewModel";
 import { Formik } from "formik";
+import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
   KeyboardAvoidingView,
@@ -28,10 +29,19 @@ const NewPasswordScreen = () => {
   const newPasswordViewModel = new NewPasswordViewModel();
   const [isLoading, setIsLoading] = React.useState(false);
 
+  // Firebase's one-time reset code, carried in the emailed link as
+  // `?mode=resetPassword&oobCode=...`. Only present when the reset email points
+  // at a custom action URL that deep-links here; with Firebase's hosted reset
+  // page this screen isn't reached at all.
+  const { oobCode } = useLocalSearchParams<{ oobCode?: string }>();
+
   const handleNewPassword = async (values: NewPasswordFormValues) => {
     setIsLoading(true);
     try {
-      const result = await newPasswordViewModel.handleNewPassword(values);
+      const result = await newPasswordViewModel.handleNewPassword(
+        values,
+        oobCode ?? "",
+      );
       if (result.success) {
         showSuccessToast(Strings.newPassword_success);
         resetAndNavigate(APP_ROUTES.SIGNIN);
