@@ -62,9 +62,6 @@ const AddItemToList = ({
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [pendingItems, setPendingItems] = useState<
-    { id: string; value: string }[]
-  >([]);
   const [manualList, setManualList] = useState<{ id: string; value: string }[]>(
     [],
   );
@@ -73,15 +70,27 @@ const AddItemToList = ({
   const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
   const [itemWeights, setItemWeights] = useState<Record<string, number>>({});
 
-  const { meals, loading, fetchMeals, searchMealsCombined } =
-    useMealsViewModel();
+  const {
+    meals,
+    globalMeals,
+    loading,
+    fetchMeals,
+    searchMealsCombined,
+    fetchGlobalMealsData,
+    searchGlobalMealsCombined,
+  } = useMealsViewModel();
   const [filteredMeals, setFilteredMeals] = useState<any[]>([]);
   const [mealsCursor, setMealsCursor] = useState<any>(null);
   const [mealsEndReached, setMealsEndReached] = useState(false);
+  const [globalCursor, setGlobalCursor] = useState<any>(null);
+  const [globalEndReached, setGlobalEndReached] = useState(false);
   const [isLoadingMoreMeals, setIsLoadingMoreMeals] = useState(false);
   const MEALS_PAGE_SIZE = 10;
   const [selectedMeals, setSelectedMeals] = useState<string[]>([]);
   const [dynamicIngredients, setDynamicIngredients] = useState<string[]>([]);
+  // Names the user removed with the ✕ — kept so the auto-add effect below
+  // doesn't put them straight back on the next recompute.
+  const [removedNames, setRemovedNames] = useState<string[]>([]);
   const [fullIngredientsData, setFullIngredientsData] = useState<any[]>([]);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<TextInput>(null);
@@ -98,13 +107,13 @@ const AddItemToList = ({
       setSearchText("");
       setSuggestions([]);
       setIsInputFocused(false);
-      setPendingItems([]);
       setManualList([]);
       setUnitweight("100 grms");
       setItemWeights({});
       setFilteredMeals([]);
       setSelectedMeals([]);
       setDynamicIngredients([]);
+      setRemovedNames([]);
       setFullIngredientsData([]);
       setIsLoading(false);
     }
@@ -123,58 +132,96 @@ const AddItemToList = ({
 
     setMealsCursor(null);
     setMealsEndReached(false);
+    setGlobalCursor(null);
+    setGlobalEndReached(false);
     setIsLoading(true);
-    fetchMeals(
-      (data) => {
-        if (data.length < MEALS_PAGE_SIZE) setMealsEndReached(true);
-        if (data.length > 0) setMealsCursor(data[data.length - 1]);
-        setIsLoading(false);
-      },
-      (error) => {
-        setIsLoading(false);
-      },
-      MEALS_PAGE_SIZE,
-      null,
-    );
+
+    // Page 1 of the user's own meals AND of the global/official catalog. Global
+    // meals are a valid source of ingredients here, so they belong in this list
+    // (and in the search below) just like the user's own.
+    Promise.all([
+      new Promise<void>((resolve) => {
+        fetchMeals(
+          (data) => {
+            if (data.length < MEALS_PAGE_SIZE) setMealsEndReached(true);
+            if (data.length > 0) setMealsCursor(data[data.length - 1]);
+            resolve();
+          },
+          () => resolve(),
+          MEALS_PAGE_SIZE,
+          null,
+        );
+      }),
+      new Promise<void>((resolve) => {
+        fetchGlobalMealsData(
+          (data) => {
+            if (data.length < MEALS_PAGE_SIZE) setGlobalEndReached(true);
+            if (data.length > 0) setGlobalCursor(data[data.length - 1]);
+            resolve();
+          },
+          () => resolve(),
+          MEALS_PAGE_SIZE,
+          null,
+        );
+      }),
+    ]).then(() => setIsLoading(false));
   }, [visible]);
 
   // `meals` is appended page-by-page and newly created meals are pushed onto the
   // end, so the store order is fetch order. Sort explicitly, newest first, to
   // match how the Meals tab presents the same data.
+  const byNewestFirst = (a: any, b: any) =>
+    (toDate(b?.createdAt)?.getTime() ?? 0) -
+    (toDate(a?.createdAt)?.getTime() ?? 0);
+
+  // The user's own meals first, then the global catalog. `meals` is the user
+  // accumulator, but legacy data can tag a global meal with a real uid, so drop
+  // those defensively (the same guard 1_Meals.tsx uses) — otherwise a global
+  // meal could show up twice.
   const mealOptions = search.trim()
     ? filteredMeals
-    : [...meals].sort(
-        (a: any, b: any) =>
-          (toDate(b?.createdAt)?.getTime() ?? 0) -
-          (toDate(a?.createdAt)?.getTime() ?? 0),
-      );
+    : [
+        ...meals.filter((meal: any) => !meal.isGlobal).sort(byNewestFirst),
+        ...[...globalMeals].sort(byNewestFirst),
+      ];
 
   const loadMoreMeals = () => {
     // `search` swaps the list over to `filteredMeals`, which is its own
     // (unpaginated) result set — don't advance the store cursor from there.
-    if (
-      search.trim() ||
-      mealsEndReached ||
-      isLoading ||
-      isLoadingMoreMeals ||
-      !mealsCursor
-    ) {
+    if (search.trim() || isLoading || isLoadingMoreMeals) {
       return;
     }
 
-    setIsLoadingMoreMeals(true);
-    fetchMeals(
-      (data) => {
-        if (data.length < MEALS_PAGE_SIZE) setMealsEndReached(true);
-        if (data.length > 0) setMealsCursor(data[data.length - 1]);
-        setIsLoadingMoreMeals(false);
-      },
-      (error) => {
-        setIsLoadingMoreMeals(false);
-      },
-      MEALS_PAGE_SIZE,
-      mealsCursor,
-    );
+    // Exhaust the user's own meals first, then keep paging into the global
+    // catalog so everything in the list stays reachable by scrolling.
+    if (!mealsEndReached && mealsCursor) {
+      setIsLoadingMoreMeals(true);
+      fetchMeals(
+        (data) => {
+          if (data.length < MEALS_PAGE_SIZE) setMealsEndReached(true);
+          if (data.length > 0) setMealsCursor(data[data.length - 1]);
+          setIsLoadingMoreMeals(false);
+        },
+        () => setIsLoadingMoreMeals(false),
+        MEALS_PAGE_SIZE,
+        mealsCursor,
+      );
+      return;
+    }
+
+    if (!globalEndReached && globalCursor) {
+      setIsLoadingMoreMeals(true);
+      fetchGlobalMealsData(
+        (data) => {
+          if (data.length < MEALS_PAGE_SIZE) setGlobalEndReached(true);
+          if (data.length > 0) setGlobalCursor(data[data.length - 1]);
+          setIsLoadingMoreMeals(false);
+        },
+        () => setIsLoadingMoreMeals(false),
+        MEALS_PAGE_SIZE,
+        globalCursor,
+      );
+    }
   };
 
   // Filter meals based on search
@@ -185,20 +232,32 @@ const AddItemToList = ({
     if (debounceTimeout.current) {
       clearTimeout(debounceTimeout.current);
     }
-    debounceTimeout.current = setTimeout(() => {
+    debounceTimeout.current = setTimeout(async () => {
       setIsLoading(true);
+      const searchText = search.trim().toLowerCase();
 
-      searchMealsCombined(
-        { searchText: search.trim().toLowerCase() },
-        (data) => {
-          setFilteredMeals(data);
-          setIsLoading(false);
-        },
-        (error) => {
-          setIsLoading(false);
-          setFilteredMeals([]);
-        },
+      // Search the user's meals and the global/official catalog in parallel.
+      // This used to hit searchMealsCombined only, so a global meal could never
+      // be found here. Each side resolves to [] on failure so one failing
+      // (e.g. the user search when there's no userId) still shows the other.
+      const [userResults, globalResults] = await Promise.all([
+        new Promise<any[]>((resolve) => {
+          searchMealsCombined({ searchText }, resolve, () => resolve([]));
+        }),
+        new Promise<any[]>((resolve) => {
+          searchGlobalMealsCombined({ searchText }, resolve, () => resolve([]));
+        }),
+      ]);
+
+      const seenIds = new Set<string>();
+      setFilteredMeals(
+        [...userResults, ...globalResults].filter((meal) => {
+          if (!meal?.id || seenIds.has(meal.id)) return false;
+          seenIds.add(meal.id);
+          return true;
+        }),
       );
+      setIsLoading(false);
     }, 400); // 400ms debounce
 
     return () => {
@@ -216,8 +275,10 @@ const AddItemToList = ({
       return;
     }
 
-    // Look in both Redux meals and search-filtered meals
-    const combinedMeals = [...meals, ...filteredMeals];
+    // A checked meal can come from the user's own meals, the global catalog or
+    // the search results, so look in all three — resolving it is what gives us
+    // its ingredients.
+    const combinedMeals = [...meals, ...globalMeals, ...filteredMeals];
     const seenIds = new Set<string>();
     const uniqueMeals = combinedMeals.filter((meal) => {
       if (seenIds.has(meal.id)) return false;
@@ -254,18 +315,36 @@ const AddItemToList = ({
 
     setDynamicIngredients(allIngredientNames);
     setFullIngredientsData(allFullIngredients);
-  }, [selectedMeals, meals, filteredMeals]);
+  }, [selectedMeals, meals, globalMeals, filteredMeals]);
+
+  // Checking a meal adds every one of its ingredients to the list right away,
+  // i.e. the checkbox alone now does what tapping each ingredient and then its
+  // "Add" button used to do. Unchecking a meal takes its ingredients back out,
+  // and anything removed with the ✕ stays out (removedNames) — this effect
+  // re-runs whenever `meals` grows through pagination, which would otherwise
+  // resurrect it.
+  useEffect(() => {
+    setManualList((prev) => {
+      const kept = prev.filter((item) =>
+        dynamicIngredients.includes(item.value),
+      );
+      const keptNames = new Set(kept.map((item) => item.value));
+      const additions = dynamicIngredients
+        .filter((name) => !keptNames.has(name) && !removedNames.includes(name))
+        .map((name) => ({ id: name, value: name }));
+      return [...kept, ...additions];
+    });
+  }, [dynamicIngredients, removedNames]);
 
   // Removed initialization of itemWeights - let them be undefined by default
   // so that ingredient's default unit can be used
 
-  // Helper: get names already picked (pending or added)
+  // Helper: get names already added to the list
   const excludedNames = useMemo(() => {
     const names = new Set<string>();
-    pendingItems.forEach((i) => names.add(i.value));
     manualList.forEach((i) => names.add(i.value));
     return names;
-  }, [pendingItems, manualList]);
+  }, [manualList]);
 
   // Build filtered suggestions whenever inputs change
   useEffect(() => {
@@ -296,19 +375,18 @@ const AddItemToList = ({
     setIsInputFocused(true);
   };
 
+  // Tapping one of a meal's ingredients adds it to the list immediately.
+  // It used to land in a "pending" row that needed a second tap on "Add"
+  // before handleGenerateList would include it, so the first tap looked like
+  // it had done nothing.
   const handleSelectSuggestion = (value: string) => {
     if (excludedNames.has(value)) {
       return;
     }
 
-    const newItem = { id: Date.now().toString(), value };
-    setPendingItems((prev) => [...prev, newItem]);
+    setManualList((prev) => [...prev, { id: Date.now().toString(), value }]);
+    setRemovedNames((prev) => prev.filter((name) => name !== value));
     setSearchText("");
-  };
-
-  const handleAddPendingItem = (item: { id: string; value: string }) => {
-    setManualList((prev) => [...prev, item]);
-    setPendingItems((prev) => prev.filter((i) => i.id !== item.id));
   };
 
   // Use dynamic ingredients from selected meals
@@ -521,7 +599,7 @@ const AddItemToList = ({
                     keyExtractor={(item) => item}
                     keyboardShouldPersistTaps="handled"
                     style={styles.suggestionsListStyle}
-                    extraData={[pendingItems, manualList, itemWeights]}
+                    extraData={[manualList, itemWeights]}
                     renderItem={({ item }) => {
                       const ingredientData = fullIngredientsData.find(
                         (ing) => ing.ingredientName === item,
@@ -604,60 +682,41 @@ const AddItemToList = ({
                 )}
 
                 <FlatList
-                  data={[...pendingItems, ...manualList]}
-                  extraData={[pendingItems, manualList]}
+                  data={manualList}
+                  extraData={manualList}
                   keyExtractor={(item) => item.id}
                   keyboardShouldPersistTaps="handled"
                   style={styles.manualListStyle}
                   showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => {
-                    const isPending = pendingItems.some(
-                      (i) => i.id === item.id,
-                    );
-
-                    return (
-                      <View style={styles.manualAddRow}>
-                        {isPending ? (
-                          <>
-                            <TextInput
-                              style={styles.manualAddInput}
-                              value={item.value}
-                              editable={isPending}
-                            />
-                            <TouchableOpacity
-                              style={styles.addButton}
-                              onPress={() => handleAddPendingItem(item)}
-                            >
-                              <Text style={styles.addButtonText}>
-                                {Strings.addItemToList_add}
-                              </Text>
-                            </TouchableOpacity>
-                          </>
-                        ) : (
-                          <View style={styles.manualItemContainer}>
-                            <TextInput
-                              style={styles.manualItemInput}
-                              value={item.value}
-                              editable={false}
-                            />
-                            <TouchableOpacity
-                              onPress={() =>
-                                setManualList((prev) =>
-                                  prev.filter((i) => i.id !== item.id),
-                                )
-                              }
-                              style={styles.closeIconButton}
-                            >
-                              <Image
-                                source={closeIcon}
-                                style={styles.closeIconImage}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        )}
+                  renderItem={({ item }) => (
+                    <View style={styles.manualAddRow}>
+                      <View style={styles.manualItemContainer}>
+                        <TextInput
+                          style={styles.manualItemInput}
+                          value={item.value}
+                          editable={false}
+                        />
+                        <TouchableOpacity
+                          onPress={() => {
+                            setManualList((prev) =>
+                              prev.filter((i) => i.id !== item.id),
+                            );
+                            setRemovedNames((prev) =>
+                              prev.includes(item.value)
+                                ? prev
+                                : [...prev, item.value],
+                            );
+                          }}
+                          style={styles.closeIconButton}
+                        >
+                          <Image
+                            source={closeIcon}
+                            style={styles.closeIconImage}
+                          />
+                        </TouchableOpacity>
                       </View>
-                    );
-                  }}
+                    </View>
+                  )}
                 />
               </View>
             )}
@@ -827,42 +886,6 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
     marginHorizontal: horizontalScale(2),
     marginTop: verticalScale(4),
-  },
-  manualAddInput: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderRadius: moderateScale(8),
-
-    fontFamily: FontFamilies.ROBOTO_REGULAR,
-    fontSize: moderateScale(12),
-    color: Colors.tertiary,
-    paddingHorizontal: horizontalScale(10),
-    height: verticalScale(40),
-    marginRight: horizontalScale(8),
-    elevation: 4,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2.5,
-  },
-  addButton: {
-    backgroundColor: Colors.white,
-    borderRadius: moderateScale(8),
-
-    paddingHorizontal: horizontalScale(18),
-    height: verticalScale(40),
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2.54,
-  },
-  addButtonText: {
-    fontFamily: FontFamilies.ROBOTO_MEDIUM,
-    fontSize: moderateScale(14),
-    color: Colors.primary,
   },
   buttonRow: {
     flexDirection: "row",

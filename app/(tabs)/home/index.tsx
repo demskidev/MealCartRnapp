@@ -56,8 +56,24 @@ const { width } = Dimensions.get("window");
 const SWIPE_THRESHOLD = 30; // Minimum swipe distance to trigger hide
 const GREETING_SECTION_HEIGHT = verticalScale(100);
 
-// Feature flag for the "Add Meal to Firebase" (add global meal) button. Hidden
-// for now — flip to `true` when we again need to add more global/official meals.
+// Feature flag for the "Add Meal to Firebase" (add global meal) button.
+// HIDDEN — flip to `true` when we next need to add global/official meals.
+//
+// Everything needed to add them is still in place, so this flag is the only
+// switch:
+//   - the button below (`SHOW_ADD_GLOBAL_MEAL && !isGuest`) routes to
+//     APP_ROUTES.CREATE_MEAL with `mode: "global"`;
+//   - CreateMealBottomSheet tags that save with uid == GLOBAL_MEALS_UID and
+//     isGlobal: true, which is what makes the meal global;
+//   - firestore.rules' canWriteGlobalMeal() allows ANY signed-in non-anonymous
+//     user to write the shared catalog (not just admins), so flipping this to
+//     `true` opens the official catalog to every real user — intentional, but
+//     worth re-checking before shipping it on.
+// Guests stay excluded either way: canWriteGlobalMeal() rejects anonymous
+// accounts, so the save would fail and the button would only frustrate them.
+//
+// Note this flag does NOT affect *using* global meals — browsing them, and
+// picking them in the add-item / meal-plan modals, is always on.
 const SHOW_ADD_GLOBAL_MEAL = false;
 
 const HomeScreen: React.FC = () => {
@@ -65,6 +81,7 @@ const HomeScreen: React.FC = () => {
   const panRef = useRef<any>(null);
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const isGuest = useAppSelector((state) => state.auth.isGuest);
   const { enrichedActivePlan, fetchActivePlan } = usePlanViewModel();
   const { recentMeals, fetchTheRecentMeals } = useMealsViewModel();
   const [activePlan, setActivePlan] = useState(enrichedActivePlan);
@@ -579,7 +596,7 @@ const HomeScreen: React.FC = () => {
                   }
                 />
 
-                {SHOW_ADD_GLOBAL_MEAL && (
+                {SHOW_ADD_GLOBAL_MEAL && !isGuest && (
                   <View style={styles.addGlobalMealWrapper}>
                     <ThemeGradientButton
                       title={Strings.home_addMealToFirebase}
