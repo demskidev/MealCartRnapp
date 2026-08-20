@@ -691,11 +691,7 @@ const AddItemToList = ({
                   renderItem={({ item }) => (
                     <View style={styles.manualAddRow}>
                       <View style={styles.manualItemContainer}>
-                        <TextInput
-                          style={styles.manualItemInput}
-                          value={item.value}
-                          editable={false}
-                        />
+                        <Text style={styles.manualItemText}>{item.value}</Text>
                         <TouchableOpacity
                           onPress={() => {
                             setManualList((prev) =>
@@ -874,12 +870,6 @@ const styles = StyleSheet.create({
     height: verticalScale(40),
     marginBottom: verticalScale(6),
   },
-  manualItemText: {
-    flex: 1,
-    fontFamily: FontFamilies.ROBOTO_REGULAR,
-    fontSize: moderateScale(15),
-    color: Colors.primary,
-  },
   manualAddRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -995,7 +985,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     flex: 1,
-    height: verticalScale(40),
+    // Same reason as manualItemText — let long ingredient names wrap rather
+    // than clipping them to one line.
+    minHeight: verticalScale(40),
+    paddingVertical: verticalScale(6),
   },
   suggestionText: {
     fontFamily: FontFamilies.ROBOTO_REGULAR,
@@ -1019,15 +1012,18 @@ const styles = StyleSheet.create({
     position: "relative",
     justifyContent: "center",
   },
-  manualItemInput: {
-    flex: 1,
+  manualItemText: {
     backgroundColor: Colors.white,
     borderRadius: moderateScale(8),
     fontFamily: FontFamilies.ROBOTO_REGULAR,
     fontSize: moderateScale(12),
     color: Colors.tertiary,
     paddingHorizontal: horizontalScale(10),
-    height: verticalScale(40),
+    paddingVertical: verticalScale(11),
+    // minHeight, not height: ingredient names are user/Kroger supplied and wrap
+    // onto a second line ("Laura's Lean Beef® 92% Lean All Natural Ground
+    // Beef"). A fixed height clipped them instead of letting the row grow.
+    minHeight: verticalScale(40),
     marginRight: 0,
     paddingRight: 36,
     elevation: 4,
