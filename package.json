@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "bump": "node scripts/bump-version.js",
+    "reindex:meals": "node scripts/backfill-meal-search-tokens.js",
     "build:android": "node scripts/bump-version.js && npx eas build --platform android --profile production",
     "build:ios": "npx eas build --platform ios --profile production",
     "postinstall": "patch-package"

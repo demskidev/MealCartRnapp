@@ -34,6 +34,7 @@ import {
   getKrogerConnectionStatus,
 } from "@/services/krogerApi";
 import { pushNavigation } from "@/utils/Navigation";
+import { buildNameSearchTokens } from "@/utils/searchTokens";
 import { showToast } from "@/utils/Toast";
 import { createMealValidationSchema } from "@/utils/validators/MealValidators";
 import { useCreateMealViewModel } from "@/viewmodels/CreateMealViewModel";
@@ -893,15 +894,11 @@ const CreateMealBottomSheet = ({
     // Add id for edit mode
     if (isEditMode) {
       mealPayload.id = values.id;
-    } else {
-      // Add nameCharacters for create mode
-      const nameCharacters = [];
-      const name = values.name.trim();
-      for (let i = 1; i <= name.length; i++) {
-        nameCharacters.push(name.substring(0, i).toLowerCase());
-      }
-      mealPayload.nameCharacters = nameCharacters;
     }
+
+    // The search index. Written on edit too, otherwise a renamed meal stays
+    // searchable only under its old name.
+    mealPayload.nameCharacters = buildNameSearchTokens(values.name);
 
     // Only add steps if there are valid steps
     if (mappedSteps.length > 0) {

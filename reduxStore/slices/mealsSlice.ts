@@ -14,6 +14,7 @@ import {
   updateDocument,
   uploadImageToFirebase,
 } from "@/services/firestore";
+import { normalizeSearchText } from "@/utils/searchTokens";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { Timestamp } from "firebase/firestore";
 import {
@@ -461,11 +462,14 @@ export const searchGlobalMeals = createAsyncThunk(
       if (difficulty) {
         filters.push({ field: "difficulty", op: "==", value: difficulty });
       }
-      if (searchText && searchText.trim()) {
+      // Must use the same normalization the tokens were built with, or e.g.
+      // "Egg  Roll" fails to match the stored "egg roll".
+      const normalizedSearch = normalizeSearchText(searchText);
+      if (normalizedSearch) {
         filters.push({
           field: "nameCharacters",
           op: "array-contains",
-          value: searchText.trim().toLowerCase(),
+          value: normalizedSearch,
         });
       }
       const options: any = {
@@ -576,11 +580,14 @@ export const searchMeals = createAsyncThunk(
       if (difficulty) {
         filters.push({ field: "difficulty", op: "==", value: difficulty });
       }
-      if (searchText && searchText.trim()) {
+      // Must use the same normalization the tokens were built with, or e.g.
+      // "Egg  Roll" fails to match the stored "egg roll".
+      const normalizedSearch = normalizeSearchText(searchText);
+      if (normalizedSearch) {
         filters.push({
           field: "nameCharacters",
           op: "array-contains",
-          value: searchText.trim().toLowerCase(),
+          value: normalizedSearch,
         });
       }
       const options: any = {
@@ -724,6 +731,10 @@ const updateMealInDb = async (
       ingredients: cleanedIngredients,
       steps: mealData.steps,
       uid: mealData.uid,
+      // The search index (see utils/searchTokens.ts). This whitelist is what
+      // actually reaches Firestore, so omitting it here means a rename never
+      // re-indexes the meal.
+      nameCharacters: mealData.nameCharacters,
     };
 
     // Only add lastViewedAt if it exists
