@@ -10,6 +10,10 @@ import { Strings } from "@/constants/Strings";
 import { Colors, FontFamilies } from "@/constants/Theme";
 import { CREATE_MEAL_PLAN, SHOPPING_LIST } from "@/reduxStore/appKeys";
 import { Meal } from "@/reduxStore/slices/mealsSlice";
+import {
+  getKrogerConnectionStatus,
+  searchKrogerProducts,
+} from "@/services/krogerApi";
 import { toDate } from "@/utils/DateFormat";
 import { useMealsViewModel } from "@/viewmodels/MealsViewModel";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -27,6 +31,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { buildProductMeta, KrogerProduct } from "./AddKrogerIngredient";
 import CustomStepper from "./CustomStepper";
 import CustomTextInput from "./CustomTextInput";
 import PaginationLoader from "./PaginationLoader";
@@ -56,15 +61,15 @@ const AddItemToList = ({
 }: AddItemToListProps) => {
   const [search, setSearch] = useState("");
 
-  const [manualInput, setManualInput] = useState("");
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
-
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [manualList, setManualList] = useState<{ id: string; value: string }[]>(
-    [],
-  );
+  // `manual: true` marks a row the user added by hand from the Kroger search.
+  // It is what keeps the auto-add effect below from sweeping the row away when
+  // the meal-derived ingredient set changes.
+  const [manualList, setManualList] = useState<
+    { id: string; value: string; manual?: boolean }[]
+  >([]);
   const [unitWeight, setUnitweight] = useState("100 grms");
   const unitWeightOptions = ["100grm", "200grm", "1kg"];
   const unitWeightIndex = unitWeightOptions.indexOf(unitWeight);
@@ -92,9 +97,19 @@ const AddItemToList = ({
   // doesn't put them straight back on the next recompute.
   const [removedNames, setRemovedNames] = useState<string[]>([]);
   const [fullIngredientsData, setFullIngredientsData] = useState<any[]>([]);
+  // Ingredients the user added from the Kroger search rather than from a meal.
+  // They are held separately because `fullIngredientsData` is recomputed from
+  // the selected meals and would drop them on the next recompute.
+  const [manualKrogerItems, setManualKrogerItems] = useState<any[]>([]);
+  const [krogerStore, setKrogerStore] = useState<any>(null);
+  const [krogerProducts, setKrogerProducts] = useState<KrogerProduct[]>([]);
+  const [isSearchingKroger, setIsSearchingKroger] = useState(false);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const krogerDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<TextInput>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const krogerLocationId = krogerStore?.locationId || "";
+  const KROGER_MIN_QUERY_LENGTH = 2;
 
   // Helper function: Fetch all ingredients data for a meal
   // Fetch from ingredient collection using ingredientId
@@ -102,8 +117,6 @@ const AddItemToList = ({
   useEffect(() => {
     if (!visible) {
       setSearch("");
-      setManualInput("");
-      setFilteredSuggestions([]);
       setSearchText("");
       setSuggestions([]);
       setIsInputFocused(false);
@@ -115,9 +128,34 @@ const AddItemToList = ({
       setDynamicIngredients([]);
       setRemovedNames([]);
       setFullIngredientsData([]);
+      setManualKrogerItems([]);
+      setKrogerProducts([]);
+      setIsSearchingKroger(false);
       setIsLoading(false);
     }
   }, [visible]);
+
+  // The Kroger product search needs a store to price/stock against, and the
+  // selected store lives on the user's Kroger connection record.
+  useEffect(() => {
+    if (!visible || from === CREATE_MEAL_PLAN) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const status: any = await getKrogerConnectionStatus();
+        if (!cancelled) setKrogerStore(status?.selectedStore || null);
+      } catch {
+        // No connection / no store — the search block explains that in place.
+        if (!cancelled) setKrogerStore(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, from]);
 
   // Load the first page every time the picker opens.
   //
@@ -325,8 +363,8 @@ const AddItemToList = ({
   // resurrect it.
   useEffect(() => {
     setManualList((prev) => {
-      const kept = prev.filter((item) =>
-        dynamicIngredients.includes(item.value),
+      const kept = prev.filter(
+        (item) => item.manual || dynamicIngredients.includes(item.value),
       );
       const keptNames = new Set(kept.map((item) => item.value));
       const additions = dynamicIngredients
@@ -367,8 +405,93 @@ const AddItemToList = ({
     setSuggestions(pool);
   }, [dynamicIngredients, searchText, isInputFocused, excludedNames]);
 
+  // The "Add item Manually" box searches the Kroger catalog for the user's
+  // selected store, the same source the meal builder's ingredient search uses.
+  // It used to filter only the selected meals' own ingredients — and since
+  // checking a meal now auto-adds every one of them, that pool was always
+  // empty, so typing here could never return anything.
+  useEffect(() => {
+    if (!visible || from === CREATE_MEAL_PLAN) return;
+
+    if (krogerDebounceTimeout.current) {
+      clearTimeout(krogerDebounceTimeout.current);
+    }
+
+    const term = searchText.trim();
+
+    if (term.length < KROGER_MIN_QUERY_LENGTH || !krogerLocationId) {
+      setKrogerProducts([]);
+      setIsSearchingKroger(false);
+      return;
+    }
+
+    setIsSearchingKroger(true);
+    krogerDebounceTimeout.current = setTimeout(async () => {
+      try {
+        const response = (await searchKrogerProducts(
+          term,
+          krogerLocationId,
+          12,
+        )) as { data?: KrogerProduct[] };
+        setKrogerProducts(response?.data || []);
+      } catch {
+        setKrogerProducts([]);
+      } finally {
+        setIsSearchingKroger(false);
+      }
+    }, 400);
+
+    return () => {
+      if (krogerDebounceTimeout.current) {
+        clearTimeout(krogerDebounceTimeout.current);
+      }
+    };
+  }, [searchText, krogerLocationId, visible, from]);
+
   const handleSearch = (text: string) => {
     setSearchText(text);
+  };
+
+  // Tapping a Kroger result adds that product to the list straight away, as a
+  // Kroger-linked ingredient (so it can be sent to the Kroger cart later).
+  const handleSelectKrogerProduct = (product: KrogerProduct) => {
+    const meta = buildProductMeta(product);
+    const name = meta.name?.trim();
+
+    if (!name || excludedNames.has(name)) {
+      setSearchText("");
+      setKrogerProducts([]);
+      return;
+    }
+
+    const ingredient = {
+      ingredientId: meta.upc || meta.productId || "",
+      ingredientName: name,
+      categoryName: meta.displayCategory || meta.category || "",
+      categoryId: "",
+      unit: meta.size || meta.parsedUnit || "",
+      count: "1",
+      mealId: "",
+      mealName: "",
+      isKroger: true,
+      krogerIngredientId: meta.productId || meta.upc || "",
+    };
+
+    setManualKrogerItems((prev) => [
+      ...prev.filter((item) => item.ingredientName !== name),
+      ingredient,
+    ]);
+    setManualList((prev) => [
+      ...prev,
+      {
+        id: `kroger-${ingredient.ingredientId}-${Date.now()}`,
+        value: name,
+        manual: true,
+      },
+    ]);
+    setRemovedNames((prev) => prev.filter((removed) => removed !== name));
+    setSearchText("");
+    setKrogerProducts([]);
   };
 
   const handleInputFocus = () => {
@@ -390,15 +513,6 @@ const AddItemToList = ({
   };
 
   // Use dynamic ingredients from selected meals
-
-  const handleAddItem = (value: string) => {
-    if (!value.trim()) return;
-
-    setManualList((prev) => [...prev, { id: Date.now().toString(), value }]);
-
-    setManualInput("");
-    setFilteredSuggestions([]);
-  };
 
   const handleMealPress = (meal: any) => {
     // Dismiss keyboard and blur input when selecting meals
@@ -422,11 +536,21 @@ const AddItemToList = ({
   };
 
   const handleGenerateList = () => {
-    // Only send ingredients that the user explicitly added via the "Add" button
+    // Only send ingredients that are actually on the added list — meal-derived
+    // ones plus anything picked out of the Kroger search.
     const addedNames = manualList.map((item) => item.value);
-    const addedIngredients = fullIngredientsData.filter((ingredient) =>
-      addedNames.includes(ingredient.ingredientName),
-    );
+    const byName = new Map<string, any>();
+    [...fullIngredientsData, ...manualKrogerItems].forEach((ingredient) => {
+      if (
+        ingredient?.ingredientName &&
+        !byName.has(ingredient.ingredientName)
+      ) {
+        byName.set(ingredient.ingredientName, ingredient);
+      }
+    });
+    const addedIngredients = addedNames
+      .map((name) => byName.get(name))
+      .filter(Boolean);
 
     const ingredientsList = addedIngredients.map((ingredient) => {
       const ingredientName = ingredient.ingredientName || "";
@@ -681,6 +805,93 @@ const AddItemToList = ({
                   />
                 )}
 
+                {searchText.trim().length >= KROGER_MIN_QUERY_LENGTH && (
+                  <View style={styles.krogerBlock}>
+                    <Text style={styles.krogerSectionLabel}>
+                      {Strings.addItemToList_krogerSectionLabel}
+                    </Text>
+
+                    {!krogerLocationId ? (
+                      <Text style={styles.krogerHintText}>
+                        {Strings.addItemToList_krogerNoStore}
+                      </Text>
+                    ) : isSearchingKroger ? (
+                      <View style={styles.krogerHintRow}>
+                        <ActivityIndicator size="small" />
+                        <Text style={styles.krogerHintText}>
+                          {Strings.addItemToList_krogerSearching}
+                        </Text>
+                      </View>
+                    ) : krogerProducts.length === 0 ? (
+                      <Text style={styles.krogerHintText}>
+                        {Strings.addItemToList_krogerNoResults}
+                      </Text>
+                    ) : (
+                      <FlatList
+                        data={krogerProducts}
+                        keyExtractor={(item) =>
+                          item.productId || item.upc || ""
+                        }
+                        keyboardShouldPersistTaps="handled"
+                        style={styles.krogerResultsList}
+                        renderItem={({ item }) => {
+                          const meta = buildProductMeta(item);
+                          const alreadyAdded = excludedNames.has(meta.name);
+
+                          return (
+                            <TouchableOpacity
+                              style={styles.krogerResultRow}
+                              disabled={alreadyAdded}
+                              onPress={() => handleSelectKrogerProduct(item)}
+                            >
+                              {meta.imageUrl ? (
+                                <Image
+                                  source={{ uri: meta.imageUrl }}
+                                  style={styles.krogerResultImage}
+                                  resizeMode="contain"
+                                />
+                              ) : (
+                                <View
+                                  style={[
+                                    styles.krogerResultImage,
+                                    styles.krogerResultImagePlaceholder,
+                                  ]}
+                                />
+                              )}
+
+                              <View style={styles.krogerResultInfo}>
+                                <Text
+                                  style={[
+                                    styles.krogerResultName,
+                                    alreadyAdded && styles.krogerResultDisabled,
+                                  ]}
+                                  numberOfLines={2}
+                                >
+                                  {meta.name}
+                                </Text>
+                                {!!(meta.size || meta.price !== null) && (
+                                  <Text style={styles.krogerResultMeta}>
+                                    {meta.size}
+                                    {meta.size && meta.price !== null
+                                      ? " · "
+                                      : ""}
+                                    {meta.price !== null
+                                      ? `$${meta.price.toFixed(2)}`
+                                      : ""}
+                                  </Text>
+                                )}
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }}
+                        ItemSeparatorComponent={() => (
+                          <View style={styles.dividerRowList} />
+                        )}
+                      />
+                    )}
+                  </View>
+                )}
+
                 <FlatList
                   data={manualList}
                   extraData={manualList}
@@ -696,6 +907,11 @@ const AddItemToList = ({
                           onPress={() => {
                             setManualList((prev) =>
                               prev.filter((i) => i.id !== item.id),
+                            );
+                            setManualKrogerItems((prev) =>
+                              prev.filter(
+                                (i) => i.ingredientName !== item.value,
+                              ),
                             );
                             setRemovedNames((prev) =>
                               prev.includes(item.value)
@@ -1006,6 +1222,62 @@ const styles = StyleSheet.create({
   },
   manualListStyle: {
     maxHeight: verticalScale(250),
+  },
+  krogerBlock: {
+    marginTop: verticalScale(4),
+    marginBottom: verticalScale(4),
+  },
+  krogerSectionLabel: {
+    fontFamily: FontFamilies.ROBOTO_MEDIUM,
+    fontSize: moderateScale(12),
+    color: Colors.primary,
+    marginBottom: verticalScale(4),
+  },
+  krogerHintRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: horizontalScale(8),
+  },
+  krogerHintText: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(11),
+    color: Colors.tertiary,
+    paddingVertical: verticalScale(6),
+    flexShrink: 1,
+  },
+  krogerResultsList: {
+    maxHeight: verticalScale(170),
+  },
+  krogerResultRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: verticalScale(6),
+  },
+  krogerResultImage: {
+    width: horizontalScale(36),
+    height: verticalScale(36),
+    marginRight: horizontalScale(10),
+  },
+  krogerResultImagePlaceholder: {
+    backgroundColor: Colors.greysoft,
+    borderRadius: moderateScale(6),
+  },
+  krogerResultInfo: {
+    flex: 1,
+  },
+  krogerResultName: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(12),
+    color: Colors.primary,
+  },
+  krogerResultDisabled: {
+    color: Colors.tertiary,
+  },
+  krogerResultMeta: {
+    fontFamily: FontFamilies.ROBOTO_REGULAR,
+    fontSize: moderateScale(11),
+    color: Colors.tertiary,
+    marginTop: verticalScale(2),
   },
   manualItemContainer: {
     flex: 1,

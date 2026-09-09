@@ -325,19 +325,63 @@ export default function TestPlanShopping() {
         .filter(Boolean) as string[],
     );
 
-    const krogerItems = allIngredients
-      .filter((ing: any, idx: number) => isSelectedKroger(ing, idx))
-      .map((ing: any) => ({
-        quantity: Number(ing.count) || 1,
-        upc: ing.krogerIngredientId,
-        modality: krogerModality,
-      }));
+    // Kroger's cart add takes one entry per UPC. The same product can reach a
+    // list from two different meals, and sending it twice in one request is
+    // rejected outright, so merge duplicates into a single line and add their
+    // quantities. Quantity also has to be a whole number of at least 1 — a
+    // recipe count of "0" or a fraction is not something a cart can hold.
+    const quantityByUpc = new Map<string, number>();
+    allIngredients.forEach((ing: any, idx: number) => {
+      if (!isSelectedKroger(ing, idx)) return;
+      const upc = String(ing.krogerIngredientId);
+      const quantity = Math.max(1, Math.round(Number(ing.count) || 1));
+      quantityByUpc.set(upc, (quantityByUpc.get(upc) || 0) + quantity);
+    });
+
+    const krogerItems = [...quantityByUpc.entries()].map(([upc, quantity]) => ({
+      quantity,
+      upc,
+      modality: krogerModality,
+    }));
 
     if (krogerItems.length === 0) {
       Alert.alert(Strings.testPlanShopping_krogerNoItems);
       return;
     }
 
+    // Sending is additive on Kroger's side: every tap adds another copy of
+    // every selected item to the cart. Re-sending items that already went
+    // across is how a list of a couple of dozen items turns into hundreds, so
+    // say so before doing it again.
+    const resendCount = allIngredients.filter(
+      (ing: any, idx: number) => isSelectedKroger(ing, idx) && ing.acquired,
+    ).length;
+
+    if (resendCount > 0) {
+      Alert.alert(
+        Strings.testPlanShopping_krogerResendTitle,
+        `${resendCount} ${Strings.testPlanShopping_krogerResendMessage}`,
+        [
+          {
+            text: Strings.testPlanShopping_krogerResendCancel,
+            style: "cancel",
+          },
+          {
+            text: Strings.testPlanShopping_krogerResendConfirm,
+            onPress: () => void sendKrogerItems(krogerItems, sentIds),
+          },
+        ],
+      );
+      return;
+    }
+
+    await sendKrogerItems(krogerItems, sentIds);
+  };
+
+  const sendKrogerItems = async (
+    krogerItems: { quantity: number; upc: string; modality: KrogerModality }[],
+    sentIds: Set<string>,
+  ) => {
     setSendingToKroger(true);
     try {
       await addItemsToKrogerCart(krogerItems);
@@ -385,11 +429,21 @@ export default function TestPlanShopping() {
         Strings.testPlanShopping_krogerSuccessMessage,
       );
     } catch (error: any) {
-      const status = error?.details?.status || error?.customData?.status;
+      // Two very different failures land here: the callable that mints the
+      // Kroger user token (auth/connection problems, reported as a Firebase
+      // error code) and the cart request itself (an HTTP status from Kroger).
+      // Telling them apart is the difference between "reconnect Kroger" and
+      // "Kroger rejected these items".
+      const status =
+        error?.status || error?.details?.status || error?.customData?.status;
       const krogerPayload =
-        error?.details?.payload || error?.customData?.payload;
+        error?.details || error?.details?.payload || error?.customData?.payload;
       let detail =
         error?.message || Strings.testPlanShopping_krogerErrorMessage;
+
+      if (error?.code === "functions/unauthenticated") {
+        detail += `\n\n${Strings.testPlanShopping_krogerReconnectHint}`;
+      }
       if (status) {
         detail += `\n\nHTTP ${status}`;
       }

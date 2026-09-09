@@ -173,8 +173,7 @@ export const Strings = {
   meals_myMeals: "My Meals",
   meals_browseMeals: "Browse Meals",
   meals_searchPlaceholder: "Search your meals...",
-  updateProfile_imageUploadFailed:
-    "Image upload failed. Please try again.",
+  updateProfile_imageUploadFailed: "Image upload failed. Please try again.",
   updateProfileModal_title: "Update Profile",
   updateProfileModal_subtitle:
     "You can set your meals servings for all your new meals.",
@@ -311,8 +310,7 @@ export const Strings = {
   appleSignIn_accountExists:
     "An account already exists for this email address. Please sign in with the method you used originally.",
   appleSignIn_noIdentityToken: "No identity token received from Apple",
-  appleSignIn_networkError:
-    "No connection. Check your internet and try again.",
+  appleSignIn_networkError: "No connection. Check your internet and try again.",
   appleSignIn_failed: "Couldn't sign in with Apple. Please try again.",
   googleSignIn_failed: "Couldn't sign in with Google. Please try again.",
   googleSignIn_providerDisabled:
@@ -462,6 +460,13 @@ export const Strings = {
     "Items have been added to your Kroger cart!",
   testPlanShopping_krogerError: "Error",
   testPlanShopping_krogerErrorMessage: "Failed to add items to Kroger cart",
+  testPlanShopping_krogerResendTitle: "Already sent to Kroger",
+  testPlanShopping_krogerResendMessage:
+    "items are already in your Kroger cart from a previous transfer. Sending again will add another copy of them.",
+  testPlanShopping_krogerResendCancel: "Cancel",
+  testPlanShopping_krogerResendConfirm: "Send anyway",
+  testPlanShopping_krogerReconnectHint:
+    "Your Kroger session may have expired. Reconnect your Kroger account from Profile and try again.",
   testPlanShopping_meal: "meal",
   testPlanShopping_meals: "meals",
   testPlanShopping_unknownIngredient: "Unknown Ingredient",
@@ -500,7 +505,15 @@ export const Strings = {
   selectKrogerStore_cancel: "Cancel",
   selectKrogerStore_selectStore: "Select Store",
   addItemToList_addManualLabel: "Add item Manually",
-  addItemToList_searchIngredient: "Search Ingredient",
+  addItemToList_searchIngredient:
+    "Search Kroger products or your ingredients...",
+  addItemToList_yourIngredientsLabel: "From your selected meals",
+  addItemToList_krogerSectionLabel: "Kroger products",
+  addItemToList_krogerSearching: "Searching Kroger...",
+  addItemToList_krogerNoResults:
+    "No Kroger products found. Try another search.",
+  addItemToList_krogerNoStore:
+    "Connect your Kroger account and pick a store to search products here.",
   addItemToList_add: "Add",
   addItemToList_cancel: "Cancel",
   addItemToList_generateList: "Generate List",

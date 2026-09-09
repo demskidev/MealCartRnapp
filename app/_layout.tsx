@@ -60,7 +60,8 @@ const RootLayout = () => {
                 {/* <AuthContextProvider> */}
                 <RootNavigator />
                 <Toast config={toastConfig} topOffset={moderateScale(200)} />
-                <Loader /> {/* </AuthContextProvider> */}
+                <Loader />
+                {/* </AuthContextProvider> */}
               </FontProvider>
             </KeyboardProvider>
           </TourGuideProvider>
