@@ -756,7 +756,16 @@ export default function TestPlanShopping() {
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity
-                    style={[styles.krogerCartButton]}
+                    style={[
+                      styles.krogerCartButton,
+                      !krogerModality && styles.krogerCartButtonDisabled,
+                    ]}
+                    // Sending needs exactly one of Delivery / Pickup, so the
+                    // button stays disabled until one is picked. It must also
+                    // *look* disabled: it used to carry the enabled style while
+                    // disabled, so it read as a live button and silently
+                    // swallowed every tap — which is indistinguishable from the
+                    // transfer being broken, and was reported as exactly that.
                     disabled={!krogerModality || sendingToKroger}
                     onPress={handleSendToKrogerCart}
                   >
@@ -980,6 +989,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     color: Colors.tertiary,
     marginBottom: verticalScale(12),
+  },
+  krogerCartButtonDisabled: {
+    opacity: 0.5,
   },
   krogerModalityRow: {
     flexDirection: "row",
