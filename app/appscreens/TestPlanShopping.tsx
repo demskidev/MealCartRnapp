@@ -317,13 +317,19 @@ export default function TestPlanShopping() {
       ing.krogerIngredientId &&
       checked.includes(itemIdFor(ing, idx));
 
-    const sentIds = new Set(
-      allIngredients
-        .map((ing: any, idx: number) =>
-          isSelectedKroger(ing, idx) ? itemIdFor(ing, idx) : null,
-        )
-        .filter(Boolean) as string[],
-    );
+    // Which rows each UPC came from, and what each UPC is called. Kroger
+    // answers per UPC, so these are what turn its answer back into "these rows
+    // are now in the cart" and "Kroger refused these items, by name".
+    const idsByUpc = new Map<string, string[]>();
+    const nameByUpc = new Map<string, string>();
+    allIngredients.forEach((ing: any, idx: number) => {
+      if (!isSelectedKroger(ing, idx)) return;
+      const upc = String(ing.krogerIngredientId);
+      idsByUpc.set(upc, [...(idsByUpc.get(upc) || []), itemIdFor(ing, idx)]);
+      if (!nameByUpc.has(upc)) {
+        nameByUpc.set(upc, ing.ingredientName || upc);
+      }
+    });
 
     // Kroger's cart add takes one entry per UPC. The same product can reach a
     // list from two different meals, and sending it twice in one request is
@@ -368,23 +374,32 @@ export default function TestPlanShopping() {
           },
           {
             text: Strings.testPlanShopping_krogerResendConfirm,
-            onPress: () => void sendKrogerItems(krogerItems, sentIds),
+            onPress: () =>
+              void sendKrogerItems(krogerItems, idsByUpc, nameByUpc),
           },
         ],
       );
       return;
     }
 
-    await sendKrogerItems(krogerItems, sentIds);
+    await sendKrogerItems(krogerItems, idsByUpc, nameByUpc);
   };
 
   const sendKrogerItems = async (
     krogerItems: { quantity: number; upc: string; modality: KrogerModality }[],
-    sentIds: Set<string>,
+    idsByUpc: Map<string, string[]>,
+    nameByUpc: Map<string, string>,
   ) => {
     setSendingToKroger(true);
     try {
-      await addItemsToKrogerCart(krogerItems);
+      const { addedUpcs, rejected } = await addItemsToKrogerCart(krogerItems);
+
+      // Only the UPCs Kroger actually accepted count as sent. Marking a
+      // rejected item acquired would tell the user it is in a cart it never
+      // reached.
+      const sentIds = new Set(
+        addedUpcs.flatMap((upc) => idsByUpc.get(upc) || []),
+      );
 
       // Mark only the sent (selected) items as acquired, locally and in
       // Firebase. Everything else keeps the flags it already had — an unchecked
@@ -424,10 +439,26 @@ export default function TestPlanShopping() {
         );
       }
 
-      Alert.alert(
-        Strings.testPlanShopping_krogerSuccess,
-        Strings.testPlanShopping_krogerSuccessMessage,
-      );
+      if (rejected.length > 0) {
+        const refused = rejected
+          .map(
+            (item) =>
+              `• ${nameByUpc.get(item.upc) || item.upc}${
+                item.reason ? ` — ${item.reason}` : ""
+              }`,
+          )
+          .join("\n");
+
+        Alert.alert(
+          Strings.testPlanShopping_krogerPartialTitle,
+          `${addedUpcs.length} ${Strings.testPlanShopping_krogerPartialMessage}\n\n${refused}`,
+        );
+      } else {
+        Alert.alert(
+          Strings.testPlanShopping_krogerSuccess,
+          Strings.testPlanShopping_krogerSuccessMessage,
+        );
+      }
     } catch (error: any) {
       // Two very different failures land here: the callable that mints the
       // Kroger user token (auth/connection problems, reported as a Firebase
@@ -443,6 +474,22 @@ export default function TestPlanShopping() {
 
       if (error?.code === "functions/unauthenticated") {
         detail += `\n\n${Strings.testPlanShopping_krogerReconnectHint}`;
+      }
+      // 403 from Kroger's cart endpoint means the user token carries no
+      // cart-write permission — nothing about the list will fix that, only
+      // re-granting the scope will.
+      if (status === 403) {
+        detail += `\n\n${Strings.testPlanShopping_krogerScopeHint}`;
+      }
+      if (Array.isArray(error?.rejected) && error.rejected.length > 0) {
+        detail += `\n\n${Strings.testPlanShopping_krogerAllRejected}\n${error.rejected
+          .map(
+            (item: any) =>
+              `• ${nameByUpc.get(item.upc) || item.upc}${
+                item.reason ? ` — ${item.reason}` : ""
+              }`,
+          )
+          .join("\n")}`;
       }
       if (status) {
         detail += `\n\nHTTP ${status}`;

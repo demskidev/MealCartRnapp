@@ -50,6 +50,11 @@ const krogerProxyCallable = httpsCallable<KrogerProxyParams, unknown>(
   "krogerProxy",
 );
 
+const logKrogerCartAttemptCallable = httpsCallable<
+  Record<string, unknown>,
+  { logged: boolean }
+>(functions, "logKrogerCartAttempt");
+
 const getKrogerUserTokenCallable = httpsCallable<
   void,
   { accessToken: string; expiresAt: string; scope: string }
@@ -108,14 +113,16 @@ const readAuthSessionRedirect = (
     return { outcome: "cancelled" };
   }
 
-  const url = "url" in result && typeof result.url === "string" ? result.url : "";
+  const url =
+    "url" in result && typeof result.url === "string" ? result.url : "";
 
   if (!url) {
     return { outcome: "unknown" };
   }
 
   const { queryParams } = Linking.parse(url);
-  const status = typeof queryParams?.status === "string" ? queryParams.status : "";
+  const status =
+    typeof queryParams?.status === "string" ? queryParams.status : "";
   const message =
     typeof queryParams?.message === "string" ? queryParams.message : undefined;
 
@@ -328,16 +335,59 @@ export async function getKrogerCart() {
   return payload;
 }
 
-export async function addItemsToKrogerCart(items: unknown[]) {
-  await ensureSignedIn();
+/**
+ * Reports the outcome of a cart add to Cloud Logging.
+ *
+ * The cart write is the one Kroger call that does not go through a function
+ * (Kroger's CDN blocks GCP egress), so nothing about it is recoverable from
+ * `firebase functions:log` — a user reporting "it doesn't send to my cart" left
+ * no server-side trace at all. This posts just the outcome, never the token.
+ * It is best-effort: a diagnostics failure must never fail a cart add.
+ */
+async function reportKrogerCartAttempt(diagnostic: Record<string, unknown>) {
+  try {
+    await logKrogerCartAttemptCallable(diagnostic);
+  } catch {
+    // Diagnostics only — swallow.
+  }
+}
 
-  // Get the user's OAuth token from the cloud function
-  const tokenResult = await getKrogerUserTokenCallable();
-  const { accessToken, scope } = tokenResult.data;
+export type KrogerCartItem = {
+  upc: string;
+  quantity: number;
+  modality?: string;
+};
 
-  console.log("[Kroger cart] token scope:", scope);
-  console.log("[Kroger cart] sending items:", JSON.stringify({ items }));
+export type KrogerCartRejection = {
+  upc: string;
+  status?: number;
+  reason?: string;
+};
 
+export type KrogerCartResult = {
+  addedUpcs: string[];
+  rejected: KrogerCartRejection[];
+};
+
+/** Statuses that describe the request as a whole, not an individual item. */
+const isWholeRequestFailure = (status: number) =>
+  status === 401 || status === 403 || status === 429 || status >= 500;
+
+const describeKrogerError = (payload: any): string => {
+  const first = payload?.errors?.[0] || payload?.error || payload;
+
+  if (typeof first === "string") return first;
+
+  return (
+    first?.reason ||
+    first?.detail ||
+    first?.message ||
+    first?.error_description ||
+    JSON.stringify(payload ?? {})
+  );
+};
+
+async function putCartAdd(accessToken: string, items: KrogerCartItem[]) {
   // Call Kroger directly from the client to avoid CDN blocking cloud function IPs
   const response = await fetch(`${KROGER_API_BASE_URL}/v1/cart/add`, {
     method: "PUT",
@@ -349,8 +399,6 @@ export async function addItemsToKrogerCart(items: unknown[]) {
     body: JSON.stringify({ items }),
   });
 
-  console.log("[Kroger cart] add response status:", response.status);
-
   const text = await response.text();
   let payload: unknown;
 
@@ -360,12 +408,91 @@ export async function addItemsToKrogerCart(items: unknown[]) {
     payload = { raw: text };
   }
 
-  if (!response.ok) {
-    const err: any = new Error(`Kroger cart API failed (${response.status})`);
-    err.status = response.status;
-    err.details = payload;
+  return { ok: response.ok, status: response.status, payload };
+}
+
+/**
+ * Adds items to the signed-in user's Kroger cart.
+ *
+ * Kroger validates `PUT /v1/cart/add` as a single unit: if it rejects any one
+ * item (a UPC the user's store does not carry, say) it fails the whole request
+ * and nothing reaches the cart. That is indistinguishable, from the outside,
+ * from "the integration is broken" — which is how it was reported. So a failed
+ * batch is retried one item at a time: the items Kroger accepts land in the
+ * cart, and the ones it refuses come back named in `rejected`.
+ *
+ * The per-item retry only runs for item-level rejections. A 401/403/429/5xx is
+ * about the request as a whole, so it is thrown straight through rather than
+ * repeated once per item.
+ */
+export async function addItemsToKrogerCart(
+  items: KrogerCartItem[],
+): Promise<KrogerCartResult> {
+  await ensureSignedIn();
+
+  // Get the user's OAuth token from the cloud function
+  const tokenResult = await getKrogerUserTokenCallable();
+  const { accessToken, scope } = tokenResult.data;
+
+  const batch = await putCartAdd(accessToken, items);
+
+  if (batch.ok) {
+    void reportKrogerCartAttempt({
+      outcome: "batch-ok",
+      scope,
+      itemCount: items.length,
+    });
+    return { addedUpcs: items.map((item) => item.upc), rejected: [] };
+  }
+
+  if (isWholeRequestFailure(batch.status)) {
+    void reportKrogerCartAttempt({
+      outcome: "request-failed",
+      scope,
+      itemCount: items.length,
+      status: batch.status,
+      reason: describeKrogerError(batch.payload),
+    });
+
+    const err: any = new Error(`Kroger cart API failed (${batch.status})`);
+    err.status = batch.status;
+    err.details = batch.payload;
     throw err;
   }
 
-  return payload;
+  const addedUpcs: string[] = [];
+  const rejected: KrogerCartRejection[] = [];
+
+  for (const item of items) {
+    const single = await putCartAdd(accessToken, [item]);
+
+    if (single.ok) {
+      addedUpcs.push(item.upc);
+    } else {
+      rejected.push({
+        upc: item.upc,
+        status: single.status,
+        reason: describeKrogerError(single.payload),
+      });
+    }
+  }
+
+  void reportKrogerCartAttempt({
+    outcome: addedUpcs.length ? "partial" : "all-rejected",
+    scope,
+    itemCount: items.length,
+    status: batch.status,
+    addedCount: addedUpcs.length,
+    rejected,
+  });
+
+  if (addedUpcs.length === 0) {
+    const err: any = new Error(`Kroger cart API failed (${batch.status})`);
+    err.status = batch.status;
+    err.details = batch.payload;
+    err.rejected = rejected;
+    throw err;
+  }
+
+  return { addedUpcs, rejected };
 }

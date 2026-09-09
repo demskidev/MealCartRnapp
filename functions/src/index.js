@@ -223,6 +223,17 @@ exports.getKrogerUserToken = onCall(
         clientSecret: krogerClientSecret.value(),
       });
 
+      // Logged because the cart add that consumes this token runs on the
+      // client and leaves no server-side trace. A user token missing
+      // `cart.basic:write` fails only at the cart, so the granted scope is the
+      // first thing worth knowing when a transfer is reported broken.
+      logger.info("getKrogerUserToken issued", {
+        uid: request.auth.uid,
+        scope: tokenData.scope || "",
+        requestedScope: tokenData.requestedScope || "",
+        expiresAt: tokenData.expiresAt || "",
+      });
+
       return {
         accessToken: tokenData.accessToken,
         expiresAt: tokenData.expiresAt,
@@ -240,6 +251,40 @@ exports.getKrogerUserToken = onCall(
         error.message || "Unable to get Kroger user token",
       );
     }
+  },
+);
+
+/**
+ * Records the outcome of a client-side Kroger cart add.
+ *
+ * `PUT /v1/cart/add` is issued straight from the app because Kroger's CDN
+ * blocks Cloud Functions egress, so it is the only Kroger call with no
+ * server-side trace. Without this, a report of "items don't reach my cart" is
+ * undiagnosable after the fact. Takes only the outcome — never a token.
+ */
+exports.logKrogerCartAttempt = onCall(
+  {
+    region: FIREBASE_FUNCTIONS_REGION,
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "You must be signed in.");
+    }
+
+    const data = request.data || {};
+
+    logger.info("kroger cart attempt", {
+      uid: request.auth.uid,
+      outcome: data.outcome || "unknown",
+      scope: data.scope || "",
+      itemCount: data.itemCount ?? null,
+      addedCount: data.addedCount ?? null,
+      status: data.status ?? null,
+      reason: data.reason ?? null,
+      rejected: Array.isArray(data.rejected) ? data.rejected.slice(0, 50) : null,
+    });
+
+    return { logged: true };
   },
 );
 

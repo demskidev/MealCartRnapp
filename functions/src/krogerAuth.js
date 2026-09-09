@@ -321,9 +321,15 @@ async function completeAuthSession({
     code,
   });
 
+  // Store what Kroger actually GRANTED (tokenData.scope), not what we asked
+  // for. This used to write `scope: session.scope`, which overwrote the granted
+  // scope with the requested one — so a grant that came back without
+  // `cart.basic:write` still read as "cart.basic:write" everywhere, and the
+  // only symptom left was cart adds failing with 403 while every other Kroger
+  // call (which uses the app token, not the user token) kept working.
   await saveUserTokens(db, session.uid, tokenData, {
     state,
-    scope: session.scope,
+    requestedScope: session.scope,
   });
 
   await sessionRef.set(

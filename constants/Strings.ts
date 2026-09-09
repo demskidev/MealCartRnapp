@@ -465,6 +465,12 @@ export const Strings = {
     "items are already in your Kroger cart from a previous transfer. Sending again will add another copy of them.",
   testPlanShopping_krogerResendCancel: "Cancel",
   testPlanShopping_krogerResendConfirm: "Send anyway",
+  testPlanShopping_krogerPartialTitle: "Partly sent to Kroger",
+  testPlanShopping_krogerPartialMessage:
+    "items were added to your Kroger cart. Kroger would not accept these — they are usually not carried at your selected store:",
+  testPlanShopping_krogerScopeHint:
+    "Kroger did not grant this app permission to write to your cart. Disconnect Kroger in Profile, reconnect, and make sure you accept the cart permission on Kroger's consent screen.",
+  testPlanShopping_krogerAllRejected: "Kroger refused every item. It reported:",
   testPlanShopping_krogerReconnectHint:
     "Your Kroger session may have expired. Reconnect your Kroger account from Profile and try again.",
   testPlanShopping_meal: "meal",
